@@ -5,7 +5,7 @@ postgres_default: &postgres_default
   encoding: unicode
   # https://guides.rubyonrails.org/configuring.html#database-pooling
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  database: bento_manager
+  database: postgres
   username: <%= ENV.fetch("POSTGRES_USER") { "postgres" } %>
   password: <%= ENV.fetch("POSTGRES_PASSWORD") { "postgres" } %>
   host: <%= ENV.fetch("POSTGRES_HOST") { "127.0.0.1" } %>
@@ -19,6 +19,7 @@ sqlite_default: &sqlite_default
 development:
   primary:
     <<: *postgres_default
+    database: bento_manager_development
   cache:
     <<: *sqlite_default
     database: storage/cache_development.sqlite3
