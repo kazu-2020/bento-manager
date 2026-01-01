@@ -12,6 +12,7 @@ gem "sqlite3", "~> 2.9"
 # UI
 gem 'vite_rails'
 gem "propshaft"
+gem "tailwindcss-rails"
 gem "turbo-rails"
 gem "stimulus-rails"
 
