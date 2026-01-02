@@ -15,10 +15,13 @@ FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 WORKDIR /rails
 
 # Install base packages
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 && \
-    ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+<<EOF bash -ex
+  apt-get update -qq
+  apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3
+  ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so
+EOF
 
 # Set production environment variables and enable jemalloc for reduced memory usage and latency.
 ENV RAILS_ENV="production" \
@@ -31,9 +34,12 @@ ENV RAILS_ENV="production" \
 FROM base AS build
 
 # Install packages needed to build gems and node modules
-RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libyaml-dev node-gyp pkg-config python-is-python3 && \
-    rm -rf /var/lib/apt/lists /var/cache/apt/archives
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+<<EOF bash -ex
+  apt-get update -qq
+  apt-get install --no-install-recommends -y build-essential git libyaml-dev node-gyp pkg-config python-is-python3
+EOF
 
 # Install JavaScript dependencies
 ARG NODE_VERSION=25.2.1
@@ -45,14 +51,22 @@ RUN curl -sL https://github.com/nodenv/node-build/archive/master.tar.gz | tar xz
 # Install application gems
 COPY Gemfile Gemfile.lock vendor ./
 
-RUN bundle install && \
-    rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
-    bundle exec bootsnap precompile -j 1 --gemfile
+RUN --mount=type=cache,target=/root/.gem,sharing=locked \
+    --mount=type=cache,target=/tmp/bundle,sharing=locked \
+<<EOF bash -ex
+  bundle config set path /tmp/bundle
+  MAKEFLAGS="-j$(nproc)" bundle install --jobs=$(nproc)
+  cp -ar /tmp/bundle /usr/local
+EOF
+# -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
+RUN <<EOF bash -ex
+bundle config set path "${BUNDLE_PATH}"
+bundle exec bootsnap precompile -j 1 --gemfile
+EOF
 
 # Install node modules
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN --mount=type=cache,target=/root/.npm npm ci
 
 # Copy application code
 COPY . .
@@ -64,9 +78,7 @@ RUN bundle exec bootsnap precompile -j 1 app/ lib/
 # Precompiling assets for production without requiring secret RAILS_MASTER_KEY
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
-
 RUN rm -rf node_modules
-
 
 # Final stage for app image
 FROM base
