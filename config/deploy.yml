@@ -7,7 +7,7 @@ image: bento_manager
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
+    - 100.68.213.116
   # job:
   #   hosts:
   #     - 192.168.0.1
@@ -19,10 +19,9 @@ servers:
 # Using an SSL proxy like this requires turning on config.assume_ssl and config.force_ssl in production.rb!
 #
 # Don't use this when deploying to multiple web servers (then you have to terminate SSL at your load balancer).
-#
-# proxy:
-#   ssl: true
-#   host: app.example.com
+proxy:
+  ssl: true
+  host: x220-158-17-38.static.xvps.ne.jp
 
 # Where you keep your container images.
 registry:
