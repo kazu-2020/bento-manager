@@ -1,4 +1,3 @@
 [tools]
-supabase = "latest"
 [env]
 SOLID_QUEUE_IN_PUMA = true
