@@ -1,0 +1,4 @@
+@import "tailwindcss";
+
+@source "../../views/**/*.html.erb";
+@source "../../helpers/**/*.rb";
