@@ -34,11 +34,15 @@ gem "thruster", require: false
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 1.2"
 
-gem "vite_rails"
+gem "vite_rails"   # https://github.com/ElMassimo/vite_ruby
+gem "reactionview" # https://github.com/marcoroth/reactionview
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
+
+  # reactionview の devtools が Rails 標準の assets pipeline に依存しているため、一時的に sprockets を追加
+  gem "propshaft"
 
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
   gem "bundler-audit", require: false
