@@ -45,11 +45,12 @@
 
 # Ignore development files
 /.devcontainer
+/.vscode
 
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
 
 # Ignore AI files
-.claude
-docs
+/.claude
+/docs
