@@ -14,7 +14,7 @@
 ### Phase 1: Foundation & Database Setup
 
 - [ ] 1. データベース基盤構築
-- [ ] 1.1 マルチデータベーススキーマ設定
+- [x] 1.1 マルチデータベーススキーマ設定
   - primary database の設定確認（`config/database.yml`）
   - schema.rb のベースライン作成
   - _Requirements: 12.1_

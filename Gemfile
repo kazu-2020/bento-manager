@@ -38,6 +38,9 @@ gem "vite_rails"   # https://github.com/ElMassimo/vite_ruby
 gem "reactionview" # https://github.com/marcoroth/reactionview
 
 group :development, :test do
+  # minitest 6.x has compatibility issues with Rails 8.1.1, pin to 5.x
+  gem "minitest", "~> 5.25"
+
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 
