@@ -33,7 +33,11 @@ module BentoManager
     # These settings can be overridden in specific environments using the files
     # in config/environments, which are processed later.
     #
-    # config.time_zone = "Central Time (US & Canada)"
+    config.time_zone = "Tokyo"
+
+    # デフォルトロケールを日本語に設定
+    config.i18n.default_locale = :ja
+    config.i18n.available_locales = [ :ja, :en ]
     # config.eager_load_paths << Rails.root.join("extras")
 
     # Don't generate system test files.

@@ -77,6 +77,7 @@ GEM
       uri (>= 0.13.1)
     ast (2.4.3)
     base64 (0.3.0)
+    bcrypt (3.1.21)
     bcrypt_pbkdf (1.1.2)
     bigdecimal (4.0.1)
     bindex (0.8.1)
@@ -243,6 +244,9 @@ GEM
     rails-html-sanitizer (1.6.2)
       loofah (~> 2.21)
       nokogiri (>= 1.15.7, != 1.16.7, != 1.16.6, != 1.16.5, != 1.16.4, != 1.16.3, != 1.16.2, != 1.16.1, != 1.16.0.rc1, != 1.16.0)
+    rails-i18n (8.1.0)
+      i18n (>= 0.7, < 2)
+      railties (>= 8.0.0, < 9)
     railties (8.1.1)
       actionpack (= 8.1.1)
       activesupport (= 8.1.1)
@@ -264,6 +268,18 @@ GEM
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
+    roda (3.99.0)
+      rack
+    rodauth (2.42.0)
+      roda (>= 2.6.0)
+      sequel (>= 4)
+    rodauth-model (0.4.0)
+      rodauth (~> 2.28)
+    rodauth-rails (2.1.2)
+      railties (>= 5.1)
+      roda (~> 3.76)
+      rodauth (~> 2.36)
+      rodauth-model (~> 0.2)
     rubocop (1.82.1)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -297,6 +313,11 @@ GEM
       ffi (~> 1.12)
       logger
     securerandom (0.4.1)
+    sequel (5.100.0)
+      bigdecimal
+    sequel-activerecord_connection (2.0.1)
+      activerecord (>= 5.1)
+      sequel (~> 5.38)
     solid_cable (3.0.12)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -335,6 +356,7 @@ GEM
     thruster (0.1.17-aarch64-linux)
     thruster (0.1.17-arm64-darwin)
     thruster (0.1.17-x86_64-linux)
+    tilt (2.6.1)
     timeout (0.6.0)
     tsort (0.2.0)
     turbo-rails (2.0.20)
@@ -379,6 +401,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  bcrypt (~> 3.1)
   bootsnap
   brakeman
   bundler-audit
@@ -389,14 +412,18 @@ DEPENDENCIES
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.1)
+  rails-i18n (~> 8.0)
   reactionview
+  rodauth-rails
   rubocop-rails-omakase
+  sequel-activerecord_connection (~> 2.0)
   solid_cable
   solid_cache
   solid_queue
   sqlite3 (>= 2.1)
   stimulus-rails
   thruster
+  tilt (~> 2.4)
   turbo-rails
   tzinfo-data
   vite_rails

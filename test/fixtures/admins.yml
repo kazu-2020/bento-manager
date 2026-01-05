@@ -1,0 +1,16 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Adminフィクスチャ: テスト用の管理者アカウント
+# パスワード: "password"（bcryptでハッシュ化）
+# Rails console運用のため、基本的にverified状態で作成
+
+verified_admin:
+  email: admin@example.com
+  password_hash: <%= RodauthApp.rodauth(:admin).allocate.password_hash("password") %>
+  status: verified
+  name: 管理者
+
+closed_admin:
+  email: closed@example.com
+  password_hash: <%= RodauthApp.rodauth(:admin).allocate.password_hash("password") %>
+  status: closed
+  name: 閉鎖済み管理者
