@@ -8,7 +8,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
 
     # Submit login with valid credentials
     post "/admin/login", params: {
-      email: "freddie@queen.com",
+      email: "admin@example.com",
       password: "password"
     }
 
@@ -35,7 +35,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
   test "admin can logout" do
     # Login first
     post "/admin/login", params: {
-      email: "freddie@queen.com",
+      email: "admin@example.com",
       password: "password"
     }
     assert_response :redirect
