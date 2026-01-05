@@ -3,11 +3,11 @@ require "test_helper"
 class AdminAuthenticationTest < ActionDispatch::IntegrationTest
   test "admin can login successfully" do
     # Navigate to login page
-    get "/login"
+    get "/admin/login"
     assert_response :success
 
     # Submit login with valid credentials
-    post "/login", params: {
+    post "/admin/login", params: {
       email: "freddie@queen.com",
       password: "password"
     }
@@ -19,11 +19,11 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
   end
 
   test "admin cannot login with invalid credentials" do
-    get "/login"
+    get "/admin/login"
     assert_response :success
 
     # Submit login with invalid credentials
-    post "/login", params: {
+    post "/admin/login", params: {
       email: "invalid@example.com",
       password: "wrong_password"
     }
@@ -34,14 +34,14 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
 
   test "admin can logout" do
     # Login first
-    post "/login", params: {
+    post "/admin/login", params: {
       email: "freddie@queen.com",
       password: "password"
     }
     assert_response :redirect
 
     # Logout (Rodauth uses POST for logout, not DELETE)
-    post "/logout"
+    post "/admin/logout"
 
     # Assert redirect after logout
     assert_response :redirect

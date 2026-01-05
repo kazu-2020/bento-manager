@@ -1,14 +1,14 @@
 class RodauthApp < Rodauth::Rails::App
-  # primary configuration
-  configure RodauthMain
+  # Admin configuration
+  configure RodauthAdmin, :admin
 
-  # secondary configuration
-  # configure RodauthAdmin, :admin
+  # Employee configuration (to be implemented in Task 2.2)
+  # configure RodauthEmployee, :employee
 
   route do |r|
-    rodauth.load_memory # autologin remembered users
+    rodauth(:admin).load_memory # autologin remembered users
 
-    r.rodauth # route rodauth requests
+    r.rodauth(:admin) # route admin rodauth requests
 
     # ==> Authenticating requests
     # Call `rodauth.require_account` for requests that you want to

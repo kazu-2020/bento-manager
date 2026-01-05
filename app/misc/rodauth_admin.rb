@@ -1,6 +1,6 @@
 require "sequel/core"
 
-class RodauthMain < Rodauth::Rails::Auth
+class RodauthAdmin < Rodauth::Rails::Auth
   configure do
     # List of authentication features that are loaded.
     enable :create_account, :verify_account, :verify_account_grace_period,
@@ -28,8 +28,8 @@ class RodauthMain < Rodauth::Rails::Auth
     # Defaults to Rails `secret_key_base`, but you can use your own secret key.
     # hmac_secret "b8bbb13ae8f8e520697030f2b3c4e76a5bd2d8d22ed9422af9ec6248c4fb31af0672e825a38dc663b85784a4ecb51e96de1c7c2ce94b0d522c8e4ae5fc676a3e"
 
-    # Use path prefix for all routes.
-    # prefix "/auth"
+    # Use path prefix for all Admin routes.
+    prefix "/admin"
 
     # Specify the controller used for view rendering, CSRF, and callbacks.
     rails_controller { RodauthController }
