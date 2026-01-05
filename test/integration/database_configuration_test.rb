@@ -1,59 +1,166 @@
 require "test_helper"
 
+# Verifies multi-database configuration for development, production, and test environments.
+#
+# This test ensures that:
+# - All environments (dev/prod/test) are configured with 4 databases: primary, cache, queue, cable
+# - Each secondary database has correct migrations_paths
+# - Database connections are valid and functional
+# - Schema files exist for all databases
+# - Migration directories exist for future migrations
+# - Configuration is consistent across environments
 class DatabaseConfigurationTest < ActiveSupport::TestCase
+  # Constants for multi-database configuration
+  ENVIRONMENTS = %w[development production test].freeze
+  SECONDARY_DATABASES = %w[cache queue cable].freeze
+  ALL_DATABASES = (["primary"] + SECONDARY_DATABASES).freeze
+
+  # ========== Configuration Tests ==========
+
   test "primary database connection is configured" do
-    assert_not_nil ActiveRecord::Base.connection
+    assert_not_nil ActiveRecord::Base.connection,
+      "Primary database connection should not be nil. Check database configuration."
   end
 
-  test "development cache database is configured" do
-    cache_config = ActiveRecord::Base.configurations.configs_for(env_name: "development", name: "cache")
-    assert_not_nil cache_config
-    assert_equal "db/cache_migrate", cache_config.migrations_paths
+  test "all environments have multi-database configuration" do
+    ENVIRONMENTS.each do |env|
+      configs = ActiveRecord::Base.configurations.configs_for(env_name: env)
+      database_names = configs.map(&:name)
+
+      assert_equal ALL_DATABASES.sort, database_names.sort,
+        "Environment '#{env}' should have databases: #{ALL_DATABASES.join(', ')}, " \
+        "but found: #{database_names.join(', ')}"
+    end
   end
 
-  test "development queue database is configured" do
-    queue_config = ActiveRecord::Base.configurations.configs_for(env_name: "development", name: "queue")
-    assert_not_nil queue_config
-    assert_equal "db/queue_migrate", queue_config.migrations_paths
+  test "secondary databases have correct migrations_paths" do
+    ENVIRONMENTS.product(SECONDARY_DATABASES).each do |env, db_name|
+      config = database_config_for(env, db_name)
+      expected_path = "db/#{db_name}_migrate"
+
+      assert_equal expected_path, config.migrations_paths,
+        "#{env}.#{db_name} migrations_paths should be '#{expected_path}', " \
+        "but was '#{config.migrations_paths}'"
+    end
   end
 
-  test "development cable database is configured" do
-    cable_config = ActiveRecord::Base.configurations.configs_for(env_name: "development", name: "cable")
-    assert_not_nil cable_config
-    assert_equal "db/cable_migrate", cable_config.migrations_paths
+  # ========== Connectivity Tests ==========
+
+  test "primary database connection is valid" do
+    assert_connection_valid(ActiveRecord::Base.connection, "primary database")
   end
 
-  test "production cache database is configured" do
-    cache_config = ActiveRecord::Base.configurations.configs_for(env_name: "production", name: "cache")
-    assert_not_nil cache_config
-    assert_equal "db/cache_migrate", cache_config.migrations_paths
+  test "cache database connection is valid" do
+    skip "CacheRecord not defined" unless defined?(CacheRecord)
+    assert_connection_valid(CacheRecord.connection, "cache database")
   end
 
-  test "production queue database is configured" do
-    queue_config = ActiveRecord::Base.configurations.configs_for(env_name: "production", name: "queue")
-    assert_not_nil queue_config
-    assert_equal "db/queue_migrate", queue_config.migrations_paths
+  test "queue database connection is valid" do
+    skip "QueueRecord not defined" unless defined?(QueueRecord)
+    assert_connection_valid(QueueRecord.connection, "queue database")
   end
 
-  test "production cable database is configured" do
-    cable_config = ActiveRecord::Base.configurations.configs_for(env_name: "production", name: "cable")
-    assert_not_nil cable_config
-    assert_equal "db/cable_migrate", cable_config.migrations_paths
+  test "cable database connection is valid" do
+    skip "CableRecord not defined" unless defined?(CableRecord)
+    assert_connection_valid(CableRecord.connection, "cable database")
   end
 
-  test "primary schema file exists" do
-    assert File.exist?(Rails.root.join("db", "schema.rb"))
+  # ========== Schema File Tests ==========
+
+  test "all schema files exist" do
+    schema_files = {
+      "primary" => "db/schema.rb",
+      "cache" => "db/cache_schema.rb",
+      "queue" => "db/queue_schema.rb",
+      "cable" => "db/cable_schema.rb"
+    }
+
+    schema_files.each do |db_name, file_path|
+      full_path = Rails.root.join(file_path)
+      assert File.exist?(full_path),
+        "Schema file for #{db_name} database should exist at #{file_path}"
+    end
   end
 
-  test "cache schema file exists" do
-    assert File.exist?(Rails.root.join("db", "cache_schema.rb"))
+  # ========== Migration Directories Verification ==========
+
+  test "migration directories exist for all secondary databases" do
+    SECONDARY_DATABASES.each do |db_name|
+      migration_dir = Rails.root.join("db", "#{db_name}_migrate")
+      assert Dir.exist?(migration_dir),
+        "Migration directory for #{db_name} should exist at db/#{db_name}_migrate. " \
+        "This directory is required for future migrations."
+    end
   end
 
-  test "queue schema file exists" do
-    assert File.exist?(Rails.root.join("db", "queue_schema.rb"))
+  # ========== Environment Consistency Validation ==========
+
+  test "all environments have identical database structure" do
+    reference_structure = database_structure_for("development")
+
+    %w[production test].each do |env|
+      env_structure = database_structure_for(env)
+      assert_equal reference_structure, env_structure,
+        "Environment '#{env}' database structure should match development environment. " \
+        "Inconsistencies: #{structure_diff(reference_structure, env_structure)}"
+    end
   end
 
-  test "cable schema file exists" do
-    assert File.exist?(Rails.root.join("db", "cable_schema.rb"))
+  private
+
+  # Retrieves database configuration for a given environment and database name.
+  # Raises an assertion error with detailed message if configuration is not found.
+  def database_config_for(env, db_name)
+    config = ActiveRecord::Base.configurations.configs_for(env_name: env, name: db_name)
+    assert_not_nil config,
+      "Database configuration for '#{env}.#{db_name}' not found. " \
+      "Please check config/database.yml and ensure '#{db_name}' is defined under '#{env}' section."
+    config
+  end
+
+  # Validates database connection by executing a simple query.
+  # Provides detailed error message if connection fails.
+  def assert_connection_valid(connection, db_description)
+    assert_not_nil connection,
+      "#{db_description.capitalize} connection should not be nil. " \
+      "Check database configuration and ensure the database exists."
+
+    # Execute a simple query to verify connection
+    result = connection.execute("SELECT 1 AS test_value").first
+    # SQLite returns a hash, ensure it has the expected value
+    assert result["test_value"] == 1 || result[:test_value] == 1,
+      "#{db_description.capitalize} should respond to queries. " \
+      "Connection may be invalid or database may not be initialized."
+  rescue => e
+    flunk "#{db_description.capitalize} connection test failed: #{e.class.name} - #{e.message}. " \
+          "Ensure database is created and schema is loaded."
+  end
+
+  # Returns a normalized structure of database configuration for an environment.
+  # Used for comparing consistency across environments.
+  def database_structure_for(env)
+    configs = ActiveRecord::Base.configurations.configs_for(env_name: env)
+    configs.map { |c|
+      {
+        name: c.name,
+        migrations_paths: c.migrations_paths,
+        adapter: c.adapter
+      }
+    }.sort_by { |c| c[:name] }
+  end
+
+  # Calculates differences between two database structures for detailed error messages.
+  def structure_diff(structure1, structure2)
+    diff = []
+
+    structure1.each_with_index do |db1, idx|
+      db2 = structure2[idx]
+      next if db1 == db2
+
+      diff << "Database '#{db1[:name]}': " \
+              "migrations_paths: #{db1[:migrations_paths]} vs #{db2[:migrations_paths]}"
+    end
+
+    diff.join("; ")
   end
 end
