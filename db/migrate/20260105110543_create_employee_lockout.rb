@@ -1,4 +1,4 @@
-class Employee < ActiveRecord::Migration[8.1]
+class CreateEmployeeLockout < ActiveRecord::Migration[8.1]
   def change
     # Used by the lockout feature for employee accounts
     # Tracks failed login attempts to prevent brute-force attacks
