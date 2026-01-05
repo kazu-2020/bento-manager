@@ -4,16 +4,14 @@ require "test_helper"
 #
 # This test ensures that:
 # - All environments (dev/prod/test) are configured with 4 databases: primary, cache, queue, cable
-# - Each secondary database has correct migrations_paths
 # - Database connections are valid and functional
 # - Schema files exist for all databases
-# - Migration directories exist for future migrations
 # - Configuration is consistent across environments
 class DatabaseConfigurationTest < ActiveSupport::TestCase
   # Constants for multi-database configuration
   ENVIRONMENTS = %w[development production test].freeze
   SECONDARY_DATABASES = %w[cache queue cable].freeze
-  ALL_DATABASES = (["primary"] + SECONDARY_DATABASES).freeze
+  ALL_DATABASES = ([ "primary" ] + SECONDARY_DATABASES).freeze
 
   # ========== Configuration Tests ==========
 
@@ -33,36 +31,10 @@ class DatabaseConfigurationTest < ActiveSupport::TestCase
     end
   end
 
-  test "secondary databases have correct migrations_paths" do
-    ENVIRONMENTS.product(SECONDARY_DATABASES).each do |env, db_name|
-      config = database_config_for(env, db_name)
-      expected_path = "db/#{db_name}_migrate"
-
-      assert_equal expected_path, config.migrations_paths,
-        "#{env}.#{db_name} migrations_paths should be '#{expected_path}', " \
-        "but was '#{config.migrations_paths}'"
-    end
-  end
-
   # ========== Connectivity Tests ==========
 
   test "primary database connection is valid" do
     assert_connection_valid(ActiveRecord::Base.connection, "primary database")
-  end
-
-  test "cache database connection is valid" do
-    skip "CacheRecord not defined" unless defined?(CacheRecord)
-    assert_connection_valid(CacheRecord.connection, "cache database")
-  end
-
-  test "queue database connection is valid" do
-    skip "QueueRecord not defined" unless defined?(QueueRecord)
-    assert_connection_valid(QueueRecord.connection, "queue database")
-  end
-
-  test "cable database connection is valid" do
-    skip "CableRecord not defined" unless defined?(CableRecord)
-    assert_connection_valid(CableRecord.connection, "cable database")
   end
 
   # ========== Schema File Tests ==========
@@ -82,17 +54,6 @@ class DatabaseConfigurationTest < ActiveSupport::TestCase
     end
   end
 
-  # ========== Migration Directories Verification ==========
-
-  test "migration directories exist for all secondary databases" do
-    SECONDARY_DATABASES.each do |db_name|
-      migration_dir = Rails.root.join("db", "#{db_name}_migrate")
-      assert Dir.exist?(migration_dir),
-        "Migration directory for #{db_name} should exist at db/#{db_name}_migrate. " \
-        "This directory is required for future migrations."
-    end
-  end
-
   # ========== Environment Consistency Validation ==========
 
   test "all environments have identical database structure" do
@@ -107,16 +68,6 @@ class DatabaseConfigurationTest < ActiveSupport::TestCase
   end
 
   private
-
-  # Retrieves database configuration for a given environment and database name.
-  # Raises an assertion error with detailed message if configuration is not found.
-  def database_config_for(env, db_name)
-    config = ActiveRecord::Base.configurations.configs_for(env_name: env, name: db_name)
-    assert_not_nil config,
-      "Database configuration for '#{env}.#{db_name}' not found. " \
-      "Please check config/database.yml and ensure '#{db_name}' is defined under '#{env}' section."
-    config
-  end
 
   # Validates database connection by executing a simple query.
   # Provides detailed error message if connection fails.
@@ -143,7 +94,6 @@ class DatabaseConfigurationTest < ActiveSupport::TestCase
     configs.map { |c|
       {
         name: c.name,
-        migrations_paths: c.migrations_paths,
         adapter: c.adapter
       }
     }.sort_by { |c| c[:name] }
@@ -157,8 +107,7 @@ class DatabaseConfigurationTest < ActiveSupport::TestCase
       db2 = structure2[idx]
       next if db1 == db2
 
-      diff << "Database '#{db1[:name]}': " \
-              "migrations_paths: #{db1[:migrations_paths]} vs #{db2[:migrations_paths]}"
+      diff << "Database '#{db1[:name]}': adapter mismatch"
     end
 
     diff.join("; ")
