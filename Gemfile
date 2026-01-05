@@ -11,6 +11,9 @@ gem "turbo-rails"
 # Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
 gem "stimulus-rails"
 
+# Rails internationalization (I18n) locale data
+gem "rails-i18n", "~> 8.0"
+
 # Rodauth for authentication [https://github.com/janko/rodauth-rails]
 gem "rodauth-rails"
 

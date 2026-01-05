@@ -9,20 +9,20 @@ class AdminTest < ActiveSupport::TestCase
   test "should require email" do
     admin = Admin.new(name: "テスト管理者")
     assert_not admin.valid?, "Admin should not be valid without email"
-    assert_includes admin.errors[:email], "can't be blank"
+    assert_includes admin.errors[:email], "を入力してください"
   end
 
   test "should require unique email" do
     # フィクスチャの verified_admin と同じメールアドレスで作成を試みる
     admin = Admin.new(email: "admin@example.com", name: "重複管理者")
     assert_not admin.valid?, "Admin should not be valid with duplicate email"
-    assert_includes admin.errors[:email], "has already been taken"
+    assert_includes admin.errors[:email], "はすでに存在します"
   end
 
   test "should require name" do
     admin = Admin.new(email: "new-admin@example.com")
     assert_not admin.valid?, "Admin should not be valid without name"
-    assert_includes admin.errors[:name], "can't be blank"
+    assert_includes admin.errors[:name], "を入力してください"
   end
 
   # ステータス遷移テスト
@@ -57,7 +57,7 @@ class AdminTest < ActiveSupport::TestCase
       status: :verified
     )
     assert_not duplicate_admin.valid?, "Should not allow duplicate email for verified accounts"
-    assert_includes duplicate_admin.errors[:email], "has already been taken"
+    assert_includes duplicate_admin.errors[:email], "はすでに存在します"
   end
 
   test "closed accounts allow email address reuse" do

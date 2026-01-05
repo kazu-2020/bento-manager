@@ -1,0 +1,15 @@
+ja:
+  activerecord:
+    attributes:
+      admin:
+        email: "メールアドレス"
+        name: "名前"
+
+  custom_errors:
+    controllers:
+      invalid_authenticity_token: "セキュリティトークンが無効です。ページを再読み込みしてもう一度お試しください。"
+      record_not_found: "指定されたデータが見つかりませんでした。"
+      record_invalid: "入力内容に誤りがあります: %{errors}"
+      standard_error:
+        development: "エラーが発生しました: %{message}"
+        production: "予期しないエラーが発生しました。しばらく時間をおいてから再度お試しください。"
