@@ -14,7 +14,7 @@
 
 ### Phase 1: Foundation & Database Setup
 
-- [ ] 1. データベース基盤構築
+- [x] 1. データベース基盤構築
 - [x] 1.1 マルチデータベーススキーマ設定
   - primary database の設定確認（`config/database.yml`）
   - schema.rb のベースライン作成
@@ -28,7 +28,7 @@
 ### Phase 2: Authentication & Authorization
 
 - [ ] 2. Rodauth 認証システム構築
-- [ ] 2.1 (P) Admin 認証セットアップ
+- [x] 2.1 (P) Admin 認証セットアップ
   - Rodauth の Admin アカウント設定（メール、パスワードハッシュ）
   - ログイン/ログアウト機能の実装
   - セッション管理の設定
