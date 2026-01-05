@@ -3,8 +3,9 @@ require "sequel/core"
 class RodauthAdmin < Rodauth::Rails::Auth
   configure do
     # List of authentication features that are loaded.
+    # Note: :remember is intentionally excluded for admin accounts for security
     enable :create_account, :verify_account, :verify_account_grace_period,
-      :login, :logout, :remember,
+      :login, :logout,
       :reset_password, :change_password, :change_login, :verify_login_change,
       :close_account
 
@@ -22,7 +23,6 @@ class RodauthAdmin < Rodauth::Rails::Auth
     verify_account_table :admin_verification_keys
     verify_login_change_table :admin_login_change_keys
     reset_password_table :admin_password_reset_keys
-    remember_table :admin_remember_keys
 
     # The secret key used for hashing public-facing tokens for various features.
     # Defaults to Rails `secret_key_base`, but you can use your own secret key.
@@ -104,16 +104,6 @@ class RodauthAdmin < Rodauth::Rails::Auth
     #   end
     # end
 
-    # ==> Remember Feature
-    # Remember all logged in users.
-    after_login { remember_login }
-
-    # Or only remember users that have ticked a "Remember Me" checkbox on login.
-    # after_login { remember_login if param_or_nil("remember") }
-
-    # Extend user's remember period when remembered via a cookie
-    extend_remember_deadline? true
-
     # ==> Hooks
     # Validate custom fields in the create account form.
     # before_create_account do
@@ -145,6 +135,5 @@ class RodauthAdmin < Rodauth::Rails::Auth
     # verify_account_grace_period 3.days.to_i
     # reset_password_deadline_interval Hash[hours: 6]
     # verify_login_change_deadline_interval Hash[days: 2]
-    # remember_deadline_interval Hash[days: 30]
   end
 end

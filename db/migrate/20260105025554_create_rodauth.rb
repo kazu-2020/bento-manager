@@ -35,13 +35,5 @@ class CreateRodauth < ActiveRecord::Migration[8.1]
       t.string :login, null: false
       t.datetime :deadline, null: false
     end
-
-    # Used by the remember me feature
-    create_table :admin_remember_keys, id: false do |t|
-      t.integer :id, primary_key: true
-      t.foreign_key :admins, column: :id
-      t.string :key, null: false
-      t.datetime :deadline, null: false
-    end
   end
 end

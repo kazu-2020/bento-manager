@@ -23,11 +23,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_05_025554) do
     t.string "key", null: false
   end
 
-  create_table "admin_remember_keys", force: :cascade do |t|
-    t.datetime "deadline", null: false
-    t.string "key", null: false
-  end
-
   create_table "admin_verification_keys", force: :cascade do |t|
     t.datetime "email_last_sent", default: -> { "CURRENT_TIMESTAMP" }, null: false
     t.string "key", null: false
@@ -46,6 +41,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_05_025554) do
 
   add_foreign_key "admin_login_change_keys", "admins", column: "id"
   add_foreign_key "admin_password_reset_keys", "admins", column: "id"
-  add_foreign_key "admin_remember_keys", "admins", column: "id"
   add_foreign_key "admin_verification_keys", "admins", column: "id"
 end
