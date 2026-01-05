@@ -14,13 +14,6 @@ class RodauthController < ApplicationController
     end
   end
 
-  private
-
-  # Rodauth固有のエラーリダイレクト先
-  def error_redirect_path
-    rodauth(:admin).login_path
-  end
-
   # Controller callbacks and rescue handlers will run around Rodauth endpoints.
   # before_action :verify_captcha, only: :login, if: -> { request.post? }
 
