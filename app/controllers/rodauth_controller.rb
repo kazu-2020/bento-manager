@@ -10,7 +10,9 @@ class RodauthController < ApplicationController
     if rodauth(:admin).logged_in? || rodauth(:employee).logged_in?
       redirect_back fallback_location: root_path
     else
-      redirect_to rodauth(:employee).login_path
+      # リクエストパスに基づいて適切なログインページにリダイレクト
+      login_path = request.path.start_with?("/admin") ? rodauth(:admin).login_path : rodauth(:employee).login_path
+      redirect_to login_path
     end
   end
 
