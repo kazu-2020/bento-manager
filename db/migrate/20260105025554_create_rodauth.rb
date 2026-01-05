@@ -1,39 +1,23 @@
 class CreateRodauth < ActiveRecord::Migration[8.1]
   def change
+    # Admins table for Rails console-managed admin accounts
+    # Status: 1=unverified (unused), 2=verified (active), 3=closed (deactivated)
+    # Email: Unique constraint only for active accounts (status IN (1,2)),
+    #        allowing email reuse after account closure
     create_table :admins do |t|
+      # Default status is 1 (unverified), but admins are created directly as verified via console
       t.integer :status, null: false, default: 1
       t.string :email, null: false
+      # Partial unique index: allows duplicate emails for closed accounts (status=3)
       t.index :email, unique: true, where: "status IN (1, 2)"
+      # bcrypt password hash
       t.string :password_hash
+      # Admin display name
       t.string :name, null: false
       t.timestamps
     end
 
-    # Used by the password reset feature
-    create_table :admin_password_reset_keys, id: false do |t|
-      t.integer :id, primary_key: true
-      t.foreign_key :admins, column: :id
-      t.string :key, null: false
-      t.datetime :deadline, null: false
-      t.datetime :email_last_sent, null: false, default: -> { "CURRENT_TIMESTAMP" }
-    end
-
-    # Used by the account verification feature
-    create_table :admin_verification_keys, id: false do |t|
-      t.integer :id, primary_key: true
-      t.foreign_key :admins, column: :id
-      t.string :key, null: false
-      t.datetime :requested_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
-      t.datetime :email_last_sent, null: false, default: -> { "CURRENT_TIMESTAMP" }
-    end
-
-    # Used by the verify login change feature
-    create_table :admin_login_change_keys, id: false do |t|
-      t.integer :id, primary_key: true
-      t.foreign_key :admins, column: :id
-      t.string :key, null: false
-      t.string :login, null: false
-      t.datetime :deadline, null: false
-    end
+    # Note: Email-based authentication tables (verification_keys, password_reset_keys,
+    # login_change_keys) are not created as admins are managed via Rails console
   end
 end

@@ -2,12 +2,11 @@ require "sequel/core"
 
 class RodauthAdmin < Rodauth::Rails::Auth
   configure do
-    # List of authentication features that are loaded.
-    # Note: :remember is intentionally excluded for admin accounts for security
-    enable :create_account, :verify_account, :verify_account_grace_period,
-      :login, :logout,
-      :reset_password, :change_password, :change_login, :verify_login_change,
-      :close_account
+    # Admin authentication features (minimal configuration for Rails console management)
+    # Admin accounts are created and managed via Rails console, not through web UI.
+    # Email-based features (:verify_account, :reset_password, :change_login) are excluded
+    # as admins are created directly with verified status.
+    enable :login, :logout, :change_password, :close_account
 
     # See the Rodauth documentation for the list of available config options:
     # http://rodauth.jeremyevans.net/documentation.html
@@ -20,9 +19,6 @@ class RodauthAdmin < Rodauth::Rails::Auth
 
     # Change prefix of table and foreign key column names from default "account"
     accounts_table :admins
-    verify_account_table :admin_verification_keys
-    verify_login_change_table :admin_login_change_keys
-    reset_password_table :admin_password_reset_keys
 
     # The secret key used for hashing public-facing tokens for various features.
     # Defaults to Rails `secret_key_base`, but you can use your own secret key.
@@ -43,9 +39,6 @@ class RodauthAdmin < Rodauth::Rails::Auth
     # Store password hash in a column instead of a separate table.
     account_password_hash_column :password_hash
 
-    # Set password when creating account instead of when verifying.
-    verify_account_set_password? false
-
     # Change some default param keys.
     login_param "email"
     login_confirm_param "email-confirm"
@@ -63,12 +56,6 @@ class RodauthAdmin < Rodauth::Rails::Auth
 
     # Redirect to the app from login and registration pages if already logged in.
     # already_logged_in { redirect login_redirect }
-
-    # ==> Emails
-    send_email do |email|
-      # queue email delivery on the mailer after the transaction commits
-      db.after_commit { email.deliver_later }
-    end
 
     # ==> Flash
     # Match flash keys with ones already used in the Rails app.
@@ -123,17 +110,5 @@ class RodauthAdmin < Rodauth::Rails::Auth
     # ==> Redirects
     # Redirect to home page after logout.
     logout_redirect "/"
-
-    # Redirect to wherever login redirects to after account verification.
-    verify_account_redirect { login_redirect }
-
-    # Redirect to login page after password reset.
-    reset_password_redirect { login_path }
-
-    # ==> Deadlines
-    # Change default deadlines for some actions.
-    # verify_account_grace_period 3.days.to_i
-    # reset_password_deadline_interval Hash[hours: 6]
-    # verify_login_change_deadline_interval Hash[days: 2]
   end
 end

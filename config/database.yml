@@ -1,60 +1,77 @@
 default: &default
   adapter: sqlite3
+  # データベース接続プールの最大接続数（デフォルト: 5）
+  # RAILS_MAX_THREADS環境変数で設定可能
+  # Pumaのスレッド数と一致させることを推奨
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  # データベースロック待機のタイムアウト（ミリ秒）
+  # SQLiteの書き込みロック待ちでブロックされた場合の最大待機時間
+  # 5000ms = 5秒でタイムアウトし、SQLite3::BusyExceptionを発生
   timeout: 5000
 
 development:
+  # プライマリデータベース: アプリケーションのメインデータ（Admin、その他モデル）を格納
   primary:
     <<: *default
     database: storage/development.sqlite3
+  # キャッシュデータベース: Active Support Cache Storeで使用（キャッシュデータを永続化）
   cache:
     <<: *default
     database: storage/development_cache.sqlite3
     migrations_paths: db/cache_migrate
+  # キューデータベース: Active Jobのキューバックエンド（非同期ジョブの管理）
   queue:
     <<: *default
     database: storage/development_queue.sqlite3
     migrations_paths: db/queue_migrate
+  # ケーブルデータベース: Action Cableのメッセージストレージ（WebSocket通信）
   cable:
     <<: *default
     database: storage/development_cable.sqlite3
     migrations_paths: db/cable_migrate
 
-# Warning: The database defined as "test" will be erased and
-# re-generated from your development database when you run "rake".
-# Do not set this db to the same as development or production.
+# 警告: testデータベースは「rake」実行時にdevelopmentデータベースから
+# 再生成されるため、開発環境や本番環境と同じデータベースを設定しないこと
 test:
+  # テスト用プライマリデータベース: テスト実行ごとにクリーンな状態でデータを管理
   primary:
     <<: *default
     database: storage/test.sqlite3
+  # テスト用キャッシュデータベース: キャッシュ動作のテスト用
   cache:
     <<: *default
     database: storage/test_cache.sqlite3
     migrations_paths: db/cache_migrate
+  # テスト用キューデータベース: 非同期ジョブのテスト用
   queue:
     <<: *default
     database: storage/test_queue.sqlite3
     migrations_paths: db/queue_migrate
+  # テスト用ケーブルデータベース: WebSocket通信のテスト用
   cable:
     <<: *default
     database: storage/test_cable.sqlite3
     migrations_paths: db/cable_migrate
 
 
-# Store production database in the storage/ directory, which by default
-# is mounted as a persistent Docker volume in config/deploy.yml.
+# 本番環境のデータベースをstorage/ディレクトリに格納
+# config/deploy.ymlでDockerの永続ボリュームとしてマウントされる
 production:
+  # 本番用プライマリデータベース: 本番環境のメインデータを永続化
   primary:
     <<: *default
     database: storage/production.sqlite3
+  # 本番用キャッシュデータベース: 本番環境のキャッシュデータを永続化
   cache:
     <<: *default
     database: storage/production_cache.sqlite3
     migrations_paths: db/cache_migrate
+  # 本番用キューデータベース: 本番環境の非同期ジョブを管理
   queue:
     <<: *default
     database: storage/production_queue.sqlite3
     migrations_paths: db/queue_migrate
+  # 本番用ケーブルデータベース: 本番環境のWebSocket通信を管理
   cable:
     <<: *default
     database: storage/production_cable.sqlite3

@@ -11,24 +11,6 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_01_05_025554) do
-  create_table "admin_login_change_keys", force: :cascade do |t|
-    t.datetime "deadline", null: false
-    t.string "key", null: false
-    t.string "login", null: false
-  end
-
-  create_table "admin_password_reset_keys", force: :cascade do |t|
-    t.datetime "deadline", null: false
-    t.datetime "email_last_sent", default: -> { "CURRENT_TIMESTAMP" }, null: false
-    t.string "key", null: false
-  end
-
-  create_table "admin_verification_keys", force: :cascade do |t|
-    t.datetime "email_last_sent", default: -> { "CURRENT_TIMESTAMP" }, null: false
-    t.string "key", null: false
-    t.datetime "requested_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
-  end
-
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -38,8 +20,4 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_05_025554) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_admins_on_email", unique: true, where: "status IN (1, 2)"
   end
-
-  add_foreign_key "admin_login_change_keys", "admins", column: "id"
-  add_foreign_key "admin_password_reset_keys", "admins", column: "id"
-  add_foreign_key "admin_verification_keys", "admins", column: "id"
 end
