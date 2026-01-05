@@ -2,6 +2,18 @@ class RodauthController < ApplicationController
   # Used by Rodauth for rendering views, CSRF protection, running any
   # registered action callbacks and rescue handlers, instrumentation etc.
 
+  # レコードが見つからない場合のハンドリング（認証状態を考慮）
+  rescue_from ActiveRecord::RecordNotFound do |exception|
+    Rails.logger.error("[Error] #{exception.class}: #{exception.message}")
+    flash[:error] = I18n.t("custom_errors.controllers.record_not_found")
+
+    if rodauth(:admin).logged_in?
+      redirect_back fallback_location: root_path
+    else
+      redirect_to rodauth(:admin).login_path
+    end
+  end
+
   private
 
   # Rodauth固有のエラーリダイレクト先

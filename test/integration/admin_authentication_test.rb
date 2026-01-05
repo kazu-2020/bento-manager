@@ -86,7 +86,8 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
   # パスワード変更テスト
   test "admin can change password while logged in" do
     # Login as verified admin
-    login_as(:verified_admin)
+    admin = admins(:verified_admin)
+    login_as(admin)
 
     # Access change password page
     get "/admin/change-password"
@@ -105,7 +106,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
     # Logout and try to login with new password
     post "/admin/logout"
     post "/admin/login", params: {
-      email: "admin@example.com",
+      email: admin.email,
       password: "newpassword123"
     }
     assert_response :redirect, "Should be able to login with new password"
