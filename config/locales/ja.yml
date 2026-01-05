@@ -16,7 +16,6 @@ ja:
       standard_error:
         development: "エラーが発生しました: %{message}"
         production: "予期しないエラーが発生しました。しばらく時間をおいてから再度お試しください。"
-      forbidden: "このページにアクセスする権限がありません。"
 
   employees:
     index:
