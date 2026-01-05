@@ -43,4 +43,32 @@ class ActionDispatch::IntegrationTest
   def logged_in?
     session[:admin_account_id].present?
   end
+
+  # Login as an employee user
+  # @param employee [Employee, Symbol] Employee object or fixture name (e.g., :verified_employee)
+  # @param password [String] Password to use for login (default: "password")
+  # @return [void]
+  #
+  # Example:
+  #   login_as_employee(:verified_employee)
+  #   login_as_employee(employees(:verified_employee))
+  #   login_as_employee(employee, password: "custom_password")
+  def login_as_employee(employee, password: "password")
+    employee_email = employee.is_a?(Symbol) ? employees(employee).email : employee.email
+    post "/employee/login", params: {
+      email: employee_email,
+      password: password
+    }
+    assert_response :redirect, "Failed to login as #{employee_email}"
+  end
+
+  # Check if currently logged in as an employee
+  # @return [Boolean] true if logged in, false otherwise
+  #
+  # Example:
+  #   assert employee_logged_in?
+  #   assert_not employee_logged_in?
+  def employee_logged_in?
+    session[:employee_account_id].present?
+  end
 end

@@ -7,10 +7,12 @@ class RodauthController < ApplicationController
     Rails.logger.error("[Error] #{exception.class}: #{exception.message}")
     flash[:error] = I18n.t("custom_errors.controllers.record_not_found")
 
-    if rodauth(:admin).logged_in?
+    if rodauth(:admin).logged_in? || rodauth(:employee).logged_in?
       redirect_back fallback_location: root_path
     else
-      redirect_to rodauth(:admin).login_path
+      # リクエストパスに基づいて適切なログインページにリダイレクト
+      login_path = request.path.start_with?("/admin") ? rodauth(:admin).login_path : rodauth(:employee).login_path
+      redirect_to login_path
     end
   end
 

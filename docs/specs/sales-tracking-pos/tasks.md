@@ -34,7 +34,7 @@
   - セッション管理の設定
   - _Requirements: 9.1, 9.2, 9.3, 9.4_
 
-- [ ] 2.2 (P) Employee 認証セットアップ
+- [x] 2.2 (P) Employee 認証セットアップ
   - Rodauth の Employee アカウント設定
   - 従業員用ログイン/ログアウト機能の実装
   - 従業員管理 CRUD（Admin のみアクセス可能）
