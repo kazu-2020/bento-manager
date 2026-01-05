@@ -1,0 +1,22 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+# Employeeフィクスチャ: テスト用の従業員アカウント
+# パスワード: "password"（bcryptでハッシュ化）
+# Adminが作成・管理するため、基本的にverified状態で作成
+
+verified_employee:
+  email: employee@example.com
+  password_hash: <%= RodauthApp.rodauth(:employee).allocate.password_hash("password") %>
+  status: verified
+  name: 従業員
+
+closed_employee:
+  email: closed-employee@example.com
+  password_hash: <%= RodauthApp.rodauth(:employee).allocate.password_hash("password") %>
+  status: closed
+  name: 閉鎖済み従業員
+
+owner_employee:
+  email: owner@example.com
+  password_hash: <%= RodauthApp.rodauth(:employee).allocate.password_hash("password") %>
+  status: verified
+  name: オーナー
