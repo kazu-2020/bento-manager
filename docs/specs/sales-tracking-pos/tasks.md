@@ -6,6 +6,7 @@
 **Language**: ja
 **Phase**: tasks-generated
 **Generated**: 2026-01-04
+**Updated**: 2026-01-05
 
 ---
 
@@ -39,11 +40,12 @@
   - 従業員管理 CRUD（Admin のみアクセス可能）
   - _Requirements: 9.5, 9.6, 9.7, 9.8_
 
-- [ ] 2.3 認可ロジック実装
-  - Admin と Employee のロール分離
-  - 管理画面へのアクセス制御（Admin のみ）
-  - 販売画面へのアクセス制御（Employee 可能）
-  - _Requirements: 9.9, 9.10_
+- [ ] 2.3 Employee管理画面の認可制御実装
+  - EmployeesController に before_action :require_admin_authentication を追加
+  - rodauth(:employee).logged_in? で Employee 判定 → 403 エラー
+  - rodauth(:admin).require_account で Admin 認証強制 → 未認証時はログインページにリダイレクト
+  - 業務機能（POS、在庫、レポート）は認可不要（Employee と Admin の両方がアクセス可能）
+  - _Requirements: 9.9, 9.10, 9.14, 9.15_
 
 ### Phase 3: Core Domain Models - Location & Catalog
 
@@ -361,10 +363,11 @@
   - 在庫一覧表示（location_id, catalog_id, inventory_date でグループ化）
   - _Requirements: 2.1, 2.2, 2.3, 2.5, 2.6_
 
-- [ ] 15.5 (P) AdminEmployeesController 実装
+- [ ] 15.5 (P) EmployeesController 実装
   - CRUD アクション（index, show, new, create, edit, update, destroy）
+  - before_action :require_admin_authentication（Admin のみアクセス可能、Employee は 403 エラー）
   - 従業員一覧表示
-  - _Requirements: 9.5, 9.6, 9.7, 9.8_
+  - _Requirements: 9.5, 9.6, 9.7, 9.8, 9.14, 9.15_
 
 - [ ] 16. POS 用コントローラー実装
 - [ ] 16.1 SalesController 実装（DailyInventory, Sale, SaleItem, SaleDiscount, Sales::PriceCalculator 依存）
@@ -439,11 +442,12 @@
   - 販売先・日付・商品を選択するフォーム
   - _Requirements: 2.1, 2.2, 2.3, 2.5, 2.6_
 
-- [ ] 23. Employee 管理画面実装
+- [ ] 23. Employee 管理画面実装（Admin のみアクセス可能）
 - [ ] 23.1 (P) Employee 一覧・フォーム画面
-  - employees/index.html.erb（従業員一覧）
-  - employees/new.html.erb, employees/edit.html.erb（従業員登録・編集フォーム）
-  - _Requirements: 9.5, 9.6, 9.7, 9.8_
+  - employees/index.html.erb（従業員一覧、Admin のみ表示）
+  - employees/new.html.erb, employees/edit.html.erb（従業員登録・編集フォーム、Admin のみ表示）
+  - Employee がアクセスすると 403 エラー画面を表示
+  - _Requirements: 9.5, 9.6, 9.7, 9.8, 9.14, 9.15_
 
 ### Phase 13: Frontend - POS Views
 

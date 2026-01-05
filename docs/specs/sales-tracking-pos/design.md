@@ -361,7 +361,7 @@ sequenceDiagram
 | 6.1, 6.2, 6.3, 6.4, 6.5 | 販売データ分析 | Sales::AnalysisCalculator, AdditionalOrdersController | predict_additional_order, calculate_sma | - |
 | 7.1, 7.2, 7.3, 7.4, 7.5 | 販売実績レポート | Reports::Generator, DashboardController | generate_daily_report, generate_period_report | - |
 | 8.1, 8.2, 8.3, 8.4, 8.5 | 販売データ可視化 | Chartkick, Chart.js, DashboardController | JSON endpoints | - |
-| 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10 | 認証と従業員管理 | Admin, Employee, Rodauth, AdminEmployeesController | Rodauth login/logout, CRUD | - |
+| 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15 | 認証とユーザー管理 | Admin, Employee, Rodauth, EmployeesController | Rodauth login/logout, Employee CRUD（Admin のみアクセス可能、Employee は 403 エラー） | - |
 | 10.1, 10.2, 10.3, 10.4, 10.5 | レスポンシブデザイン | Tailwind CSS, Vite | Tailwind responsive classes | - |
 | 11.1, 11.2, 11.3, 11.4, 11.5 | オフライン対応 | Service Worker, LocalStorage, offline_sync_controller.js, Sales::OfflineSynchronizer | /api/sales/sync | オフライン同期フロー |
 | 12.1, 12.2, 12.3, 12.4, 12.5 | データ整合性とパフォーマンス | DailyInventory (lock_version), Solid Cache, Indexes | Optimistic Locking, Transaction, Cache | 販売フロー |
@@ -376,8 +376,8 @@ sequenceDiagram
 
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
 |-----------|--------------|--------|--------------|------------------|-----------|
-| Admin | Authentication | システム管理者アカウント | 9.1-9.10 | Rodauth (P0) | - |
-| Employee | Authentication | 従業員アカウント | 9.1-9.10 | Rodauth (P0) | - |
+| Admin | Authentication | システム開発者アカウント（Rails console のみ、Employee 管理画面へのアクセス権限） | 9.1-9.15 | Rodauth (P0) | Service |
+| Employee | Authentication | 業務ユーザーアカウント（オーナー + 販売員、Employee 管理画面はアクセス不可） | 9.1-9.15 | Rodauth (P0), Admin (P0) | Service, API |
 | Location | Location Domain | 販売先マスタ（配達状態管理: active/inactive） | 16.1-16.7 | - | Service |
 | Catalog | Catalog Domain | 商品カタログモデル（category enum） | 1.1-1.5, 14.1-14.8 | CatalogPrice, CatalogPricingRule (P0) | Service |
 | CatalogPrice | Catalog Domain | 価格管理（種別別: regular/bundle） | 1.1-1.5, 14.1-14.8 | Catalog (P0) | Service |
@@ -448,6 +448,132 @@ end
 - デフォルトスコープで status = 'active' のレコードのみ取得
 - unscoped で inactive 状態のレコードも取得可能
 - 将来的な拡張: suspended（一時停止）などの状態追加が容易
+
+---
+
+### Authentication Domain
+
+#### Admin
+
+| Field | Detail |
+|-------|--------|
+| Intent | システム開発者アカウント（デバッグ・運用サポート） |
+| Requirements | 9.1, 9.2, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15 |
+
+**Responsibilities & Constraints**
+- システム開発者のみのアカウント
+- Rails console でのみ作成・編集・削除（UI 不要）
+- Employee の CRUD 権限を持つ（EmployeesController へのアクセス）
+- 認可機能不要（すべての機能にアクセス可能）
+
+**Dependencies**
+- Outbound: Employee — Employee CRUD 操作 (P0)
+- External: Rodauth — 認証・セッション管理 (P0)
+
+**Contracts**: Service [x]
+
+**Service Interface**:
+```ruby
+class Admin < ApplicationRecord
+  include Rodauth::Rails.model # Rodauth 統合
+
+  has_many :employees, foreign_key: 'created_by_admin_id', dependent: :nullify
+
+  validates :email, presence: true, uniqueness: true
+  validates :name, presence: true
+
+  # Rodauth によるパスワード管理（bcrypt ハッシュ化）
+end
+```
+
+**Implementation Notes**:
+- **Rails console のみ**: `Admin.create!(email: '...', password: '...', name: '...')` で作成
+- **UI 不要**: Admin 用の CRUD コントローラーは実装しない
+- **認可不要**: Admin は全機能にアクセス可能（認可チェック不要）
+- **Rodauth 統合**: 共通ログイン画面で Admin と Employee を認証
+- **将来的な拡張**: Admin 管理 UI が必要になった場合は `Admin::EmployeesController` を追加可能
+
+---
+
+#### Employee
+
+| Field | Detail |
+|-------|--------|
+| Intent | 業務ユーザーアカウント（オーナー + 販売員） |
+| Requirements | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15 |
+
+**Responsibilities & Constraints**
+- オーナーと販売員を一律で扱う業務ユーザー
+- 機能的な区別なし（認可機能不要）
+- すべての業務機能にアクセス可能
+
+**Dependencies**
+- Inbound: Admin — 作成・編集・削除操作 (P0)
+- External: Rodauth — 認証・セッション管理 (P0)
+- Outbound: Sale — 販売記録の作成者 (P1)
+- Outbound: AdditionalOrder — 追加発注の作成者 (P1)
+
+**Contracts**: Service [x], API [x]
+
+**Service Interface**:
+```ruby
+class Employee < ApplicationRecord
+  include Rodauth::Rails.model # Rodauth 統合
+
+  has_many :sales, dependent: :nullify
+  has_many :additional_orders, dependent: :nullify
+  has_many :voided_sales, class_name: 'Sale', foreign_key: 'voided_by_employee_id', dependent: :nullify
+  has_many :refunds, dependent: :nullify
+  belongs_to :created_by_admin, class_name: 'Admin', optional: true
+
+  validates :email, presence: true, uniqueness: true
+  validates :name, presence: true
+
+  # Rodauth によるパスワード管理（bcrypt ハッシュ化）
+end
+```
+
+**API Contract**:
+
+| Method | Endpoint | Request | Response | Errors |
+|--------|----------|---------|----------|--------|
+| GET | /employees | - | Employee[] | 401, 500 |
+| GET | /employees/:id | - | Employee | 404, 500 |
+| POST | /employees | CreateEmployeeRequest | Employee | 400, 422, 500 |
+| PATCH | /employees/:id | UpdateEmployeeRequest | Employee | 400, 404, 422, 500 |
+| DELETE | /employees/:id | - | - | 404, 500 |
+
+**CreateEmployeeRequest**:
+```ruby
+{
+  employee: {
+    email: String,
+    password: String,
+    name: String
+  }
+}
+```
+
+**UpdateEmployeeRequest**:
+```ruby
+{
+  employee: {
+    email: String (optional),
+    password: String (optional),
+    name: String (optional)
+  }
+}
+```
+
+**Implementation Notes**:
+- **Admin のみ CRUD 可能**: EmployeesController へのアクセスは Admin のみに制限（`before_action :require_admin_authentication`）
+- **認可制御実装**: rodauth-rails の公式機能を使用
+  - `rodauth(:employee).logged_in?` で Employee ログイン判定 → 403 エラー
+  - `rodauth(:admin).require_account` で Admin 認証を強制 → 未認証時はログインページにリダイレクト
+- **業務機能は認可不要**: Employee はすべての業務機能（POS、在庫、レポートなど）にアクセス可能（権限チェック不要）
+- **Rodauth 統合**: 共通ログイン画面で Admin と Employee を認証（複数アカウント設定: `:admin`, `:employee`）
+- **エラーハンドリング**: Employee が Employee管理画面にアクセスすると 403 Forbidden を返す
+- **将来的な拡張**: オーナーと販売員を区別する role フィールド追加が容易
 
 ---
 

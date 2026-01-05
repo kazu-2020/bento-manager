@@ -113,21 +113,33 @@
 4. The システム shall 曜日別の販売傾向をグラフで表示する
 5. When オーナーがグラフの期間を変更する, the システム shall 指定期間のデータで再描画する
 
-### Requirement 9: 認証と従業員管理
+### Requirement 9: 認証とユーザー管理
 
-**Objective:** As a システム管理者, I want 従業員を登録・管理できる, so that 従業員が安全にシステムにアクセスでき、デバッグや運用サポートが可能になる
+**Objective:** As a システム開発者, I want EmployeeとAdminの認証を管理できる, so that 業務ユーザー（オーナー・販売員）が安全にシステムにアクセスでき、デバッグや運用サポートが可能になる
+
+**Background:**
+- Employee: オーナーと販売員を一律で扱う業務ユーザー（機能的な区別なし）
+- Admin: システム開発者のみ（デバッグ・運用サポート用）
+- 現状は販売員（母）のみが利用想定のため、一般的な業務機能では認可機能（権限制御）は不要
+- EmployeeとAdminは想定されるすべての業務機能を利用可能
+- **例外**: Employee管理画面（CRUD）はAdminのみがアクセス可能
 
 #### Acceptance Criteria
-1. When システム管理者またはEmployeeがログインする, the システム shall メールアドレスとパスワードで認証する
-2. When システム管理者がEmployeeを登録する, the システム shall メールアドレス、パスワード、氏名を入力フォームで受け付ける
-3. The システム shall Employee一覧画面でEmployeeを表示する
-4. When システム管理者がEmployeeを編集する, the システム shall メールアドレス、パスワード、氏名を更新する
-5. When システム管理者がEmployeeを削除する, the システム shall 該当Employeeを削除する
-6. The システム shall すべての認証済みEmployeeに業務機能へのアクセスを許可する
-7. The システム shall すべての認証済みシステム管理者にすべての機能へのアクセスを許可する
-8. If 未認証ユーザーが保護されたページにアクセスする, then the システム shall ログインページにリダイレクトする
-9. When ユーザーがログアウトする, the システム shall セッションを破棄しログイン画面にリダイレクトする
-10. The システム shall パスワードをハッシュ化して安全に保存する
+1. When EmployeeまたはAdminがログインする, the システム shall メールアドレスとパスワードで認証する
+2. The システム shall ログイン画面をEmployeeとAdmin共通で提供する
+3. When AdminがEmployeeを登録する, the システム shall メールアドレス、パスワード、氏名を入力フォームで受け付ける
+4. The システム shall Employee一覧画面でEmployeeを表示する
+5. When AdminがEmployeeを編集する, the システム shall メールアドレス、パスワード、氏名を更新する
+6. When AdminがEmployeeを削除する, the システム shall 該当Employeeを削除する
+7. The システム shall すべての認証済みEmployeeにすべての業務機能へのアクセスを許可する（認可制御なし）
+8. The システム shall すべての認証済みAdminにすべての機能へのアクセスを許可する
+9. The システム shall Adminの登録・編集・削除機能をUIとして提供しない（Rails consoleでの操作を想定）
+10. If 未認証ユーザーが保護されたページにアクセスする, then the システム shall ログインページにリダイレクトする
+11. When ユーザーがログアウトする, the システム shall セッションを破棄しログイン画面にリダイレクトする
+12. The システム shall パスワードをハッシュ化して安全に保存する
+13. The システム shall EmployeeとAdminを別テーブルで管理する（異なるユーザータイプ）
+14. If EmployeeがEmployee管理画面（一覧・登録・編集・削除）にアクセスしようとする, then the システム shall アクセスを拒否し403エラーを返す
+15. The システム shall AdminのみがEmployee管理画面にアクセスできるように認可制御を実装する
 
 ### Requirement 10: レスポンシブデザイン
 

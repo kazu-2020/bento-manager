@@ -691,3 +691,86 @@
 - location_id NOT NULL 制約を追加
 
 ---
+
+## Discovery Phase 4 - 2026-01-05（Requirement 9 明確化）
+
+### 決定12: Admin UI 管理機能の削除と認可機能の不要化
+
+**コンテキスト**: Requirement 9 が更新され、Admin と Employee のユーザー管理に関する詳細が明確化された。
+
+**変更内容**:
+1. **Employee**: オーナーと販売員を一律で扱う業務ユーザー（機能的な区別なし）
+2. **Admin**: システム開発者のみ（デバッグ・運用サポート用）
+3. **認可機能（権限制御）は不要**: Employee と Admin は想定されるすべての機能を利用可能
+4. **Admin の UI 管理機能は不要**: Rails console でのみ作成・編集・削除
+5. **ログイン画面は共通**: Employee と Admin が同じログイン画面を使用
+
+**設計への影響**:
+- **AdminEmployeesController を削除**: Admin 用の CRUD UI は提供しない
+- **認可ロジック不要**: Employee と Admin で機能アクセス制限なし
+- **Rodauth 設定の簡略化**: 共通ログイン画面を使用（prefix 分離は不要の可能性）
+- **Employee CRUD**: Admin のみが実行可能（現状維持）
+
+**理由**:
+- 現状は販売員（母）のみが利用想定のため、複雑な権限管理は不要
+- Admin は開発者のみのため、Rails console での操作で十分
+- システムのシンプル性を保ち、実装コストを削減
+
+**トレードオフ**:
+- メリット: シンプルな実装、開発コスト削減、保守容易性
+- デメリット: Admin の UI がないため、非エンジニアが Admin を管理できない（将来的に追加可能）
+
+**フォローアップ**: 将来的に Admin 管理 UI が必要になった場合は、Admin::EmployeesController を追加可能
+
+---
+
+### 決定13: Employee管理画面への認可制御の追加
+
+**コンテキスト**: Requirement 9 が再更新され、Employee管理画面（CRUD）へのアクセスを Admin のみに制限する認可制御が必要になった。
+
+**変更内容**:
+1. **Employee管理画面へのアクセス制限**: Admin のみがアクセス可能、Employee がアクセスすると 403 エラー
+2. **認可制御の実装**: EmployeesController に before_action フィルタで Admin 認証を実装
+3. **Acceptance Criteria 追加**: AC 14-15 を追加（Employee のアクセス拒否、Admin のみアクセス許可）
+
+**設計への影響**:
+- **EmployeesController**: `before_action :require_admin_authentication` を追加
+- **認可ヘルパー**: rodauth-rails の `rodauth(:admin).logged_in?` と `rodauth(:employee).logged_in?` で判定
+- **エラーハンドリング**: Employee がアクセスすると `head :forbidden` で 403 エラー、未認証の場合は Admin ログインページにリダイレクト
+- **テスト追加**: EmployeesController の認可制御テスト（Admin: 成功、Employee: 403、未認証: リダイレクト）
+
+**理由**:
+- Employee が誤って他の Employee を編集・削除するリスクを排除
+- Admin のみが Employee 管理を行えるようにすることで、運用の安全性を確保
+- rodauth-rails の公式機能（`logged_in?`, `require_account`）を活用することで、認証・認可ロジックを統一
+- シンプルな認可制御で実装コストを最小化
+
+**トレードオフ**:
+- メリット: 安全性向上、誤操作防止、rodauth-rails の標準機能を活用、テスタビリティ向上
+- デメリット: 認可ロジックの追加により若干の複雑性増加
+
+**実装パターン（rodauth-rails 公式機能を使用）**:
+```ruby
+# app/controllers/employees_controller.rb
+class EmployeesController < ApplicationController
+  before_action :require_admin_authentication
+
+  private
+
+  def require_admin_authentication
+    # Employee でログイン済みの場合は 403 エラー
+    if rodauth(:employee).logged_in?
+      head :forbidden
+    else
+      # Admin でログインしていない場合は Admin ログインページにリダイレクト
+      rodauth(:admin).require_account
+    end
+  end
+end
+```
+
+**参考資料**:
+- [rodauth-rails - Requiring authentication](https://github.com/janko/rodauth-rails?tab=readme-ov-file#requiring-authentication)
+- [rodauth-rails - Multiple configurations](https://github.com/janko/rodauth-rails?tab=readme-ov-file#multiple-configurations)
+
+---
