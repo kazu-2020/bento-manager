@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class EmployeesControllerTest < ActionDispatch::IntegrationTest
+class Admin::EmployeesControllerTest < ActionDispatch::IntegrationTest
   setup do
     @admin = admins(:verified_admin)
     @employee = employees(:verified_employee)
@@ -70,68 +70,6 @@ class EmployeesControllerTest < ActionDispatch::IntegrationTest
   end
 
   # ============================================================
-  # Employee認証時のテスト（403 Forbidden）
-  # ============================================================
-
-  test "employee cannot access index and gets 403" do
-    login_as_employee(@employee)
-    get admin_employees_path
-    assert_response :forbidden
-  end
-
-  test "employee cannot access show and gets 403" do
-    login_as_employee(@employee)
-    get admin_employee_path(@employee)
-    assert_response :forbidden
-  end
-
-  test "employee cannot access new and gets 403" do
-    login_as_employee(@employee)
-    get new_admin_employee_path
-    assert_response :forbidden
-  end
-
-  test "employee cannot create and gets 403" do
-    login_as_employee(@employee)
-    assert_no_difference("Employee.count") do
-      post admin_employees_path, params: {
-        employee: {
-          email: "another@example.com",
-          name: "別の従業員",
-          password: "password"
-        }
-      }
-    end
-    assert_response :forbidden
-  end
-
-  test "employee cannot access edit and gets 403" do
-    login_as_employee(@employee)
-    get edit_admin_employee_path(@employee)
-    assert_response :forbidden
-  end
-
-  test "employee cannot update and gets 403" do
-    login_as_employee(@employee)
-    original_name = @employee.name
-    patch admin_employee_path(@employee), params: {
-      employee: { name: "ハッキング試み" }
-    }
-    assert_response :forbidden
-    @employee.reload
-    assert_equal original_name, @employee.name
-  end
-
-  test "employee cannot destroy and gets 403" do
-    login_as_employee(@employee)
-    employee_to_delete = employees(:owner_employee)
-    assert_no_difference("Employee.count") do
-      delete admin_employee_path(employee_to_delete)
-    end
-    assert_response :forbidden
-  end
-
-  # ============================================================
   # 未認証時のテスト（ログインページにリダイレクト）
   # ============================================================
 
@@ -178,6 +116,69 @@ class EmployeesControllerTest < ActionDispatch::IntegrationTest
   test "unauthenticated user is redirected to login on destroy" do
     assert_no_difference("Employee.count") do
       delete admin_employee_path(@employee)
+    end
+    assert_redirected_to "/admin/login"
+  end
+
+  # ============================================================
+  # Employee認証時のテスト（ログインページにリダイレクト）
+  # Employee認証はAdmin認証として認識されないため、ログインページにリダイレクト
+  # ============================================================
+
+  test "employee accessing index is redirected to admin login" do
+    login_as_employee(@employee)
+    get admin_employees_path
+    assert_redirected_to "/admin/login"
+  end
+
+  test "employee accessing show is redirected to admin login" do
+    login_as_employee(@employee)
+    get admin_employee_path(@employee)
+    assert_redirected_to "/admin/login"
+  end
+
+  test "employee accessing new is redirected to admin login" do
+    login_as_employee(@employee)
+    get new_admin_employee_path
+    assert_redirected_to "/admin/login"
+  end
+
+  test "employee creating is redirected to admin login" do
+    login_as_employee(@employee)
+    assert_no_difference("Employee.count") do
+      post admin_employees_path, params: {
+        employee: {
+          email: "another@example.com",
+          name: "別の従業員",
+          password: "password"
+        }
+      }
+    end
+    assert_redirected_to "/admin/login"
+  end
+
+  test "employee accessing edit is redirected to admin login" do
+    login_as_employee(@employee)
+    get edit_admin_employee_path(@employee)
+    assert_redirected_to "/admin/login"
+  end
+
+  test "employee updating is redirected to admin login" do
+    login_as_employee(@employee)
+    original_name = @employee.name
+    patch admin_employee_path(@employee), params: {
+      employee: { name: "ハッキング試み" }
+    }
+    assert_redirected_to "/admin/login"
+    @employee.reload
+    assert_equal original_name, @employee.name
+  end
+
+  test "employee deleting is redirected to admin login" do
+    login_as_employee(@employee)
+    employee_to_delete = employees(:owner_employee)
+    assert_no_difference("Employee.count") do
+      delete admin_employee_path(employee_to_delete)
     end
     assert_redirected_to "/admin/login"
   end

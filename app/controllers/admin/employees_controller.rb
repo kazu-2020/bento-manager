@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-class EmployeesController < ApplicationController
-  before_action :require_admin_authentication
+class Admin::EmployeesController < Admin::ApplicationController
   before_action :set_employee, only: %i[show edit update destroy]
 
   def index

@@ -41,21 +41,6 @@ class ApplicationController < ActionController::Base
 
   private
 
-  # Admin専用の認可制御
-  # Employee認証時は403エラー、未認証時はAdminログインページにリダイレクト
-  def require_admin_authentication
-    # Employeeとしてログイン中 → 403エラー
-    if rodauth(:employee).logged_in?
-      render file: Rails.public_path.join("403.html"), status: :forbidden, layout: false
-      return
-    end
-
-    # Admin認証チェック（未認証時はログインページにリダイレクト）
-    unless rodauth(:admin).logged_in?
-      redirect_to rodauth(:admin).login_path
-    end
-  end
-
   # エラーリダイレクト先（各コントローラーでオーバーライド可能）
   def error_redirect_path
     root_path

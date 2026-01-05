@@ -20,7 +20,7 @@ Rails.application.routes.draw do
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
   # Admin管理画面
-  scope :admin, as: :admin do
+  namespace :admin do
     resources :employees
   end
 
