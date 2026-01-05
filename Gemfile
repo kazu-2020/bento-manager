@@ -38,13 +38,13 @@ gem "vite_rails"   # https://github.com/ElMassimo/vite_ruby
 gem "reactionview" # https://github.com/marcoroth/reactionview
 
 group :development, :test do
-  # minitest 6.x has compatibility issues with Rails 8.1.1, pin to 5.x
+  # Pin minitest to 5.x for Rails 8.1.1 compatibility (minitest 6.x has known issues)
   gem "minitest", "~> 5.25"
 
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 
-  # reactionview の devtools が Rails 標準の assets pipeline に依存しているため、一時的に sprockets を追加
+  # Propshaft added temporarily for reactionview devtools (requires Rails asset pipeline)
   gem "propshaft"
 
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
