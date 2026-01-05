@@ -32,6 +32,7 @@ class ActionDispatch::IntegrationTest
       password: password
     }
     assert_response :redirect, "Failed to login as #{admin_email}"
+    follow_redirect!
   end
 
   # Check if currently logged in as an admin
@@ -60,6 +61,7 @@ class ActionDispatch::IntegrationTest
       password: password
     }
     assert_response :redirect, "Failed to login as #{employee_email}"
+    follow_redirect!
   end
 
   # Check if currently logged in as an employee

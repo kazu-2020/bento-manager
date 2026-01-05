@@ -1,0 +1,12 @@
+<h1><%= t("employees.show.title") %></h1>
+
+<dl>
+  <dt><%= Employee.human_attribute_name(:name) %></dt>
+  <dd><%= @employee.name %></dd>
+
+  <dt><%= Employee.human_attribute_name(:email) %></dt>
+  <dd><%= @employee.email %></dd>
+</dl>
+
+<%= link_to t("helpers.link.edit"), edit_admin_employee_path(@employee) %>
+<%= link_to t("helpers.link.back"), admin_employees_path %>

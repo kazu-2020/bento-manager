@@ -27,7 +27,7 @@
 
 ### Phase 2: Authentication & Authorization
 
-- [ ] 2. Rodauth 認証システム構築
+- [x] 2. Rodauth 認証システム構築
 - [x] 2.1 (P) Admin 認証セットアップ
   - Rodauth の Admin アカウント設定（メール、パスワードハッシュ）
   - ログイン/ログアウト機能の実装
@@ -40,10 +40,10 @@
   - 従業員管理 CRUD（Admin のみアクセス可能）
   - _Requirements: 9.5, 9.6, 9.7, 9.8_
 
-- [ ] 2.3 Employee管理画面の認可制御実装
+- [x] 2.3 Employee管理画面の認可制御実装
   - EmployeesController に before_action :require_admin_authentication を追加
   - rodauth(:employee).logged_in? で Employee 判定 → 403 エラー
-  - rodauth(:admin).require_account で Admin 認証強制 → 未認証時はログインページにリダイレクト
+  - rodauth(:admin).logged_in? で Admin 認証チェック → 未認証時はログインページにリダイレクト
   - 業務機能（POS、在庫、レポート）は認可不要（Employee と Admin の両方がアクセス可能）
   - _Requirements: 9.9, 9.10, 9.14, 9.15_
 
