@@ -1,0 +1,26 @@
+<h1><%= t("employees.index.title") %></h1>
+
+<%= link_to t("helpers.link.new"), new_admin_employee_path, class: "btn" %>
+
+<table>
+  <thead>
+    <tr>
+      <th><%= Employee.human_attribute_name(:name) %></th>
+      <th><%= Employee.human_attribute_name(:email) %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @employees.each do |employee| %>
+      <tr>
+        <td><%= employee.name %></td>
+        <td><%= employee.email %></td>
+        <td>
+          <%= link_to t("helpers.link.show"), admin_employee_path(employee) %>
+          <%= link_to t("helpers.link.edit"), edit_admin_employee_path(employee) %>
+          <%= link_to t("helpers.link.delete"), admin_employee_path(employee), data: { turbo_method: :delete, turbo_confirm: t("helpers.confirm.delete") } %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

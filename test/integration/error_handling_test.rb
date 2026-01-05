@@ -24,7 +24,6 @@ class ErrorHandlingTest < ActionDispatch::IntegrationTest
 
   test "authenticated admin is redirected back on RecordNotFound" do
     login_as(:verified_admin)
-    follow_redirect!
 
     get "/admin/test-record-not-found"
     assert_response :redirect
@@ -35,7 +34,6 @@ class ErrorHandlingTest < ActionDispatch::IntegrationTest
 
   test "authenticated employee is redirected back on RecordNotFound" do
     login_as_employee(:verified_employee)
-    follow_redirect!
 
     get "/employee/test-record-not-found"
     assert_response :redirect

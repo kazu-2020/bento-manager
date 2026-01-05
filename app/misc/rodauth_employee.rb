@@ -28,6 +28,9 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # Use path prefix for all Employee routes.
     prefix "/employee"
 
+    # Use unique session key for Employee to distinguish from Admin
+    session_key :employee_account_id
+
     # Specify the controller used for view rendering, CSRF, and callbacks.
     rails_controller { RodauthController }
 

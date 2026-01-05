@@ -13,4 +13,7 @@ class Employee < ApplicationRecord
       case_sensitive: false
     }
   validates :name, presence: true
+
+  # 新規作成時はパスワード必須、更新時は任意
+  validates :password, presence: true, on: :create
 end

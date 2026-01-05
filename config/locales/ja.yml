@@ -16,3 +16,23 @@ ja:
       standard_error:
         development: "エラーが発生しました: %{message}"
         production: "予期しないエラーが発生しました。しばらく時間をおいてから再度お試しください。"
+
+  helpers:
+    hint:
+      password_optional: "空欄の場合、パスワードは変更されません"
+
+  employees:
+    index:
+      title: "従業員一覧"
+    show:
+      title: "従業員詳細"
+    new:
+      title: "従業員登録"
+    edit:
+      title: "従業員編集"
+    create:
+      success: "従業員を登録しました。"
+    update:
+      success: "従業員情報を更新しました。"
+    destroy:
+      success: "従業員を削除しました。"

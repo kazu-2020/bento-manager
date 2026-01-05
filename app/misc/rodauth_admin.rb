@@ -27,6 +27,9 @@ class RodauthAdmin < Rodauth::Rails::Auth
     # Use path prefix for all Admin routes.
     prefix "/admin"
 
+    # Use unique session key for Admin to distinguish from Employee
+    session_key :admin_account_id
+
     # Specify the controller used for view rendering, CSRF, and callbacks.
     rails_controller { RodauthController }
 

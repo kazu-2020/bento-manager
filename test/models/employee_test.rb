@@ -1,9 +1,9 @@
 require "test_helper"
 
 class EmployeeTest < ActiveSupport::TestCase
-  test "should create employee with email and name" do
-    employee = Employee.new(email: "new-employee@example.com", name: "テスト従業員")
-    assert employee.valid?, "Employee should be valid with email and name"
+  test "should create employee with email and name and password" do
+    employee = Employee.new(email: "new-employee@example.com", name: "テスト従業員", password: "password")
+    assert employee.valid?, "Employee should be valid with email, name, and password"
   end
 
   test "should require email" do
@@ -27,10 +27,10 @@ class EmployeeTest < ActiveSupport::TestCase
 
   # ステータス遷移テスト
   test "can create employee with verified or closed status" do
-    verified_employee = Employee.new(email: "new-verified@example.com", name: "検証済み従業員", status: :verified)
+    verified_employee = Employee.new(email: "new-verified@example.com", name: "検証済み従業員", password: "password", status: :verified)
     assert verified_employee.valid?, "Employee should be valid with verified status"
 
-    closed_employee = Employee.new(email: "new-closed@example.com", name: "閉鎖済み従業員", status: :closed)
+    closed_employee = Employee.new(email: "new-closed@example.com", name: "閉鎖済み従業員", password: "password", status: :closed)
     assert closed_employee.valid?, "Employee should be valid with closed status"
   end
 
@@ -65,6 +65,7 @@ class EmployeeTest < ActiveSupport::TestCase
     reused_email_employee = Employee.new(
       email: "closed-employee@example.com",
       name: "再利用従業員",
+      password: "password",
       status: :verified
     )
     # closedアカウントのメールアドレスは再利用可能（部分ユニークインデックスのため）
@@ -76,12 +77,14 @@ class EmployeeTest < ActiveSupport::TestCase
     Employee.create!(
       email: "duplicate-closed@example.com",
       name: "最初の閉鎖従業員",
+      password: "password",
       status: :closed
     )
 
     second_closed = Employee.new(
       email: "duplicate-closed@example.com",
       name: "2番目の閉鎖従業員",
+      password: "password",
       status: :closed
     )
     # closedステータス同士は重複可能
