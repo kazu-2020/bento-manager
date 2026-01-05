@@ -49,7 +49,7 @@ class EmployeesController < ApplicationController
   end
 
   def employee_params
-    params.require(:employee).permit(:email, :name, :password, :password_confirmation)
+    params.require(:employee).permit(:email, :name, :password)
   end
 
   def employee_update_params
@@ -57,7 +57,7 @@ class EmployeesController < ApplicationController
     if params[:employee][:password].blank?
       params.require(:employee).permit(:email, :name)
     else
-      params.require(:employee).permit(:email, :name, :password, :password_confirmation)
+      params.require(:employee).permit(:email, :name, :password)
     end
   end
 end

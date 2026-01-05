@@ -37,8 +37,7 @@ class EmployeesControllerTest < ActionDispatch::IntegrationTest
         employee: {
           email: "new-employee@example.com",
           name: "新規従業員",
-          password: "password",
-          password_confirmation: "password"
+          password: "password"
         }
       }
     end
@@ -99,8 +98,7 @@ class EmployeesControllerTest < ActionDispatch::IntegrationTest
         employee: {
           email: "another@example.com",
           name: "別の従業員",
-          password: "password",
-          password_confirmation: "password"
+          password: "password"
         }
       }
     end
@@ -158,8 +156,7 @@ class EmployeesControllerTest < ActionDispatch::IntegrationTest
         employee: {
           email: "hacker@example.com",
           name: "ハッカー",
-          password: "password",
-          password_confirmation: "password"
+          password: "password"
         }
       }
     end
