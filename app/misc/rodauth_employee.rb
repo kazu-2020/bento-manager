@@ -6,7 +6,8 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # Employees are created and managed by Admin via web UI.
     # Email-based features (:verify_account, :reset_password, :change_login) are excluded
     # as employees are created directly with verified status by Admin.
-    enable :login, :logout, :change_password, :close_account
+    # :lockout is enabled for brute-force protection.
+    enable :login, :logout, :change_password, :close_account, :lockout
 
     # See the Rodauth documentation for the list of available config options:
     # http://rodauth.jeremyevans.net/documentation.html
@@ -106,6 +107,14 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # after_close_account do
     #   Profile.find_by!(account_id: account_id).destroy
     # end
+
+    # ==> Lockout
+    # Brute-force protection configuration
+    # Maximum number of failed logins before account is locked (default: 100)
+    max_invalid_logins 5
+    # Use custom table names for employee accounts
+    account_login_failures_table :employee_login_failures
+    account_lockouts_table :employee_lockouts
 
     # ==> Redirects
     # Redirect to home page after logout.

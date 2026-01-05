@@ -7,6 +7,7 @@ class Employee < ApplicationRecord
   # これにより、closedアカウントは同じメールアドレスを持つことができ、
   # closedアカウントのメールアドレスは新しいアカウントで再利用可能
   validates :email, presence: true,
+    format: { with: URI::MailTo::EMAIL_REGEXP },
     uniqueness: {
       conditions: -> { where.not(status: :closed) },
       case_sensitive: false

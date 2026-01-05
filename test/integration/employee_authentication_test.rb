@@ -205,8 +205,9 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
     assert second_device_session.response.redirect?, "Second device should login successfully"
 
     # Both sessions should be valid (concurrent login allowed)
-    # Note: This test verifies that Rodauth doesn't invalidate the first session
-    # when the second device logs in
+    # Verify first session is still valid by accessing a protected page
+    first_device_session.get root_path
+    assert first_device_session.response.successful?, "First device session should remain valid"
   end
 
   # 業務機能アクセステスト（Requirement 9.7）
@@ -217,5 +218,15 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
     # Employee should be able to access root path (業務機能)
     get root_path
     assert_response :success, "Employee should be able to access business functions"
+  end
+
+  # 未認証アクセステスト
+  test "unauthenticated user cannot access change-password page" do
+    # Try to access change-password without logging in
+    get "/employee/change-password"
+
+    # Rodauth should redirect to login page
+    assert_response :redirect
+    assert_redirected_to "/employee/login"
   end
 end

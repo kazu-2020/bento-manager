@@ -5,7 +5,8 @@ class CreateEmployees < ActiveRecord::Migration[8.1]
     # Email: Unique constraint only for active accounts (status IN (1,2)),
     #        allowing email reuse after account closure
     create_table :employees do |t|
-      # Default status is 1 (unverified), but employees are created directly as verified via Admin
+      # Default status is 1 (unverified). When Admin creates an employee,
+      # the status should be explicitly set to 2 (verified) during creation.
       t.integer :status, null: false, default: 1
       t.string :email, null: false
       # Partial unique index: allows duplicate emails for closed accounts (status=3)
