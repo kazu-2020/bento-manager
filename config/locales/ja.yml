@@ -4,6 +4,9 @@ ja:
       admin:
         email: "メールアドレス"
         name: "名前"
+      employee:
+        email: "メールアドレス"
+        name: "名前"
 
   custom_errors:
     controllers:
