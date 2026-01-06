@@ -9,7 +9,7 @@ class CreateCatalogPrices < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :catalog_prices, [:catalog_id, :kind], name: "idx_catalog_prices_catalog_kind"
+    add_index :catalog_prices, [ :catalog_id, :kind ], name: "idx_catalog_prices_catalog_kind"
     add_index :catalog_prices, :effective_from
   end
 end
