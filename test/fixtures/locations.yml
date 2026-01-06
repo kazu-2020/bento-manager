@@ -1,0 +1,7 @@
+city_hall:
+  name: 市役所
+  status: 0
+
+prefectural_office:
+  name: 県庁
+  status: 1

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_05_110543) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_06_000026) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -39,6 +39,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_05_110543) do
     t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_employees_on_email", unique: true, where: "status IN (1, 2)"
+  end
+
+  create_table "locations", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "idx_locations_name", unique: true
+    t.index ["status"], name: "index_locations_on_status"
   end
 
   add_foreign_key "employee_lockouts", "employees", column: "id"

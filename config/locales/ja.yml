@@ -7,6 +7,9 @@ ja:
       employee:
         email: "メールアドレス"
         name: "名前"
+      location:
+        name: "販売先名"
+        status: "配達状態"
 
   custom_errors:
     controllers:
