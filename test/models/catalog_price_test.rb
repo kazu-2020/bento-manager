@@ -44,6 +44,57 @@ class CatalogPriceTest < ActiveSupport::TestCase
     assert_includes price.errors[:effective_from], "を入力してください"
   end
 
+  test "effective_until が effective_from より前の場合はエラー" do
+    catalog = catalogs(:daily_bento_a)
+    price = CatalogPrice.new(
+      catalog: catalog,
+      kind: :regular,
+      price: 500,
+      effective_from: Time.current,
+      effective_until: 1.day.ago
+    )
+    assert_not price.valid?
+    assert_includes price.errors[:effective_until], "は適用開始日時より後の日時を指定してください"
+  end
+
+  test "effective_until が effective_from と同じ日時の場合はエラー" do
+    now = Time.current
+    catalog = catalogs(:daily_bento_a)
+    price = CatalogPrice.new(
+      catalog: catalog,
+      kind: :regular,
+      price: 500,
+      effective_from: now,
+      effective_until: now
+    )
+    assert_not price.valid?
+    assert_includes price.errors[:effective_until], "は適用開始日時より後の日時を指定してください"
+  end
+
+  test "effective_until が effective_from より後の場合は有効" do
+    catalog = catalogs(:daily_bento_a)
+    price = CatalogPrice.new(
+      catalog: catalog,
+      kind: :regular,
+      price: 500,
+      effective_from: Time.current,
+      effective_until: 1.day.from_now
+    )
+    assert price.valid?, "effective_until が effective_from より後なら有効: #{price.errors.full_messages.join(', ')}"
+  end
+
+  test "effective_until が nil の場合は有効（無期限）" do
+    catalog = catalogs(:daily_bento_a)
+    price = CatalogPrice.new(
+      catalog: catalog,
+      kind: :regular,
+      price: 500,
+      effective_from: Time.current,
+      effective_until: nil
+    )
+    assert price.valid?, "effective_until が nil なら有効: #{price.errors.full_messages.join(', ')}"
+  end
+
   test "有効な属性で作成できる" do
     catalog = catalogs(:daily_bento_a)
     price = CatalogPrice.new(

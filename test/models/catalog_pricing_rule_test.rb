@@ -80,6 +80,60 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     assert_includes rule.errors[:valid_from], "を入力してください"
   end
 
+  test "valid_until が valid_from より前の場合はエラー" do
+    catalog = catalogs(:salad)
+    rule = CatalogPricingRule.new(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: "bento",
+      max_per_trigger: 1,
+      valid_from: Date.current,
+      valid_until: 1.day.ago.to_date
+    )
+    assert_not rule.valid?
+    assert_includes rule.errors[:valid_until], "は有効開始日より後の日付を指定してください"
+  end
+
+  test "valid_until が valid_from と同じ日の場合はエラー" do
+    catalog = catalogs(:salad)
+    rule = CatalogPricingRule.new(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: "bento",
+      max_per_trigger: 1,
+      valid_from: Date.current,
+      valid_until: Date.current
+    )
+    assert_not rule.valid?
+    assert_includes rule.errors[:valid_until], "は有効開始日より後の日付を指定してください"
+  end
+
+  test "valid_until が valid_from より後の場合は有効" do
+    catalog = catalogs(:salad)
+    rule = CatalogPricingRule.new(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: "bento",
+      max_per_trigger: 1,
+      valid_from: Date.current,
+      valid_until: 1.day.from_now.to_date
+    )
+    assert rule.valid?, "valid_until が valid_from より後なら有効: #{rule.errors.full_messages.join(', ')}"
+  end
+
+  test "valid_until が nil の場合は有効（無期限）" do
+    catalog = catalogs(:salad)
+    rule = CatalogPricingRule.new(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: "bento",
+      max_per_trigger: 1,
+      valid_from: Date.current,
+      valid_until: nil
+    )
+    assert rule.valid?, "valid_until が nil なら有効: #{rule.errors.full_messages.join(', ')}"
+  end
+
   test "有効な属性で作成できる" do
     catalog = catalogs(:salad)
     rule = CatalogPricingRule.new(

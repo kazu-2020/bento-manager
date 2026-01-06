@@ -7,6 +7,7 @@ class CatalogPricingRule < ApplicationRecord
   validates :trigger_category, presence: true
   validates :max_per_trigger, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :valid_from, presence: true
+  validate :valid_date_range
 
   scope :active, -> {
     where(valid_from: ..Date.current)
@@ -30,6 +31,15 @@ class CatalogPricingRule < ApplicationRecord
   end
 
   private
+
+  # valid_until が valid_from より後であることを検証
+  def valid_date_range
+    return if valid_from.blank? || valid_until.blank?
+
+    if valid_until <= valid_from
+      errors.add(:valid_until, "は有効開始日より後の日付を指定してください")
+    end
+  end
 
   def count_trigger_items(cart_items)
     cart_items.sum do |item|

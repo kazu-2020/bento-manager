@@ -6,6 +6,7 @@ class CatalogPrice < ApplicationRecord
   validates :kind, presence: true
   validates :price, presence: true, numericality: { greater_than: 0 }
   validates :effective_from, presence: true
+  validate :valid_date_range
 
   scope :current, -> {
     where(effective_from: ..Time.current)
@@ -21,5 +22,16 @@ class CatalogPrice < ApplicationRecord
       .current
       .order(effective_from: :desc)
       .first
+  end
+
+  private
+
+  # effective_until が effective_from より後であることを検証
+  def valid_date_range
+    return if effective_from.blank? || effective_until.blank?
+
+    if effective_until <= effective_from
+      errors.add(:effective_until, "は適用開始日時より後の日時を指定してください")
+    end
   end
 end
