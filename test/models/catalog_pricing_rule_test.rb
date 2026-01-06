@@ -7,7 +7,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.new(
       target_catalog: nil,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -20,7 +20,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.new(
       target_catalog: catalog,
       price_kind: nil,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -33,7 +33,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.new(
       target_catalog: catalog,
       price_kind: :invalid_kind,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -54,12 +54,25 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     assert_includes rule.errors[:trigger_category], "を入力してください"
   end
 
+  test "trigger_category は bento または side_menu のみ許可" do
+    catalog = catalogs(:salad)
+    rule = CatalogPricingRule.new(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: :invalid_category,
+      max_per_trigger: 1,
+      valid_from: Date.current
+    )
+    assert_not rule.valid?
+    assert_includes rule.errors[:trigger_category], "は一覧にありません"
+  end
+
   test "max_per_trigger は 0 以上である必要がある" do
     catalog = catalogs(:salad)
     rule = CatalogPricingRule.new(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: -1,
       valid_from: Date.current
     )
@@ -72,7 +85,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.new(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: nil
     )
@@ -85,7 +98,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.new(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current,
       valid_until: 1.day.ago.to_date
@@ -99,7 +112,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.new(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current,
       valid_until: Date.current
@@ -113,7 +126,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.new(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current,
       valid_until: 1.day.from_now.to_date
@@ -126,7 +139,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.new(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current,
       valid_until: nil
@@ -139,7 +152,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.new(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -155,7 +168,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     past_rule = CatalogPricingRule.create!(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: 2.days.ago.to_date,
       valid_until: 1.day.ago.to_date
@@ -165,7 +178,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     current_rule = CatalogPricingRule.create!(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: 1.day.ago.to_date,
       valid_until: nil
@@ -175,7 +188,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     future_rule = CatalogPricingRule.create!(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: 1.day.from_now.to_date,
       valid_until: nil
@@ -195,7 +208,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     salad_rule = CatalogPricingRule.create!(
       target_catalog: salad,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -203,7 +216,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     bento_rule = CatalogPricingRule.create!(
       target_catalog: bento_a,
       price_kind: :regular,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -220,7 +233,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     bento_triggered_rule = CatalogPricingRule.create!(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -228,12 +241,12 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     side_menu_triggered_rule = CatalogPricingRule.create!(
       target_catalog: catalog,
       price_kind: :regular,
-      trigger_category: "side_menu",
+      trigger_category: :side_menu,
       max_per_trigger: 1,
       valid_from: Date.current
     )
 
-    bento_triggered_rules = CatalogPricingRule.triggered_by("bento")
+    bento_triggered_rules = CatalogPricingRule.triggered_by(:bento)
 
     assert_includes bento_triggered_rules, bento_triggered_rule
     assert_not_includes bento_triggered_rules, side_menu_triggered_rule
@@ -248,7 +261,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.create!(
       target_catalog: salad,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -267,7 +280,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.create!(
       target_catalog: salad,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -287,7 +300,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.create!(
       target_catalog: salad,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -308,7 +321,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.create!(
       target_catalog: salad,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -327,7 +340,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.create!(
       target_catalog: salad,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )
@@ -348,7 +361,7 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     rule = CatalogPricingRule.create!(
       target_catalog: catalog,
       price_kind: :bundle,
-      trigger_category: "bento",
+      trigger_category: :bento,
       max_per_trigger: 1,
       valid_from: Date.current
     )

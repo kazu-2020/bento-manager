@@ -48,7 +48,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_06_100003) do
     t.integer "max_per_trigger", default: 1, null: false
     t.integer "price_kind", null: false
     t.integer "target_catalog_id", null: false
-    t.string "trigger_category", null: false
+    t.integer "trigger_category", null: false
     t.datetime "updated_at", null: false
     t.date "valid_from", null: false
     t.date "valid_until"

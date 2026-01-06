@@ -1,11 +1,11 @@
 # CatalogPricingRule fixtures for testing
 # price_kind enum: regular: 0, bundle: 1
-# trigger_category: "bento" or "side_menu" (String)
+# trigger_category enum: bento: 0, side_menu: 1
 
 salad_bundle_by_bento:
   target_catalog: salad
   price_kind: 1
-  trigger_category: "bento"
+  trigger_category: 0
   max_per_trigger: 1
   valid_from: <%= 1.month.ago.to_date %>
   valid_until:

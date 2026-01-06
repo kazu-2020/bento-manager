@@ -69,6 +69,9 @@ ja:
       price_kind:
         regular: "通常価格"
         bundle: "セット価格"
+      trigger_category:
+        bento: "弁当"
+        side_menu: "サイドメニュー"
 
   custom_errors:
     controllers:
