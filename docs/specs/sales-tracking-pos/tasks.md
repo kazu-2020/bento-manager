@@ -50,19 +50,19 @@
 ### Phase 3: Core Domain Models - Location & Catalog
 
 - [ ] 3. Location（販売先）ドメイン実装
-- [ ] 3.1 (P) Location モデル作成
+- [x] 3.1 (P) Location モデル作成
   - Location テーブルマイグレーション（id, name, status, created_at, updated_at）
   - status enum（active / inactive）の実装
   - default_scope で active のみ取得
   - deactivate/activate メソッド実装
   - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7_
 
-- [ ] 3.2 (P) Location バリデーション実装
+- [x] 3.2 (P) Location バリデーション実装
   - name の必須バリデーション
   - name の一意性バリデーション
   - _Requirements: 16.6_
 
-- [ ] 3.3 (P) Location インデックス作成
+- [x] 3.3 (P) Location インデックス作成
   - idx_locations_name インデックス追加
   - _Requirements: 16.4_
 

@@ -1,12 +1,37 @@
 ja:
   activerecord:
+    models:
+      admin: "管理者"
+      employee: "従業員"
+      location: "販売先"
     attributes:
       admin:
         email: "メールアドレス"
         name: "名前"
+        status: "ステータス"
       employee:
         email: "メールアドレス"
         name: "名前"
+        status: "ステータス"
+      location:
+        name: "販売先名"
+        status: "販売状態"
+
+  enums:
+    admin:
+      status:
+        unverified: "未認証"
+        verified: "認証済み"
+        closed: "閉鎖"
+    employee:
+      status:
+        unverified: "未認証"
+        verified: "認証済み"
+        closed: "閉鎖"
+    location:
+      status:
+        active: "有効"
+        inactive: "無効"
 
   custom_errors:
     controllers:
