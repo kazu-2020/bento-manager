@@ -10,7 +10,6 @@ class CreateCatalogPricingRules < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    add_index :catalog_pricing_rules, :target_catalog_id, name: "idx_catalog_pricing_rules_target"
     add_index :catalog_pricing_rules, :trigger_category
     add_index :catalog_pricing_rules, :valid_from
   end

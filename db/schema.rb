@@ -52,7 +52,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_06_100003) do
     t.datetime "updated_at", null: false
     t.date "valid_from", null: false
     t.date "valid_until"
-    t.index ["target_catalog_id"], name: "idx_catalog_pricing_rules_target"
     t.index ["target_catalog_id"], name: "index_catalog_pricing_rules_on_target_catalog_id"
     t.index ["trigger_category"], name: "index_catalog_pricing_rules_on_trigger_category"
     t.index ["valid_from"], name: "index_catalog_pricing_rules_on_valid_from"
