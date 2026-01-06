@@ -26,13 +26,13 @@ class LocationTest < ActiveSupport::TestCase
     assert location.active?
   end
 
-  # 3.1 active_only スコープテスト
-  test "active_only スコープは active のみ取得" do
+  # 3.1 enum スコープテスト（enum デフォルト機能）
+  test "active スコープは active のみ取得" do
     active = Location.create!(name: "テスト市役所C")
     inactive = Location.create!(name: "テスト県庁D", status: :inactive)
 
-    assert_includes Location.active_only, active
-    assert_not_includes Location.active_only, inactive
+    assert_includes Location.active, active
+    assert_not_includes Location.active, inactive
   end
 
   test "all は active と inactive の両方を取得" do
