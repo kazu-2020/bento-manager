@@ -174,4 +174,61 @@ class CatalogTest < ActiveSupport::TestCase
     catalog = catalogs(:daily_bento_a)
     assert_not catalog.discontinued?
   end
+
+  # ===== available スコープテスト =====
+
+  test "available スコープは提供終了していない商品のみ取得" do
+    available_catalog = Catalog.create!(name: "販売中弁当", category: :bento)
+    discontinued_catalog = Catalog.create!(name: "終了弁当", category: :bento)
+
+    CatalogDiscontinuation.create!(
+      catalog: discontinued_catalog,
+      discontinued_at: Time.current,
+      reason: "販売終了"
+    )
+
+    assert_includes Catalog.available, available_catalog
+    assert_not_includes Catalog.available, discontinued_catalog
+  end
+
+  test "available スコープは他のスコープとチェーン可能" do
+    available_bento = Catalog.create!(name: "販売中弁当C", category: :bento)
+    available_side = Catalog.create!(name: "販売中サイド", category: :side_menu)
+    discontinued_bento = Catalog.create!(name: "終了弁当C", category: :bento)
+
+    CatalogDiscontinuation.create!(
+      catalog: discontinued_bento,
+      discontinued_at: Time.current,
+      reason: "販売終了"
+    )
+
+    result = Catalog.available.bento
+    assert_includes result, available_bento
+    assert_not_includes result, available_side
+    assert_not_includes result, discontinued_bento
+  end
+
+  # ===== 削除禁止テスト =====
+
+  test "物理削除は禁止されている" do
+    catalog = catalogs(:daily_bento_a)
+    initial_count = Catalog.count
+
+    result = catalog.destroy
+
+    assert_not result, "destroy は false を返すべき"
+    assert_equal initial_count, Catalog.count, "レコード数は変わらないべき"
+    assert catalog.persisted?, "レコードは削除されていないべき"
+  end
+
+  test "destroy! は例外を発生させない（abort で中断）" do
+    catalog = catalogs(:daily_bento_a)
+
+    # before_destroy で throw :abort するため、destroy! は false を返す
+    # （RecordNotDestroyed 例外は発生しない）
+    result = catalog.destroy
+
+    assert_not result
+    assert catalog.persisted?
+  end
 end

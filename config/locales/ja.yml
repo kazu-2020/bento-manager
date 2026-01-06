@@ -65,6 +65,10 @@ ja:
       kind:
         regular: "通常価格"
         bundle: "セット価格"
+    catalog_pricing_rule:
+      price_kind:
+        regular: "通常価格"
+        bundle: "セット価格"
 
   custom_errors:
     controllers:

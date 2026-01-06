@@ -97,9 +97,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_06_100003) do
     t.index ["status"], name: "index_locations_on_status"
   end
 
-  add_foreign_key "catalog_discontinuations", "catalogs"
-  add_foreign_key "catalog_prices", "catalogs"
-  add_foreign_key "catalog_pricing_rules", "catalogs", column: "target_catalog_id"
+  add_foreign_key "catalog_discontinuations", "catalogs", on_delete: :restrict
+  add_foreign_key "catalog_prices", "catalogs", on_delete: :restrict
+  add_foreign_key "catalog_pricing_rules", "catalogs", column: "target_catalog_id", on_delete: :restrict
   add_foreign_key "employee_lockouts", "employees", column: "id"
   add_foreign_key "employee_login_failures", "employees", column: "id"
 end

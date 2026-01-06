@@ -1,7 +1,7 @@
 class CreateCatalogPricingRules < ActiveRecord::Migration[8.1]
   def change
     create_table :catalog_pricing_rules, comment: "価格ルール（セット価格適用条件など）" do |t|
-      t.references :target_catalog, null: false, foreign_key: { to_table: :catalogs }, comment: "適用対象商品ID"
+      t.references :target_catalog, null: false, foreign_key: { to_table: :catalogs, on_delete: :restrict }, comment: "適用対象商品ID"
       t.integer :price_kind, null: false, comment: "適用価格種別（0: regular, 1: bundle）"
       t.string :trigger_category, null: false, comment: "トリガーカテゴリ（bento/side_menu）"
       t.integer :max_per_trigger, null: false, default: 1, comment: "トリガー1つあたりの最大適用数"

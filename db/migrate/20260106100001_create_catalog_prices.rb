@@ -1,7 +1,7 @@
 class CreateCatalogPrices < ActiveRecord::Migration[8.1]
   def change
     create_table :catalog_prices, comment: "商品価格（種別別: regular/bundle）" do |t|
-      t.references :catalog, null: false, foreign_key: true, comment: "商品ID"
+      t.references :catalog, null: false, foreign_key: { on_delete: :restrict }, comment: "商品ID"
       t.integer :kind, null: false, comment: "価格種別（0: regular, 1: bundle）"
       t.integer :price, null: false, comment: "価格（税込）"
       t.datetime :effective_from, null: false, comment: "価格適用開始日時"
