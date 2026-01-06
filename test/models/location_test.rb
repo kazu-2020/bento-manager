@@ -21,6 +21,12 @@ class LocationTest < ActiveSupport::TestCase
     assert_equal 1, Location.statuses[:inactive]
   end
 
+  test "status に無効な値を設定するとバリデーションエラー" do
+    location = Location.new(name: "テスト市役所", status: :invalid_status)
+    assert_not location.valid?
+    assert_includes location.errors[:status], "は一覧にありません"
+  end
+
   test "デフォルト status は active" do
     location = Location.create!(name: "テスト県庁B")
     assert location.active?
