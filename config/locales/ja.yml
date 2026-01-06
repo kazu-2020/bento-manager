@@ -1,5 +1,9 @@
 ja:
   activerecord:
+    models:
+      admin: "管理者"
+      employee: "従業員"
+      location: "販売先"
     attributes:
       admin:
         email: "メールアドレス"
@@ -9,7 +13,7 @@ ja:
         name: "名前"
       location:
         name: "販売先名"
-        status: "配達状態"
+        status: "販売状態"
 
   custom_errors:
     controllers:
