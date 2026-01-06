@@ -4,6 +4,10 @@ ja:
       admin: "管理者"
       employee: "従業員"
       location: "販売先"
+      catalog: "商品カタログ"
+      catalog_price: "商品価格"
+      catalog_pricing_rule: "価格ルール"
+      catalog_discontinuation: "提供終了記録"
     attributes:
       admin:
         email: "メールアドレス"
@@ -16,6 +20,27 @@ ja:
       location:
         name: "販売先名"
         status: "販売状態"
+      catalog:
+        name: "商品名"
+        category: "商品カテゴリ"
+        description: "商品説明"
+      catalog_price:
+        catalog: "商品"
+        kind: "価格種別"
+        price: "価格"
+        effective_from: "適用開始日時"
+        effective_until: "適用終了日時"
+      catalog_pricing_rule:
+        target_catalog: "対象商品"
+        price_kind: "適用価格種別"
+        trigger_category: "トリガーカテゴリ"
+        max_per_trigger: "トリガーあたりの最大適用数"
+        valid_from: "有効開始日"
+        valid_until: "有効終了日"
+      catalog_discontinuation:
+        catalog: "商品"
+        discontinued_at: "提供終了日時"
+        reason: "提供終了理由"
 
   enums:
     admin:
@@ -32,6 +57,14 @@ ja:
       status:
         active: "有効"
         inactive: "無効"
+    catalog:
+      category:
+        bento: "弁当"
+        side_menu: "サイドメニュー"
+    catalog_price:
+      kind:
+        regular: "通常価格"
+        bundle: "セット価格"
 
   custom_errors:
     controllers:

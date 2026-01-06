@@ -66,36 +66,36 @@
   - idx_locations_name インデックス追加
   - _Requirements: 16.4_
 
-- [ ] 4. Catalog（商品カタログ）ドメイン実装
-- [ ] 4.1 (P) Catalog モデル作成
+- [x] 4. Catalog（商品カタログ）ドメイン実装
+- [x] 4.1 (P) Catalog モデル作成
   - Catalog テーブルマイグレーション（id, name, category, description）
   - category enum（bento / side_menu）の実装
   - _Requirements: 1.1, 1.2, 1.4_
 
-- [ ] 4.2 (P) CatalogPrice モデル作成
+- [x] 4.2 (P) CatalogPrice モデル作成
   - CatalogPrice テーブルマイグレーション（id, catalog_id, kind, price, effective_from, effective_until）
   - kind enum（regular / bundle）の実装
   - effective_from/effective_until による価格履歴管理
   - _Requirements: 1.1, 1.5, 14.1, 14.2_
 
-- [ ] 4.3 (P) CatalogPricingRule モデル作成
+- [x] 4.3 (P) CatalogPricingRule モデル作成
   - CatalogPricingRule テーブルマイグレーション（id, target_catalog_id, price_kind, trigger_category, max_per_trigger, valid_from, valid_until）
   - セット価格適用ルールのロジック実装
   - applicable? メソッド実装
   - _Requirements: 14.3, 14.4, 14.5, 14.6_
 
-- [ ] 4.4 (P) CatalogDiscontinuation モデル作成
+- [x] 4.4 (P) CatalogDiscontinuation モデル作成
   - CatalogDiscontinuation テーブルマイグレーション（id, catalog_id, discontinued_at, reason）
   - catalog_id のユニーク制約
   - _Requirements: 1.3_
 
-- [ ] 4.5 (P) Catalog バリデーション実装
+- [x] 4.5 (P) Catalog バリデーション実装
   - name のユニーク制約
   - category の必須バリデーション
   - price > 0 のバリデーション
   - _Requirements: 1.1, 1.4, 1.5_
 
-- [ ] 4.6 (P) Catalog インデックス作成
+- [x] 4.6 (P) Catalog インデックス作成
   - idx_catalogs_name インデックス追加
   - idx_catalog_prices_catalog_kind インデックス追加
   - idx_catalog_pricing_rules_target インデックス追加
