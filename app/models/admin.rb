@@ -1,6 +1,6 @@
 class Admin < ApplicationRecord
   include Rodauth::Rails.model(:admin)
-  enum :status, { unverified: 1, verified: 2, closed: 3 }
+  enum :status, { unverified: 1, verified: 2, closed: 3 }, validate: true
 
   # メールアドレスのユニーク性は、closedステータスを除外して検証
   # データベースの部分ユニークインデックス (status IN (1, 2)) と一致
