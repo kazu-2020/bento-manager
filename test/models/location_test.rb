@@ -26,34 +26,37 @@ class LocationTest < ActiveSupport::TestCase
     assert location.active?
   end
 
-  # 3.1 default_scope テスト
-  test "default_scope は active のみ取得" do
+  # 3.1 active_only スコープテスト
+  test "active_only スコープは active のみ取得" do
     active = Location.create!(name: "テスト市役所C")
     inactive = Location.create!(name: "テスト県庁D", status: :inactive)
 
+    assert_includes Location.active_only, active
+    assert_not_includes Location.active_only, inactive
+  end
+
+  test "all は active と inactive の両方を取得" do
+    active = Location.create!(name: "テスト市役所E")
+    inactive = Location.create!(name: "テスト県庁F", status: :inactive)
+
     assert_includes Location.all, active
-    assert_not_includes Location.all, inactive
+    assert_includes Location.all, inactive
   end
 
-  test "unscoped で inactive も取得可能" do
-    inactive = Location.create!(name: "テスト県庁E", status: :inactive)
-    assert_includes Location.unscoped, inactive
-  end
-
-  # 3.1 activate/deactivate メソッドテスト
-  test "deactivate で status を inactive に変更" do
-    location = Location.create!(name: "テスト市役所F")
+  # 3.1 enum 更新メソッドテスト（enum デフォルト機能）
+  test "inactive! で status を inactive に変更" do
+    location = Location.create!(name: "テスト市役所G")
     assert location.active?
 
-    location.deactivate
+    location.inactive!
     assert location.inactive?
   end
 
-  test "activate で status を active に変更" do
-    location = Location.unscoped.create!(name: "テスト県庁G", status: :inactive)
+  test "active! で status を active に変更" do
+    location = Location.create!(name: "テスト県庁H", status: :inactive)
     assert location.inactive?
 
-    location.activate
+    location.active!
     assert location.active?
   end
 end
