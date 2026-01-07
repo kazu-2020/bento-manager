@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_07_100437) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_07_121252) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -75,6 +75,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_100437) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "daily_inventories", force: :cascade do |t|
+    t.integer "catalog_id", null: false
+    t.datetime "created_at", null: false
+    t.date "inventory_date", null: false
+    t.integer "location_id", null: false
+    t.integer "lock_version", default: 0, null: false
+    t.integer "reserved_stock", default: 0, null: false
+    t.integer "stock", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["catalog_id"], name: "index_daily_inventories_on_catalog_id"
+    t.index ["location_id", "catalog_id", "inventory_date"], name: "idx_daily_inventories_location_catalog_date", unique: true
+  end
+
   create_table "discounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "discountable_id", null: false
@@ -120,6 +133,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_100437) do
   add_foreign_key "catalog_discontinuations", "catalogs", on_delete: :restrict
   add_foreign_key "catalog_prices", "catalogs", on_delete: :restrict
   add_foreign_key "catalog_pricing_rules", "catalogs", column: "target_catalog_id", on_delete: :restrict
+  add_foreign_key "daily_inventories", "catalogs", on_delete: :restrict
+  add_foreign_key "daily_inventories", "locations", on_delete: :restrict
   add_foreign_key "employee_lockouts", "employees", column: "id"
   add_foreign_key "employee_login_failures", "employees", column: "id"
 end

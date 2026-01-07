@@ -8,6 +8,7 @@ ja:
       catalog_price: "商品価格"
       catalog_pricing_rule: "価格ルール"
       catalog_discontinuation: "提供終了記録"
+      daily_inventory: "日次在庫"
     attributes:
       admin:
         email: "メールアドレス"
@@ -41,6 +42,12 @@ ja:
         catalog: "商品"
         discontinued_at: "提供終了日時"
         reason: "提供終了理由"
+      daily_inventory:
+        location: "販売先"
+        catalog: "商品"
+        inventory_date: "在庫日"
+        stock: "在庫数"
+        reserved_stock: "予約済み在庫数"
 
   enums:
     admin:
