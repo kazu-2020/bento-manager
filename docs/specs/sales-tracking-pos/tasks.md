@@ -157,27 +157,27 @@
 
 ### Phase 6: Sales Domain - Core Models
 
-- [ ] 7. Sale（販売記録）ドメイン実装
-- [ ] 7.1 Sale モデル作成（Location, Employee 依存）
+- [x] 7. Sale（販売記録）ドメイン実装
+- [x] 7.1 Sale モデル作成（Location, Employee 依存）
   - Sale テーブルマイグレーション（id, location_id, sale_datetime, customer_type, total_amount, final_amount, employee_id, status, voided_at, voided_by_employee_id, void_reason, corrected_from_sale_id）
   - location_id, employee_id の外部キー制約
   - status enum（completed / voided）の実装
   - customer_type enum（staff / citizen）の実装
   - _Requirements: 3.3, 3.5, 15.1, 15.2, 15.8, 16.1_
 
-- [ ] 7.2 Sale バリデーション実装
+- [x] 7.2 Sale バリデーション実装
   - location_id, sale_datetime, customer_type の必須バリデーション
   - total_amount >= 0, final_amount >= 0 のバリデーション
   - status が voided の場合、voided_at, voided_by_employee_id, void_reason が必須
   - _Requirements: 3.3, 15.8_
 
-- [ ] 7.3 Sale インデックス作成
+- [x] 7.3 Sale インデックス作成
   - idx_sales_location_datetime（INDEX: location_id, sale_datetime）
   - idx_sales_datetime（INDEX: sale_datetime）
   - idx_sales_status（INDEX: status）
   - _Requirements: 3.3, 7.1, 15.1_
 
-- [ ] 7.4 Sale void メソッド実装
+- [x] 7.4 Sale void メソッド実装
   - void! メソッド（status を voided に変更、voided_at, voided_by_employee_id, void_reason を記録）
   - voided? メソッド
   - _Requirements: 15.1, 15.2, 15.8_

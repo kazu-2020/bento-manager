@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_07_121252) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_07_150000) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -130,6 +130,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_121252) do
     t.index ["status"], name: "index_locations_on_status"
   end
 
+  create_table "sales", force: :cascade do |t|
+    t.bigint "corrected_from_sale_id"
+    t.datetime "created_at", null: false
+    t.integer "customer_type", null: false
+    t.integer "employee_id"
+    t.integer "final_amount", null: false
+    t.integer "location_id", null: false
+    t.datetime "sale_datetime", null: false
+    t.integer "status", default: 0, null: false
+    t.integer "total_amount", null: false
+    t.datetime "updated_at", null: false
+    t.string "void_reason"
+    t.datetime "voided_at"
+    t.bigint "voided_by_employee_id"
+    t.index ["employee_id"], name: "index_sales_on_employee_id"
+    t.index ["location_id", "sale_datetime"], name: "idx_sales_location_datetime"
+    t.index ["location_id"], name: "index_sales_on_location_id"
+    t.index ["sale_datetime"], name: "idx_sales_datetime"
+    t.index ["status"], name: "idx_sales_status"
+  end
+
   add_foreign_key "catalog_discontinuations", "catalogs", on_delete: :restrict
   add_foreign_key "catalog_prices", "catalogs", on_delete: :restrict
   add_foreign_key "catalog_pricing_rules", "catalogs", column: "target_catalog_id", on_delete: :restrict
@@ -137,4 +158,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_121252) do
   add_foreign_key "daily_inventories", "locations", on_delete: :restrict
   add_foreign_key "employee_lockouts", "employees", column: "id"
   add_foreign_key "employee_login_failures", "employees", column: "id"
+  add_foreign_key "sales", "employees"
+  add_foreign_key "sales", "employees", column: "voided_by_employee_id"
+  add_foreign_key "sales", "locations"
+  add_foreign_key "sales", "sales", column: "corrected_from_sale_id"
 end
