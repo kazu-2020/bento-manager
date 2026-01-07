@@ -800,3 +800,61 @@ end
 - デメリット: なし（設計の明確化のみ）
 
 ---
+
+## Discovery Phase 6 - 2026-01-08（SaleItem リファクタリング）
+
+### 決定15: 在庫減算を SaleItem コールバックから Sales::Recorder PORO に移動
+
+**コンテキスト**: SaleItem の `after_create :decrement_inventory_stock` コールバックで DailyInventory を直接操作する設計には以下の懸念があった:
+1. **関係の遠さ**: SaleItem → Sale → Location ← DailyInventory（2ホップ）
+2. **高い結合度**: SaleItem が DailyInventory の検索条件を知っている
+3. **隠れた副作用**: コールバックは呼び出し側から見えにくい
+
+**検討した選択肢**:
+1. **案A: 現状維持（after_create コールバック）**
+   - 結合度: ❌ 高い（2ホップ先のモデルを操作）
+   - 副作用の可視性: ❌ 隠れている
+   - テスト容易性: ❌ SaleItem 作成に DailyInventory が必須
+   - 呼び出し忘れリスク: ✅ なし（自動実行）
+
+2. **案B: 呼び出し側（Sale モデル）で実行**
+   - 結合度: ⚠️ 中程度（Sale が DailyInventory を知る）
+   - 副作用の可視性: ✅ 明示的
+   - テスト容易性: ✅ SaleItem を単独でテスト可能
+   - 呼び出し忘れリスク: ❌ あり
+
+3. **案C: PORO（Sales::Recorder）で表現**
+   - 結合度: ✅ 低い（責務が分離）
+   - 副作用の可視性: ✅ 明示的
+   - テスト容易性: ✅ 各モデルを単独でテスト可能
+   - 呼び出し忘れリスク: ❌ あり（PORO 経由でない場合）
+   - プロジェクト方針: ✅ PORO 方針に準拠
+
+**選択したアプローチ**: 案C（PORO: Sales::Recorder）
+
+**理由**:
+- `Sales::PriceCalculator` が既に設計されており、PORO パターンはプロジェクトで採用済み
+- 販売処理は「Sale + SaleItem 作成 + 在庫減算」という複合ロジックであり、PORO で集約するのが自然
+- SaleItem が純粋なデータモデルになり、テストが容易
+- プロジェクト方針（`docs/steering/structure.md`）に準拠:
+  - Fat Models, Skinny Controllers
+  - **Service オブジェクトは絶対作成しない**
+  - モデルを跨ぐ複雑な処理は `app/models` に PORO クラスを使用
+
+**トレードオフ**:
+- メリット: 責務分離、テスト容易性、副作用の可視性、プロジェクト方針準拠
+- デメリット: コード量増加、PORO 経由でない場合の呼び出し忘れリスク
+
+**実装詳細**:
+- `app/models/sales/recorder.rb` を新規作成
+- SaleItem から `after_create :decrement_inventory_stock` を削除
+- 在庫減算テストを `test/models/sales/recorder_test.rb` に移動
+- SaleItem は純粋なデータモデルとしてテスト
+
+**影響範囲**:
+- `app/models/sale_item.rb` - コールバック削除
+- `app/models/sales/recorder.rb` - 新規作成
+- `test/models/sale_item_test.rb` - 在庫減算テスト削除
+- `test/models/sales/recorder_test.rb` - 新規作成
+
+---
