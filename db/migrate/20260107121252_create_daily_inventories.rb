@@ -1,7 +1,8 @@
 class CreateDailyInventories < ActiveRecord::Migration[8.1]
   def change
     create_table :daily_inventories, comment: "販売先ごとの日次在庫" do |t|
-      t.references :location, null: false, foreign_key: { on_delete: :restrict }, comment: "販売先"
+      # 複合インデックスに含まれるため index: false とする
+      t.references :location, null: false, foreign_key: { on_delete: :restrict }, index: false, comment: "販売先"
       t.references :catalog, null: false, foreign_key: { on_delete: :restrict }, comment: "商品"
       t.date :inventory_date, null: false, comment: "在庫日"
       t.integer :stock, null: false, default: 0, comment: "在庫数"
