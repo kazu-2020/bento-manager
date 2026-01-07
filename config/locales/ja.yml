@@ -9,6 +9,7 @@ ja:
       catalog_pricing_rule: "価格ルール"
       catalog_discontinuation: "提供終了記録"
       daily_inventory: "日次在庫"
+      sale: "販売"
     attributes:
       admin:
         email: "メールアドレス"
@@ -48,6 +49,18 @@ ja:
         inventory_date: "在庫日"
         stock: "在庫数"
         reserved_stock: "予約済み在庫数"
+      sale:
+        location: "販売先"
+        employee: "担当従業員"
+        voided_by_employee: "取消担当者"
+        corrected_from_sale: "訂正元販売"
+        sale_datetime: "販売日時"
+        customer_type: "顧客種別"
+        status: "ステータス"
+        total_amount: "合計金額"
+        final_amount: "最終金額"
+        voided_at: "取消日時"
+        void_reason: "取消理由"
 
   enums:
     admin:
@@ -79,6 +92,13 @@ ja:
       trigger_category:
         bento: "弁当"
         side_menu: "サイドメニュー"
+    sale:
+      status:
+        completed: "完了"
+        voided: "取消"
+      customer_type:
+        staff: "職員"
+        citizen: "市民"
 
   custom_errors:
     controllers:
