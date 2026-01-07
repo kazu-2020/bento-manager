@@ -70,6 +70,9 @@ end
 | daily_inventory_test.rb | `:locations, :catalogs, :daily_inventories` |
 | coupon_test.rb | `:coupons, :catalogs, :discounts` |
 | discount_test.rb | `:coupons, :catalogs, :discounts` |
+| sale_test.rb | `:locations, :employees, :sales` |
+| sale_item_test.rb | `:locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items` |
+| sales/recorder_test.rb | `:locations, :employees, :catalogs, :catalog_prices, :daily_inventories` |
 | admin_authentication_test.rb | `:admins` |
 | employee_authentication_test.rb | `:employees` |
 | error_handling_test.rb | `:admins, :employees` |
@@ -113,14 +116,90 @@ AAA パターン（Arrange-Act-Assert）に従う：
 test "在庫を減算できる" do
   # Arrange
   inventory = daily_inventories(:city_hall_bento_a_today)
-  initial_stock = inventory.stock
 
-  # Act
+  # Act & Assert
+  assert_difference -> { inventory.reload.stock }, -3 do
+    inventory.decrement_stock!(3)
+  end
+end
+```
+
+## State Change Assertions
+
+DB のレコード数や属性値の増減を検証する場合、一時変数を使わず Rails テストヘルパーを利用する。
+
+### assert_difference（レコード数・数値の増減）
+
+```ruby
+# Good: レコード数の増加
+assert_difference "Sale.count" do
+  create_sale
+end
+
+# Good: 複数レコードの同時検証
+assert_no_difference [ "Sale.count", "SaleItem.count" ] do
+  invalid_operation
+end
+
+# Good: 数値の増減（ラムダ使用）
+assert_difference -> { inventory.reload.stock }, -3 do
   inventory.decrement_stock!(3)
-  inventory.reload
+end
 
-  # Assert
-  assert_equal initial_stock - 3, inventory.stock
+# Bad: 一時変数を使用
+initial_count = Sale.count
+create_sale
+assert_equal initial_count + 1, Sale.count
+```
+
+参考: [assert_difference API](https://api.rubyonrails.org/v8.1/classes/ActiveSupport/Testing/Assertions.html#method-i-assert_difference)
+
+### assert_changes（属性値の変化）
+
+```ruby
+# Good: from/to で具体値を指定
+assert_changes -> { inventory.reload.stock }, from: 10, to: 8 do
+  inventory.decrement_stock!(2)
+end
+
+# Good: 変化しないことを検証（ロールバック確認）
+assert_no_changes -> { inventory.reload.stock } do
+  assert_raises ActiveRecord::RecordNotFound do
+    recorder.record(invalid_params)
+  end
+end
+
+# Bad: 一時変数を使用
+initial_stock = inventory.stock
+inventory.decrement_stock!(2)
+inventory.reload
+assert_equal initial_stock - 2, inventory.stock
+```
+
+参考: [assert_changes API](https://api.rubyonrails.org/v8.1/classes/ActiveSupport/Testing/Assertions.html#method-i-assert_changes)
+
+### 使い分け
+
+| ヘルパー | 用途 | 例 |
+|---------|------|-----|
+| `assert_difference` | レコード数や数値の増減 | `Sale.count`, `inventory.stock` |
+| `assert_no_difference` | 変化しないことを検証 | ロールバック、バリデーション失敗 |
+| `assert_changes` | 任意の属性値の変化（from/to 指定） | `user.status`, `order.state` |
+| `assert_no_changes` | 属性値が変化しないこと | トランザクションロールバック |
+
+### ネストによる複合検証
+
+```ruby
+test "トランザクションでロールバックされる" do
+  inventory = daily_inventories(:city_hall_bento_a_today)
+
+  assert_no_difference [ "Sale.count", "SaleItem.count" ] do
+    assert_no_changes -> { inventory.reload.stock } do
+      assert_raises ActiveRecord::RecordNotFound do
+        @recorder.record(@sale_params, invalid_items)
+      end
+    end
+  end
 end
 ```
 
