@@ -1,0 +1,20 @@
+# SaleItem fixtures for testing
+# Note: Fixtures are loaded directly into DB without triggering callbacks
+
+completed_sale_bento_a:
+  sale: completed_sale
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 1
+  unit_price: 550
+  line_total: 550
+  sold_at: <%= Time.current %>
+
+voided_sale_bento_a:
+  sale: voided_sale
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 2
+  unit_price: 550
+  line_total: 1100
+  sold_at: <%= 1.hour.ago %>
