@@ -86,7 +86,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_121252) do
     t.datetime "updated_at", null: false
     t.index ["catalog_id"], name: "index_daily_inventories_on_catalog_id"
     t.index ["location_id", "catalog_id", "inventory_date"], name: "idx_daily_inventories_location_catalog_date", unique: true
-    t.index ["location_id"], name: "idx_daily_inventories_location"
     t.index ["location_id"], name: "index_daily_inventories_on_location_id"
   end
 

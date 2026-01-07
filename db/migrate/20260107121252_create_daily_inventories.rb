@@ -13,6 +13,5 @@ class CreateDailyInventories < ActiveRecord::Migration[8.1]
     # Task 6.3: インデックス作成
     add_index :daily_inventories, [ :location_id, :catalog_id, :inventory_date ],
               unique: true, name: "idx_daily_inventories_location_catalog_date"
-    add_index :daily_inventories, :location_id, name: "idx_daily_inventories_location"
   end
 end
