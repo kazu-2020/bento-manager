@@ -30,7 +30,12 @@ class Sale < ApplicationRecord
   # 販売を取り消す
   # @param reason [String] 取消理由
   # @param voided_by [Employee] 取消担当者
-  # @raise [AlreadyVoidedError] 既に取り消されている場合
+  ##
+  # Mark the sale as voided, recording the void reason and the employee who performed the void.
+  # @param [String] reason - The reason for voiding the sale.
+  # @param [Employee] voided_by - The employee who voided the sale.
+  # @return [Boolean] `true` if the record was updated.
+  # @raise [AlreadyVoidedError] if the sale is already voided.
   def void!(reason:, voided_by:)
     raise AlreadyVoidedError, "この販売は既に取り消されています" if voided?
 
