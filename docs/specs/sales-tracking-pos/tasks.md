@@ -4,9 +4,9 @@
 
 **Feature Name**: 販売記録・追加発注・データ分析システム（POS + Analytics）
 **Language**: ja
-**Phase**: tasks-generated
+**Phase**: tasks-approved
 **Generated**: 2026-01-04
-**Updated**: 2026-01-05
+**Updated**: 2026-01-07
 
 ---
 
@@ -241,9 +241,10 @@
 
 - [ ] 10.3 割引適用ロジック実装
   - apply_discounts メソッド（Discount#applicable? を判定）
-  - クーポン枚数の計算（弁当数 × max_per_bento_quantity）
+  - クーポン枚数の計算（弁当の合計個数（quantity の合計）× max_per_bento_quantity）
+  - 例: 日替わりA 3個 + 日替わりB 2個 = 弁当5個 → クーポン最大5枚適用可能
   - 複数割引の合算
-  - _Requirements: 13.4, 13.5, 13.6, 13.7_
+  - _Requirements: 13.2, 13.4, 13.5, 13.6, 13.7, 13.8_
 
 - [ ] 10.4 calculate メソッド実装
   - Step 1: 価格ルール適用（CatalogPricingRule）

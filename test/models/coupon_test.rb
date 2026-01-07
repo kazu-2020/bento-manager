@@ -95,7 +95,7 @@ class CouponTest < ActiveSupport::TestCase
 
   # ===== ビジネスロジック: max_applicable_quantity テスト =====
 
-  test "max_applicable_quantity は弁当の種類数 × max_per_bento_quantity を返す" do
+  test "max_applicable_quantity は弁当の合計個数 × max_per_bento_quantity を返す" do
     coupon = coupons(:fifty_yen_coupon)  # max_per_bento_quantity: 1
     bento_a = catalogs(:daily_bento_a)
     bento_b = catalogs(:daily_bento_b)
@@ -105,9 +105,9 @@ class CouponTest < ActiveSupport::TestCase
       { catalog: bento_b, quantity: 1 }
     ]
 
-    # design.md に従い、sale_items.count で弁当の「種類数」をカウント
-    # 弁当の種類数（2種類）× max_per_bento_quantity(1) = 2
-    assert_equal 2, coupon.max_applicable_quantity(sale_items)
+    # Requirement 13.2, 13.8: 弁当の種類数ではなく、個数ベースでカウント
+    # 弁当の合計個数（2 + 1 = 3個）× max_per_bento_quantity(1) = 3
+    assert_equal 3, coupon.max_applicable_quantity(sale_items)
   end
 
   test "max_applicable_quantity は弁当がない場合 0 を返す" do
@@ -131,8 +131,9 @@ class CouponTest < ActiveSupport::TestCase
       { catalog: bento, quantity: 2 }
     ]
 
-    # design.md に従い、弁当の「種類数」（1種類）× max_per_bento_quantity(1) = 1枚 × 50円 = 50円
-    assert_equal 50, coupon.calculate_discount(sale_items)
+    # Requirement 13.2, 13.8: 弁当の個数ベースでカウント
+    # 弁当2個 × max_per_bento_quantity(1) = 2枚 × 50円 = 100円
+    assert_equal 100, coupon.calculate_discount(sale_items)
   end
 
   test "calculate_discount は弁当がない場合 0 を返す" do

@@ -13,14 +13,15 @@ class Coupon < ApplicationRecord
   # @param sale_items [Array<Hash>] 販売明細 [{ catalog: Catalog, quantity: Integer }, ...]
   # @return [Boolean] 弁当が含まれている場合 true
   def applicable?(sale_items)
-    bento_count(sale_items) > 0
+    bento_quantity(sale_items) > 0
   end
 
   # 最大適用可能枚数を計算
+  # Requirement 13.2, 13.8: 弁当の種類数ではなく、個数ベースでカウント
   # @param sale_items [Array<Hash>] 販売明細
-  # @return [Integer] 弁当の種類数 × max_per_bento_quantity
+  # @return [Integer] 弁当の合計個数 × max_per_bento_quantity
   def max_applicable_quantity(sale_items)
-    bento_count(sale_items) * max_per_bento_quantity
+    bento_quantity(sale_items) * max_per_bento_quantity
   end
 
   # 割引額を計算
@@ -32,10 +33,12 @@ class Coupon < ApplicationRecord
 
   private
 
-  # 弁当の数をカウント（sale_items の中で category が bento のアイテム数）
-  # Note: design.md の実装例に従い、sale_items.count を使用（種類数をカウント）
-  # 将来的に quantity を考慮する場合は sum { |item| item[:quantity] } に変更
-  def bento_count(sale_items)
-    sale_items.count { |item| item[:catalog].category == "bento" }
+  # 弁当の合計個数をカウント
+  # Requirement 13.2, 13.8: 弁当の種類数ではなく、個数ベースでカウント
+  # 例: 日替わりA 3個 + 日替わりB 2個 = 5個
+  def bento_quantity(sale_items)
+    sale_items
+      .select { |item| item[:catalog].category == "bento" }
+      .sum { |item| item[:quantity] }
   end
 end

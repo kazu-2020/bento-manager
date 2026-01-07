@@ -774,3 +774,29 @@ end
 - [rodauth-rails - Multiple configurations](https://github.com/janko/rodauth-rails?tab=readme-ov-file#multiple-configurations)
 
 ---
+
+## Discovery Phase 5 - 2026-01-07（Requirement 13 明確化）
+
+### 決定14: クーポン適用条件の明確化（quantity ベース）
+
+**コンテキスト**: Requirement 13 の AC 2, 8 が更新され、クーポン適用条件が「ラインアイテム数」ではなく「弁当 quantity の合計」であることが明確化された。
+
+**変更内容**:
+- Coupon#applicable? と Coupon#max_applicable_quantity を quantity ベースに変更
+- `.count` → `.sum { |item| item[:quantity] }`
+
+**理由**:
+- 例: 日替わりA 3個 + 日替わりB 2個 = 弁当5個 → クーポン最大5枚適用可能
+- ラインアイテム数（2種類）ではなく、合計個数（5個）でカウントする
+- ビジネス要件として「弁当1個につき1枚」の意味が「購入した弁当の合計個数につき1枚」であることが明確化
+
+**影響範囲**:
+- Coupon モデルのメソッド
+- Sales::PriceCalculator の割引計算ロジック
+- 関連するテストケース
+
+**トレードオフ**:
+- メリット: ビジネス要件に正確に準拠、ユーザーにとって直感的
+- デメリット: なし（設計の明確化のみ）
+
+---

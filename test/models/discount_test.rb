@@ -175,8 +175,9 @@ class DiscountTest < ActiveSupport::TestCase
 
     sale_items = [ { catalog: bento, quantity: 2 } ]
 
-    # design.md に従い、弁当の「種類数」（1種類）× max_per_bento_quantity(1) = 1枚 × 50円 = 50円
-    assert_equal 50, discount.calculate_discount(sale_items)
+    # Requirement 13.2, 13.8: 弁当の個数ベースでカウント
+    # 弁当2個 × max_per_bento_quantity(1) = 2枚 × 50円 = 100円
+    assert_equal 100, discount.calculate_discount(sale_items)
   end
 
   test "calculate_discount は applicable? が false の場合 0 を返す" do
