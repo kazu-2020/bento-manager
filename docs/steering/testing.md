@@ -70,7 +70,7 @@ end
 | daily_inventory_test.rb | `:locations, :catalogs, :daily_inventories` |
 | coupon_test.rb | `:coupons, :catalogs, :discounts` |
 | discount_test.rb | `:coupons, :catalogs, :discounts` |
-| admin_authentication_test.rb | `:admins, :employees` |
+| admin_authentication_test.rb | `:admins` |
 | employee_authentication_test.rb | `:employees` |
 | error_handling_test.rb | `:admins, :employees` |
 | employees_controller_test.rb | `:admins, :employees` |
