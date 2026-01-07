@@ -1,0 +1,3 @@
+# CatalogDiscontinuation fixtures for testing
+# Note: This fixture is intentionally empty to avoid conflicts with uniqueness tests
+# Tests will create their own discontinuation records as needed

@@ -1,0 +1,30 @@
+# CatalogPrice fixtures for testing
+# kind enum: regular: 0, bundle: 1
+
+daily_bento_a_regular:
+  catalog: daily_bento_a
+  kind: 0
+  price: 550
+  effective_from: <%= 1.month.ago.to_fs(:db) %>
+  effective_until:
+
+daily_bento_b_regular:
+  catalog: daily_bento_b
+  kind: 0
+  price: 500
+  effective_from: <%= 1.month.ago.to_fs(:db) %>
+  effective_until:
+
+salad_regular:
+  catalog: salad
+  kind: 0
+  price: 250
+  effective_from: <%= 1.month.ago.to_fs(:db) %>
+  effective_until:
+
+salad_bundle:
+  catalog: salad
+  kind: 1
+  price: 150
+  effective_from: <%= 1.month.ago.to_fs(:db) %>
+  effective_until:
