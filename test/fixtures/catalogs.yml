@@ -20,3 +20,8 @@ discontinued_bento:
   name: "販売終了弁当"
   category: 0
   description: "提供終了した弁当"
+
+miso_soup:
+  name: "味噌汁"
+  category: 1
+  description: "日替わり味噌汁"

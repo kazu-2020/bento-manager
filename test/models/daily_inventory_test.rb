@@ -59,13 +59,11 @@ class DailyInventoryTest < ActiveSupport::TestCase
     existing = daily_inventories(:city_hall_bento_a_today)
     new_inventory = DailyInventory.new(
       location: existing.location,
-      catalog: catalogs(:salad),
+      catalog: catalogs(:miso_soup),
       inventory_date: existing.inventory_date,
       stock: 5,
       reserved_stock: 0
     )
-    # salad も city_hall_salad_today として存在するので、別の日付を使う
-    new_inventory.inventory_date = existing.inventory_date + 1.day
     assert new_inventory.valid?
   end
 
