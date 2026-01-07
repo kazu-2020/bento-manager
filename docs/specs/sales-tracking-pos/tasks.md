@@ -130,26 +130,26 @@
 
 ### Phase 5: Inventory Domain
 
-- [ ] 6. DailyInventory（日次在庫）ドメイン実装
-- [ ] 6.1 DailyInventory モデル作成（Location, Catalog 依存）
+- [x] 6. DailyInventory（日次在庫）ドメイン実装
+- [x] 6.1 DailyInventory モデル作成（Location, Catalog 依存）
   - DailyInventory テーブルマイグレーション（id, location_id, catalog_id, inventory_date, stock, reserved_stock, lock_version）
   - location_id, catalog_id の外部キー制約
   - (location_id, catalog_id, inventory_date) のユニーク制約
   - optimistic locking（lock_version）の設定
   - _Requirements: 2.1, 2.2, 2.4, 12.1, 12.2, 16.1_
 
-- [ ] 6.2 DailyInventory バリデーション実装
+- [x] 6.2 DailyInventory バリデーション実装
   - stock >= 0, reserved_stock >= 0 のバリデーション
   - available_stock = stock - reserved_stock >= 0 の検証
   - location_id, catalog_id, inventory_date の必須バリデーション
   - _Requirements: 2.4, 12.4_
 
-- [ ] 6.3 DailyInventory インデックス作成
+- [x] 6.3 DailyInventory インデックス作成
   - idx_daily_inventories_location_catalog_date（UNIQUE: location_id, catalog_id, inventory_date）
   - idx_daily_inventories_location（INDEX: location_id）
   - _Requirements: 2.2, 2.6_
 
-- [ ] 6.4 DailyInventory 在庫操作メソッド実装
+- [x] 6.4 DailyInventory 在庫操作メソッド実装
   - decrement_stock メソッド（販売時の在庫減算）
   - increment_stock メソッド（返品時の在庫復元）
   - トランザクション管理

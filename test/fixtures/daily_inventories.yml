@@ -1,0 +1,30 @@
+# DailyInventory fixtures for testing
+# location_id, catalog_id, inventory_date の組み合わせがユニーク
+
+city_hall_bento_a_today:
+  location: city_hall
+  catalog: daily_bento_a
+  inventory_date: <%= Date.current %>
+  stock: 10
+  reserved_stock: 0
+
+city_hall_bento_b_today:
+  location: city_hall
+  catalog: daily_bento_b
+  inventory_date: <%= Date.current %>
+  stock: 5
+  reserved_stock: 2
+
+prefectural_office_bento_a_today:
+  location: prefectural_office
+  catalog: daily_bento_a
+  inventory_date: <%= Date.current %>
+  stock: 8
+  reserved_stock: 0
+
+city_hall_salad_today:
+  location: city_hall
+  catalog: salad
+  inventory_date: <%= Date.current %>
+  stock: 15
+  reserved_stock: 0

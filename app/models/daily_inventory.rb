@@ -1,0 +1,76 @@
+class DailyInventory < ApplicationRecord
+  # ===== カスタム例外 =====
+  class InsufficientStockError < StandardError; end
+
+  # ===== アソシエーション =====
+  belongs_to :location
+  belongs_to :catalog
+
+  # ===== バリデーション =====
+  validates :inventory_date, presence: true
+  validates :stock, presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :reserved_stock, presence: true, numericality: { greater_than_or_equal_to: 0 }
+
+  # Task 6.3: ユニーク制約（location_id, catalog_id, inventory_date）
+  validates :inventory_date, uniqueness: {
+    scope: [:location_id, :catalog_id],
+    message: "同じ販売先・商品・日付の組み合わせは既に存在します"
+  }
+
+  # カスタムバリデーション
+  validate :available_stock_must_be_non_negative
+
+  # ===== ビジネスロジック =====
+
+  # 利用可能在庫数を計算
+  def available_stock
+    stock - reserved_stock
+  end
+
+  # Task 6.4: 在庫減算（販売時）
+  # @param quantity [Integer] 減算する数量（正の整数）
+  # @raise [ArgumentError] 数量が正の整数でない場合
+  # @raise [InsufficientStockError] 在庫不足の場合
+  def decrement_stock!(quantity)
+    validate_positive_quantity!(quantity)
+
+    with_lock do
+      if stock < quantity
+        raise InsufficientStockError, "在庫が不足しています（現在: #{stock}, 必要: #{quantity}）"
+      end
+
+      self.stock -= quantity
+      save!
+    end
+  end
+
+  # Task 6.4: 在庫加算（返品時、追加発注時）
+  # @param quantity [Integer] 加算する数量（正の整数）
+  # @raise [ArgumentError] 数量が正の整数でない場合
+  def increment_stock!(quantity)
+    validate_positive_quantity!(quantity)
+
+    with_lock do
+      self.stock += quantity
+      save!
+    end
+  end
+
+  private
+
+  # 利用可能在庫数が0以上であることを検証
+  def available_stock_must_be_non_negative
+    return if stock.blank? || reserved_stock.blank?
+
+    if available_stock < 0
+      errors.add(:base, "利用可能在庫数（stock - reserved_stock）は0以上である必要があります")
+    end
+  end
+
+  # 数量が正の整数であることを検証
+  def validate_positive_quantity!(quantity)
+    unless quantity.is_a?(Integer) && quantity.positive?
+      raise ArgumentError, "数量は正の整数である必要があります"
+    end
+  end
+end
