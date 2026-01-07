@@ -83,7 +83,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_100437) do
     t.datetime "updated_at", null: false
     t.date "valid_from", null: false
     t.date "valid_until"
-    t.index ["discountable_type", "discountable_id"], name: "idx_discounts_discountable"
+    t.index ["discountable_type", "discountable_id"], name: "idx_discounts_discountable", unique: true
     t.index ["name"], name: "idx_discounts_name"
     t.index ["valid_from", "valid_until"], name: "idx_discounts_validity"
   end
