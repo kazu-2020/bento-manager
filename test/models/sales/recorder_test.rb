@@ -72,7 +72,6 @@ module Sales
 
     test "record decrements inventory stock" do
       inventory = daily_inventories(:city_hall_bento_a_today)
-      initial_stock = inventory.stock
 
       items_params = [
         {
@@ -84,17 +83,14 @@ module Sales
         }
       ]
 
-      @recorder.record(@sale_params, items_params)
-
-      inventory.reload
-      assert_equal initial_stock - 2, inventory.stock
+      assert_changes -> { inventory.reload.stock }, from: inventory.stock, to: inventory.stock - 2 do
+        @recorder.record(@sale_params, items_params)
+      end
     end
 
     test "record decrements inventory for multiple items" do
       inventory_a = daily_inventories(:city_hall_bento_a_today)
       inventory_salad = daily_inventories(:city_hall_salad_today)
-      initial_stock_a = inventory_a.stock
-      initial_stock_salad = inventory_salad.stock
 
       items_params = [
         {
@@ -113,12 +109,11 @@ module Sales
         }
       ]
 
-      @recorder.record(@sale_params, items_params)
-
-      inventory_a.reload
-      inventory_salad.reload
-      assert_equal initial_stock_a - 3, inventory_a.stock
-      assert_equal initial_stock_salad - 2, inventory_salad.stock
+      assert_difference -> { inventory_a.reload.stock }, -3 do
+        assert_difference -> { inventory_salad.reload.stock }, -2 do
+          @recorder.record(@sale_params, items_params)
+        end
+      end
     end
 
     # ===== エラーケーステスト =====
@@ -160,10 +155,7 @@ module Sales
     # ===== トランザクションテスト =====
 
     test "rolls back all changes when inventory decrement fails" do
-      initial_sale_count = Sale.count
-      initial_sale_item_count = SaleItem.count
       inventory = daily_inventories(:city_hall_bento_a_today)
-      initial_stock = inventory.stock
 
       items_params = [
         {
@@ -182,15 +174,13 @@ module Sales
         }
       ]
 
-      assert_raises ActiveRecord::RecordNotFound do
-        @recorder.record(@sale_params, items_params)
+      assert_no_difference [ "Sale.count", "SaleItem.count" ] do
+        assert_no_changes -> { inventory.reload.stock } do
+          assert_raises ActiveRecord::RecordNotFound do
+            @recorder.record(@sale_params, items_params)
+          end
+        end
       end
-
-      # ロールバックされていることを確認
-      assert_equal initial_sale_count, Sale.count
-      assert_equal initial_sale_item_count, SaleItem.count
-      inventory.reload
-      assert_equal initial_stock, inventory.stock
     end
   end
 end
