@@ -1,0 +1,18 @@
+# Coupon fixtures for testing
+# amount_per_unit: 1枚あたりの割引額（円）
+# max_per_bento_quantity: 弁当1個あたりの最大適用枚数
+
+fifty_yen_coupon:
+  description: "50円割引クーポン"
+  amount_per_unit: 50
+  max_per_bento_quantity: 1
+
+hundred_yen_coupon:
+  description: "100円割引クーポン"
+  amount_per_unit: 100
+  max_per_bento_quantity: 1
+
+double_coupon:
+  description: "ダブルクーポン（弁当1個につき2枚まで）"
+  amount_per_unit: 30
+  max_per_bento_quantity: 2
