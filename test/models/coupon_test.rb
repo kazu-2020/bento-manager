@@ -1,6 +1,8 @@
 require "test_helper"
 
 class CouponTest < ActiveSupport::TestCase
+  fixtures :coupons, :catalogs, :discounts
+
   # ===== バリデーションテスト =====
 
   test "description は必須" do

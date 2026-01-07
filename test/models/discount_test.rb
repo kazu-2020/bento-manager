@@ -1,6 +1,8 @@
 require "test_helper"
 
 class DiscountTest < ActiveSupport::TestCase
+  fixtures :coupons, :catalogs, :discounts
+
   # ===== バリデーションテスト =====
 
   test "name は必須" do

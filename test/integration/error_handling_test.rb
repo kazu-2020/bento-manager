@@ -1,6 +1,8 @@
 require "test_helper"
 
 class ErrorHandlingTest < ActionDispatch::IntegrationTest
+  fixtures :admins, :employees
+
   # RodauthControllerのrescue_from ActiveRecord::RecordNotFoundの動作を検証
   # テスト専用ルート（/admin/test-record-not-found, /employee/test-record-not-found）を使用
 

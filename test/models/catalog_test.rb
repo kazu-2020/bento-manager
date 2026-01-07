@@ -1,6 +1,8 @@
 require "test_helper"
 
 class CatalogTest < ActiveSupport::TestCase
+  fixtures :catalogs
+
   # ===== バリデーションテスト =====
 
   test "name は必須" do

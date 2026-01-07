@@ -1,6 +1,8 @@
 require "test_helper"
 
 class CatalogDiscontinuationTest < ActiveSupport::TestCase
+  fixtures :catalogs, :catalog_discontinuations
+
   # ===== バリデーションテスト =====
 
   test "catalog は必須" do

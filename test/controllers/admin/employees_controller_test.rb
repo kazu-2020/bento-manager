@@ -3,6 +3,8 @@
 require "test_helper"
 
 class Admin::EmployeesControllerTest < ActionDispatch::IntegrationTest
+  fixtures :admins, :employees
+
   setup do
     @admin = admins(:verified_admin)
     @employee = employees(:verified_employee)
