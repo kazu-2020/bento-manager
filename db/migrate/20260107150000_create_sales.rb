@@ -1,4 +1,10 @@
 class CreateSales < ActiveRecord::Migration[8.1]
+  ##
+  # Creates the `sales` table with its columns, constraints, foreign keys, and indexes.
+  # The migration defines columns for location, sale_datetime, customer_type, total and final amounts,
+  # optional employee association, status with default, voiding and correction audit fields, and timestamps.
+  # It also adds foreign keys for `voided_by_employee_id` (to `employees`) and `corrected_from_sale_id` (self-referential),
+  # and creates indexes on `(location_id, sale_datetime)`, `sale_datetime`, and `status`.
   def change
     create_table :sales, comment: "販売記録" do |t|
       t.references :location, null: false, foreign_key: true, comment: "販売先"
