@@ -13,7 +13,7 @@ class DailyInventory < ApplicationRecord
 
   # Task 6.3: ユニーク制約（location_id, catalog_id, inventory_date）
   validates :inventory_date, uniqueness: {
-    scope: [:location_id, :catalog_id],
+    scope: [ :location_id, :catalog_id ],
     message: "同じ販売先・商品・日付の組み合わせは既に存在します"
   }
 
