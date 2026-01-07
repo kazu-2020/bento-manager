@@ -96,56 +96,7 @@ class SaleItemTest < ActiveSupport::TestCase
     assert_equal 100, sale_item.line_total
   end
 
-  # ===== Task 8.4: 在庫減算テスト =====
-
-  test "decrement_inventory_stock reduces stock on create" do
-    sale = sales(:completed_sale)
-    inventory = daily_inventories(:city_hall_bento_a_today)
-    initial_stock = inventory.stock
-
-    sale_item = SaleItem.create!(
-      sale: sale,
-      catalog: catalogs(:daily_bento_a),
-      catalog_price: catalog_prices(:daily_bento_a_regular),
-      quantity: 2,
-      unit_price: 550,
-      sold_at: Time.current
-    )
-
-    inventory.reload
-    assert_equal initial_stock - 2, inventory.stock
-  end
-
-  test "raises InsufficientStockError when stock is insufficient" do
-    sale = sales(:completed_sale)
-    inventory = daily_inventories(:city_hall_bento_a_today)
-
-    assert_raises DailyInventory::InsufficientStockError do
-      SaleItem.create!(
-        sale: sale,
-        catalog: catalogs(:daily_bento_a),
-        catalog_price: catalog_prices(:daily_bento_a_regular),
-        quantity: inventory.stock + 100,
-        unit_price: 550,
-        sold_at: Time.current
-      )
-    end
-  end
-
-  test "raises ActiveRecord::RecordNotFound when inventory does not exist" do
-    sale = sales(:completed_sale)
-
-    assert_raises ActiveRecord::RecordNotFound do
-      SaleItem.create!(
-        sale: sale,
-        catalog: catalogs(:miso_soup),
-        catalog_price: catalog_prices(:daily_bento_a_regular),
-        quantity: 1,
-        unit_price: 100,
-        sold_at: Time.current
-      )
-    end
-  end
+  # Note: 在庫減算テストは Sales::RecorderTest に移動
 
   private
 
