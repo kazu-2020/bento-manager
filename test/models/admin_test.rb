@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AdminTest < ActiveSupport::TestCase
+  fixtures :admins
+
   test "should create admin with email and password" do
     admin = Admin.new(email: "new-admin@example.com", name: "テスト管理者")
     assert admin.valid?, "Admin should be valid with email and name"

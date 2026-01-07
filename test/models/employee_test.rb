@@ -1,6 +1,8 @@
 require "test_helper"
 
 class EmployeeTest < ActiveSupport::TestCase
+  fixtures :employees
+
   test "should create employee with email and name and password" do
     employee = Employee.new(email: "new-employee@example.com", name: "テスト従業員", password: "password")
     assert employee.valid?, "Employee should be valid with email, name, and password"

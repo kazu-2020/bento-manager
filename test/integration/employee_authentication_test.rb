@@ -1,6 +1,8 @@
 require "test_helper"
 
 class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
+  fixtures :employees
+
   test "employee can login successfully" do
     # Navigate to login page
     get "/employee/login"

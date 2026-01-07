@@ -1,6 +1,8 @@
 require "test_helper"
 
 class AdminAuthenticationTest < ActionDispatch::IntegrationTest
+  fixtures :admins
+
   test "admin can login successfully" do
     # Navigate to login page
     get "/admin/login"

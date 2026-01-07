@@ -1,6 +1,8 @@
 require "test_helper"
 
 class DailyInventoryTest < ActiveSupport::TestCase
+  fixtures :locations, :catalogs, :daily_inventories
+
   # =============================================================================
   # Task 6.1: モデル存在・アソシエーションテスト
   # =============================================================================
