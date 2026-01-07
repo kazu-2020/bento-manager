@@ -25,7 +25,7 @@ class Discount < ApplicationRecord
   # @param sale_items [Array<Hash>] 販売明細 [{ catalog: Catalog, quantity: Integer }, ...]
   # @return [Integer] 割引額（適用不可の場合は 0）
   def calculate_discount(sale_items = [])
-    return 0 unless discountable.applicable?(sale_items)
+    return 0 unless applicable?(sale_items)
 
     discountable.calculate_discount(sale_items)
   end
