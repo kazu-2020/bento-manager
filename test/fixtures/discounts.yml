@@ -1,0 +1,23 @@
+# Discount fixtures for testing
+# delegated_type pattern: discountable_type + discountable_id
+
+fifty_yen_discount:
+  discountable_type: "Coupon"
+  discountable_id: <%= ActiveRecord::FixtureSet.identify(:fifty_yen_coupon) %>
+  name: "50円割引クーポン"
+  valid_from: <%= 1.month.ago.to_date.to_fs(:db) %>
+  valid_until:
+
+hundred_yen_discount:
+  discountable_type: "Coupon"
+  discountable_id: <%= ActiveRecord::FixtureSet.identify(:hundred_yen_coupon) %>
+  name: "100円割引クーポン"
+  valid_from: <%= 1.month.ago.to_date.to_fs(:db) %>
+  valid_until: <%= 1.month.from_now.to_date.to_fs(:db) %>
+
+expired_discount:
+  discountable_type: "Coupon"
+  discountable_id: <%= ActiveRecord::FixtureSet.identify(:double_coupon) %>
+  name: "期限切れ割引"
+  valid_from: <%= 2.months.ago.to_date.to_fs(:db) %>
+  valid_until: <%= 1.day.ago.to_date.to_fs(:db) %>

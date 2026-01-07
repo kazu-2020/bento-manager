@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_06_100003) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_07_100437) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -65,6 +65,27 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_06_100003) do
     t.datetime "updated_at", null: false
     t.index ["category"], name: "index_catalogs_on_category"
     t.index ["name"], name: "idx_catalogs_name", unique: true
+  end
+
+  create_table "coupons", force: :cascade do |t|
+    t.integer "amount_per_unit", null: false
+    t.datetime "created_at", null: false
+    t.string "description", null: false
+    t.integer "max_per_bento_quantity", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "discounts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "discountable_id", null: false
+    t.string "discountable_type", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.date "valid_from", null: false
+    t.date "valid_until"
+    t.index ["discountable_type", "discountable_id"], name: "idx_discounts_discountable", unique: true
+    t.index ["name"], name: "idx_discounts_name"
+    t.index ["valid_from", "valid_until"], name: "idx_discounts_validity"
   end
 
   create_table "employee_lockouts", force: :cascade do |t|

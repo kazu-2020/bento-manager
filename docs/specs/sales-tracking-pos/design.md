@@ -742,13 +742,19 @@ class Coupon < ApplicationRecord
   validates :max_per_bento_quantity, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
   def applicable?(sale_items)
-    bento_count = sale_items.count { |item| item[:catalog].category == 'bento' }
-    bento_count > 0
+    bento_quantity = sale_items
+      .select { |item| item[:catalog].category == 'bento' }
+      .sum { |item| item[:quantity] }
+    bento_quantity > 0
   end
 
   def max_applicable_quantity(sale_items)
-    bento_count = sale_items.count { |item| item[:catalog].category == 'bento' }
-    bento_count * max_per_bento_quantity
+    # Requirement 13.2, 13.8: 弁当の種類ではなく、個数ベースでカウント
+    # 複数種類の弁当がある場合は各 quantity の合計
+    bento_quantity = sale_items
+      .select { |item| item[:catalog].category == 'bento' }
+      .sum { |item| item[:quantity] }
+    bento_quantity * max_per_bento_quantity
   end
 
   def calculate_discount(sale_items)
@@ -764,6 +770,8 @@ end
 - 例: 50円割引クーポン
   - amount_per_unit: 50
   - max_per_bento_quantity: 1（弁当1個につき1枚まで）
+- クーポン適用上限は弁当の種類ではなく、購入した弁当の合計個数（quantity の合計）でカウント
+  - 例: 日替わりA 3個 + 日替わりB 2個 = 弁当5個 → クーポン最大5枚適用可能
 
 ### Sales Domain
 
