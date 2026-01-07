@@ -11,8 +11,8 @@ class CreateDiscounts < ActiveRecord::Migration[8.1]
     end
 
     # Task 5.4: インデックス作成
-    add_index :discounts, [:discountable_type, :discountable_id], name: "idx_discounts_discountable"
+    add_index :discounts, [ :discountable_type, :discountable_id ], name: "idx_discounts_discountable"
     add_index :discounts, :name, name: "idx_discounts_name"
-    add_index :discounts, [:valid_from, :valid_until], name: "idx_discounts_validity"
+    add_index :discounts, [ :valid_from, :valid_until ], name: "idx_discounts_validity"
   end
 end

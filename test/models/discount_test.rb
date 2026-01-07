@@ -159,7 +159,7 @@ class DiscountTest < ActiveSupport::TestCase
     )
     bento = catalogs(:daily_bento_a)
 
-    sale_items = [{ catalog: bento, quantity: 1 }]
+    sale_items = [ { catalog: bento, quantity: 1 } ]
 
     assert discount.applicable?(sale_items)
   end
@@ -173,7 +173,7 @@ class DiscountTest < ActiveSupport::TestCase
     )
     bento = catalogs(:daily_bento_a)
 
-    sale_items = [{ catalog: bento, quantity: 2 }]
+    sale_items = [ { catalog: bento, quantity: 2 } ]
 
     # design.md に従い、弁当の「種類数」（1種類）× max_per_bento_quantity(1) = 1枚 × 50円 = 50円
     assert_equal 50, discount.calculate_discount(sale_items)
@@ -188,7 +188,7 @@ class DiscountTest < ActiveSupport::TestCase
     )
     salad = catalogs(:salad)
 
-    sale_items = [{ catalog: salad, quantity: 2 }]
+    sale_items = [ { catalog: salad, quantity: 2 } ]
 
     assert_equal 0, discount.calculate_discount(sale_items)
   end
