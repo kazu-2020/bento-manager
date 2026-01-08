@@ -51,17 +51,22 @@ class SaleDiscountTest < ActiveSupport::TestCase
     assert_includes sale_discount.errors[:discount_amount], "を入力してください"
   end
 
-  test "discount_amount must be greater than or equal to 0" do
+  test "discount_amount must be greater than 0" do
     sale_discount = build_valid_sale_discount
 
-    # 0 は有効
-    sale_discount.discount_amount = 0
+    # 1 以上は有効
+    sale_discount.discount_amount = 1
     assert sale_discount.valid?
+
+    # 0 は無効（割引が適用されるなら必ず 1 以上）
+    sale_discount.discount_amount = 0
+    assert_not sale_discount.valid?
+    assert_includes sale_discount.errors[:discount_amount], "は0より大きい値にしてください"
 
     # 負の値は無効
     sale_discount.discount_amount = -1
     assert_not sale_discount.valid?
-    assert_includes sale_discount.errors[:discount_amount], "は0以上の値にしてください"
+    assert_includes sale_discount.errors[:discount_amount], "は0より大きい値にしてください"
   end
 
   # ===== Task 9.2: ユニーク制約テスト（同じ割引の重複適用防止） =====
