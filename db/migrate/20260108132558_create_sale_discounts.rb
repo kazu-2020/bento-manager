@@ -1,4 +1,11 @@
 class CreateSaleDiscounts < ActiveRecord::Migration[8.1]
+  ##
+  # Creates the `sale_discounts` table with foreign keys, columns, timestamps, and a composite unique index.
+  # The table links sales to discounts and enforces:
+  # - a non-null `sale` reference with `on_delete: :cascade`,
+  # - a non-null `discount` reference with `on_delete: :restrict`,
+  # - a non-null integer `discount_amount`,
+  # and a unique index on `[sale_id, discount_id]` named `"idx_sale_discounts_unique"` to prevent applying the same discount to a sale more than once.
   def change
     create_table :sale_discounts do |t|
       # Task 9.1: 外部キー制約
