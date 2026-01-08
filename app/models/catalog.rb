@@ -1,9 +1,9 @@
 class Catalog < ApplicationRecord
   # ===== アソシエーション =====
   # 関連レコードが存在する場合は削除を禁止（DB レベルでも ON DELETE RESTRICT）
+  has_one  :discontinuation, class_name: "CatalogDiscontinuation", dependent: :restrict_with_error
   has_many :prices, class_name: "CatalogPrice", dependent: :restrict_with_error
   has_many :pricing_rules, class_name: "CatalogPricingRule", foreign_key: "target_catalog_id", dependent: :restrict_with_error
-  has_one :discontinuation, class_name: "CatalogDiscontinuation", dependent: :restrict_with_error
   has_many :daily_inventories, dependent: :restrict_with_error
   has_many :sale_items, dependent: :restrict_with_error
 
