@@ -182,26 +182,26 @@
   - voided? メソッド
   - _Requirements: 15.1, 15.2, 15.8_
 
-- [ ] 8. SaleItem（販売明細）モデル実装
-- [ ] 8.1 SaleItem モデル作成（Sale, Catalog, CatalogPrice 依存）
+- [x] 8. SaleItem（販売明細）モデル実装
+- [x] 8.1 SaleItem モデル作成（Sale, Catalog, CatalogPrice 依存）
   - SaleItem テーブルマイグレーション（id, sale_id, catalog_id, catalog_price_id, quantity, unit_price, line_total, sold_at）
   - sale_id, catalog_id, catalog_price_id の外部キー制約
   - _Requirements: 3.1, 3.2, 14.7_
 
-- [ ] 8.2 SaleItem バリデーション実装
+- [x] 8.2 SaleItem バリデーション実装
   - quantity > 0 のバリデーション
   - unit_price >= 0 のバリデーション
   - line_total = unit_price × quantity の整合性検証
   - _Requirements: 3.1, 3.2_
 
-- [ ] 8.3 SaleItem インデックス作成
+- [x] 8.3 SaleItem インデックス作成
   - idx_sale_items_sale_id（INDEX: sale_id）
   - idx_sale_items_catalog_id（INDEX: catalog_id）
   - idx_sale_items_catalog_price_id（INDEX: catalog_price_id）
   - idx_sale_items_sale_catalog（INDEX: sale_id, catalog_id）
   - _Requirements: 3.1_
 
-- [ ] 8.4 SaleItem after_create コールバック実装
+- [x] 8.4 SaleItem after_create コールバック実装
   - 在庫減算ロジック（DailyInventory#decrement_stock 呼び出し）
   - トランザクション内での在庫確認
   - 在庫不足時のエラーハンドリング

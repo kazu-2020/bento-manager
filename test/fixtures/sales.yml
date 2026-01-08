@@ -1,0 +1,33 @@
+# Sale fixtures for testing
+# status enum: completed: 0, voided: 1
+# customer_type enum: staff: 0, citizen: 1
+
+completed_sale:
+  location: city_hall
+  sale_datetime: <%= Time.current %>
+  customer_type: 0
+  total_amount: 550
+  final_amount: 500
+  employee: verified_employee
+  status: 0
+
+voided_sale:
+  location: city_hall
+  sale_datetime: <%= 1.hour.ago %>
+  customer_type: 1
+  total_amount: 1100
+  final_amount: 1000
+  employee: verified_employee
+  status: 1
+  voided_at: <%= Time.current %>
+  voided_by_employee: owner_employee
+  void_reason: "お客様都合による返品"
+
+prefectural_office_sale:
+  location: prefectural_office
+  sale_datetime: <%= Time.current %>
+  customer_type: 0
+  total_amount: 500
+  final_amount: 500
+  employee: owner_employee
+  status: 0

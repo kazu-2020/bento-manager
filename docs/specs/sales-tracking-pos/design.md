@@ -123,6 +123,7 @@ graph TB
             Sale
             SaleItem
             SaleDiscount
+            SalesRecorder[Sales::Recorder PORO]
             SalesPriceCalc[Sales::PriceCalculator PORO]
             SalesAnalysisCalc[Sales::AnalysisCalculator PORO]
             SalesOfflineSync[Sales::OfflineSynchronizer PORO]
@@ -154,7 +155,7 @@ graph TB
 ```
 
 **境界間の統合ポイント**:
-- POS画面 → SalesController → Sale + SaleItem + DailyInventory + Discount + CatalogPricingRule
+- POS画面 → SalesController → Sales::Recorder → Sale + SaleItem + DailyInventory（在庫減算）
 - 在庫確認 → Turbo Streams → DailyInventory
 - 返品処理 → SalesController#void → Sale void + DailyInventory 復元 + 再販売 + Refund 記録
 - 販売予測 → AdditionalOrdersController → Sales::AnalysisCalculator → Sale
@@ -200,6 +201,7 @@ sequenceDiagram
     participant U as 販売員
     participant UI as POS画面
     participant SC as SalesController
+    participant SR as Sales::Recorder
     participant PC as Sales::PriceCalculator
     participant S as Sale
     participant SI as SaleItem
@@ -222,18 +224,20 @@ sequenceDiagram
     UI->>U: 小計・割引額・合計を表示
     U->>UI: 会計ボタン押下
     UI->>SC: POST /sales (catalog_id, quantity, discount_ids)
-    SC->>SC: Transaction開始
-    SC->>S: create!
+    SC->>SR: record(sale_params, items_params)
+    SR->>SR: Transaction開始
+    SR->>S: create!
     loop 各販売明細
-        S->>SI: create SaleItem (catalog_id, catalog_price_id, quantity, unit_price, line_total, sold_at)
-        SI->>DI: decrement_stock!(quantity)
+        SR->>SI: create SaleItem (catalog_id, catalog_price_id, quantity, unit_price, line_total, sold_at)
+        SR->>DI: decrement_stock!(quantity)
         DI->>DI: stock -= quantity
         DI->>DI: save! (with optimistic locking)
     end
     loop 各割引
-        S->>D: create SaleDiscount (discount_id, discount_amount)
+        SR->>D: create SaleDiscount (discount_id, discount_amount)
     end
-    SC->>SC: Transaction commit
+    SR->>SR: Transaction commit
+    SR-->>SC: Sale
     SC->>TS: broadcast_inventory_update
     TS-->>UI: Turbo Stream更新
     SC-->>UI: 成功レスポンス
@@ -244,8 +248,8 @@ sequenceDiagram
 - **価格ルール適用**: CatalogPricingRule でセット価格適用条件を判定（弁当1個につきサラダ1個まで）
 - **価格確定**: CatalogPrice.kind (regular/bundle) から unit_price を取得し、SaleItem に保存
 - **割引適用**: Discount モデルの `applicable?` メソッドに委譲 (ポリモーフィズム)
-- **在庫減算**: SaleItem の after_create コールバックで自動実行（DailyInventory の stock から減算）
-- **SaleItem**: catalog_id, catalog_price_id, quantity, unit_price, line_total, sold_at を保持
+- **在庫減算**: Sales::Recorder PORO で明示的に実行（DailyInventory の stock から減算）
+- **SaleItem**: catalog_id, catalog_price_id, quantity, unit_price, line_total, sold_at を保持（純粋なデータモデル）
 - **楽観的ロック**: lock_version で競合検出し、StaleObjectError を rescue
 - **Turbo Streams**: リアルタイムに在庫数を全クライアントに配信
 
@@ -387,8 +391,9 @@ sequenceDiagram
 | SaleDiscount | Sales Domain | 販売・割引中間テーブル（監査トレイル、複数割引対応） | 3.1-3.7, 13.1-13.9 | Sale (P0), Discount (P0) | - |
 | DailyInventory | Inventory Domain | 販売先ごとの日次在庫管理（返品時に在庫復元） | 2.1-2.6, 3.1-3.8, 4.1-4.5, 15.1-15.12, 16.1-16.7 | Location (P0), Catalog (P0), Sale (P1) | Service, State |
 | Sale | Sales Domain | 販売記録（販売先ごと、void 対応、取消→再販売） | 3.1-3.8, 15.1-15.12, 16.1-16.7 | Location (P0), DailyInventory (P0), Discount (P1), SaleItem (P0) | API |
-| SaleItem | Sales Domain | 販売明細（単価確定、価格履歴管理） | 3.1-3.8, 14.1-14.8 | Sale (P0), Catalog (P0), CatalogPrice (P0) | Service |
+| SaleItem | Sales Domain | 販売明細（単価確定、価格履歴管理、純粋データモデル） | 3.1-3.8, 14.1-14.8 | Sale (P0), Catalog (P0), CatalogPrice (P0) | Service |
 | Refund | Refund Domain | 差額返金記録（元Sale - 新Sale） | 15.1-15.12 | Sale (P0) | API |
+| Sales::Recorder | Sales PORO | 販売記録と在庫減算の一括処理 | 3.1-3.8, 12.1-12.2 | Sale (P0), SaleItem (P0), DailyInventory (P0) | Service |
 | Sales::PriceCalculator | Sales PORO | 販売価格計算（価格ルール + 複数割引） | 3.1-3.8, 13.1-13.9, 14.1-14.8 | CatalogPricingRule (P0), Discount (P0) | Service |
 | Sales::AnalysisCalculator | Sales PORO | 販売予測・統計 | 6.1-6.5 | Sale (P0) | Service |
 | Reports::Generator | Reports PORO | レポート生成 | 7.1-7.5 | Sale (P0), DailyInventory (P0) | Service |
@@ -782,7 +787,7 @@ end
 - **販売時の確定単価を保持**（unit_price, line_total）
 - 販売時の価格 (catalog_price_id) を保持
 - 販売日時 (sold_at) を記録
-- 販売時に在庫を自動減算
+- **純粋なデータモデル**（在庫減算は Sales::Recorder PORO で実行）
 
 **Service Interface**:
 ```ruby
@@ -796,21 +801,13 @@ class SaleItem < ApplicationRecord
   validates :line_total, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :sold_at, presence: true
 
-  before_validation :calculate_line_total, if: :unit_price_changed?
-  after_create :decrement_inventory_stock
+  before_validation :calculate_line_total
 
   private
 
   def calculate_line_total
+    return unless unit_price.present? && quantity.present?
     self.line_total = unit_price * quantity
-  end
-
-  def decrement_inventory_stock
-    inventory = DailyInventory.find_by!(
-      catalog_id: catalog_id,
-      inventory_date: sold_at.to_date
-    )
-    inventory.decrement_stock!(quantity)
   end
 end
 ```
@@ -819,7 +816,7 @@ end
 - unit_price: 販売時に確定した単価（価格ルール適用後）
 - line_total: unit_price × quantity（R9 調査で Stored を採用）
 - catalog_price_id: 基準価格を参照（価格履歴管理）
-- 在庫減算は after_create で自動実行
+- **在庫減算は Sales::Recorder PORO で明示的に実行**（SaleItem はコールバックを持たない純粋データモデル）
 
 #### Sale
 
@@ -1049,6 +1046,70 @@ end
 
 ### Sales PORO
 
+#### Sales::Recorder
+
+| Field | Detail |
+|-------|--------|
+| Intent | 販売記録と在庫減算を一括で処理する PORO |
+| Requirements | 3.1-3.8, 12.1-12.2 |
+
+**Responsibilities**:
+- Sale と SaleItem の作成を一括で実行
+- 在庫減算（DailyInventory）を明示的に実行
+- トランザクション内で原子性を保証
+- 在庫不足時にエラーを発生させる
+
+**Dependencies**:
+- Sale (P0)
+- SaleItem (P0)
+- DailyInventory (P0)
+
+**Service Interface**:
+```ruby
+module Sales
+  class Recorder
+    # 販売を記録し、在庫を減算する
+    # @param sale_params [Hash] Sale の属性
+    # @param items_params [Array<Hash>] SaleItem の属性配列
+    # @return [Sale] 作成された Sale
+    # @raise [DailyInventory::InsufficientStockError] 在庫不足時
+    # @raise [ActiveRecord::RecordNotFound] 在庫レコード未存在時
+    def record(sale_params, items_params)
+      Sale.transaction do
+        sale = Sale.create!(sale_params)
+
+        items_params.each do |item_params|
+          sale_item = sale.sale_items.create!(item_params)
+          decrement_inventory(sale, sale_item)
+        end
+
+        sale
+      end
+    end
+
+    private
+
+    def decrement_inventory(sale, sale_item)
+      inventory = DailyInventory.find_by!(
+        location_id: sale.location_id,
+        catalog_id: sale_item.catalog_id,
+        inventory_date: sale_item.sold_at.to_date
+      )
+      inventory.decrement_stock!(sale_item.quantity)
+    end
+  end
+end
+```
+
+**Implementation Notes**:
+- SaleItem は純粋なデータモデル（コールバックなし）
+- 在庫減算は Sales::Recorder で明示的に実行
+- プロジェクト方針（PORO パターン）に準拠
+- 2ホップ先のモデル操作をコールバックから分離し、結合度を低減
+- テスト容易性向上（SaleItem を単独でテスト可能）
+
+---
+
 #### Sales::PriceCalculator
 
 **Service Interface**:
@@ -1140,7 +1201,7 @@ end
 - **Catalog Aggregate**: Catalog (root), CatalogPrice, CatalogPricingRule, CatalogDiscontinuation
 - **Discount Aggregate**: Discount (root), Coupon
 - **Inventory Aggregate**: DailyInventory (root)
-- **Sale Aggregate**: Sale (root), SaleItem (在庫減算は SaleItem の after_create で実行), SaleDiscount
+- **Sale Aggregate**: Sale (root), SaleItem, SaleDiscount（在庫減算は Sales::Recorder PORO で実行）
 - **Refund Aggregate**: Refund (root)
 
 **Business Rules & Invariants**:
@@ -1431,15 +1492,15 @@ erDiagram
 def create
   sale_params = params.require(:sale).permit(:customer_type, discount_ids: [], sale_items_attributes: [:catalog_id, :catalog_price_id, :quantity, :unit_price])
 
-  # 販売記録作成（Sale + SaleItem + SaleDiscount 作成、在庫減算は SaleItem の after_create で自動実行）
-  sale = Sale.create_with_items_and_discounts!(
+  # 販売記録作成（Sales::Recorder PORO で Sale + SaleItem 作成 + 在庫減算を一括実行）
+  recorder = Sales::Recorder.new
+  sale = recorder.record(
     {
       sale_datetime: Time.current,
       customer_type: sale_params[:customer_type],
       employee_id: current_employee&.id
     },
-    sale_params[:sale_items_attributes],
-    discount_ids: sale_params[:discount_ids]
+    sale_params[:sale_items_attributes]
   )
 
   redirect_to sales_path, notice: '販売記録を保存しました'
@@ -1506,14 +1567,15 @@ end
 - CatalogPricingRule.applicable?, max_applicable_quantity
 - Discount.applicable?, Discount.calculate_discount (Coupon)
 - DailyInventory.bulk_create_for_date, DailyInventory.available_count_for
-- SaleItem.calculate_line_total, SaleItem.decrement_inventory_stock
+- SaleItem.calculate_line_total（純粋なデータモデルとしてテスト）
 - Sale.void!, Sale.create_with_items_and_discounts!
+- Sales::Recorder.record（在庫減算、エラーケース、トランザクション）
 - Sales::PriceCalculator.calculate, apply_pricing_rules (価格ルール適用の各パターン)
 - Sales::AnalysisCalculator.calculate_sma (データ不足時の挙動含む)
 
 ### Integration Tests
 
-- 販売フロー: POS画面 → SalesController → Sale + SaleItem + DailyInventory 更新 + 価格ルール適用 + 割引適用 → Turbo Streams
+- 販売フロー: POS画面 → SalesController → Sales::Recorder → Sale + SaleItem + DailyInventory 更新 + 価格ルール適用 + 割引適用 → Turbo Streams
 - Void フロー: 取消 → 在庫復元 → 再販売 → Refund 記録 → Turbo Streams
 - オフライン同期フロー: LocalStorage保存 → /api/sales/sync → 競合検出 → エラー通知
 - 追加発注フロー: AdditionalOrdersController → DailyInventory 加算 → Turbo Streams

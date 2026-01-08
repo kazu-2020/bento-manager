@@ -8,6 +8,7 @@ class Sale < ApplicationRecord
   belongs_to :voided_by_employee, class_name: "Employee", optional: true
   belongs_to :corrected_from_sale, class_name: "Sale", optional: true
   has_one :correction_sale, class_name: "Sale", foreign_key: "corrected_from_sale_id"
+  has_many :sale_items, dependent: :destroy
 
   # ===== Enum =====
   enum :status, { completed: 0, voided: 1 }, validate: true

@@ -1,5 +1,6 @@
 class CatalogPrice < ApplicationRecord
   belongs_to :catalog
+  has_many :sale_items, dependent: :restrict_with_error
 
   enum :kind, { regular: 0, bundle: 1 }, validate: true
 

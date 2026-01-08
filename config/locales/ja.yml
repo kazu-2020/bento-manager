@@ -10,6 +10,7 @@ ja:
       catalog_discontinuation: "提供終了記録"
       daily_inventory: "日次在庫"
       sale: "販売"
+      sale_item: "販売明細"
     attributes:
       admin:
         email: "メールアドレス"
@@ -61,6 +62,14 @@ ja:
         final_amount: "最終金額"
         voided_at: "取消日時"
         void_reason: "取消理由"
+      sale_item:
+        sale: "販売"
+        catalog: "商品"
+        catalog_price: "価格"
+        quantity: "数量"
+        unit_price: "単価"
+        line_total: "小計"
+        sold_at: "販売日時"
 
   enums:
     admin:

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_07_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_07_232222) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -130,6 +130,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_150000) do
     t.index ["status"], name: "index_locations_on_status"
   end
 
+  create_table "sale_items", force: :cascade do |t|
+    t.integer "catalog_id", null: false
+    t.integer "catalog_price_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "line_total", null: false
+    t.integer "quantity", null: false
+    t.integer "sale_id", null: false
+    t.datetime "sold_at", null: false
+    t.integer "unit_price", null: false
+    t.datetime "updated_at", null: false
+    t.index ["catalog_id"], name: "index_sale_items_on_catalog_id"
+    t.index ["catalog_price_id"], name: "index_sale_items_on_catalog_price_id"
+    t.index ["sale_id", "catalog_id"], name: "idx_sale_items_sale_catalog"
+    t.index ["sale_id"], name: "index_sale_items_on_sale_id"
+  end
+
   create_table "sales", force: :cascade do |t|
     t.bigint "corrected_from_sale_id"
     t.datetime "created_at", null: false
@@ -158,6 +174,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_150000) do
   add_foreign_key "daily_inventories", "locations", on_delete: :restrict
   add_foreign_key "employee_lockouts", "employees", column: "id"
   add_foreign_key "employee_login_failures", "employees", column: "id"
+  add_foreign_key "sale_items", "catalog_prices", on_delete: :restrict
+  add_foreign_key "sale_items", "catalogs", on_delete: :restrict
+  add_foreign_key "sale_items", "sales", on_delete: :cascade
   add_foreign_key "sales", "employees"
   add_foreign_key "sales", "employees", column: "voided_by_employee_id"
   add_foreign_key "sales", "locations"
