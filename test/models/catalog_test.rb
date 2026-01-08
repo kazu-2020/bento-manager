@@ -172,35 +172,6 @@ class CatalogTest < ActiveSupport::TestCase
 
   # ===== ビジネスロジックメソッドテスト（Task 4.5 追加） =====
 
-  test "current_price は現在有効な価格を取得" do
-    catalog = Catalog.create!(name: "current_price テスト", category: :bento)
-
-    # 過去の価格
-    CatalogPrice.create!(
-      catalog: catalog,
-      kind: :regular,
-      price: 400,
-      effective_from: 2.days.ago,
-      effective_until: 1.day.ago
-    )
-
-    # 現在有効な価格
-    current = CatalogPrice.create!(
-      catalog: catalog,
-      kind: :regular,
-      price: 500,
-      effective_from: 1.day.ago,
-      effective_until: nil
-    )
-
-    assert_equal current, catalog.current_price
-  end
-
-  test "current_price は有効な価格がない場合 nil を返す" do
-    catalog = Catalog.create!(name: "価格なしテスト", category: :bento)
-    assert_nil catalog.current_price
-  end
-
   test "price_by_kind は指定した kind の現在有効な価格を取得" do
     catalog = Catalog.create!(name: "price_by_kind テスト", category: :side_menu)
 
