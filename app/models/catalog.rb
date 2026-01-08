@@ -5,6 +5,7 @@ class Catalog < ApplicationRecord
   has_many :pricing_rules, class_name: "CatalogPricingRule", foreign_key: "target_catalog_id", dependent: :restrict_with_error
   has_one :discontinuation, class_name: "CatalogDiscontinuation", dependent: :restrict_with_error
   has_many :daily_inventories, dependent: :restrict_with_error
+  has_many :sale_items, dependent: :restrict_with_error
 
   # ===== コールバック =====
   # 物理削除を禁止する
