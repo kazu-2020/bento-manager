@@ -16,7 +16,6 @@ class CatalogPricingRule < ApplicationRecord
         where(valid_until: nil).or(where(valid_until: Date.current..))
       )
   }
-  scope :for_target, ->(catalog_id) { where(target_catalog_id: catalog_id) }
   scope :triggered_by, ->(category) { where(trigger_category: category) }
 
   # カート内に trigger_category があるかどうかを判定

@@ -119,6 +119,46 @@ class CatalogTest < ActiveSupport::TestCase
     assert_includes catalog.pricing_rules, rule
   end
 
+  test "active_pricing_rules は現在有効なルールのみ取得" do
+    catalog = Catalog.create!(name: "active_pricing_rules テスト", category: :side_menu)
+
+    # 過去のルール（有効期限切れ）
+    past_rule = CatalogPricingRule.create!(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: :bento,
+      max_per_trigger: 1,
+      valid_from: 2.months.ago,
+      valid_until: 1.month.ago
+    )
+
+    # 現在有効なルール
+    current_rule = CatalogPricingRule.create!(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: :bento,
+      max_per_trigger: 1,
+      valid_from: 1.week.ago,
+      valid_until: nil
+    )
+
+    # 未来のルール（まだ有効でない）
+    future_rule = CatalogPricingRule.create!(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: :bento,
+      max_per_trigger: 1,
+      valid_from: 1.month.from_now,
+      valid_until: nil
+    )
+
+    active_rules = catalog.active_pricing_rules
+
+    assert_not_includes active_rules, past_rule, "期限切れのルールは含まれるべきでない"
+    assert_includes active_rules, current_rule, "現在有効なルールは含まれるべき"
+    assert_not_includes active_rules, future_rule, "未来のルールは含まれるべきでない"
+  end
+
   test "discontinuation との関連が正しく設定されている" do
     catalog = catalogs(:daily_bento_b)
     discontinuation = CatalogDiscontinuation.create!(

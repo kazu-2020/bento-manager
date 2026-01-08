@@ -4,6 +4,7 @@ class Catalog < ApplicationRecord
   has_one  :discontinuation, class_name: "CatalogDiscontinuation", dependent: :restrict_with_error
   has_many :prices, class_name: "CatalogPrice", dependent: :restrict_with_error
   has_many :pricing_rules, class_name: "CatalogPricingRule", foreign_key: "target_catalog_id", dependent: :restrict_with_error
+  has_many :active_pricing_rules, -> { CatalogPricingRule.active }, class_name: "CatalogPricingRule", foreign_key: "target_catalog_id"
   has_many :daily_inventories, dependent: :restrict_with_error
   has_many :sale_items, dependent: :restrict_with_error
 

@@ -47,7 +47,7 @@ module Sales
         catalog = item[:catalog]
 
         # 価格ルールを検索
-        pricing_rules = CatalogPricingRule.active.for_target(catalog.id)
+        pricing_rules = catalog.active_pricing_rules
 
         if pricing_rules.any? { |rule| rule.applicable?(cart_items) }
           # セット価格適用可能な場合
