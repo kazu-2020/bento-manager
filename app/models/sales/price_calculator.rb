@@ -24,7 +24,9 @@ module Sales
       # Step 3: 割引適用
       discount_result = apply_discounts(cart_items, discount_ids)
 
-      # Step 4: 最終金額計算（0 以下にならないようにする）
+      # Step 4: 最終金額計算
+      # NOTE: ビジネスルール上 final_total = 0 になるケースは発生しない想定だが、
+      #       防御的なセーフティネットとして 0 以下にならないようにしている
       final_total = [ subtotal - discount_result[:total_discount_amount], 0 ].max
 
       {
