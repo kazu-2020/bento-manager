@@ -140,12 +140,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_07_232222) do
     t.datetime "sold_at", null: false
     t.integer "unit_price", null: false
     t.datetime "updated_at", null: false
-    t.index ["catalog_id"], name: "idx_sale_items_catalog_id"
     t.index ["catalog_id"], name: "index_sale_items_on_catalog_id"
-    t.index ["catalog_price_id"], name: "idx_sale_items_catalog_price_id"
     t.index ["catalog_price_id"], name: "index_sale_items_on_catalog_price_id"
     t.index ["sale_id", "catalog_id"], name: "idx_sale_items_sale_catalog"
-    t.index ["sale_id"], name: "idx_sale_items_sale_id"
     t.index ["sale_id"], name: "index_sale_items_on_sale_id"
   end
 
