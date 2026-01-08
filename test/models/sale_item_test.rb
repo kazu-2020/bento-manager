@@ -55,14 +55,15 @@ class SaleItemTest < ActiveSupport::TestCase
     assert_includes sale_item.errors[:unit_price], "を入力してください"
   end
 
-  test "unit_price must be greater than or equal to 0" do
+  test "unit_price must be greater than 0" do
     sale_item = build_valid_sale_item
+    sale_item.unit_price = 0
+    assert_not sale_item.valid?
+    assert_includes sale_item.errors[:unit_price], "は0より大きい値にしてください"
+
     sale_item.unit_price = -1
     assert_not sale_item.valid?
-    assert_includes sale_item.errors[:unit_price], "は0以上の値にしてください"
-
-    sale_item.unit_price = 0
-    assert sale_item.valid?
+    assert_includes sale_item.errors[:unit_price], "は0より大きい値にしてください"
   end
 
   test "sold_at must be present" do
