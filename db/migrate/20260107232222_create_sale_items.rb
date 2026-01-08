@@ -1,4 +1,16 @@
 class CreateSaleItems < ActiveRecord::Migration[8.1]
+  ##
+  # Create the `sale_items` table with required columns, foreign key constraints, timestamps, and a composite index.
+  #
+  # The table includes:
+  # - `sale` reference (not null) with a foreign key that cascades on delete.
+  # - `catalog` reference (not null) with a foreign key that restricts on delete.
+  # - `catalog_price` reference (not null) with a foreign key that restricts on delete.
+  # - `quantity`, `unit_price`, and `line_total` as non-null integers.
+  # - `sold_at` as a non-null datetime.
+  # - automatic `created_at` and `updated_at` timestamps.
+  #
+  # Adds a composite index on [:sale_id, :catalog_id] named "idx_sale_items_sale_catalog".
   def change
     create_table :sale_items do |t|
       t.references :sale, null: false, foreign_key: { on_delete: :cascade }
