@@ -23,9 +23,9 @@ class SaleItemTest < ActiveSupport::TestCase
     assert_equal catalog_prices(:daily_bento_a_regular), sale_item.catalog_price
   end
 
-  test "sale has_many sale_items" do
+  test "sale has_many items" do
     sale = sales(:completed_sale)
-    assert_includes sale.sale_items, sale_items(:completed_sale_bento_a)
+    assert_includes sale.items, sale_items(:completed_sale_bento_a)
   end
 
   # ===== Task 8.2: バリデーションテスト =====

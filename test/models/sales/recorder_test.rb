@@ -35,11 +35,11 @@ module Sales
       assert_equal 550, sale.total_amount
     end
 
-    test "record creates sale_items" do
+    test "record creates items" do
       sale = @recorder.record(@sale_params, @items_params)
 
-      assert_equal 1, sale.sale_items.count
-      sale_item = sale.sale_items.first
+      assert_equal 1, sale.items.count
+      sale_item = sale.items.first
       assert_equal catalogs(:daily_bento_a), sale_item.catalog
       assert_equal 1, sale_item.quantity
       assert_equal 550, sale_item.unit_price
@@ -65,7 +65,7 @@ module Sales
 
       sale = @recorder.record(@sale_params, items_params)
 
-      assert_equal 2, sale.sale_items.count
+      assert_equal 2, sale.items.count
     end
 
     # ===== 在庫減算テスト =====

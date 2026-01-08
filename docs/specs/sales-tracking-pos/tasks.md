@@ -207,20 +207,20 @@
   - 在庫不足時のエラーハンドリング
   - _Requirements: 3.4, 3.7_
 
-- [ ] 9. SaleDiscount（販売・割引中間テーブル）モデル実装
-- [ ] 9.1 (P) SaleDiscount モデル作成
+- [x] 9. SaleDiscount（販売・割引中間テーブル）モデル実装
+- [x] 9.1 (P) SaleDiscount モデル作成
   - SaleDiscount テーブルマイグレーション（id, sale_id, discount_id, discount_amount）
   - sale_id, discount_id の外部キー制約
   - (sale_id, discount_id) のユニーク制約
   - _Requirements: 13.8, 13.9_
 
-- [ ] 9.2 (P) SaleDiscount バリデーション実装
+- [x] 9.2 (P) SaleDiscount バリデーション実装
   - sale_id, discount_id, discount_amount の必須バリデーション
   - discount_amount >= 0 のバリデーション
   - 同じ割引の重複適用防止
   - _Requirements: 13.8_
 
-- [ ] 9.3 (P) SaleDiscount インデックス作成
+- [x] 9.3 (P) SaleDiscount インデックス作成
   - idx_sale_discounts_unique（UNIQUE: sale_id, discount_id）
   - _Requirements: 13.8_
 

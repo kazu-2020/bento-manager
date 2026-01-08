@@ -997,7 +997,7 @@ class SaleDiscount < ApplicationRecord
   belongs_to :sale
   belongs_to :discount
 
-  validates :discount_amount, presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :discount_amount, presence: true, numericality: { greater_than: 0 }
   validates :discount_id, uniqueness: { scope: :sale_id, message: "同じ割引を複数回適用できません" }
 end
 ```

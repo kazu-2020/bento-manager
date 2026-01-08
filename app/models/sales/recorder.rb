@@ -18,7 +18,7 @@ module Sales
         sale = Sale.create!(sale_params)
 
         items_params.each do |item_params|
-          sale_item = sale.sale_items.create!(item_params)
+          sale_item = sale.items.create!(item_params)
           decrement_inventory(sale, sale_item)
         end
 
