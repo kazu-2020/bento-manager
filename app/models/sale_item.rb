@@ -7,6 +7,10 @@ class SaleItem < ApplicationRecord
   belongs_to :catalog
   belongs_to :catalog_price
 
+  # ===== 属性保護 =====
+  # line_total は自動計算値のため、作成後の手動変更を防止
+  attr_readonly :line_total
+
   # ===== バリデーション (Task 8.2) =====
   validates :quantity, presence: true, numericality: { greater_than: 0 }
   validates :unit_price, presence: true, numericality: { greater_than: 0 }
