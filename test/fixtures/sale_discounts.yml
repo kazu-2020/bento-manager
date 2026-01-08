@@ -1,0 +1,12 @@
+# SaleDiscount fixtures for testing
+# 販売・割引の中間テーブル
+
+completed_sale_fifty_yen:
+  sale: completed_sale
+  discount: fifty_yen_discount
+  discount_amount: 50
+
+prefectural_sale_hundred_yen:
+  sale: prefectural_office_sale
+  discount: hundred_yen_discount
+  discount_amount: 100
