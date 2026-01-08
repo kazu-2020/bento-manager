@@ -226,27 +226,27 @@
 
 ### Phase 7: Sales Domain - Price Calculator
 
-- [ ] 10. Sales::PriceCalculator（価格計算 PORO）実装
-- [ ] 10.1 Sales::PriceCalculator クラス作成（Catalog, CatalogPrice, CatalogPricingRule, Discount 依存）
+- [x] 10. Sales::PriceCalculator（価格計算 PORO）実装
+- [x] 10.1 Sales::PriceCalculator クラス作成（Catalog, CatalogPrice, CatalogPricingRule, Discount 依存）
   - app/models/sales ディレクトリ作成
   - PriceCalculator クラスの基本構造
   - initialize メソッド（cart_items, discount_ids を受け取る）
   - _Requirements: 3.1, 3.2, 13.1, 14.1_
 
-- [ ] 10.2 価格ルール適用ロジック実装
+- [x] 10.2 価格ルール適用ロジック実装
   - apply_pricing_rules メソッド（CatalogPricingRule#applicable? を判定）
   - セット価格適用条件の判定（弁当1個につきサラダ1個まで）
   - 単品価格とセット価格の使い分け
   - _Requirements: 14.3, 14.4, 14.5, 14.6_
 
-- [ ] 10.3 割引適用ロジック実装
+- [x] 10.3 割引適用ロジック実装
   - apply_discounts メソッド（Discount#applicable? を判定）
   - クーポン枚数の計算（弁当の合計個数（quantity の合計）× max_per_bento_quantity）
   - 例: 日替わりA 3個 + 日替わりB 2個 = 弁当5個 → クーポン最大5枚適用可能
   - 複数割引の合算
   - _Requirements: 13.2, 13.4, 13.5, 13.6, 13.7, 13.8_
 
-- [ ] 10.4 calculate メソッド実装
+- [x] 10.4 calculate メソッド実装
   - Step 1: 価格ルール適用（CatalogPricingRule）
   - Step 2: 小計計算（unit_price × quantity）
   - Step 3: 割引適用（Discount#calculate_discount）
