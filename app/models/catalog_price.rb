@@ -17,12 +17,12 @@ class CatalogPrice < ApplicationRecord
   }
   scope :by_kind, ->(kind) { where(kind: kind) }
 
-  def self.current_price_by_kind(catalog_id, kind)
+  def self.current_price_by_kind!(catalog_id, kind)
     where(catalog_id: catalog_id)
       .by_kind(kind)
       .current
       .order(effective_from: :desc)
-      .first
+      .first!
   end
 
   private

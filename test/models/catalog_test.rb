@@ -201,6 +201,36 @@ class CatalogTest < ActiveSupport::TestCase
     assert_nil catalog.current_price
   end
 
+  test "price_by_kind は指定した kind の現在有効な価格を取得" do
+    catalog = Catalog.create!(name: "price_by_kind テスト", category: :side_menu)
+
+    regular_price = CatalogPrice.create!(
+      catalog: catalog,
+      kind: :regular,
+      price: 250,
+      effective_from: 1.day.ago,
+      effective_until: nil
+    )
+
+    bundle_price = CatalogPrice.create!(
+      catalog: catalog,
+      kind: :bundle,
+      price: 150,
+      effective_from: 1.day.ago,
+      effective_until: nil
+    )
+
+    assert_equal regular_price, catalog.price_by_kind(:regular)
+    assert_equal bundle_price, catalog.price_by_kind(:bundle)
+  end
+
+  test "price_by_kind は有効な価格がない場合 ActiveRecord::RecordNotFound を発生" do
+    catalog = Catalog.create!(name: "価格なしテスト2", category: :bento)
+    assert_raises(ActiveRecord::RecordNotFound) do
+      catalog.price_by_kind(:regular)
+    end
+  end
+
   test "discontinued? は提供終了記録がある場合 true を返す" do
     catalog = catalogs(:salad)
     CatalogDiscontinuation.create!(

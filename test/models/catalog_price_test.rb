@@ -189,7 +189,7 @@ class CatalogPriceTest < ActiveSupport::TestCase
 
   # ===== クラスメソッドテスト =====
 
-  test "current_price_by_kind は指定した catalog と kind の現在価格を取得" do
+  test "current_price_by_kind! は指定した catalog と kind の現在価格を取得" do
     catalog = catalogs(:daily_bento_b)
 
     # 現在有効な regular 価格
@@ -210,13 +210,15 @@ class CatalogPriceTest < ActiveSupport::TestCase
       effective_until: nil
     )
 
-    assert_equal regular_price, CatalogPrice.current_price_by_kind(catalog.id, :regular)
-    assert_equal bundle_price, CatalogPrice.current_price_by_kind(catalog.id, :bundle)
+    assert_equal regular_price, CatalogPrice.current_price_by_kind!(catalog.id, :regular)
+    assert_equal bundle_price, CatalogPrice.current_price_by_kind!(catalog.id, :bundle)
   end
 
-  test "current_price_by_kind は有効な価格がない場合 nil を返す" do
+  test "current_price_by_kind! は有効な価格がない場合 ActiveRecord::RecordNotFound を発生" do
     catalog = catalogs(:discontinued_bento)
-    assert_nil CatalogPrice.current_price_by_kind(catalog.id, :regular)
+    assert_raises(ActiveRecord::RecordNotFound) do
+      CatalogPrice.current_price_by_kind!(catalog.id, :regular)
+    end
   end
 
   # ===== アソシエーションテスト =====

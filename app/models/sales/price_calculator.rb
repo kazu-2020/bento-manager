@@ -124,7 +124,7 @@ module Sales
       result = []
 
       if bundle_quantity > 0
-        bundle_price = CatalogPrice.current_price_by_kind(catalog.id, :bundle)
+        bundle_price = catalog.price_by_kind(:bundle)
         result << item.merge(
           quantity: bundle_quantity,
           unit_price: bundle_price.price,
@@ -142,10 +142,7 @@ module Sales
     # 通常価格を適用
     def self.apply_regular_price(item)
       catalog = item[:catalog]
-      price = CatalogPrice.current_price_by_kind(catalog.id, :regular)
-
-      # 通常価格がない場合は現在の価格にフォールバック
-      price ||= catalog.current_price
+      price = catalog.price_by_kind(:regular)
 
       item.merge(
         unit_price: price.price,
