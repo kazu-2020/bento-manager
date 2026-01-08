@@ -76,14 +76,13 @@ module Sales
       total_discount_amount = 0
 
       discounts.each do |discount|
-        applicable = discount.applicable?(cart_items)
-        discount_amount = applicable ? discount.calculate_discount(cart_items) : 0
+        discount_amount = discount.calculate_discount(cart_items)
 
         discount_details << {
           discount_id: discount.id,
           discount_name: discount.name,
           discount_amount: discount_amount,
-          applicable: applicable
+          applicable: discount_amount > 0
         }
 
         total_discount_amount += discount_amount
