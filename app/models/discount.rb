@@ -1,6 +1,6 @@
 class Discount < ApplicationRecord
   # ===== アソシエーション =====
-  has_many :sale_discounts, dependent: :destroy
+  has_many :sale_discounts, dependent: :restrict_with_exception
   has_many :sales, through: :sale_discounts
   delegated_type :discountable, types: %w[Coupon]
 
