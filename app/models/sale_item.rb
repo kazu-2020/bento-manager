@@ -22,8 +22,7 @@ class SaleItem < ApplicationRecord
 
   private
 
-  ##
-  # Calculates and assigns the line total as the product of `unit_price` and `quantity` when both are present.
+  # unit_price と quantity の両方が存在する場合、line_total を計算して設定する
   def calculate_line_total
     return unless unit_price.present? && quantity.present?
     self.line_total = unit_price * quantity
