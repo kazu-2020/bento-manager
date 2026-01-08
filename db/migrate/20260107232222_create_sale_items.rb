@@ -12,10 +12,9 @@ class CreateSaleItems < ActiveRecord::Migration[8.1]
       t.timestamps
     end
 
-    # Task 8.3: インデックス作成
-    add_index :sale_items, :sale_id, name: "idx_sale_items_sale_id"
-    add_index :sale_items, :catalog_id, name: "idx_sale_items_catalog_id"
-    add_index :sale_items, :catalog_price_id, name: "idx_sale_items_catalog_price_id"
+    # Task 8.3: 複合インデックス作成
+    # 注: t.references が自動的に単一カラムインデックスを作成するため、
+    #     ここでは複合インデックスのみを追加
     add_index :sale_items, [ :sale_id, :catalog_id ], name: "idx_sale_items_sale_catalog"
   end
 end
