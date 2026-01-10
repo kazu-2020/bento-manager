@@ -1,4 +1,7 @@
+# frozen_string_literal: true
+
 class HomeController < ApplicationController
-  def index
-  end
+  skip_before_action :require_authentication
+
+  def index; end
 end

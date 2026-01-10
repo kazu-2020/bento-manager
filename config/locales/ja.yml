@@ -126,6 +126,7 @@ ja:
 
   custom_errors:
     controllers:
+      require_authentication: "ログインが必要です。"
       invalid_authenticity_token: "セキュリティトークンが無効です。ページを再読み込みしてもう一度お試しください。"
       record_not_found: "指定されたデータが見つかりませんでした。"
       record_invalid: "入力内容に誤りがあります: %{errors}"
@@ -152,3 +153,19 @@ ja:
       success: "従業員情報を更新しました。"
     destroy:
       success: "従業員を削除しました。"
+
+  locations:
+    index:
+      title: "販売先一覧"
+    show:
+      title: "販売先詳細"
+    new:
+      title: "販売先登録"
+    edit:
+      title: "販売先編集"
+    create:
+      success: "販売先を登録しました。"
+    update:
+      success: "販売先情報を更新しました。"
+    destroy:
+      success: "販売先を無効化しました。"

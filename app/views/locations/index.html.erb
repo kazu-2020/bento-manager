@@ -1,0 +1,26 @@
+<h1><%= t("locations.index.title") %></h1>
+
+<%= link_to t("helpers.link.new"), new_location_path, class: "btn" %>
+
+<table>
+  <thead>
+    <tr>
+      <th><%= Location.human_attribute_name(:name) %></th>
+      <th><%= Location.human_attribute_name(:status) %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @locations.each do |location| %>
+      <tr>
+        <td><%= location.name %></td>
+        <td><%= t("enums.location.status.#{location.status}") %></td>
+        <td>
+          <%= link_to t("helpers.link.show"), location_path(location) %>
+          <%= link_to t("helpers.link.edit"), edit_location_path(location) %>
+          <%= link_to t("helpers.link.delete"), location_path(location), data: { turbo_method: :delete, turbo_confirm: t("helpers.confirm.delete") } %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
