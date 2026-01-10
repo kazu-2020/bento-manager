@@ -283,7 +283,7 @@
   - 価格不足時は Sales::PriceCalculator::MissingPriceError を発生（商品名と価格種別を含む）
   - _Requirements: 17.1, 17.2, 17.3, 17.4_
 
-- [ ] 41.5 Sales::Recorder への統合（決定18）
+- [x] 41.5 Sales::Recorder への統合（決定18）
   - Sales::Recorder は PriceCalculator.calculate を呼び出し
   - PriceCalculator 内で価格存在検証が実行される（Recorder は直接呼び出さない）
   - MissingPriceError 発生時はエラーログを記録
