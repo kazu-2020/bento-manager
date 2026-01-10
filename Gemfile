@@ -47,6 +47,9 @@ gem "image_processing", "~> 1.2"
 gem "vite_rails"   # https://github.com/ElMassimo/vite_ruby
 gem "reactionview" # https://github.com/marcoroth/reactionview
 
+# ViewComponent - A framework for creating reusable, testable & encapsulated view components
+gem "view_component"
+
 group :development, :test do
   # Pin minitest to 5.x for Rails 8.1.1 compatibility (minitest 6.x has known issues)
   gem "minitest", "~> 5.25"
@@ -70,4 +73,7 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # Lookbook - UI development environment for ViewComponent
+  gem "lookbook"
 end

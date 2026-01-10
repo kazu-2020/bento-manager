@@ -75,6 +75,8 @@ GEM
       securerandom (>= 0.3)
       tzinfo (~> 2.0, >= 2.0.5)
       uri (>= 0.13.1)
+    addressable (2.8.8)
+      public_suffix (>= 2.0.2, < 8.0)
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.21)
@@ -92,6 +94,8 @@ GEM
     concurrent-ruby (1.3.6)
     connection_pool (3.0.2)
     crass (1.0.6)
+    css_parser (1.21.1)
+      addressable
     date (3.5.1)
     debug (1.11.1)
       irb (~> 1.10)
@@ -123,6 +127,8 @@ GEM
     herb (0.8.6-arm64-darwin)
     herb (0.8.6-x86_64-linux-gnu)
     herb (0.8.6-x86_64-linux-musl)
+    htmlbeautifier (1.4.3)
+    htmlentities (4.3.4)
     i18n (1.14.8)
       concurrent-ruby (~> 1.0)
     image_processing (1.14.0)
@@ -151,6 +157,18 @@ GEM
     loofah (2.25.0)
       crass (~> 1.0.2)
       nokogiri (>= 1.12.0)
+    lookbook (2.3.14)
+      activemodel
+      css_parser
+      htmlbeautifier (~> 1.3)
+      htmlentities (~> 4.3.4)
+      marcel (~> 1.0)
+      railties (>= 5.0)
+      redcarpet (~> 3.5)
+      rouge (>= 3.26, < 5.0)
+      view_component (>= 2.0)
+      yard (~> 0.9)
+      zeitwerk (~> 2.5)
     mail (2.9.0)
       logger
       mini_mime (>= 0.1.1)
@@ -209,6 +227,7 @@ GEM
     psych (5.3.1)
       date
       stringio
+    public_suffix (7.0.2)
     puma (7.1.0)
       nio4r (~> 2.0)
     raabro (1.4.0)
@@ -265,6 +284,7 @@ GEM
     reactionview (0.2.0)
       actionview (>= 7.0)
       herb (>= 0.8.0, < 1.0.0)
+    redcarpet (3.6.1)
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -280,6 +300,7 @@ GEM
       roda (~> 3.76)
       rodauth (~> 2.36)
       rodauth-model (~> 0.2)
+    rouge (4.7.0)
     rubocop (1.82.1)
       json (~> 2.3)
       language_server-protocol (~> 3.17.0.2)
@@ -369,6 +390,10 @@ GEM
     unicode-emoji (4.2.0)
     uri (1.1.1)
     useragent (0.16.11)
+    view_component (4.2.0)
+      actionview (>= 7.1.0)
+      activesupport (>= 7.1.0)
+      concurrent-ruby (~> 1)
     vite_rails (3.0.20)
       railties (>= 5.1, < 9)
       vite_ruby (~> 3.0, >= 3.2.2)
@@ -387,6 +412,7 @@ GEM
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    yard (0.9.38)
     zeitwerk (2.7.4)
 
 PLATFORMS
@@ -408,6 +434,7 @@ DEPENDENCIES
   debug
   image_processing (~> 1.2)
   kamal
+  lookbook
   minitest (~> 5.25)
   propshaft
   puma (>= 5.0)
@@ -426,6 +453,7 @@ DEPENDENCIES
   tilt (~> 2.4)
   turbo-rails
   tzinfo-data
+  view_component
   vite_rails
   web-console
 
