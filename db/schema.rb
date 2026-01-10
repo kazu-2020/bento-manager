@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_08_132558) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_10_200000) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -90,7 +90,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_08_132558) do
 
   create_table "discounts", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.bigint "discountable_id", null: false
+    t.integer "discountable_id", null: false
     t.string "discountable_type", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
@@ -130,6 +130,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_08_132558) do
     t.index ["status"], name: "index_locations_on_status"
   end
 
+  create_table "refunds", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.integer "corrected_sale_id"
+    t.datetime "created_at", null: false
+    t.integer "employee_id"
+    t.integer "original_sale_id", null: false
+    t.string "reason", null: false
+    t.datetime "refund_datetime", null: false
+    t.datetime "updated_at", null: false
+    t.index ["corrected_sale_id"], name: "index_refunds_on_corrected_sale_id"
+    t.index ["employee_id"], name: "index_refunds_on_employee_id"
+    t.index ["original_sale_id"], name: "index_refunds_on_original_sale_id"
+  end
+
   create_table "sale_discounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "discount_amount", null: false
@@ -158,7 +172,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_08_132558) do
   end
 
   create_table "sales", force: :cascade do |t|
-    t.bigint "corrected_from_sale_id"
+    t.integer "corrected_from_sale_id"
     t.datetime "created_at", null: false
     t.integer "customer_type", null: false
     t.integer "employee_id"
@@ -170,12 +184,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_08_132558) do
     t.datetime "updated_at", null: false
     t.string "void_reason"
     t.datetime "voided_at"
-    t.bigint "voided_by_employee_id"
+    t.integer "voided_by_employee_id"
+    t.index ["corrected_from_sale_id"], name: "index_sales_on_corrected_from_sale_id"
     t.index ["employee_id"], name: "index_sales_on_employee_id"
     t.index ["location_id", "sale_datetime"], name: "idx_sales_location_datetime"
     t.index ["location_id"], name: "index_sales_on_location_id"
     t.index ["sale_datetime"], name: "idx_sales_datetime"
     t.index ["status"], name: "idx_sales_status"
+    t.index ["voided_by_employee_id"], name: "index_sales_on_voided_by_employee_id"
   end
 
   add_foreign_key "catalog_discontinuations", "catalogs", on_delete: :restrict
@@ -185,6 +201,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_08_132558) do
   add_foreign_key "daily_inventories", "locations", on_delete: :restrict
   add_foreign_key "employee_lockouts", "employees", column: "id"
   add_foreign_key "employee_login_failures", "employees", column: "id"
+  add_foreign_key "refunds", "employees", on_delete: :nullify
+  add_foreign_key "refunds", "sales", column: "corrected_sale_id", on_delete: :restrict
+  add_foreign_key "refunds", "sales", column: "original_sale_id", on_delete: :restrict
   add_foreign_key "sale_discounts", "discounts", on_delete: :restrict
   add_foreign_key "sale_discounts", "sales", on_delete: :cascade
   add_foreign_key "sale_items", "catalog_prices", on_delete: :restrict

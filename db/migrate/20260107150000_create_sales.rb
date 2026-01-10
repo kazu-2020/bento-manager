@@ -15,14 +15,11 @@ class CreateSales < ActiveRecord::Migration[8.1]
       t.references :employee, null: true, foreign_key: true, comment: "販売担当者"
       t.integer :status, null: false, default: 0, comment: "状態（0: completed, 1: voided）"
       t.datetime :voided_at, null: true, comment: "取消日時"
-      t.bigint :voided_by_employee_id, null: true, comment: "取消担当者ID"
+      t.references :voided_by_employee, null: true, foreign_key: { to_table: :employees }, comment: "取消担当者ID"
       t.string :void_reason, null: true, comment: "取消理由"
-      t.bigint :corrected_from_sale_id, null: true, comment: "元の販売ID（再販売の場合）"
+      t.references :corrected_from_sale, null: true, foreign_key: { to_table: :sales }, comment: "元の販売ID（再販売の場合）"
       t.timestamps
     end
-
-    add_foreign_key :sales, :employees, column: :voided_by_employee_id
-    add_foreign_key :sales, :sales, column: :corrected_from_sale_id
 
     # Task 7.3: インデックス作成
     add_index :sales, [ :location_id, :sale_datetime ], name: "idx_sales_location_datetime"

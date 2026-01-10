@@ -4,6 +4,7 @@ class Employee < ApplicationRecord
   # ===== アソシエーション =====
   has_many :sales, dependent: :nullify
   has_many :voided_sales, class_name: "Sale", foreign_key: "voided_by_employee_id", dependent: :nullify
+  has_many :refunds, dependent: :nullify
 
   # ===== Enum =====
   enum :status, { unverified: 1, verified: 2, closed: 3 }, validate: true
