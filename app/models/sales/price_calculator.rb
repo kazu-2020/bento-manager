@@ -137,8 +137,7 @@ module Sales
     def build_bundle_price_item(item, rule, quantity)
       bundle_price = item[:catalog].price_by_kind(rule.price_kind.to_sym, at: calculation_time)
 
-      # 価格が存在しない場合は通常価格にフォールバック
-      return apply_regular_price(item.merge(quantity: quantity)) if bundle_price.nil?
+      raise_missing_price_error(item[:catalog], rule.price_kind) if bundle_price.nil?
 
       item.merge(
         quantity: quantity,
@@ -151,6 +150,8 @@ module Sales
     def apply_regular_price(item)
       catalog = item[:catalog]
       price = catalog.price_by_kind(:regular, at: calculation_time)
+
+      raise_missing_price_error(catalog, :regular) if price.nil?
 
       item.merge(
         unit_price: price.price,
@@ -184,6 +185,18 @@ module Sales
         .map { |rule| rule.price_kind.to_sym }
 
       [ :regular, *applicable_rule_kinds ].uniq
+    end
+
+    # 価格が存在しない場合のエラーを発生
+    # @param catalog [Catalog] 商品
+    # @param price_kind [Symbol, String] 価格種別
+    # @raise [MissingPriceError]
+    def raise_missing_price_error(catalog, price_kind)
+      raise MissingPriceError.new([ {
+        catalog_id: catalog.id,
+        catalog_name: catalog.name,
+        price_kind: price_kind.to_s
+      } ])
     end
   end
 end
