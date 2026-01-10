@@ -203,32 +203,6 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     assert_not_includes active_rules, future_rule, "未来のルールは含まれるべきでない"
   end
 
-  test "for_target スコープは指定した target_catalog_id のルールのみ取得" do
-    salad = catalogs(:salad)
-    bento_a = catalogs(:daily_bento_a)
-
-    salad_rule = CatalogPricingRule.create!(
-      target_catalog: salad,
-      price_kind: :bundle,
-      trigger_category: :bento,
-      max_per_trigger: 1,
-      valid_from: Date.current
-    )
-
-    bento_rule = CatalogPricingRule.create!(
-      target_catalog: bento_a,
-      price_kind: :regular,
-      trigger_category: :bento,
-      max_per_trigger: 1,
-      valid_from: Date.current
-    )
-
-    salad_rules = CatalogPricingRule.for_target(salad.id)
-
-    assert_includes salad_rules, salad_rule
-    assert_not_includes salad_rules, bento_rule
-  end
-
   test "triggered_by スコープは指定した trigger_category のルールのみ取得" do
     catalog = catalogs(:salad)
 

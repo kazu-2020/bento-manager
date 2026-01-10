@@ -10,13 +10,13 @@ class CatalogPricingRule < ApplicationRecord
   validates :valid_from, presence: true
   validate :valid_date_range
 
-  scope :active, -> {
-    where(valid_from: ..Date.current)
+  scope :active_at, ->(date) {
+    where(valid_from: ..date)
       .merge(
-        where(valid_until: nil).or(where(valid_until: Date.current..))
+        where(valid_until: nil).or(where(valid_until: date..))
       )
   }
-  scope :for_target, ->(catalog_id) { where(target_catalog_id: catalog_id) }
+  scope :active, -> { active_at(Date.current) }
   scope :triggered_by, ->(category) { where(trigger_category: category) }
 
   # カート内に trigger_category があるかどうかを判定

@@ -373,6 +373,9 @@ sequenceDiagram
 | 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8 | サイドメニュー（サラダ）の条件付き価格設定 | CatalogPricingRule, CatalogPrice, Sales::PriceCalculator, Catalog (category enum) | CatalogPricingRule#applicable?, apply_pricing_rules, CatalogPrice.by_kind | 販売フロー |
 | 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 15.11, 15.12 | 返品・返金処理（取消・再販売・差額返金） | Sale, Refund, SalesController#void, Sales::PriceCalculator, DailyInventory | Sale#void!, Refund, corrected_from_sale_id | 返品・返金フロー |
 | 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7 | 販売先（ロケーション）管理 | Location, LocationsController, DailyInventory, Sale, AdditionalOrder | LocationsController CRUD, Location#soft_delete | - |
+| 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7 | 価格ルール適用時の価格存在検証（会計時） | Sales::Recorder, Sales::PriceCalculator, Catalogs::PriceValidator | Sales::PriceCalculator.validate_prices!, Catalogs::PriceValidator.validate! | 販売フロー |
+| 18.1, 18.2, 18.3, 18.4, 18.5, 18.6 | 管理画面での価格設定不備の警告表示 | Catalog, CatalogPricingRule, CatalogsController, catalogs/index view | Catalog#missing_prices_for_rules, Catalog.with_missing_prices | - |
+| 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7 | 価格ルール作成・有効化時の価格存在バリデーション | Catalog::PricingRuleCreator, CatalogPricingRule | Catalog::PricingRuleCreator#create, #update | - |
 
 ## Components & Interface Contracts
 
@@ -393,8 +396,10 @@ sequenceDiagram
 | Sale | Sales Domain | 販売記録（販売先ごと、void 対応、取消→再販売） | 3.1-3.8, 15.1-15.12, 16.1-16.7 | Location (P0), DailyInventory (P0), Discount (P1), SaleItem (P0) | API |
 | SaleItem | Sales Domain | 販売明細（単価確定、価格履歴管理、純粋データモデル） | 3.1-3.8, 14.1-14.8 | Sale (P0), Catalog (P0), CatalogPrice (P0) | Service |
 | Refund | Refund Domain | 差額返金記録（元Sale - 新Sale） | 15.1-15.12 | Sale (P0) | API |
-| Sales::Recorder | Sales PORO | 販売記録と在庫減算の一括処理 | 3.1-3.8, 12.1-12.2 | Sale (P0), SaleItem (P0), DailyInventory (P0) | Service |
-| Sales::PriceCalculator | Sales PORO | 販売価格計算（価格ルール + 複数割引） | 3.1-3.8, 13.1-13.9, 14.1-14.8 | CatalogPricingRule (P0), Discount (P0) | Service |
+| Sales::Recorder | Sales PORO | 販売記録と在庫減算の一括処理（PriceCalculator経由で価格検証）※決定18 | 3.1-3.8, 12.1-12.2, 17.1-17.7 | Sale (P0), SaleItem (P0), DailyInventory (P0), Sales::PriceCalculator (P0) | Service |
+| Sales::PriceCalculator | Sales PORO | 販売価格計算（kind 決定 + 価格存在検証 + 価格ルール + 割引）※決定18 | 3.1-3.8, 13.1-13.9, 14.1-14.8, 17.1-17.7 | CatalogPricingRule (P0), Discount (P0), Catalogs::PriceValidator (P0) | Service |
+| Catalogs::PriceValidator | Catalog PORO | (catalog, kind, at) の価格存在検証（薄い部品）※決定18 | 17.1-17.7, 18.1-18.6 | CatalogPrice (P0) | Service |
+| Catalog::PricingRuleCreator | Catalog PORO | 価格ルールの作成・更新と価格存在検証 | 19.1-19.7 | CatalogPricingRule (P0), CatalogPrice (P0) | Service |
 | Sales::AnalysisCalculator | Sales PORO | 販売予測・統計 | 6.1-6.5 | Sale (P0) | Service |
 | Reports::Generator | Reports PORO | レポート生成 | 7.1-7.5 | Sale (P0), DailyInventory (P0) | Service |
 | pos_controller.js | Frontend Stimulus | POS UI制御（クーポン枚数入力、価格内訳表示） | 3.1-3.8, 13.1-13.9, 14.1-14.8 | SalesController (P0) | State |
@@ -421,31 +426,12 @@ sequenceDiagram
 **Contracts**: Service [x]
 
 **Service Interface**:
-```ruby
-class Location < ApplicationRecord
-  has_many :daily_inventories, dependent: :restrict_with_error
-  has_many :sales, dependent: :restrict_with_error
-  has_many :additional_orders, dependent: :restrict_with_error
 
-  # 配達状態管理（active / inactive）
-  enum status: { active: 'active', inactive: 'inactive' }
-
-  # デフォルトスコープで active のみ取得
-  default_scope { where(status: 'active') }
-
-  def deactivate
-    update(status: :inactive)
-  end
-
-  def activate
-    update(status: :active)
-  end
-
-  def active?
-    status == 'active'
-  end
-end
-```
+| Method | Input | Output | 契約 |
+|--------|-------|--------|------|
+| deactivate | - | Boolean | status を inactive に変更 |
+| activate | - | Boolean | status を active に変更 |
+| active? | - | Boolean | status が active かどうか |
 
 **Implementation Notes**:
 - 状態管理パターンを採用（status enum: active / inactive）
@@ -597,27 +583,13 @@ end
 - 価格情報、価格ルール、提供終了状態の関連管理
 
 **Service Interface**:
-```ruby
-class Catalog < ApplicationRecord
-  has_many :catalog_prices, dependent: :destroy
-  has_many :catalog_pricing_rules, foreign_key: 'target_catalog_id', dependent: :destroy
-  has_one :catalog_discontinuation, dependent: :destroy
-  has_many :daily_inventories, dependent: :destroy
 
-  enum category: { bento: 'bento', side_menu: 'side_menu' }
+| Method | Input | Output | 契約 |
+|--------|-------|--------|------|
+| current_price | - | CatalogPrice | 現在有効な価格を取得 |
+| discontinued? | - | Boolean | 提供終了状態かどうか |
 
-  validates :name, presence: true, uniqueness: true
-  validates :category, presence: true
-
-  def current_price
-    catalog_prices.current.first
-  end
-
-  def discontinued?
-    catalog_discontinuation.present?
-  end
-end
-```
+**Associations**: catalog_prices, catalog_pricing_rules, catalog_discontinuation, daily_inventories
 
 **Implementation Notes**:
 - category は String Enum（`bento: 'bento', side_menu: 'side_menu'`）
@@ -637,24 +609,12 @@ end
 - 現在有効な価格の取得
 
 **Service Interface**:
-```ruby
-class CatalogPrice < ApplicationRecord
-  belongs_to :catalog
 
-  enum kind: { regular: 'regular', bundle: 'bundle' }
+| Method | Input | Output | 契約 |
+|--------|-------|--------|------|
+| self.current_price_by_kind | catalog_id, kind | CatalogPrice | 指定 catalog_id, kind の現在有効な価格を取得 |
 
-  validates :price, presence: true, numericality: { greater_than: 0 }
-  validates :kind, presence: true
-  validates :effective_from, presence: true
-
-  scope :current, -> { where('effective_from <= ? AND (effective_until IS NULL OR effective_until >= ?)', Time.current, Time.current) }
-  scope :by_kind, ->(kind) { where(kind: kind) }
-
-  def self.current_price_by_kind(catalog_id, kind)
-    where(catalog_id: catalog_id).by_kind(kind).current.first
-  end
-end
-```
+**Scopes**: `current` (有効期間内), `by_kind(kind)` (種別フィルタ)
 
 **Implementation Notes**:
 - kind は String Enum（`regular: 'regular', bundle: 'bundle'`）
@@ -672,32 +632,16 @@ end
 - どの商品（target_catalog）にどの価格種別（price_kind）を適用するか定義
 - 適用条件（trigger_category, max_per_trigger）の管理
 - 有効期間管理（valid_from, valid_until）
+- **注意**: 価格存在検証はモデルバリデーションではなく `Catalog::PricingRuleCreator` PORO で実行
 
 **Service Interface**:
-```ruby
-class CatalogPricingRule < ApplicationRecord
-  belongs_to :target_catalog, class_name: 'Catalog', foreign_key: 'target_catalog_id'
 
-  validates :target_catalog_id, presence: true
-  validates :price_kind, presence: true, inclusion: { in: %w[regular bundle] }
-  validates :trigger_category, presence: true
-  validates :max_per_trigger, presence: true, numericality: { greater_than_or_equal_to: 0 }
+| Method | Input | Output | 契約 |
+|--------|-------|--------|------|
+| applicable? | cart_items | Boolean | カート内に trigger_category の商品があるか判定 |
+| max_applicable_quantity | cart_items | Integer | 適用可能な最大数量を計算（trigger_count × max_per_trigger） |
 
-  scope :active, -> { where('valid_from <= ? AND (valid_until IS NULL OR valid_until >= ?)', Date.today, Date.today) }
-  scope :for_target, ->(catalog_id) { where(target_catalog_id: catalog_id) }
-  scope :triggered_by, ->(category) { where(trigger_category: category) }
-
-  def applicable?(cart_items)
-    trigger_count = cart_items.count { |item| item[:catalog].category == trigger_category }
-    trigger_count > 0
-  end
-
-  def max_applicable_quantity(cart_items)
-    trigger_count = cart_items.count { |item| item[:catalog].category == trigger_category }
-    [trigger_count * max_per_trigger, Float::INFINITY].min
-  end
-end
-```
+**Scopes**: `active` (有効期間内), `for_target(catalog_id)`, `triggered_by(category)`
 
 **Implementation Notes**:
 - 例: サラダのセット価格ルール
@@ -707,6 +651,7 @@ end
   - max_per_trigger: 1（弁当1個につきサラダ1個まで）
 - `applicable?` で適用可否を判定
 - `max_applicable_quantity` で最大適用数を計算
+- **Requirement 19 対応**: 価格存在検証は `Catalog::PricingRuleCreator` PORO で実行（モデルバリデーションでは他モデルに依存しない）
 
 ### Discount Domain
 
@@ -717,59 +662,25 @@ end
 - 割引適用可能性の判定と割引額計算を discountable に委譲
 
 **Service Interface**:
-```ruby
-class Discount < ApplicationRecord
-  has_many :sale_discounts, dependent: :destroy
-  has_many :sales, through: :sale_discounts
-  delegated_type :discountable, types: %w[Coupon]
 
-  delegate :applicable?, to: :discountable
+| Method | Input | Output | 契約 |
+|--------|-------|--------|------|
+| applicable? | sale_items | Boolean | discountable に委譲 |
+| calculate_discount | sale_items | Integer | 割引額を計算（discountable に委譲） |
 
-  # クーポンの場合: discountable が割引額計算を担当
-  def calculate_discount(sale_items = [])
-    return 0 unless discountable.applicable?(sale_items)
-    discountable.calculate_discount(sale_items)
-  end
-end
-```
+**Delegated Types**: Coupon
 
 **Implementation Notes**: R6調査で確認済み。delegated_type パターンで柔軟な割引ロジックを実現。has_many :through で複数販売に適用可能。
 
 #### Coupon
 
 **Service Interface**:
-```ruby
-class Coupon < ApplicationRecord
-  has_one :discount, as: :discountable, touch: true
 
-  validates :description, presence: true
-  validates :amount_per_unit, presence: true, numericality: { greater_than: 0 }
-  validates :max_per_bento_quantity, presence: true, numericality: { greater_than_or_equal_to: 0 }
-
-  def applicable?(sale_items)
-    bento_quantity = sale_items
-      .select { |item| item[:catalog].category == 'bento' }
-      .sum { |item| item[:quantity] }
-    bento_quantity > 0
-  end
-
-  def max_applicable_quantity(sale_items)
-    # Requirement 13.2, 13.8: 弁当の種類ではなく、個数ベースでカウント
-    # 複数種類の弁当がある場合は各 quantity の合計
-    bento_quantity = sale_items
-      .select { |item| item[:catalog].category == 'bento' }
-      .sum { |item| item[:quantity] }
-    bento_quantity * max_per_bento_quantity
-  end
-
-  def calculate_discount(sale_items)
-    max_quantity = max_applicable_quantity(sale_items)
-    # クーポン枚数は外部から渡される想定（Sales::PriceCalculator で制御）
-    # ここでは最大適用可能枚数を返す
-    max_quantity * amount_per_unit
-  end
-end
-```
+| Method | Input | Output | 契約 |
+|--------|-------|--------|------|
+| applicable? | sale_items | Boolean | カート内に弁当があるか判定（quantity > 0） |
+| max_applicable_quantity | sale_items | Integer | 最大適用可能枚数（弁当quantity合計 × max_per_bento_quantity） |
+| calculate_discount | sale_items | Integer | 割引額を計算（max_applicable_quantity × amount_per_unit） |
 
 **Implementation Notes**:
 - 例: 50円割引クーポン
@@ -789,28 +700,9 @@ end
 - 販売日時 (sold_at) を記録
 - **純粋なデータモデル**（在庫減算は Sales::Recorder PORO で実行）
 
-**Service Interface**:
-```ruby
-class SaleItem < ApplicationRecord
-  belongs_to :sale
-  belongs_to :catalog
-  belongs_to :catalog_price
+**Callbacks**: `before_validation :calculate_line_total` (line_total = unit_price × quantity を自動計算)
 
-  validates :quantity, presence: true, numericality: { greater_than: 0 }
-  validates :unit_price, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :line_total, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :sold_at, presence: true
-
-  before_validation :calculate_line_total
-
-  private
-
-  def calculate_line_total
-    return unless unit_price.present? && quantity.present?
-    self.line_total = unit_price * quantity
-  end
-end
-```
+**Associations**: sale, catalog, catalog_price
 
 **Implementation Notes**:
 - unit_price: 販売時に確定した単価（価格ルール適用後）
@@ -867,116 +759,16 @@ end
 ```
 
 **Service Interface**:
-```ruby
-class Sale < ApplicationRecord
-  has_many :sale_items, dependent: :destroy
-  has_many :sale_discounts, dependent: :destroy
-  has_many :discounts, through: :sale_discounts
-  belongs_to :employee, optional: true
-  belongs_to :corrected_from_sale, class_name: 'Sale', optional: true
-  has_one :correction_sale, class_name: 'Sale', foreign_key: 'corrected_from_sale_id'
 
-  enum customer_type: { staff: 'staff', citizen: 'citizen' }
-  enum status: { completed: 'completed', voided: 'voided' }
+| Method | Input | Output | Raises | 契約 |
+|--------|-------|--------|--------|------|
+| total_discount_amount | - | Integer | - | 適用された割引額の合計 |
+| void! | reason:, voided_by:, remaining_items: [] | Hash | RecordInvalid, StaleObjectError | 取消処理（在庫復元→再販売→返金記録）を実行 |
+| self.create_with_items_and_discounts! | sale_params, items_params, discount_ids: [] | Sale | RecordInvalid | 価格計算→Sale作成→SaleItem作成→割引適用 |
 
-  validates :sale_datetime, presence: true
-  validates :customer_type, presence: true
-  validates :total_amount, presence: true, numericality: { greater_than: 0 }
-  validates :final_amount, presence: true, numericality: { greater_than: 0 }
-  validates :status, presence: true
+**Associations**: sale_items, sale_discounts, discounts, employee, corrected_from_sale, correction_sale
 
-  def total_discount_amount
-    sale_discounts.sum(:discount_amount)
-  end
-
-  def void!(reason:, voided_by:, remaining_items: [])
-    transaction do
-      # Step 1: 元 Sale を void
-      update!(
-        status: :voided,
-        voided_at: Time.current,
-        voided_by_employee_id: voided_by.id,
-        void_reason: reason
-      )
-
-      # Step 2: 在庫を復元
-      sale_items.each do |item|
-        inventory = DailyInventory.find_by!(catalog_id: item.catalog_id, inventory_date: item.sold_at.to_date)
-        inventory.stock += item.quantity
-        inventory.save!
-      end
-
-      # Step 3: 残す商品で新 Sale 作成
-      if remaining_items.any?
-        new_sale = Sale.create_with_items_and_discounts!(
-          {
-            sale_datetime: Time.current,
-            customer_type: customer_type,
-            employee_id: voided_by.id,
-            corrected_from_sale_id: id
-          },
-          remaining_items,
-          discount_ids: []
-        )
-      else
-        new_sale = nil
-      end
-
-      # Step 4: 差額を Refund に記録
-      refund_amount = new_sale ? final_amount - new_sale.final_amount : final_amount
-      Refund.create!(
-        original_sale_id: id,
-        corrected_sale_id: new_sale&.id,
-        employee_id: voided_by.id,
-        refund_datetime: Time.current,
-        amount: refund_amount,
-        reason: reason
-      )
-
-      { corrected_sale: new_sale, refund_amount: refund_amount }
-    end
-  end
-
-  def self.create_with_items_and_discounts!(sale_params, items_params, discount_ids: [])
-    transaction do
-      # 価格計算
-      pricing = Sales::PriceCalculator.calculate(items_params, discount_ids)
-
-      sale = create!(
-        sale_params.merge(
-          total_amount: pricing[:subtotal],
-          final_amount: pricing[:final_total],
-          status: :completed
-        )
-      )
-
-      # 販売明細作成
-      items_params.each do |item|
-        SaleItem.create!(
-          sale: sale,
-          catalog_id: item[:catalog_id],
-          catalog_price_id: item[:catalog_price_id],
-          quantity: item[:quantity],
-          unit_price: item[:unit_price],
-          sold_at: sale.sale_datetime
-        )
-      end
-
-      # 割引適用
-      pricing[:discount_details].each do |detail|
-        next unless detail[:applicable]
-        SaleDiscount.create!(
-          sale: sale,
-          discount_id: detail[:discount_id],
-          discount_amount: detail[:discount_amount]
-        )
-      end
-
-      sale
-    end
-  end
-end
-```
+**Enums**: customer_type (staff/citizen), status (completed/voided)
 
 **Implementation Notes**:
 - status: completed / voided（String Enum、R8 調査）
@@ -991,16 +783,9 @@ end
 - 各割引の適用額を記録
 - 同じ割引の重複適用を防止（ユニーク制約）
 
-**Service Interface**:
-```ruby
-class SaleDiscount < ApplicationRecord
-  belongs_to :sale
-  belongs_to :discount
+**Associations**: sale, discount
 
-  validates :discount_amount, presence: true, numericality: { greater_than: 0 }
-  validates :discount_id, uniqueness: { scope: :sale_id, message: "同じ割引を複数回適用できません" }
-end
-```
+**Validations**: discount_amount (presence, > 0), discount_id (uniqueness scope: sale_id)
 
 **Implementation Notes**: 中間テーブルで複数割引対応を実現。discount_id の uniqueness バリデーション（scope: :sale_id）と DB レベルのユニークインデックスで同じ割引の重複適用を防止。各割引の適用額を discount_amount に保存。
 
@@ -1044,6 +829,85 @@ end
 - corrected_sale_id: nullable（全額返金の場合は nil）
 - 返金理由を reason に記録
 
+### Catalog PORO
+
+#### Catalogs::PriceValidator
+
+| Field | Detail |
+|-------|--------|
+| Intent | 指定された (catalog, kind, at) の価格が存在するかを検証する薄い PORO |
+| Requirements | 17.1-17.7, 18.1-18.6 |
+
+**Responsibilities**:
+- 指定された (catalog, kind, at) に対応する CatalogPrice の存在を検証（単一責務）
+- 価格の取得（存在しない場合は nil または MissingPriceError）
+- 商品一覧画面での価格設定不備の検出（Requirement 18）
+- **注意**: 「何の kind が必要か」の判定は Sales::PriceCalculator が担当（決定18参照）
+
+**Dependencies**:
+- CatalogPrice (P0)
+- Catalog (P0)
+
+**Service Interface**:
+
+| Method | Input | Output | Raises | 契約 |
+|--------|-------|--------|--------|------|
+| initialize | at: Date | - | - | 基準日を設定（デフォルト: 今日） |
+| price_exists? | catalog, kind | Boolean | - | 指定 (catalog, kind) の価格が存在するか |
+| find_price | catalog, kind | CatalogPrice/nil | - | 価格を取得（存在しない場合は nil） |
+| find_price! | catalog, kind | CatalogPrice | MissingPriceError | 価格を取得（存在しない場合はエラー） |
+| catalogs_with_missing_prices | - | Array<Hash> | - | 価格設定に不備がある商品一覧を取得 |
+
+**Inner Classes**: `MissingPriceError` (catalog_name, price_kind を保持)
+
+**Implementation Notes**:
+- **薄い部品**: 価格ルールの適用判定は行わず、指定された (catalog, kind, at) の価格存在のみを検証
+- **決定18 対応**: 「何の kind が必要か」は Sales::PriceCalculator が決定し、PriceValidator を呼び出して検証
+- **インスタンスベース**: `at` パラメータをインスタンス変数として保持し、基準日を統一
+- `price_exists?`: Catalog#price_exists? に委譲（Boolean を返す軽量な存在チェック）
+- `find_price` / `find_price!`: Catalog#price_by_kind に委譲（nil または MissingPriceError）
+- `catalogs_with_missing_prices`: 管理画面警告表示用（Requirement 18）、`preload(:active_pricing_rules)` で N+1 を回避
+
+---
+
+#### Catalog::PricingRuleCreator
+
+| Field | Detail |
+|-------|--------|
+| Intent | 価格ルールの作成・更新と価格存在検証を行う PORO |
+| Requirements | 19.1-19.7 |
+
+**Responsibilities**:
+- 価格ルール作成時に対応する CatalogPrice の存在を検証（19.1）
+- 価格ルール有効化時に対応する CatalogPrice の存在を検証（19.2）
+- 検証失敗時にエラーメッセージを返す（19.3, 19.4）
+- 今日時点で有効な CatalogPrice が存在すれば許可（19.5）
+- 無効化時は価格存在の検証をスキップ（19.7）
+
+**Dependencies**:
+- CatalogPricingRule (P0)
+- CatalogPrice (P0)
+
+**Service Interface**:
+
+| Method | Input | Output | Raises | 契約 |
+|--------|-------|--------|--------|------|
+| create | rule_params | CatalogPricingRule | MissingPriceError, RecordInvalid | 価格ルール作成（有効化時は価格存在検証） |
+| update | rule, rule_params | CatalogPricingRule | MissingPriceError, RecordInvalid | 価格ルール更新（有効化時は価格存在検証） |
+
+**Inner Classes**: `MissingPriceError` (catalog_name, price_kind を保持)
+
+**Private Methods**: `should_validate?` (有効化判定), `validate_price_existence!` (価格存在検証)
+
+**Implementation Notes**:
+- `create`: 新規ルール作成時に価格存在検証を実行（19.1）
+- `update`: ルール更新時に価格存在検証を実行（19.2）
+- `should_validate?`: 有効化時のみ検証、無効化時はスキップ（19.7）
+- 今日時点で有効な CatalogPrice が存在すれば許可（19.5）
+- モデルバリデーションで他モデルに依存せず、PORO でユーザーイベント起点の検証を担保
+
+---
+
 ### Sales PORO
 
 #### Sales::Recorder
@@ -1051,146 +915,91 @@ end
 | Field | Detail |
 |-------|--------|
 | Intent | 販売記録と在庫減算を一括で処理する PORO |
-| Requirements | 3.1-3.8, 12.1-12.2 |
+| Requirements | 3.1-3.8, 12.1-12.2, 17.1-17.7 |
 
 **Responsibilities**:
 - Sale と SaleItem の作成を一括で実行
+- 価格計算（Sales::PriceCalculator 経由で価格存在検証も実行）
 - 在庫減算（DailyInventory）を明示的に実行
 - トランザクション内で原子性を保証
-- 在庫不足時にエラーを発生させる
+- 在庫不足時・価格不足時にエラーを発生させる
 
 **Dependencies**:
 - Sale (P0)
 - SaleItem (P0)
 - DailyInventory (P0)
+- Sales::PriceCalculator (P0)
 
 **Service Interface**:
-```ruby
-module Sales
-  class Recorder
-    # 販売を記録し、在庫を減算する
-    # @param sale_params [Hash] Sale の属性
-    # @param items_params [Array<Hash>] SaleItem の属性配列
-    # @return [Sale] 作成された Sale
-    # @raise [DailyInventory::InsufficientStockError] 在庫不足時
-    # @raise [ActiveRecord::RecordNotFound] 在庫レコード未存在時
-    def record(sale_params, items_params)
-      Sale.transaction do
-        sale = Sale.create!(sale_params)
 
-        items_params.each do |item_params|
-          sale_item = sale.sale_items.create!(item_params)
-          decrement_inventory(sale, sale_item)
-        end
+| Method | Input | Output | Raises | 契約 |
+|--------|-------|--------|--------|------|
+| record | sale_params, items_params, discount_ids: [] | Sale | MissingPriceError, InsufficientStockError, RecordNotFound | 価格計算→Sale作成→SaleItem作成→在庫減算→割引適用を原子的に実行 |
 
-        sale
-      end
-    end
-
-    private
-
-    def decrement_inventory(sale, sale_item)
-      inventory = DailyInventory.find_by!(
-        location_id: sale.location_id,
-        catalog_id: sale_item.catalog_id,
-        inventory_date: sale_item.sold_at.to_date
-      )
-      inventory.decrement_stock!(sale_item.quantity)
-    end
-  end
-end
-```
+**Private Methods**: `decrement_inventory(sale, sale_item)` (在庫減算)
 
 **Implementation Notes**:
+- **決定18 対応**: 価格存在検証は PriceCalculator.calculate 内で実行（Catalogs::PriceValidator を直接呼び出さない）
 - SaleItem は純粋なデータモデル（コールバックなし）
 - 在庫減算は Sales::Recorder で明示的に実行
 - プロジェクト方針（PORO パターン）に準拠
 - 2ホップ先のモデル操作をコールバックから分離し、結合度を低減
 - テスト容易性向上（SaleItem を単独でテスト可能）
+- **Requirement 17 対応**: PriceCalculator.calculate が内部で価格存在検証を実行
+  - 価格不足時は MissingPriceError を発生、トランザクションは開始されない（17.6）
+  - エラーログを記録（17.7）
 
 ---
 
 #### Sales::PriceCalculator
 
+| Field | Detail |
+|-------|--------|
+| Intent | 価格ルール適用、価格存在検証、価格計算を一括で行う PORO |
+| Requirements | 3.1-3.8, 13.1-13.9, 14.1-14.8, 17.1-17.7 |
+
+**Responsibilities**:
+- 価格ルール適用判定（どの kind が必要かを決定）
+- **価格存在検証**（決定した kind に対応する価格が存在するか）
+- 価格取得と小計計算
+- 割引適用と最終金額計算
+- **注意**: 「何の kind が必要か」の決定はこのクラスの責務（決定18参照）
+
+**Dependencies**:
+- CatalogPricingRule (P0)
+- Catalogs::PriceValidator (P0)
+- Discount (P0)
+
 **Service Interface**:
+
+| Method | Input | Output | Raises | 契約 |
+|--------|-------|--------|--------|------|
+| initialize | cart_items, discount_ids: [] | - | - | カートアイテムと割引IDを設定 |
+| calculate | - | Hash | MissingPriceError | 価格計算を実行（検証→価格ルール適用→小計→割引→最終金額） |
+| apply_pricing_rules | - | Array<Hash> | - | 価格ルールを適用してアイテムに価格情報を付加 |
+| apply_discounts | - | Hash | - | 割引を適用（discount_details, total_discount_amount） |
+
+**Return Value (calculate)**:
 ```ruby
-module Sales
-  class PriceCalculator
-    def self.calculate(cart_items, discount_ids = [])
-      # Step 1: 価格ルール適用（セット価格判定）
-      items_with_prices = apply_pricing_rules(cart_items)
-
-      # Step 2: 小計計算
-      subtotal = items_with_prices.sum { |item| item[:unit_price] * item[:quantity] }
-
-      # Step 3: 割引適用
-      discount_details = []
-      total_discount_amount = 0
-
-      discounts = Discount.where(id: discount_ids)
-      discounts.each do |discount|
-        applicable = discount.applicable?(cart_items)
-        if applicable
-          discount_amount = discount.calculate_discount(cart_items)
-          discount_details << {
-            discount_id: discount.id,
-            discount_name: discount.name,
-            discount_amount: discount_amount,
-            applicable: true
-          }
-          total_discount_amount += discount_amount
-        else
-          discount_details << {
-            discount_id: discount.id,
-            discount_name: discount.name,
-            discount_amount: 0,
-            applicable: false
-          }
-        end
-      end
-
-      {
-        items_with_prices: items_with_prices,
-        subtotal: subtotal,
-        discount_details: discount_details,
-        total_discount_amount: total_discount_amount,
-        final_total: subtotal - total_discount_amount
-      }
-    end
-
-    def self.apply_pricing_rules(cart_items)
-      cart_items.map do |item|
-        catalog = item[:catalog]
-        quantity = item[:quantity]
-
-        # デフォルトは通常価格
-        price_kind = 'regular'
-
-        # 価格ルール適用判定
-        pricing_rules = CatalogPricingRule.active.for_target(catalog.id)
-        pricing_rules.each do |rule|
-          if rule.applicable?(cart_items)
-            max_quantity = rule.max_applicable_quantity(cart_items)
-            if quantity <= max_quantity
-              price_kind = rule.price_kind
-            end
-          end
-        end
-
-        # 価格取得
-        price = CatalogPrice.current_price_by_kind(catalog.id, price_kind)
-        unit_price = price&.price || catalog.current_price.price
-
-        item.merge(unit_price: unit_price, catalog_price_id: price&.id)
-      end
-    end
-  end
-end
+{
+  items_with_prices: Array<Hash>,  # 価格情報を付加したアイテム
+  subtotal: Integer,               # 小計（割引前）
+  discount_details: Array<Hash>,   # 割引詳細
+  total_discount_amount: Integer,  # 割引合計
+  final_total: Integer             # 最終金額（割引後）
+}
 ```
 
+**Inner Classes**: `MissingPriceError` (missing_prices を保持)
+
+**Private Methods**: `validate_required_prices!`, `determine_required_price_kinds`, `apply_regular_price`, `split_item_by_pricing_rule`
+
 **Implementation Notes**:
-- apply_pricing_rules: CatalogPricingRule を適用してセット価格を判定
-- calculate: 価格ルール適用 → 小計計算 → 割引適用
+- **決定18 対応**: 価格ルール適用と価格存在検証を統合し、「何の kind が必要か」をこのクラスが決定
+- `determine_required_price_kinds`: カート内容に基づいて必要な価格種別を決定（:regular + ルール適用時の :bundle など）
+- `validate_required_prices!`: Catalogs::PriceValidator を使って価格存在を検証（Requirement 17）
+- `apply_pricing_rules` / `split_item_by_pricing_rule`: 価格ルールを適用して価格情報を付与
+- MissingPriceError: 不足している価格がある場合に発生、Requirement 17.3 のエラーメッセージを生成
 - 複数割引に対応し、各割引の適用可否と割引額を個別に計算
 
 ## Data Models
@@ -1483,74 +1292,28 @@ erDiagram
 - 割引適用不可: 「この割引には以下の条件が必要です: 弁当、サイドメニュー」→ カートに戻る
 - 価格ルール適用不可: 「セット価格を適用するには弁当が必要です」→ カートに戻る
 - Void 失敗: 「この販売は既に取り消されています」→ 一覧に戻る
+- **価格未設定（Requirement 17）**: 「商品「サラダ」に価格種別「bundle」の価格が設定されていません」→ 商品一覧で価格設定を促す
 
 ### Error Categories and Responses
 
-**販売記録時のエラーハンドリング**:
-```ruby
-# SalesController
-def create
-  sale_params = params.require(:sale).permit(:customer_type, discount_ids: [], sale_items_attributes: [:catalog_id, :catalog_price_id, :quantity, :unit_price])
+**SalesController#create エラーハンドリング**:
 
-  # 販売記録作成（Sales::Recorder PORO で Sale + SaleItem 作成 + 在庫減算を一括実行）
-  recorder = Sales::Recorder.new
-  sale = recorder.record(
-    {
-      sale_datetime: Time.current,
-      customer_type: sale_params[:customer_type],
-      employee_id: current_employee&.id
-    },
-    sale_params[:sale_items_attributes]
-  )
+| Error Class | 原因 | Response | HTTP Status |
+|-------------|------|----------|-------------|
+| MissingPriceError | 価格未設定（Req 17） | flash[:error], render :new | 422 |
+| RecordInvalid | バリデーションエラー | flash[:error], render :new | 422 |
+| RecordNotUnique | 割引重複適用 | flash[:error], render :new | 422 |
+| StaleObjectError | 競合（在庫更新） | flash[:error], redirect new_sale_path | 302 |
+| StandardError | システムエラー | log + flash[:error], redirect | 500 |
 
-  redirect_to sales_path, notice: '販売記録を保存しました'
-rescue ActiveRecord::RecordInvalid => e
-  flash[:error] = "入力エラー: #{e.message}"
-  render :new, status: :unprocessable_entity
-rescue ActiveRecord::RecordNotUnique => e
-  flash[:error] = '同じ割引を複数回適用することはできません。'
-  render :new, status: :unprocessable_entity
-rescue ActiveRecord::StaleObjectError
-  flash[:error] = '在庫が他のユーザーによって更新されました。再読み込みしてください。'
-  redirect_to new_sale_path
-rescue StandardError => e
-  Rails.logger.error("Sale creation failed: #{e.message}")
-  flash[:error] = 'システムエラーが発生しました。管理者に連絡してください。'
-  redirect_to new_sale_path, status: :internal_server_error
-end
-```
+**SalesController#void エラーハンドリング**:
 
-**Void 処理時のエラーハンドリング**:
-```ruby
-# SalesController
-def void
-  sale = Sale.find(params[:id])
-
-  if sale.voided?
-    flash[:error] = 'この販売は既に取り消されています。'
-    redirect_to sales_path and return
-  end
-
-  result = sale.void!(
-    reason: params[:void_reason],
-    voided_by: current_employee,
-    remaining_items: params[:remaining_items]
-  )
-
-  flash[:success] = "販売を取り消しました。返金額: #{result[:refund_amount]}円"
-  redirect_to refunds_path
-rescue ActiveRecord::RecordInvalid => e
-  flash[:error] = "入力エラー: #{e.message}"
-  redirect_to sale_path(sale)
-rescue ActiveRecord::StaleObjectError
-  flash[:error] = '在庫が他のユーザーによって更新されました。再読み込みしてください。'
-  redirect_to sale_path(sale)
-rescue StandardError => e
-  Rails.logger.error("Void failed: #{e.message}")
-  flash[:error] = 'システムエラーが発生しました。管理者に連絡してください。'
-  redirect_to sale_path(sale)
-end
-```
+| Error Class | 原因 | Response | HTTP Status |
+|-------------|------|----------|-------------|
+| voided? == true | 既に取消済み | flash[:error], redirect sales_path | 302 |
+| RecordInvalid | バリデーションエラー | flash[:error], redirect sale_path | 302 |
+| StaleObjectError | 競合（在庫更新） | flash[:error], redirect sale_path | 302 |
+| StandardError | システムエラー | log + flash[:error], redirect | 302 |
 
 ### Monitoring
 
@@ -1565,17 +1328,20 @@ end
 - Catalog.current_price, Catalog.discontinued?
 - CatalogPrice.current_price_by_kind
 - CatalogPricingRule.applicable?, max_applicable_quantity
+- **Catalog::PricingRuleCreator.create, #update（Requirement 19: 価格存在バリデーション）**
 - Discount.applicable?, Discount.calculate_discount (Coupon)
 - DailyInventory.bulk_create_for_date, DailyInventory.available_count_for
 - SaleItem.calculate_line_total（純粋なデータモデルとしてテスト）
 - Sale.void!, Sale.create_with_items_and_discounts!
-- Sales::Recorder.record（在庫減算、エラーケース、トランザクション）
+- Sales::Recorder.record（在庫減算、エラーケース、トランザクション、**価格検証**）
 - Sales::PriceCalculator.calculate, apply_pricing_rules (価格ルール適用の各パターン)
 - Sales::AnalysisCalculator.calculate_sma (データ不足時の挙動含む)
+- **Catalogs::PriceValidator.validate!, find_missing_prices, catalogs_with_missing_prices（Requirement 17-18）**
 
 ### Integration Tests
 
-- 販売フロー: POS画面 → SalesController → Sales::Recorder → Sale + SaleItem + DailyInventory 更新 + 価格ルール適用 + 割引適用 → Turbo Streams
+- 販売フロー: POS画面 → SalesController → Sales::Recorder → **価格検証** → Sale + SaleItem + DailyInventory 更新 + 価格ルール適用 + 割引適用 → Turbo Streams
+- **価格未設定エラーフロー（Requirement 17）**: 会計 → 価格検証失敗 → エラーメッセージ表示 → 在庫減算なし
 - Void フロー: 取消 → 在庫復元 → 再販売 → Refund 記録 → Turbo Streams
 - オフライン同期フロー: LocalStorage保存 → /api/sales/sync → 競合検出 → エラー通知
 - 追加発注フロー: AdditionalOrdersController → DailyInventory 加算 → Turbo Streams
@@ -1585,6 +1351,8 @@ end
 ### E2E/UI Tests
 
 - POS画面での販売記録 (価格ルール + 割引適用含む)
+- **価格未設定時の会計エラー表示（Requirement 17）**
+- **商品一覧での価格設定不備警告表示（Requirement 18）**
 - 返品・返金処理 (取消 → 再販売 → 返金額表示)
 - リアルタイム在庫確認 (Turbo Streams)
 - オフライン状態での販売記録とネットワーク復旧後の同期

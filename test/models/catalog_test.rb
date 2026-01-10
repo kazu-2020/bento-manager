@@ -119,6 +119,46 @@ class CatalogTest < ActiveSupport::TestCase
     assert_includes catalog.pricing_rules, rule
   end
 
+  test "active_pricing_rules は現在有効なルールのみ取得" do
+    catalog = Catalog.create!(name: "active_pricing_rules テスト", category: :side_menu)
+
+    # 過去のルール（有効期限切れ）
+    past_rule = CatalogPricingRule.create!(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: :bento,
+      max_per_trigger: 1,
+      valid_from: 2.months.ago,
+      valid_until: 1.month.ago
+    )
+
+    # 現在有効なルール
+    current_rule = CatalogPricingRule.create!(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: :bento,
+      max_per_trigger: 1,
+      valid_from: 1.week.ago,
+      valid_until: nil
+    )
+
+    # 未来のルール（まだ有効でない）
+    future_rule = CatalogPricingRule.create!(
+      target_catalog: catalog,
+      price_kind: :bundle,
+      trigger_category: :bento,
+      max_per_trigger: 1,
+      valid_from: 1.month.from_now,
+      valid_until: nil
+    )
+
+    active_rules = catalog.active_pricing_rules
+
+    assert_not_includes active_rules, past_rule, "期限切れのルールは含まれるべきでない"
+    assert_includes active_rules, current_rule, "現在有効なルールは含まれるべき"
+    assert_not_includes active_rules, future_rule, "未来のルールは含まれるべきでない"
+  end
+
   test "discontinuation との関連が正しく設定されている" do
     catalog = catalogs(:daily_bento_b)
     discontinuation = CatalogDiscontinuation.create!(
@@ -132,33 +172,32 @@ class CatalogTest < ActiveSupport::TestCase
 
   # ===== ビジネスロジックメソッドテスト（Task 4.5 追加） =====
 
-  test "current_price は現在有効な価格を取得" do
-    catalog = Catalog.create!(name: "current_price テスト", category: :bento)
+  test "price_by_kind は指定した kind の現在有効な価格を取得" do
+    catalog = Catalog.create!(name: "price_by_kind テスト", category: :side_menu)
 
-    # 過去の価格
-    CatalogPrice.create!(
+    regular_price = CatalogPrice.create!(
       catalog: catalog,
       kind: :regular,
-      price: 400,
-      effective_from: 2.days.ago,
-      effective_until: 1.day.ago
-    )
-
-    # 現在有効な価格
-    current = CatalogPrice.create!(
-      catalog: catalog,
-      kind: :regular,
-      price: 500,
+      price: 250,
       effective_from: 1.day.ago,
       effective_until: nil
     )
 
-    assert_equal current, catalog.current_price
+    bundle_price = CatalogPrice.create!(
+      catalog: catalog,
+      kind: :bundle,
+      price: 150,
+      effective_from: 1.day.ago,
+      effective_until: nil
+    )
+
+    assert_equal regular_price, catalog.price_by_kind(:regular)
+    assert_equal bundle_price, catalog.price_by_kind(:bundle)
   end
 
-  test "current_price は有効な価格がない場合 nil を返す" do
-    catalog = Catalog.create!(name: "価格なしテスト", category: :bento)
-    assert_nil catalog.current_price
+  test "price_by_kind は有効な価格がない場合 nil を返す" do
+    catalog = Catalog.create!(name: "価格なしテスト2", category: :bento)
+    assert_nil catalog.price_by_kind(:regular)
   end
 
   test "discontinued? は提供終了記録がある場合 true を返す" do

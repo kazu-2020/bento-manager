@@ -8,13 +8,14 @@ class Discount < ApplicationRecord
   delegate :applicable?, to: :discountable
 
   # ===== スコープ =====
-  # 現在有効な割引を取得（valid_from <= 今日 AND (valid_until が nil OR valid_until >= 今日)）
-  scope :active, -> {
-    where(valid_from: ..Date.current)
+  # 指定日時点で有効な割引を取得
+  scope :active_at, ->(date) {
+    where(valid_from: ..date)
       .merge(
-        where(valid_until: nil).or(where(valid_until: Date.current..))
+        where(valid_until: nil).or(where(valid_until: date..))
       )
   }
+  scope :active, -> { active_at(Date.current) }
 
   # ===== バリデーション =====
   validates :name, presence: true

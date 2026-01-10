@@ -4,9 +4,9 @@
 
 **Feature Name**: 販売記録・追加発注・データ分析システム（POS + Analytics）
 **Language**: ja
-**Phase**: tasks-approved
+**Phase**: tasks-generated
 **Generated**: 2026-01-04
-**Updated**: 2026-01-07
+**Updated**: 2026-01-10
 
 ---
 
@@ -226,33 +226,110 @@
 
 ### Phase 7: Sales Domain - Price Calculator
 
-- [ ] 10. Sales::PriceCalculator（価格計算 PORO）実装
-- [ ] 10.1 Sales::PriceCalculator クラス作成（Catalog, CatalogPrice, CatalogPricingRule, Discount 依存）
+- [x] 10. Sales::PriceCalculator（価格計算 PORO）実装
+- [x] 10.1 Sales::PriceCalculator クラス作成（Catalog, CatalogPrice, CatalogPricingRule, Discount 依存）
   - app/models/sales ディレクトリ作成
   - PriceCalculator クラスの基本構造
   - initialize メソッド（cart_items, discount_ids を受け取る）
   - _Requirements: 3.1, 3.2, 13.1, 14.1_
 
-- [ ] 10.2 価格ルール適用ロジック実装
+- [x] 10.2 価格ルール適用ロジック実装
   - apply_pricing_rules メソッド（CatalogPricingRule#applicable? を判定）
   - セット価格適用条件の判定（弁当1個につきサラダ1個まで）
   - 単品価格とセット価格の使い分け
   - _Requirements: 14.3, 14.4, 14.5, 14.6_
 
-- [ ] 10.3 割引適用ロジック実装
+- [x] 10.3 割引適用ロジック実装
   - apply_discounts メソッド（Discount#applicable? を判定）
   - クーポン枚数の計算（弁当の合計個数（quantity の合計）× max_per_bento_quantity）
   - 例: 日替わりA 3個 + 日替わりB 2個 = 弁当5個 → クーポン最大5枚適用可能
   - 複数割引の合算
   - _Requirements: 13.2, 13.4, 13.5, 13.6, 13.7, 13.8_
 
-- [ ] 10.4 calculate メソッド実装
+- [x] 10.4 calculate メソッド実装
   - Step 1: 価格ルール適用（CatalogPricingRule）
   - Step 2: 小計計算（unit_price × quantity）
   - Step 3: 割引適用（Discount#calculate_discount）
   - Step 4: 最終金額計算（total_amount - total_discount_amount）
   - 価格内訳の返却（item_details, discount_details, total_amount, final_amount）
   - _Requirements: 3.1, 3.2, 13.8, 14.7_
+
+### Phase 7b: Price Validation Domain (Requirements 17-19)
+
+- [x] 41. Catalogs::PriceValidator（価格存在検証 PORO）実装
+- [x] 41.1 Catalogs::PriceValidator クラス作成
+  - app/models/catalogs ディレクトリ作成
+  - PriceValidator クラスの基本構造（薄い部品として設計 - 決定18）
+  - price_exists? インスタンスメソッド（catalog, kind の2引数、at はコンストラクタで指定）
+  - MissingPriceError カスタム例外クラス（catalog_name, price_kind 属性を保持）
+  - _Requirements: 17.1, 17.2_
+
+- [x] 41.2 find_price / find_price! メソッド実装
+  - find_price: 価格取得（存在しない場合は nil）
+  - find_price!: 価格取得（存在しない場合は MissingPriceError）
+  - Catalog#price_by_kind に委譲
+  - _Requirements: 17.2, 17.3_
+
+- [x] 41.3 catalogs_with_missing_prices メソッド実装
+  - 管理画面用: 価格設定に不備がある全商品を返す
+  - 有効な価格ルールが参照する価格種別に対応する CatalogPrice が存在しない商品を検出
+  - 戻り値: 商品と不足価格種別のリスト `[{ catalog: Catalog, missing_kinds: [String] }]`
+  - _Requirements: 18.1, 18.2, 18.3, 18.6_
+
+- [x] 41.4 Sales::PriceCalculator への価格存在検証統合（決定18）
+  - PriceCalculator.calculate 内で価格ルール適用前に検証を実行
+  - 「何の kind が必要か」は PriceCalculator#determine_required_price_kinds が決定
+  - Catalogs::PriceValidator#price_exists? を呼び出して価格存在を検証
+  - 価格不足時は Sales::PriceCalculator::MissingPriceError を発生（商品名と価格種別を含む）
+  - _Requirements: 17.1, 17.2, 17.3, 17.4_
+
+- [ ] 41.5 Sales::Recorder への統合（決定18）
+  - Sales::Recorder は PriceCalculator.calculate を呼び出し
+  - PriceCalculator 内で価格存在検証が実行される（Recorder は直接呼び出さない）
+  - MissingPriceError 発生時はエラーログを記録
+  - トランザクション開始前に検証が完了するため、在庫減算なし
+  - _Requirements: 17.5, 17.6, 17.7_
+
+- [ ] 42. Catalogs::PricingRuleCreator（価格ルール作成 PORO）実装
+- [ ] 42.1 Catalogs::PricingRuleCreator クラス作成
+  - app/models/catalogs ディレクトリ内に PricingRuleCreator クラス作成
+  - MissingPriceError は Catalogs::PriceValidator::MissingPriceError を再利用
+  - _Requirements: 19.1, 19.3, 19.4_
+
+- [ ] 42.2 create メソッド実装
+  - CatalogPricingRule のインスタンス作成
+  - 今日時点で有効化される場合は価格存在検証を実行
+  - 検証成功時のみ save! を実行
+  - _Requirements: 19.1, 19.5, 19.6_
+
+- [ ] 42.3 update メソッド実装
+  - 既存 CatalogPricingRule の属性更新
+  - 有効化（active）される場合は価格存在検証を実行
+  - 無効化（inactive）の場合は検証をスキップ
+  - _Requirements: 19.2, 19.5, 19.6, 19.7_
+
+- [ ] 42.4 validate_price_existence! プライベートメソッド実装
+  - 参照する価格種別（kind）に対応する CatalogPrice の存在確認
+  - 今日時点（Date.current）で有効な価格のみを検証対象
+  - 不足時は MissingPriceError を発生
+  - _Requirements: 19.3, 19.4, 19.5_
+
+- [ ] 43. Admin 画面での価格設定警告表示実装
+- [ ] 43.1 (P) CatalogsController index アクション更新
+  - Catalogs::PriceValidator#catalogs_with_missing_prices を呼び出し
+  - 警告対象の商品リストをビューに渡す
+  - _Requirements: 18.1, 18.2_
+
+- [ ] 43.2 (P) catalogs/index.html.erb 警告表示実装
+  - 価格設定に不備がある商品を視覚的に警告表示（赤背景、アイコン）
+  - 不足している価格種別（kind）を表示
+  - 警告クリックで価格設定画面に遷移
+  - _Requirements: 18.1, 18.3, 18.4_
+
+- [ ] 43.3 (P) 警告セクション実装
+  - 警告がある商品を一覧上部または別セクションにまとめて表示
+  - 「すべての商品に価格が正しく設定されています」の正常状態表示
+  - _Requirements: 18.5, 18.6_
 
 ### Phase 8: Refund Domain
 
@@ -477,8 +554,9 @@
   - 顧客区分（staff / citizen）選択
   - 販売確定ボタン
   - 在庫不足時のエラーメッセージ表示
+  - 価格未設定時のエラーメッセージ表示（商品名と価格種別を含む）
   - 販売完了後のリダイレクト
-  - _Requirements: 3.3, 3.4, 3.7_
+  - _Requirements: 3.3, 3.4, 3.7, 17.2, 17.3_
 
 - [ ] 25. リアルタイム在庫確認画面実装
 - [ ] 25.1 在庫表示画面
@@ -658,7 +736,8 @@
   - 価格ルール適用テスト（セット価格）
   - 割引適用テスト（クーポン）
   - calculate メソッド統合テスト
-  - _Requirements: 3.1, 3.2, 13.8, 14.7_
+  - 価格存在検証テスト（MissingPriceError 発生）
+  - _Requirements: 3.1, 3.2, 13.8, 14.7, 17.1, 17.2, 17.3_
 
 - [ ]* 35.2 Sales::AnalysisCalculator テスト
   - calculate_sma メソッドテスト
@@ -675,6 +754,21 @@
   - 重複チェックテスト
   - エラーハンドリングテスト
   - _Requirements: 11.2, 11.3_
+
+- [ ]* 35.5 Catalog::PriceValidator テスト
+  - price_exists? メソッドテスト（正常系: 価格存在時は true）
+  - price_exists? メソッドテスト（異常系: 価格未設定時は false）
+  - find_price! メソッドテスト（価格未設定時に MissingPriceError）
+  - catalogs_with_missing_prices メソッドテスト（管理画面用）
+  - _Requirements: 17.1, 17.2, 18.1, 18.2_
+
+- [ ]* 35.6 Catalog::PricingRuleCreator テスト
+  - create メソッドテスト（正常系: 価格存在時に作成成功）
+  - create メソッドテスト（異常系: 価格未設定時に MissingPriceError）
+  - update メソッドテスト（有効化時の価格検証）
+  - update メソッドテスト（無効化時の検証スキップ）
+  - 将来の valid_from 設定時の検証スキップ
+  - _Requirements: 19.1, 19.2, 19.3, 19.5, 19.6, 19.7_
 
 - [ ] 36. コントローラーテスト実装
 - [ ]* 36.1 LocationsController テスト
@@ -700,7 +794,8 @@
   - create アクションテスト（販売記録、在庫減算、割引適用）
   - void アクションテスト（返品・返金処理）
   - トランザクションテスト
-  - _Requirements: 3.1, 3.3, 3.4, 15.1, 15.2_
+  - 価格未設定時のエラーハンドリングテスト
+  - _Requirements: 3.1, 3.3, 3.4, 15.1, 15.2, 17.2, 17.3_
 
 - [ ]* 36.6 AdditionalOrdersController テスト
   - create アクションテスト（追加発注記録、在庫加算）
@@ -731,6 +826,18 @@
   - オフライン販売データ保存 → オンライン復帰 → 同期処理
   - _Requirements: 11.1, 11.2, 11.3_
 
+- [ ]* 37.5 価格未設定商品の会計エラーフロー統合テスト
+  - 価格ルールに対応する CatalogPrice が存在しない商品をカートに追加
+  - 会計確定 → Sales::PriceCalculator.calculate で MissingPriceError 発生
+  - エラーメッセージ表示（商品名と価格種別を含む）、在庫減算なし
+  - _Requirements: 17.1, 17.2, 17.3, 17.5, 17.6_
+
+- [ ]* 37.6 価格ルール作成・有効化時の価格検証統合テスト
+  - 価格が存在しない商品に対して価格ルールを作成 → エラー
+  - 価格を追加後に価格ルールを作成 → 成功
+  - 既存ルールを有効化（価格なし）→ エラー
+  - _Requirements: 19.1, 19.2, 19.3, 19.6_
+
 - [ ] 38. E2E テスト実装（System tests）
 - [ ]* 38.1 POS 画面 E2E テスト
   - 販売先選択 → 商品選択 → クーポン入力 → 販売確定
@@ -746,9 +853,9 @@
 - [ ] 39. システム統合
 - [ ] 39.1 全機能統合確認
   - Location, Catalog, Discount, DailyInventory, Sale, SaleItem, SaleDiscount, Refund, AdditionalOrder の連携確認
-  - Sales::PriceCalculator の統合確認
+  - Sales::PriceCalculator の統合確認（価格存在検証を含む）
   - Sales::OfflineSynchronizer の統合確認
-  - _Requirements: 3.1, 3.2, 3.3, 3.4, 13.8, 14.7, 15.1, 15.2_
+  - _Requirements: 3.1, 3.2, 3.3, 3.4, 13.8, 14.7, 15.1, 15.2, 17.1, 17.4_
 
 - [ ] 39.2 データ整合性確認
   - 在庫数の整合性（販売、返品、追加発注）
@@ -780,7 +887,7 @@
 
 ## Requirements Coverage
 
-全 16 の要件がカバーされています:
+全 19 の要件にマッピング済み:
 
 - **Requirement 1**: 弁当商品マスタ管理 → Tasks 4, 15.2, 20, 34.2, 36.2, 38.2
 - **Requirement 2**: 販売先ごとの在庫登録 → Tasks 6, 15.4, 22, 34.4, 36.4, 38.2
@@ -798,17 +905,20 @@
 - **Requirement 14**: サイドメニュー（サラダ）の条件付き価格設定 → Tasks 4.2, 4.3, 10.2, 20.1, 24.3, 37.1
 - **Requirement 15**: 返品・返金処理（取消・再販売・差額返金） → Tasks 7, 11, 16.1, 27, 34.7, 36.5, 37.2
 - **Requirement 16**: 販売先（ロケーション）管理 → Tasks 3, 6.1, 7.1, 12.1, 15.1, 19, 24.1, 34.1, 36.1
+- **Requirement 17**: 価格ルール適用時の価格存在検証 → Tasks 41.1, 41.2, 41.4, 41.5, 35.1, 35.5, 37.5
+- **Requirement 18**: 管理画面での価格設定不備の警告表示 → Tasks 41.3, 43, 35.5
+- **Requirement 19**: 価格ルール作成・有効化時の価格存在バリデーション → Tasks 42, 35.6, 37.6
 
 ---
 
 ## Task Summary
 
-- **総タスク数**: 40 major tasks, 127 sub-tasks
-- **並列実行可能タスク**: 45 tasks marked with `(P)`
-- **オプショナルテストタスク**: 39 tasks marked with `*` (deferrable post-MVP)
+- **総タスク数**: 43 major tasks, 145 sub-tasks
+- **並列実行可能タスク**: 48 tasks marked with `(P)`
+- **オプショナルテストタスク**: 45 tasks marked with `*` (deferrable post-MVP)
 - **平均タスクサイズ**: 1-3 hours per sub-task
-- **全要件カバレッジ**: 16/16 requirements (100%)
+- **要件マッピング**: 19/19 requirements
 
 ---
 
-**次のステップ**: タスクを確認後、`/kiro:spec-impl sales-tracking-pos 1.1` で実装を開始してください。
+**次のステップ**: タスクを確認後、`/kiro:spec-impl sales-tracking-pos 41.1` で実装を開始してください。

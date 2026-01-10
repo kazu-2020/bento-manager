@@ -4,6 +4,7 @@ class Catalog < ApplicationRecord
   has_one  :discontinuation, class_name: "CatalogDiscontinuation", dependent: :restrict_with_error
   has_many :prices, class_name: "CatalogPrice", dependent: :restrict_with_error
   has_many :pricing_rules, class_name: "CatalogPricingRule", foreign_key: "target_catalog_id", dependent: :restrict_with_error
+  has_many :active_pricing_rules, -> { active }, class_name: "CatalogPricingRule", foreign_key: "target_catalog_id"
   has_many :daily_inventories, dependent: :restrict_with_error
   has_many :sale_items, dependent: :restrict_with_error
 
@@ -27,13 +28,31 @@ class Catalog < ApplicationRecord
 
   # ===== ビジネスロジック =====
 
-  # 現在有効な価格を取得
-  def current_price
-    prices.current.order(effective_from: :desc).first
+  # 指定した種別の有効な価格を取得（存在しない場合は nil）
+  # @param kind [String, Symbol] 価格種別 ('regular' | 'bundle')
+  # @param at [Time] 基準日時（デフォルト: 現在）
+  # @return [CatalogPrice, nil]
+  def price_by_kind(kind, at: Time.current)
+    prices.price_by_kind(kind: kind, at: at)
+  end
+
+  # 指定した種別の価格が存在するか
+  # @param kind [String, Symbol] 価格種別 ('regular' | 'bundle')
+  # @param at [Time] 基準日時（デフォルト: 現在）
+  # @return [Boolean]
+  def price_exists?(kind, at: Time.current)
+    price_by_kind(kind, at: at).present?
   end
 
   # 提供終了かどうかを判定
   def discontinued?
     discontinuation.present?
+  end
+
+  # 指定した日付で有効な価格ルールを取得
+  # @param date [Date] 基準日（デフォルト: 今日）
+  # @return [ActiveRecord::Relation<CatalogPricingRule>]
+  def active_pricing_rules_at(date = Date.current)
+    pricing_rules.active_at(date)
   end
 end
