@@ -18,7 +18,6 @@ class Sale < ApplicationRecord
   enum :customer_type, { staff: 0, citizen: 1 }, validate: true
 
   # ===== バリデーション =====
-  validates :location, presence: true
   validates :sale_datetime, presence: true
   validates :customer_type, presence: true
   validates :total_amount, presence: true, numericality: { greater_than_or_equal_to: 0 }

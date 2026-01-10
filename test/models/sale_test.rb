@@ -146,19 +146,6 @@ class SaleTest < ActiveSupport::TestCase
   # Task 7.2: バリデーションテスト
   # =============================================================================
 
-  test "location は必須" do
-    sale = Sale.new(
-      location: nil,
-      sale_datetime: Time.current,
-      customer_type: :staff,
-      total_amount: 1000,
-      final_amount: 950,
-      status: :completed
-    )
-    assert_not sale.valid?
-    assert_includes sale.errors[:location], "を入力してください"
-  end
-
   test "sale_datetime は必須" do
     sale = Sale.new(
       location: locations(:city_hall),

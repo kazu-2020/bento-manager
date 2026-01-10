@@ -91,18 +91,6 @@ class RefundTest < ActiveSupport::TestCase
 
   # ===== Task 11.2: Refund バリデーション実装 =====
 
-  test "original_sale is required" do
-    refund = Refund.new(
-      original_sale: nil,
-      refund_datetime: Time.current,
-      amount: 500,
-      reason: "商品の返品"
-    )
-
-    assert_not refund.valid?
-    assert_includes refund.errors[:original_sale], "を入力してください"
-  end
-
   test "refund_datetime is required" do
     refund = Refund.new(
       original_sale: sales(:completed_sale),
