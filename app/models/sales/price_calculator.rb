@@ -6,10 +6,11 @@ module Sales
 
     # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
     # @param discount_ids [Array<Integer>] 適用する割引の ID リスト
-    def initialize(cart_items, discount_ids: [])
+    # @param calculation_time [Time] 計算基準時刻（デフォルト: 現在）
+    def initialize(cart_items, discount_ids: [], calculation_time: Time.current)
       @cart_items = cart_items
       @discount_ids = discount_ids
-      @calculation_time = Time.current
+      @calculation_time = calculation_time
       @applicable_rules_cache = {}
     end
 
