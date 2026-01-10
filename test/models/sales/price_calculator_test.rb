@@ -332,5 +332,68 @@ module Sales
       assert_equal 450, result[:final_total]
       assert result[:final_total] >= 0
     end
+
+    # ===== 41.4 価格存在検証テスト (Requirement 17) =====
+
+    test "calculate raises MissingPriceError when regular price is missing" do
+      # miso_soup には価格が設定されていない
+      cart_items = [
+        { catalog: catalogs(:miso_soup), quantity: 1 }
+      ]
+
+      error = assert_raises(Sales::PriceCalculator::MissingPriceError) do
+        Sales::PriceCalculator.calculate(cart_items)
+      end
+
+      assert_includes error.message, "味噌汁"
+      assert_includes error.message, "regular"
+      assert_not_nil error.missing_prices
+      assert_equal 1, error.missing_prices.length
+    end
+
+    test "calculate raises MissingPriceError with multiple missing prices" do
+      # miso_soup と discontinued_bento には価格が設定されていない
+      cart_items = [
+        { catalog: catalogs(:miso_soup), quantity: 1 },
+        { catalog: catalogs(:discontinued_bento), quantity: 1 }
+      ]
+
+      error = assert_raises(Sales::PriceCalculator::MissingPriceError) do
+        Sales::PriceCalculator.calculate(cart_items)
+      end
+
+      assert_equal 2, error.missing_prices.length
+      catalog_names = error.missing_prices.map { |mp| mp[:catalog_name] }
+      assert_includes catalog_names, "味噌汁"
+      assert_includes catalog_names, "販売終了弁当"
+    end
+
+    test "MissingPriceError contains catalog_name and price_kind" do
+      cart_items = [
+        { catalog: catalogs(:miso_soup), quantity: 1 }
+      ]
+
+      error = assert_raises(Sales::PriceCalculator::MissingPriceError) do
+        Sales::PriceCalculator.calculate(cart_items)
+      end
+
+      missing = error.missing_prices.first
+      assert_equal catalogs(:miso_soup).id, missing[:catalog_id]
+      assert_equal "味噌汁", missing[:catalog_name]
+      assert_equal "regular", missing[:price_kind]
+    end
+
+    test "calculate succeeds when all required prices exist" do
+      # すべての価格が設定されている場合はエラーなし
+      cart_items = [
+        { catalog: catalogs(:daily_bento_a), quantity: 1 },
+        { catalog: catalogs(:salad), quantity: 1 }
+      ]
+
+      result = Sales::PriceCalculator.calculate(cart_items)
+
+      assert_not_nil result[:items_with_prices]
+      assert_equal 700, result[:subtotal]
+    end
   end
 end

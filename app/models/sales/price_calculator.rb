@@ -2,6 +2,18 @@
 # カート内アイテムの価格ルール適用と割引計算を行う
 module Sales
   class PriceCalculator
+    # 必要な価格が存在しない場合に発生する例外
+    class MissingPriceError < StandardError
+      attr_reader :missing_prices
+
+      def initialize(missing_prices)
+        @missing_prices = missing_prices
+        messages = missing_prices.map do |mp|
+          "商品「#{mp[:catalog_name]}」に価格種別「#{mp[:price_kind]}」の価格が設定されていません"
+        end
+        super("価格設定エラー: #{messages.join('; ')}")
+      end
+    end
     # 価格計算を実行
     #
     # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
@@ -15,16 +27,19 @@ module Sales
     def self.calculate(cart_items, discount_ids = [])
       return empty_result if cart_items.empty?
 
-      # Step 1: 価格ルール適用（セット価格判定）
+      # Step 1: 価格存在検証（必要な価格がすべて設定されているかチェック）
+      validate_required_prices!(cart_items)
+
+      # Step 2: 価格ルール適用（セット価格判定）
       items_with_prices = apply_pricing_rules(cart_items)
 
-      # Step 2: 小計計算
+      # Step 3: 小計計算
       subtotal = items_with_prices.sum { |item| item[:unit_price] * item[:quantity] }
 
-      # Step 3: 割引適用
+      # Step 4: 割引適用
       discount_result = apply_discounts(cart_items, discount_ids)
 
-      # Step 4: 最終金額計算
+      # Step 5: 最終金額計算
       # NOTE: ビジネスルール上 final_total = 0 になるケースは発生しない想定だが、
       #       防御的なセーフティネットとして 0 以下にならないようにしている
       final_total = [ subtotal - discount_result[:total_discount_amount], 0 ].max
@@ -150,6 +165,43 @@ module Sales
       )
     end
 
-    private_class_method :empty_result, :split_item_by_pricing_rule, :apply_regular_price
+    # 必要な価格がすべて設定されているか検証
+    # @param cart_items [Array<Hash>] カート内アイテム
+    # @raise [MissingPriceError] 価格が設定されていない商品がある場合
+    def self.validate_required_prices!(cart_items)
+      validator = Catalogs::PriceValidator.new
+      missing = []
+
+      cart_items.each do |item|
+        catalog = item[:catalog]
+        required_kinds = determine_required_price_kinds(catalog, cart_items)
+
+        required_kinds.each do |kind|
+          next if validator.price_exists?(catalog.id, kind)
+          missing << { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind.to_s }
+        end
+      end
+
+      raise MissingPriceError.new(missing) if missing.any?
+    end
+
+    # 商品に必要な価格種別を決定
+    # @param catalog [Catalog] 商品
+    # @param cart_items [Array<Hash>] カート内アイテム
+    # @return [Array<Symbol>] 必要な価格種別
+    def self.determine_required_price_kinds(catalog, cart_items)
+      kinds = [ :regular ]
+
+      # 価格ルールが適用可能な場合は bundle 価格も必要
+      catalog.active_pricing_rules.each do |rule|
+        next unless rule.applicable?(cart_items)
+        kinds << rule.price_kind.to_sym
+      end
+
+      kinds.uniq
+    end
+
+    private_class_method :empty_result, :split_item_by_pricing_rule, :apply_regular_price,
+                         :validate_required_prices!, :determine_required_price_kinds
   end
 end
