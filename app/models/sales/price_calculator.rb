@@ -76,7 +76,7 @@ module Sales
     def apply_discounts
       return { discount_details: [], total_discount_amount: 0 } if discount_ids.empty?
 
-      discount_details = Discount.active.where(id: discount_ids).map do |discount|
+      discount_details = Discount.active_at(calculation_time.to_date).where(id: discount_ids).map do |discount|
         discount_amount = discount.calculate_discount(cart_items)
 
         {
