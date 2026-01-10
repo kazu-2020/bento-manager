@@ -5,8 +5,7 @@ class AdditionalOrder < ApplicationRecord
   belongs_to :employee, optional: true
 
   # ===== バリデーション =====
-  validates :order_date, presence: true
-  validates :order_time, presence: true
+  validates :order_at, presence: true
   validates :quantity, presence: true, numericality: { greater_than: 0 }
 
   # ===== クラスメソッド =====
@@ -23,7 +22,7 @@ class AdditionalOrder < ApplicationRecord
       inventory = DailyInventory.find_or_create_by!(
         location: order.location,
         catalog: order.catalog,
-        inventory_date: order.order_date
+        inventory_date: order.order_at.to_date
       )
 
       inventory.increment_stock!(order.quantity)

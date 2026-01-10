@@ -16,8 +16,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_10_200001) do
     t.datetime "created_at", null: false
     t.integer "employee_id"
     t.integer "location_id", null: false
-    t.date "order_date", null: false
-    t.time "order_time", null: false
+    t.datetime "order_at", null: false
     t.integer "quantity", null: false
     t.datetime "updated_at", null: false
     t.index ["catalog_id"], name: "index_additional_orders_on_catalog_id"

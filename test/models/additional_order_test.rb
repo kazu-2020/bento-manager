@@ -11,8 +11,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.new(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 5,
       employee: employees(:verified_employee)
     )
@@ -23,8 +22,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.create!(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 5
     )
     assert_equal locations(:city_hall), order.location
@@ -34,8 +32,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.create!(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 5
     )
     assert_equal catalogs(:daily_bento_a), order.catalog
@@ -45,8 +42,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.create!(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 5,
       employee: employees(:verified_employee)
     )
@@ -57,8 +53,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.new(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 5,
       employee: nil
     )
@@ -73,8 +68,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.new(
       location: nil,
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 5
     )
     assert_not order.valid?
@@ -85,44 +79,29 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.new(
       location: locations(:city_hall),
       catalog: nil,
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 5
     )
     assert_not order.valid?
     assert_includes order.errors[:catalog], "を入力してください"
   end
 
-  test "order_date は必須" do
+  test "order_at は必須" do
     order = AdditionalOrder.new(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: nil,
-      order_time: Time.current,
+      order_at: nil,
       quantity: 5
     )
     assert_not order.valid?
-    assert_includes order.errors[:order_date], "を入力してください"
-  end
-
-  test "order_time は必須" do
-    order = AdditionalOrder.new(
-      location: locations(:city_hall),
-      catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: nil,
-      quantity: 5
-    )
-    assert_not order.valid?
-    assert_includes order.errors[:order_time], "を入力してください"
+    assert_includes order.errors[:order_at], "を入力してください"
   end
 
   test "quantity は必須" do
     order = AdditionalOrder.new(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: nil
     )
     assert_not order.valid?
@@ -133,8 +112,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.new(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 0
     )
     assert_not order.valid?
@@ -145,8 +123,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.new(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: -1
     )
     assert_not order.valid?
@@ -157,8 +134,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.new(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 1
     )
     assert order.valid?
@@ -175,8 +151,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.create_with_inventory!(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: inventory.inventory_date,
-      order_time: Time.current,
+      order_at: inventory.inventory_date.to_time,
       quantity: 5
     )
 
@@ -198,8 +173,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
       AdditionalOrder.create_with_inventory!(
         location: locations(:city_hall),
         catalog: catalogs(:daily_bento_a),
-        order_date: future_date,
-        order_time: Time.current,
+        order_at: future_date.to_time,
         quantity: 10
       )
     end
@@ -224,8 +198,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
           AdditionalOrder.create_with_inventory!(
             location: locations(:city_hall),
             catalog: catalogs(:daily_bento_a),
-            order_date: Date.current,
-            order_time: Time.current,
+            order_at: Time.current,
             quantity: 0  # 無効な値
           )
         end
@@ -240,8 +213,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     AdditionalOrder.create!(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
-      order_time: Time.current,
+      order_at: Time.current,
       quantity: 5
     )
 
