@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_08_132558) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_10_200000) do
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -130,6 +130,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_08_132558) do
     t.index ["status"], name: "index_locations_on_status"
   end
 
+  create_table "refunds", force: :cascade do |t|
+    t.integer "amount", null: false
+    t.bigint "corrected_sale_id"
+    t.datetime "created_at", null: false
+    t.integer "employee_id"
+    t.bigint "original_sale_id", null: false
+    t.string "reason", null: false
+    t.datetime "refund_datetime", null: false
+    t.datetime "updated_at", null: false
+    t.index ["corrected_sale_id"], name: "idx_refunds_corrected_sale"
+    t.index ["employee_id"], name: "index_refunds_on_employee_id"
+    t.index ["original_sale_id"], name: "idx_refunds_original_sale"
+  end
+
   create_table "sale_discounts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "discount_amount", null: false
@@ -185,6 +199,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_08_132558) do
   add_foreign_key "daily_inventories", "locations", on_delete: :restrict
   add_foreign_key "employee_lockouts", "employees", column: "id"
   add_foreign_key "employee_login_failures", "employees", column: "id"
+  add_foreign_key "refunds", "employees"
+  add_foreign_key "refunds", "sales", column: "corrected_sale_id"
+  add_foreign_key "refunds", "sales", column: "original_sale_id"
   add_foreign_key "sale_discounts", "discounts", on_delete: :restrict
   add_foreign_key "sale_discounts", "sales", on_delete: :cascade
   add_foreign_key "sale_items", "catalog_prices", on_delete: :restrict

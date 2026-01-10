@@ -1,0 +1,16 @@
+# Refund fixtures for testing
+# amount: 返金額（元の販売金額 - 修正後の販売金額）
+
+partial_refund:
+  original_sale: voided_sale
+  employee: owner_employee
+  refund_datetime: <%= Time.current %>
+  amount: 500
+  reason: "1個返品のため"
+
+full_refund:
+  original_sale: voided_sale
+  employee: owner_employee
+  refund_datetime: <%= Time.current %>
+  amount: 1000
+  reason: "全額返金"

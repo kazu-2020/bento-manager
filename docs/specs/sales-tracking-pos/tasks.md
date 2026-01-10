@@ -333,23 +333,23 @@
 
 ### Phase 8: Refund Domain
 
-- [ ] 11. Refund（返金記録）ドメイン実装
-- [ ] 11.1 Refund モデル作成（Sale, Employee 依存）
+- [x] 11. Refund（返金記録）ドメイン実装
+- [x] 11.1 Refund モデル作成（Sale, Employee 依存）
   - Refund テーブルマイグレーション（id, original_sale_id, corrected_sale_id, employee_id, refund_datetime, amount, reason）
   - original_sale_id, corrected_sale_id, employee_id の外部キー制約
   - _Requirements: 15.3, 15.7, 15.10, 15.12_
 
-- [ ] 11.2 Refund バリデーション実装
+- [x] 11.2 Refund バリデーション実装
   - original_sale_id, refund_datetime, amount の必須バリデーション
   - amount >= 0 のバリデーション
   - _Requirements: 15.10_
 
-- [ ] 11.3 Refund インデックス作成
+- [x] 11.3 Refund インデックス作成
   - idx_refunds_original_sale（INDEX: original_sale_id）
   - idx_refunds_corrected_sale（INDEX: corrected_sale_id）
   - _Requirements: 15.3_
 
-- [ ] 11.4 返品・返金処理ロジック実装
+- [x] 11.4 返品・返金処理ロジック実装
   - 元の Sale を void（status = voided, voided_at, void_reason を記録）
   - 返品分を除いた商品で新規 Sale を作成（corrected_from_sale_id を設定）
   - 価格ルール・割引を再評価（Sales::PriceCalculator 呼び出し）

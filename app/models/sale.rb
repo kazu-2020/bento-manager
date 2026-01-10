@@ -11,6 +11,7 @@ class Sale < ApplicationRecord
   has_many :items, class_name: "SaleItem", dependent: :destroy
   has_many :sale_discounts, dependent: :destroy
   has_many :discounts, through: :sale_discounts
+  has_many :refunds, foreign_key: "original_sale_id", dependent: :nullify
 
   # ===== Enum =====
   enum :status, { completed: 0, voided: 1 }, validate: true
