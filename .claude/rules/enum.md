@@ -1,3 +1,7 @@
+---
+paths: app/models/**/*.rb
+---
+
 # Enum 定義ルール
 
 [目的: Rails モデルにおける enum 定義の標準化とバリデーション強化]

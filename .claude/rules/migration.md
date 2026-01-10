@@ -1,3 +1,7 @@
+---
+paths: db/migrate/*.rb
+---
+
 # Migration Standards
 
 [Purpose: マイグレーションファイルにおけるテーブル・カラムコメントの規約]
