@@ -38,7 +38,6 @@ module Sales
       )
 
       # Assert
-      assert result[:success]
       assert_equal sale.final_amount, result[:refund_amount]
       assert_nil result[:corrected_sale]
 
@@ -81,10 +80,7 @@ module Sales
         employee: @employee
       )
 
-      # Assert
-      assert result[:success]
-
-      # 元の Sale が voided になっている
+      # Assert: 元の Sale が voided になっている
       sale.reload
       assert sale.voided?
 
@@ -137,10 +133,7 @@ module Sales
         employee: @employee
       )
 
-      # Assert
-      assert result[:success]
-
-      # 新しい Sale のサラダは単品価格（250円）になる
+      # Assert: 新しい Sale のサラダは単品価格（250円）になる
       corrected_sale = result[:corrected_sale]
       assert_equal 250, corrected_sale.final_amount
 

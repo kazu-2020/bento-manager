@@ -11,6 +11,8 @@ module Sales
     #   - :location [Location] 販売先
     #   - :customer_type [Symbol] 顧客区分
     #   - :employee [Employee] 販売員
+    #   - :corrected_from_sale_id [Integer, nil] 修正元の Sale ID（返品・返金による
+    #     再販売の場合に指定。Sales::Refunder#create_corrected_sale から使用される）
     # @param items_params [Array<Hash>] 各アイテムの属性配列
     #   - :catalog [Catalog] 商品
     #   - :quantity [Integer] 数量

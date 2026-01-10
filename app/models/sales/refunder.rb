@@ -11,7 +11,6 @@ module Sales
     # @param reason [String] 返金理由
     # @param employee [Employee] 返金処理担当者
     # @return [Hash] 処理結果
-    #   - :success [Boolean] 成功/失敗
     #   - :refund [Refund] 作成された Refund レコード
     #   - :corrected_sale [Sale, nil] 作成された新規 Sale（全額返金の場合は nil）
     #   - :refund_amount [Integer] 返金額
@@ -34,7 +33,6 @@ module Sales
         )
 
         {
-          success: true,
           refund: refund,
           corrected_sale: corrected_sale,
           refund_amount: refund_amount
