@@ -7,6 +7,7 @@ class Catalog < ApplicationRecord
   has_many :active_pricing_rules, -> { active }, class_name: "CatalogPricingRule", foreign_key: "target_catalog_id"
   has_many :daily_inventories, dependent: :restrict_with_error
   has_many :sale_items, dependent: :restrict_with_error
+  has_many :additional_orders, dependent: :restrict_with_error
 
   # ===== コールバック =====
   # 物理削除を禁止する

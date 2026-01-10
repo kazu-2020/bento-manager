@@ -10,7 +10,20 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_10_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_10_200001) do
+  create_table "additional_orders", force: :cascade do |t|
+    t.integer "catalog_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "employee_id"
+    t.integer "location_id", null: false
+    t.datetime "order_at", null: false
+    t.integer "quantity", null: false
+    t.datetime "updated_at", null: false
+    t.index ["catalog_id"], name: "index_additional_orders_on_catalog_id"
+    t.index ["employee_id"], name: "index_additional_orders_on_employee_id"
+    t.index ["location_id"], name: "index_additional_orders_on_location_id"
+  end
+
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email", null: false
@@ -194,6 +207,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_10_200000) do
     t.index ["voided_by_employee_id"], name: "index_sales_on_voided_by_employee_id"
   end
 
+  add_foreign_key "additional_orders", "catalogs", on_delete: :restrict
+  add_foreign_key "additional_orders", "employees", on_delete: :nullify
+  add_foreign_key "additional_orders", "locations", on_delete: :restrict
   add_foreign_key "catalog_discontinuations", "catalogs", on_delete: :restrict
   add_foreign_key "catalog_prices", "catalogs", on_delete: :restrict
   add_foreign_key "catalog_pricing_rules", "catalogs", column: "target_catalog_id", on_delete: :restrict

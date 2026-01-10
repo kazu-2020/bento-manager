@@ -1220,8 +1220,7 @@ erDiagram
         int id PK
         int location_id FK            "sales location"
         int catalog_id FK
-        date order_date
-        time order_time
+        datetime order_at
         int quantity
         int employee_id FK
     }
@@ -1244,7 +1243,7 @@ erDiagram
 - `sale_items`: 販売明細 (sale_id, catalog_id, catalog_price_id, quantity, unit_price, line_total, sold_at)
 - `sale_discounts`: 販売・割引中間テーブル (sale_id, discount_id, discount_amount)
 - `refunds`: 返金記録 (original_sale_id, corrected_sale_id, amount, reason)
-- `additional_orders`: 追加発注（location_id, catalog_id, order_date, order_time, quantity）
+- `additional_orders`: 追加発注（location_id, catalog_id, order_at, quantity）
 
 **テーブル設計の特徴**:
 - **Location**: 論理削除パターン（deleted_at カラム）、販売先マスタ
