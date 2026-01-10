@@ -57,7 +57,7 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     validator = Catalogs::PriceValidator.new
     catalog = catalogs(:daily_bento_a)
 
-    price = validator.find_price(catalog.id, :regular)
+    price = validator.find_price(catalog, :regular)
 
     assert_kind_of CatalogPrice, price
     assert_equal 550, price.price
@@ -67,7 +67,7 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     validator = Catalogs::PriceValidator.new
     catalog = catalogs(:miso_soup)
 
-    price = validator.find_price(catalog.id, :regular)
+    price = validator.find_price(catalog, :regular)
 
     assert_nil price
   end
@@ -76,7 +76,7 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     validator = Catalogs::PriceValidator.new
     catalog = catalogs(:daily_bento_a)
 
-    price = validator.find_price!(catalog.id, :regular)
+    price = validator.find_price!(catalog, :regular)
 
     assert_kind_of CatalogPrice, price
     assert_equal 550, price.price
@@ -87,7 +87,7 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     catalog = catalogs(:miso_soup)
 
     error = assert_raises(Catalogs::PriceValidator::MissingPriceError) do
-      validator.find_price!(catalog.id, :regular)
+      validator.find_price!(catalog, :regular)
     end
 
     assert_equal "味噌汁", error.catalog_name

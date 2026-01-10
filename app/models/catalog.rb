@@ -28,9 +28,9 @@ class Catalog < ApplicationRecord
 
   # ===== ビジネスロジック =====
 
-  # 指定した種別の現在有効な価格を取得（存在しない場合は例外）
+  # 指定した種別の現在有効な価格を取得（存在しない場合は nil）
   def price_by_kind(kind)
-    prices.by_kind(kind).current.order(effective_from: :desc).first!
+    prices.current_price_by_kind(kind)
   end
 
   # 指定した種別の価格が存在するか

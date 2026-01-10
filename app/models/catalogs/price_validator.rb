@@ -44,26 +44,21 @@ module Catalogs
 
     # 価格を取得（存在しない場合は nil）
     #
-    # @param catalog_id [Integer] カタログID
+    # @param catalog [Catalog] カタログ
     # @param kind [String, Symbol] 価格種別
     # @return [CatalogPrice, nil] 価格が存在する場合は CatalogPrice、存在しない場合は nil
-    def find_price(catalog_id, kind)
-      CatalogPrice.current_price_by_kind!(catalog_id, kind)
-    rescue ActiveRecord::RecordNotFound
-      nil
+    def find_price(catalog, kind)
+      catalog.price_by_kind(kind)
     end
 
     # 価格を取得（存在しない場合は MissingPriceError）
     #
-    # @param catalog_id [Integer] カタログID
+    # @param catalog [Catalog] カタログ
     # @param kind [String, Symbol] 価格種別
     # @return [CatalogPrice] 価格
     # @raise [MissingPriceError] 価格が存在しない場合
-    def find_price!(catalog_id, kind)
-      CatalogPrice.current_price_by_kind!(catalog_id, kind)
-    rescue ActiveRecord::RecordNotFound
-      catalog = ::Catalog.find(catalog_id)
-      raise MissingPriceError.new(catalog.name, kind.to_s)
+    def find_price!(catalog, kind)
+      catalog.price_by_kind(kind) || raise(MissingPriceError.new(catalog.name, kind.to_s))
     end
 
     # 商品一覧用: 価格設定に不備がある商品を取得（Requirement 18）
@@ -73,7 +68,7 @@ module Catalogs
     def catalogs_with_missing_prices
       result = []
 
-      ::Catalog.available.includes(:prices, :pricing_rules).find_each do |catalog|
+      ::Catalog.available.preload(:active_pricing_rules).find_each do |catalog|
         missing_kinds = []
 
         # 通常価格チェック（全商品で必須）
