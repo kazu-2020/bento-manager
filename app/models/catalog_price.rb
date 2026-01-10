@@ -9,12 +9,13 @@ class CatalogPrice < ApplicationRecord
   validates :effective_from, presence: true
   validate :valid_date_range
 
-  scope :current, -> {
-    where(effective_from: ..Time.current)
+  scope :effective_at, ->(date) {
+    where(effective_from: ..date)
       .merge(
-        where(effective_until: nil).or(where(effective_until: Time.current..))
+        where(effective_until: nil).or(where(effective_until: date..))
       )
   }
+  scope :current, -> { effective_at(Time.current) }
   scope :by_kind, ->(kind) { where(kind: kind) }
 
   def self.current_price_by_kind!(catalog_id, kind)

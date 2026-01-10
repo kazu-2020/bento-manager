@@ -33,6 +33,14 @@ class Catalog < ApplicationRecord
     prices.by_kind(kind).current.order(effective_from: :desc).first!
   end
 
+  # 指定した種別の価格が存在するか
+  # @param kind [String, Symbol] 価格種別 ('regular' | 'bundle')
+  # @param at [Date] 基準日（デフォルト: 今日）
+  # @return [Boolean]
+  def price_exists?(kind, at: Date.current)
+    prices.by_kind(kind).effective_at(at).exists?
+  end
+
   # 提供終了かどうかを判定
   def discontinued?
     discontinuation.present?

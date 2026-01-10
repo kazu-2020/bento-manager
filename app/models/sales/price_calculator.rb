@@ -177,7 +177,7 @@ module Sales
         required_kinds = determine_required_price_kinds(catalog, cart_items)
 
         required_kinds.each do |kind|
-          next if validator.price_exists?(catalog.id, kind)
+          next if validator.price_exists?(catalog, kind)
           missing << { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind.to_s }
         end
       end

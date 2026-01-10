@@ -11,28 +11,28 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     validator = Catalogs::PriceValidator.new
     catalog = catalogs(:daily_bento_a)
 
-    assert validator.price_exists?(catalog.id, :regular)
+    assert validator.price_exists?(catalog, :regular)
   end
 
   test "price_exists? は指定したカタログに指定した種別の価格が存在しない場合に false を返す" do
     validator = Catalogs::PriceValidator.new
     catalog = catalogs(:miso_soup)
 
-    assert_not validator.price_exists?(catalog.id, :regular)
+    assert_not validator.price_exists?(catalog, :regular)
   end
 
   test "price_exists? は bundle 価格が存在する場合に true を返す" do
     validator = Catalogs::PriceValidator.new
     catalog = catalogs(:salad)
 
-    assert validator.price_exists?(catalog.id, :bundle)
+    assert validator.price_exists?(catalog, :bundle)
   end
 
   test "price_exists? は bundle 価格が存在しない場合に false を返す" do
     validator = Catalogs::PriceValidator.new
     catalog = catalogs(:daily_bento_a)
 
-    assert_not validator.price_exists?(catalog.id, :bundle)
+    assert_not validator.price_exists?(catalog, :bundle)
   end
 
   test "price_exists? は基準日を指定できる" do
@@ -40,7 +40,7 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     catalog = catalogs(:daily_bento_a)
 
     # フィクスチャの価格は 1.month.ago から有効なので、2.months.ago では存在しない
-    assert_not validator.price_exists?(catalog.id, :regular)
+    assert_not validator.price_exists?(catalog, :regular)
   end
 
   test "price_exists? はデフォルトで今日の日付を使用する" do
@@ -48,7 +48,7 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     catalog = catalogs(:daily_bento_a)
 
     assert_equal Date.current, validator.at
-    assert validator.price_exists?(catalog.id, :regular)
+    assert validator.price_exists?(catalog, :regular)
   end
 
   # ===== Task 41.2: find_price / find_price! =====

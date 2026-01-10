@@ -33,17 +33,13 @@ module Catalogs
       @at = at
     end
 
-    # 指定された (catalog_id, kind) の価格が存在するか検証
+    # 指定された (catalog, kind) の価格が存在するか検証
     #
-    # @param catalog_id [Integer] カタログID
+    # @param catalog [Catalog] カタログ
     # @param kind [String, Symbol] 価格種別 ('regular' または 'bundle')
     # @return [Boolean] 価格が存在する場合は true
-    def price_exists?(catalog_id, kind)
-      CatalogPrice
-        .where(catalog_id: catalog_id, kind: kind)
-        .where("effective_from <= ?", at)
-        .where("effective_until IS NULL OR effective_until >= ?", at)
-        .exists?
+    def price_exists?(catalog, kind)
+      catalog.price_exists?(kind, at: at)
     end
 
     # 価格を取得（存在しない場合は nil）
@@ -81,12 +77,12 @@ module Catalogs
         missing_kinds = []
 
         # 通常価格チェック（全商品で必須）
-        missing_kinds << "regular" unless price_exists?(catalog.id, :regular)
+        missing_kinds << "regular" unless catalog.price_exists?(:regular, at: at)
 
         # 有効な価格ルールが参照する価格種別をチェック
         catalog.active_pricing_rules.each do |rule|
           next if rule.price_kind == "regular"
-          missing_kinds << rule.price_kind unless price_exists?(catalog.id, rule.price_kind)
+          missing_kinds << rule.price_kind unless catalog.price_exists?(rule.price_kind, at: at)
         end
 
         result << { catalog: catalog, missing_kinds: missing_kinds.uniq } if missing_kinds.any?
