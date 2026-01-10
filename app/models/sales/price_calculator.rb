@@ -68,24 +68,16 @@ module Sales
     #
     # @return [Array<Hash>] 価格情報を付加したアイテム
     def apply_pricing_rules
-      result = []
+      cart_items.flat_map do |item|
+        pricing_rules = item[:catalog].active_pricing_rules_at(calculation_time.to_date)
+        applicable_rules = pricing_rules.select { |rule| rule.applicable?(cart_items) }
 
-      cart_items.each do |item|
-        catalog = item[:catalog]
-
-        # 価格ルールを検索
-        pricing_rules = catalog.active_pricing_rules_at(calculation_time.to_date)
-
-        if pricing_rules.any? { |rule| rule.applicable?(cart_items) }
-          # セット価格適用可能な場合
-          result.concat(split_item_by_pricing_rule(item, pricing_rules))
+        if applicable_rules.any?
+          split_item_by_pricing_rule(item, applicable_rules)
         else
-          # 通常価格
-          result << apply_regular_price(item)
+          [ apply_regular_price(item) ]
         end
       end
-
-      result
     end
 
     # 割引を適用
@@ -96,26 +88,20 @@ module Sales
     def apply_discounts
       return { discount_details: [], total_discount_amount: 0 } if discount_ids.empty?
 
-      discounts = Discount.active.where(id: discount_ids)
-      discount_details = []
-      total_discount_amount = 0
-
-      discounts.each do |discount|
+      discount_details = Discount.active.where(id: discount_ids).map do |discount|
         discount_amount = discount.calculate_discount(cart_items)
 
-        discount_details << {
+        {
           discount_id: discount.id,
           discount_name: discount.name,
           discount_amount: discount_amount,
           applicable: discount_amount > 0
         }
-
-        total_discount_amount += discount_amount
       end
 
       {
         discount_details: discount_details,
-        total_discount_amount: total_discount_amount
+        total_discount_amount: discount_details.sum { |d| d[:discount_amount] }
       }
     end
 
@@ -131,46 +117,34 @@ module Sales
 
     # アイテムを価格ルールに基づいて分割
     # 例: 弁当1個 + サラダ3個 → サラダ1個@150円 + サラダ2個@250円
-    def split_item_by_pricing_rule(item, pricing_rules)
-      catalog = item[:catalog]
-      quantity = item[:quantity]
+    #
+    # @param item [Hash] カートアイテム
+    # @param applicable_rules [Array<PricingRule>] 適用可能な価格ルール（事前にフィルタ済み）
+    def split_item_by_pricing_rule(item, applicable_rules)
+      selected_rule = applicable_rules.max_by { |rule| rule.max_applicable_quantity(cart_items) }
+      max_quantity = selected_rule.max_applicable_quantity(cart_items)
 
-      # 適用可能なルールから最大適用数量を持つルールを選択
-      selected_rule = pricing_rules
-        .select { |rule| rule.applicable?(cart_items) }
-        .max_by { |rule| rule.max_applicable_quantity(cart_items) }
-
-      # ルールが選択されなかった場合は全て通常価格
-      return [ apply_regular_price(item) ] if selected_rule.nil?
-
-      max_applicable_quantity = selected_rule.max_applicable_quantity(cart_items)
-      bundle_quantity = [ quantity, max_applicable_quantity ].min
-      regular_quantity = quantity - bundle_quantity
+      bundle_quantity = [ item[:quantity], max_quantity ].min
+      regular_quantity = item[:quantity] - bundle_quantity
 
       result = []
-
-      if bundle_quantity > 0
-        # 選択されたルールの price_kind を使用
-        selected_kind = selected_rule.price_kind.to_sym
-        bundle_price = catalog.price_by_kind(selected_kind, at: calculation_time)
-
-        # 価格が存在しない場合は通常価格にフォールバック
-        if bundle_price.nil?
-          result << apply_regular_price(item.merge(quantity: bundle_quantity))
-        else
-          result << item.merge(
-            quantity: bundle_quantity,
-            unit_price: bundle_price.price,
-            catalog_price_id: bundle_price.id
-          )
-        end
-      end
-
-      if regular_quantity > 0
-        result << apply_regular_price(item.merge(quantity: regular_quantity))
-      end
-
+      result << build_bundle_price_item(item, selected_rule, bundle_quantity) if bundle_quantity > 0
+      result << apply_regular_price(item.merge(quantity: regular_quantity)) if regular_quantity > 0
       result
+    end
+
+    # バンドル価格アイテムを構築
+    def build_bundle_price_item(item, rule, quantity)
+      bundle_price = item[:catalog].price_by_kind(rule.price_kind.to_sym, at: calculation_time)
+
+      # 価格が存在しない場合は通常価格にフォールバック
+      return apply_regular_price(item.merge(quantity: quantity)) if bundle_price.nil?
+
+      item.merge(
+        quantity: quantity,
+        unit_price: bundle_price.price,
+        catalog_price_id: bundle_price.id
+      )
     end
 
     # 通常価格を適用
@@ -188,16 +162,13 @@ module Sales
     # @raise [MissingPriceError] 価格が設定されていない商品がある場合
     def validate_required_prices!
       validator = Catalogs::PriceValidator.new(at: calculation_time)
-      missing = []
 
-      cart_items.each do |item|
+      missing = cart_items.flat_map do |item|
         catalog = item[:catalog]
-        required_kinds = determine_required_price_kinds(catalog)
 
-        required_kinds.each do |kind|
-          next if validator.price_exists?(catalog, kind)
-          missing << { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind.to_s }
-        end
+        determine_required_price_kinds(catalog)
+          .reject { |kind| validator.price_exists?(catalog, kind) }
+          .map { |kind| { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind.to_s } }
       end
 
       raise MissingPriceError.new(missing) if missing.any?
@@ -207,15 +178,12 @@ module Sales
     # @param catalog [Catalog] 商品
     # @return [Array<Symbol>] 必要な価格種別
     def determine_required_price_kinds(catalog)
-      kinds = [ :regular ]
+      applicable_rule_kinds = catalog
+        .active_pricing_rules_at(calculation_time.to_date)
+        .select { |rule| rule.applicable?(cart_items) }
+        .map { |rule| rule.price_kind.to_sym }
 
-      # 価格ルールが適用可能な場合は bundle 価格も必要
-      catalog.active_pricing_rules_at(calculation_time.to_date).each do |rule|
-        next unless rule.applicable?(cart_items)
-        kinds << rule.price_kind.to_sym
-      end
-
-      kinds.uniq
+      [ :regular, *applicable_rule_kinds ].uniq
     end
   end
 end
