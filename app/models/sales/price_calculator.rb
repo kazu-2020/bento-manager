@@ -135,24 +135,35 @@ module Sales
       catalog = item[:catalog]
       quantity = item[:quantity]
 
-      # 適用可能なルールから最大適用数量を計算
-      max_bundle_quantity = pricing_rules
+      # 適用可能なルールから最大適用数量を持つルールを選択
+      selected_rule = pricing_rules
         .select { |rule| rule.applicable?(cart_items) }
-        .map { |rule| rule.max_applicable_quantity(cart_items) }
-        .max || 0
+        .max_by { |rule| rule.max_applicable_quantity(cart_items) }
 
-      bundle_quantity = [ quantity, max_bundle_quantity ].min
+      # ルールが選択されなかった場合は全て通常価格
+      return [ apply_regular_price(item) ] if selected_rule.nil?
+
+      max_applicable_quantity = selected_rule.max_applicable_quantity(cart_items)
+      bundle_quantity = [ quantity, max_applicable_quantity ].min
       regular_quantity = quantity - bundle_quantity
 
       result = []
 
       if bundle_quantity > 0
-        bundle_price = catalog.price_by_kind(:bundle, at: calculation_time)
-        result << item.merge(
-          quantity: bundle_quantity,
-          unit_price: bundle_price.price,
-          catalog_price_id: bundle_price.id
-        )
+        # 選択されたルールの price_kind を使用
+        selected_kind = selected_rule.price_kind.to_sym
+        bundle_price = catalog.price_by_kind(selected_kind, at: calculation_time)
+
+        # 価格が存在しない場合は通常価格にフォールバック
+        if bundle_price.nil?
+          result << apply_regular_price(item.merge(quantity: bundle_quantity))
+        else
+          result << item.merge(
+            quantity: bundle_quantity,
+            unit_price: bundle_price.price,
+            catalog_price_id: bundle_price.id
+          )
+        end
       end
 
       if regular_quantity > 0
