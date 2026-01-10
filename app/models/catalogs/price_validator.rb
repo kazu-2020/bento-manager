@@ -10,8 +10,8 @@ module Catalogs
   #   validator = Catalogs::PriceValidator.new
   #   validator.price_exists?(catalog, :regular)  # => true/false
   #
-  # @example 過去の日付で検証
-  #   validator = Catalogs::PriceValidator.new(at: 1.month.ago.to_date)
+  # @example 過去の日時で検証
+  #   validator = Catalogs::PriceValidator.new(at: 1.month.ago)
   #   validator.find_price(catalog, :bundle)  # => CatalogPrice or nil
   #
   class PriceValidator
@@ -28,8 +28,8 @@ module Catalogs
 
     attr_reader :at
 
-    # @param at [Date] 基準日（デフォルト: 今日）
-    def initialize(at: Date.current)
+    # @param at [Time] 基準日時（デフォルト: 現在）
+    def initialize(at: Time.current)
       @at = at
     end
 
@@ -48,7 +48,7 @@ module Catalogs
     # @param kind [String, Symbol] 価格種別
     # @return [CatalogPrice, nil] 価格が存在する場合は CatalogPrice、存在しない場合は nil
     def find_price(catalog, kind)
-      catalog.price_by_kind(kind)
+      catalog.price_by_kind(kind, at: at)
     end
 
     # 価格を取得（存在しない場合は MissingPriceError）
@@ -58,7 +58,7 @@ module Catalogs
     # @return [CatalogPrice] 価格
     # @raise [MissingPriceError] 価格が存在しない場合
     def find_price!(catalog, kind)
-      catalog.price_by_kind(kind) || raise(MissingPriceError.new(catalog.name, kind.to_s))
+      catalog.price_by_kind(kind, at: at) || raise(MissingPriceError.new(catalog.name, kind.to_s))
     end
 
     # 商品一覧用: 価格設定に不備がある商品を取得（Requirement 18）

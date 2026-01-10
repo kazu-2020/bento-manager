@@ -18,8 +18,8 @@ class CatalogPrice < ApplicationRecord
   scope :current, -> { effective_at(Time.current) }
   scope :by_kind, ->(kind) { where(kind: kind) }
 
-  def self.current_price_by_kind(kind)
-    by_kind(kind).current.order(effective_from: :desc).first
+  def self.price_by_kind(kind:, at: Time.current)
+    by_kind(kind).effective_at(at).order(effective_from: :desc).first
   end
 
   private

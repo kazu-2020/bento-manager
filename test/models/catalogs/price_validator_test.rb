@@ -43,11 +43,11 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     assert_not validator.price_exists?(catalog, :regular)
   end
 
-  test "price_exists? はデフォルトで今日の日付を使用する" do
+  test "price_exists? はデフォルトで現在日時を使用する" do
     validator = Catalogs::PriceValidator.new
     catalog = catalogs(:daily_bento_a)
 
-    assert_equal Date.current, validator.at
+    assert_kind_of Time, validator.at
     assert validator.price_exists?(catalog, :regular)
   end
 
@@ -94,6 +94,26 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     assert_equal "regular", error.price_kind
     assert_match(/味噌汁/, error.message)
     assert_match(/regular/, error.message)
+  end
+
+  test "find_price は基準日を使用して価格を取得する" do
+    catalog = catalogs(:daily_bento_a)
+
+    # daily_bento_a のフィクスチャ価格は 1.month.ago から有効
+    # 2.months.ago では価格が存在しない
+    validator = Catalogs::PriceValidator.new(at: 2.months.ago.to_date)
+    price = validator.find_price(catalog, :regular)
+
+    assert_nil price, "2ヶ月前には価格が存在しないはず"
+  end
+
+  test "find_price と price_exists? は同じ at を使用する" do
+    catalog = catalogs(:daily_bento_a)
+    validator = Catalogs::PriceValidator.new(at: 2.months.ago.to_date)
+
+    # 両方のメソッドが同じ結果を返すことを確認
+    assert_not validator.price_exists?(catalog, :regular)
+    assert_nil validator.find_price(catalog, :regular)
   end
 
   # ===== Task 41.3: catalogs_with_missing_prices =====

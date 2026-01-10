@@ -189,7 +189,7 @@ class CatalogPriceTest < ActiveSupport::TestCase
 
   # ===== クラスメソッドテスト =====
 
-  test "current_price_by_kind は指定した kind の現在価格を取得" do
+  test "price_by_kind は指定した kind の現在価格を取得" do
     catalog = catalogs(:daily_bento_b)
 
     # 現在有効な regular 価格
@@ -210,13 +210,39 @@ class CatalogPriceTest < ActiveSupport::TestCase
       effective_until: nil
     )
 
-    assert_equal regular_price, catalog.prices.current_price_by_kind(:regular)
-    assert_equal bundle_price, catalog.prices.current_price_by_kind(:bundle)
+    assert_equal regular_price, catalog.prices.price_by_kind(kind: :regular)
+    assert_equal bundle_price, catalog.prices.price_by_kind(kind: :bundle)
   end
 
-  test "current_price_by_kind は有効な価格がない場合 nil を返す" do
+  test "price_by_kind は有効な価格がない場合 nil を返す" do
     catalog = catalogs(:discontinued_bento)
-    assert_nil catalog.prices.current_price_by_kind(:regular)
+    assert_nil catalog.prices.price_by_kind(kind: :regular)
+  end
+
+  test "price_by_kind は指定した日時の価格を取得" do
+    catalog = catalogs(:daily_bento_b)
+
+    # 過去の価格（1週間前から昨日まで有効）
+    past_price = CatalogPrice.create!(
+      catalog: catalog,
+      kind: :regular,
+      price: 500,
+      effective_from: 1.week.ago,
+      effective_until: 1.day.ago
+    )
+
+    # 現在有効な価格
+    current_price = CatalogPrice.create!(
+      catalog: catalog,
+      kind: :regular,
+      price: 600,
+      effective_from: 1.day.ago,
+      effective_until: nil
+    )
+
+    # at パラメータで過去の日時を指定
+    assert_equal past_price, catalog.prices.price_by_kind(kind: :regular, at: 3.days.ago)
+    assert_equal current_price, catalog.prices.price_by_kind(kind: :regular, at: Time.current)
   end
 
   # ===== アソシエーションテスト =====
