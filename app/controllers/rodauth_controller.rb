@@ -1,4 +1,6 @@
 class RodauthController < ApplicationController
+  skip_before_action :require_authentication
+
   # Used by Rodauth for rendering views, CSRF protection, running any
   # registered action callbacks and rescue handlers, instrumentation etc.
 

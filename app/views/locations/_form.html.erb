@@ -1,0 +1,21 @@
+<%= form_with model: location, url: location.persisted? ? location_path(location) : locations_path do |form| %>
+  <% if location.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= t("errors.template.header", model: Location.model_name.human, count: location.errors.count) %></h2>
+      <ul>
+        <% location.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :name %>
+    <%= form.text_field :name, required: true %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

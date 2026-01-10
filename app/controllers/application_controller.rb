@@ -2,6 +2,18 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
+  # 認証制御: Admin または Employee がログインしていることを確認
+  before_action :require_authentication
+
+  private
+
+  def require_authentication
+    return if rodauth(:admin).logged_in? || rodauth(:employee).logged_in?
+
+    flash[:error] = I18n.t("custom_errors.controllers.require_authentication")
+    redirect_to rodauth(:employee).login_path
+  end
+
   # エラーハンドリング（優先度順: 具体的 → 汎用的）
 
   # CSRF検証失敗時のハンドリング（セキュリティイベント）
