@@ -24,7 +24,14 @@ module Sales
 
         corrected_sale = create_corrected_sale(sale, remaining_items, employee)
         refund_amount = calculate_refund_amount(sale, corrected_sale)
-        refund = create_refund(sale, corrected_sale, refund_amount, reason, employee)
+        refund = Refund.create!(
+          original_sale: sale,
+          corrected_sale: corrected_sale,
+          employee: employee,
+          refund_datetime: Time.current,
+          amount: refund_amount,
+          reason: reason
+        )
 
         {
           success: true,
@@ -96,25 +103,6 @@ module Sales
     # @return [Integer] 返金額
     def calculate_refund_amount(original_sale, corrected_sale)
       original_sale.final_amount - (corrected_sale&.final_amount || 0)
-    end
-
-    # Refund レコードを作成
-    #
-    # @param original_sale [Sale] 元の販売レコード
-    # @param corrected_sale [Sale, nil] 新規販売レコード
-    # @param amount [Integer] 返金額
-    # @param reason [String] 返金理由
-    # @param employee [Employee] 返金処理担当者
-    # @return [Refund]
-    def create_refund(original_sale, corrected_sale, amount, reason, employee)
-      Refund.create!(
-        original_sale: original_sale,
-        corrected_sale: corrected_sale,
-        employee: employee,
-        refund_datetime: Time.current,
-        amount: amount,
-        reason: reason
-      )
     end
   end
 end
