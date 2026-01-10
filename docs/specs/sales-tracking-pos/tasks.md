@@ -417,10 +417,12 @@
 ### Phase 11: Backend Controllers & Routes
 
 - [ ] 15. Admin 用コントローラー実装
-- [ ] 15.1 (P) LocationsController 実装
+- [x] 15.1 (P) LocationsController 実装
   - CRUD アクション（index, show, new, create, edit, update, destroy）
-  - destroy アクションで deactivate 呼び出し（status = inactive）
+  - destroy アクションで inactive! 呼び出し（status = inactive）
   - フラッシュメッセージ表示
+  - ApplicationController に共有認証 (require_authentication) を追加
+  - /locations パスで Admin と Employee 両方がアクセス可能
   - _Requirements: 16.1, 16.2, 16.3, 16.4_
 
 - [ ] 15.2 (P) CatalogsController 実装
@@ -771,10 +773,11 @@
   - _Requirements: 19.1, 19.2, 19.3, 19.5, 19.6, 19.7_
 
 - [ ] 36. コントローラーテスト実装
-- [ ]* 36.1 LocationsController テスト
-  - CRUD アクションテスト
-  - deactivate アクションテスト
-  - _Requirements: 16.1, 16.2, 16.3_
+- [x]* 36.1 LocationsController テスト
+  - CRUD アクションテスト（Admin/Employee 認証テスト含む）
+  - inactive! アクションテスト
+  - バリデーションエラーテスト
+  - _Requirements: 16.1, 16.2, 16.3, 16.4_
 
 - [ ]* 36.2 CatalogsController テスト
   - CRUD アクションテスト
