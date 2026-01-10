@@ -360,22 +360,22 @@
 
 ### Phase 9: Additional Order Domain
 
-- [ ] 12. AdditionalOrder（追加発注）ドメイン実装
-- [ ] 12.1 AdditionalOrder モデル作成（Location, Catalog, Employee 依存）
+- [x] 12. AdditionalOrder（追加発注）ドメイン実装
+- [x] 12.1 AdditionalOrder モデル作成（Location, Catalog, Employee 依存）
   - AdditionalOrder テーブルマイグレーション（id, location_id, catalog_id, order_date, order_time, quantity, employee_id）
   - location_id, catalog_id, employee_id の外部キー制約
   - _Requirements: 5.1, 5.2, 16.1_
 
-- [ ] 12.2 AdditionalOrder バリデーション実装
+- [x] 12.2 AdditionalOrder バリデーション実装
   - location_id, catalog_id, order_date, order_time, quantity の必須バリデーション
   - quantity > 0 のバリデーション
   - _Requirements: 5.1, 5.2_
 
-- [ ] 12.3 AdditionalOrder インデックス作成
+- [x] 12.3 AdditionalOrder インデックス作成
   - idx_additional_orders_location（INDEX: location_id）
   - _Requirements: 5.4_
 
-- [ ] 12.4 AdditionalOrder after_create コールバック実装
+- [x] 12.4 AdditionalOrder after_create コールバック実装
   - 在庫数加算ロジック（DailyInventory#increment_stock 呼び出し）
   - トランザクション管理
   - _Requirements: 5.2_
