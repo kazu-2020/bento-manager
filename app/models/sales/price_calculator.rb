@@ -23,6 +23,7 @@ module Sales
       @cart_items = cart_items
       @discount_ids = discount_ids
       @calculation_time = Time.current
+      @applicable_rules_cache = {}
     end
 
     # 価格計算を実行
@@ -69,8 +70,7 @@ module Sales
     # @return [Array<Hash>] 価格情報を付加したアイテム
     def apply_pricing_rules
       cart_items.flat_map do |item|
-        pricing_rules = item[:catalog].active_pricing_rules_at(calculation_time.to_date)
-        applicable_rules = pricing_rules.select { |rule| rule.applicable?(cart_items) }
+        applicable_rules = applicable_pricing_rules_for(item[:catalog])
 
         if applicable_rules.any?
           split_item_by_pricing_rule(item, applicable_rules)
@@ -179,12 +179,19 @@ module Sales
     # @param catalog [Catalog] 商品
     # @return [Array<Symbol>] 必要な価格種別
     def determine_required_price_kinds(catalog)
-      applicable_rule_kinds = catalog
-        .active_pricing_rules_at(calculation_time.to_date)
-        .select { |rule| rule.applicable?(cart_items) }
+      applicable_rule_kinds = applicable_pricing_rules_for(catalog)
         .map { |rule| rule.price_kind.to_sym }
 
       [ :regular, *applicable_rule_kinds ].uniq
+    end
+
+    # 商品に適用可能な価格ルールを取得（メモ化）
+    # @param catalog [Catalog] 商品
+    # @return [Array<PricingRule>] 適用可能な価格ルール
+    def applicable_pricing_rules_for(catalog)
+      @applicable_rules_cache[catalog.id] ||= catalog
+        .active_pricing_rules_at(calculation_time.to_date)
+        .select { |rule| rule.applicable?(cart_items) }
     end
 
     # 価格が存在しない場合のエラーを発生
