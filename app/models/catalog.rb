@@ -28,9 +28,20 @@ class Catalog < ApplicationRecord
 
   # ===== ビジネスロジック =====
 
-  # 指定した種別の現在有効な価格を取得（存在しない場合は例外）
-  def price_by_kind(kind)
-    prices.by_kind(kind).current.order(effective_from: :desc).first!
+  # 指定した種別の有効な価格を取得（存在しない場合は nil）
+  # @param kind [String, Symbol] 価格種別 ('regular' | 'bundle')
+  # @param at [Time] 基準日時（デフォルト: 現在）
+  # @return [CatalogPrice, nil]
+  def price_by_kind(kind, at: Time.current)
+    prices.price_by_kind(kind: kind, at: at)
+  end
+
+  # 指定した種別の価格が存在するか
+  # @param kind [String, Symbol] 価格種別 ('regular' | 'bundle')
+  # @param at [Time] 基準日時（デフォルト: 現在）
+  # @return [Boolean]
+  def price_exists?(kind, at: Time.current)
+    price_by_kind(kind, at: at).present?
   end
 
   # 提供終了かどうかを判定

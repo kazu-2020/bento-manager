@@ -195,11 +195,9 @@ class CatalogTest < ActiveSupport::TestCase
     assert_equal bundle_price, catalog.price_by_kind(:bundle)
   end
 
-  test "price_by_kind は有効な価格がない場合 ActiveRecord::RecordNotFound を発生" do
+  test "price_by_kind は有効な価格がない場合 nil を返す" do
     catalog = Catalog.create!(name: "価格なしテスト2", category: :bento)
-    assert_raises(ActiveRecord::RecordNotFound) do
-      catalog.price_by_kind(:regular)
-    end
+    assert_nil catalog.price_by_kind(:regular)
   end
 
   test "discontinued? は提供終了記録がある場合 true を返す" do
