@@ -44,7 +44,7 @@ module Sales
         { catalog: catalogs(:daily_bento_a), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
+      result = Sales::PriceCalculator.new(cart_items).send(:apply_pricing_rules)
 
       assert_equal 1, result.length
       item = result.first
@@ -59,7 +59,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
+      result = Sales::PriceCalculator.new(cart_items).send(:apply_pricing_rules)
 
       bento_item = result.find { |i| i[:catalog].bento? }
       salad_item = result.find { |i| i[:catalog].side_menu? }
@@ -77,7 +77,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 3 }
       ]
 
-      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
+      result = Sales::PriceCalculator.new(cart_items).send(:apply_pricing_rules)
 
       salad_items = result.select { |i| i[:catalog].side_menu? }
       # 数量3を分割して返す: 1個@150 + 2個@250
@@ -99,7 +99,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 2 }
       ]
 
-      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
+      result = Sales::PriceCalculator.new(cart_items).send(:apply_pricing_rules)
 
       salad_item = result.find { |i| i[:catalog].side_menu? }
       assert_equal 150, salad_item[:unit_price]
@@ -112,7 +112,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 2 }
       ]
 
-      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
+      result = Sales::PriceCalculator.new(cart_items).send(:apply_pricing_rules)
 
       salad_item = result.first
       assert_equal 250, salad_item[:unit_price]
@@ -126,7 +126,7 @@ module Sales
         { catalog: catalogs(:daily_bento_a), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.new(cart_items).apply_discounts
+      result = Sales::PriceCalculator.new(cart_items).send(:apply_discounts)
 
       assert_equal [], result[:discount_details]
       assert_equal 0, result[:total_discount_amount]
@@ -139,7 +139,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).send(:apply_discounts)
 
       assert_equal 1, result[:discount_details].length
       detail = result[:discount_details].first
@@ -157,7 +157,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).send(:apply_discounts)
 
       assert_equal 150, result[:total_discount_amount]
     end
@@ -171,7 +171,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).send(:apply_discounts)
 
       assert_equal 250, result[:total_discount_amount]
     end
@@ -183,7 +183,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).send(:apply_discounts)
 
       detail = result[:discount_details].first
       assert_not detail[:applicable]
@@ -201,7 +201,7 @@ module Sales
         discounts(:hundred_yen_discount).id
       ]
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).send(:apply_discounts)
 
       assert_equal 2, result[:discount_details].length
       assert_equal 300, result[:total_discount_amount]
@@ -213,7 +213,7 @@ module Sales
       ]
       discount_ids = [ discounts(:expired_discount).id ]
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).send(:apply_discounts)
 
       # 期限切れは含まれない
       assert_equal 0, result[:discount_details].length

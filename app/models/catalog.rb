@@ -48,4 +48,11 @@ class Catalog < ApplicationRecord
   def discontinued?
     discontinuation.present?
   end
+
+  # 指定した日付で有効な価格ルールを取得
+  # @param date [Date] 基準日（デフォルト: 今日）
+  # @return [ActiveRecord::Relation<CatalogPricingRule>]
+  def active_pricing_rules_at(date = Date.current)
+    pricing_rules.active_at(date)
+  end
 end

@@ -15,13 +15,14 @@ module Sales
       end
     end
 
-    attr_reader :cart_items, :discount_ids
+    attr_reader :cart_items, :discount_ids, :calculation_time
 
     # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
     # @param discount_ids [Array<Integer>] 適用する割引の ID リスト
     def initialize(cart_items, discount_ids: [])
       @cart_items = cart_items
       @discount_ids = discount_ids
+      @calculation_time = Time.current
     end
 
     # 価格計算を実行
@@ -61,6 +62,8 @@ module Sales
       }
     end
 
+    private
+
     # 価格ルールを適用してアイテムに価格情報を付加
     #
     # @return [Array<Hash>] 価格情報を付加したアイテム
@@ -71,7 +74,7 @@ module Sales
         catalog = item[:catalog]
 
         # 価格ルールを検索
-        pricing_rules = catalog.active_pricing_rules
+        pricing_rules = catalog.active_pricing_rules_at(calculation_time.to_date)
 
         if pricing_rules.any? { |rule| rule.applicable?(cart_items) }
           # セット価格適用可能な場合
@@ -116,8 +119,6 @@ module Sales
       }
     end
 
-    private
-
     def empty_result
       {
         items_with_prices: [],
@@ -146,7 +147,7 @@ module Sales
       result = []
 
       if bundle_quantity > 0
-        bundle_price = catalog.price_by_kind(:bundle)
+        bundle_price = catalog.price_by_kind(:bundle, at: calculation_time)
         result << item.merge(
           quantity: bundle_quantity,
           unit_price: bundle_price.price,
@@ -164,7 +165,7 @@ module Sales
     # 通常価格を適用
     def apply_regular_price(item)
       catalog = item[:catalog]
-      price = catalog.price_by_kind(:regular)
+      price = catalog.price_by_kind(:regular, at: calculation_time)
 
       item.merge(
         unit_price: price.price,
@@ -175,7 +176,7 @@ module Sales
     # 必要な価格がすべて設定されているか検証
     # @raise [MissingPriceError] 価格が設定されていない商品がある場合
     def validate_required_prices!
-      validator = Catalogs::PriceValidator.new
+      validator = Catalogs::PriceValidator.new(at: calculation_time)
       missing = []
 
       cart_items.each do |item|
@@ -198,7 +199,7 @@ module Sales
       kinds = [ :regular ]
 
       # 価格ルールが適用可能な場合は bundle 価格も必要
-      catalog.active_pricing_rules.each do |rule|
+      catalog.active_pricing_rules_at(calculation_time.to_date).each do |rule|
         next unless rule.applicable?(cart_items)
         kinds << rule.price_kind.to_sym
       end
