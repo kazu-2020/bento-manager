@@ -24,10 +24,7 @@ class AdditionalOrder < ApplicationRecord
         location: order.location,
         catalog: order.catalog,
         inventory_date: order.order_date
-      ) do |inv|
-        inv.stock = 0
-        inv.reserved_stock = 0
-      end
+      )
 
       inventory.increment_stock!(order.quantity)
       order

@@ -175,7 +175,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     order = AdditionalOrder.create_with_inventory!(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      order_date: Date.current,
+      order_date: inventory.inventory_date,
       order_time: Time.current,
       quantity: 5
     )
@@ -185,18 +185,20 @@ class AdditionalOrderTest < ActiveSupport::TestCase
   end
 
   test "create_with_inventory! で該当する DailyInventory が存在しない場合は作成されて在庫が加算される" do
-    # 明日の在庫は存在しないはず
+    future_date = Date.current + 365
+
+    # 将来の日付の在庫は存在しないはず
     assert_nil DailyInventory.find_by(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day
+      inventory_date: future_date
     )
 
     assert_difference "DailyInventory.count" do
       AdditionalOrder.create_with_inventory!(
         location: locations(:city_hall),
         catalog: catalogs(:daily_bento_a),
-        order_date: Date.current + 1.day,
+        order_date: future_date,
         order_time: Time.current,
         quantity: 10
       )
@@ -205,7 +207,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     inventory = DailyInventory.find_by(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day
+      inventory_date: future_date
     )
     assert_not_nil inventory
     assert_equal 10, inventory.stock
