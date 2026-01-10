@@ -6,8 +6,9 @@ module Sales
 
     # ===== 10.1 基本構造テスト =====
 
-    test "responds to calculate class method" do
-      assert_respond_to Sales::PriceCalculator, :calculate
+    test "responds to calculate instance method" do
+      calculator = Sales::PriceCalculator.new([])
+      assert_respond_to calculator, :calculate
     end
 
     test "calculate returns a hash with required keys" do
@@ -15,7 +16,7 @@ module Sales
         { catalog: catalogs(:daily_bento_a), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.calculate(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).calculate
 
       assert_kind_of Hash, result
       assert result.key?(:items_with_prices)
@@ -26,7 +27,7 @@ module Sales
     end
 
     test "calculate with empty cart returns zero totals" do
-      result = Sales::PriceCalculator.calculate([])
+      result = Sales::PriceCalculator.new([]).calculate
 
       assert_equal [], result[:items_with_prices]
       assert_equal 0, result[:subtotal]
@@ -43,7 +44,7 @@ module Sales
         { catalog: catalogs(:daily_bento_a), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.apply_pricing_rules(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
 
       assert_equal 1, result.length
       item = result.first
@@ -58,7 +59,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.apply_pricing_rules(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
 
       bento_item = result.find { |i| i[:catalog].bento? }
       salad_item = result.find { |i| i[:catalog].side_menu? }
@@ -76,7 +77,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 3 }
       ]
 
-      result = Sales::PriceCalculator.apply_pricing_rules(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
 
       salad_items = result.select { |i| i[:catalog].side_menu? }
       # 数量3を分割して返す: 1個@150 + 2個@250
@@ -98,7 +99,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 2 }
       ]
 
-      result = Sales::PriceCalculator.apply_pricing_rules(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
 
       salad_item = result.find { |i| i[:catalog].side_menu? }
       assert_equal 150, salad_item[:unit_price]
@@ -111,7 +112,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 2 }
       ]
 
-      result = Sales::PriceCalculator.apply_pricing_rules(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).apply_pricing_rules
 
       salad_item = result.first
       assert_equal 250, salad_item[:unit_price]
@@ -125,7 +126,7 @@ module Sales
         { catalog: catalogs(:daily_bento_a), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.apply_discounts(cart_items, [])
+      result = Sales::PriceCalculator.new(cart_items).apply_discounts
 
       assert_equal [], result[:discount_details]
       assert_equal 0, result[:total_discount_amount]
@@ -138,7 +139,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.apply_discounts(cart_items, discount_ids)
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
 
       assert_equal 1, result[:discount_details].length
       detail = result[:discount_details].first
@@ -156,7 +157,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.apply_discounts(cart_items, discount_ids)
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
 
       assert_equal 150, result[:total_discount_amount]
     end
@@ -170,7 +171,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.apply_discounts(cart_items, discount_ids)
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
 
       assert_equal 250, result[:total_discount_amount]
     end
@@ -182,7 +183,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.apply_discounts(cart_items, discount_ids)
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
 
       detail = result[:discount_details].first
       assert_not detail[:applicable]
@@ -200,7 +201,7 @@ module Sales
         discounts(:hundred_yen_discount).id
       ]
 
-      result = Sales::PriceCalculator.apply_discounts(cart_items, discount_ids)
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
 
       assert_equal 2, result[:discount_details].length
       assert_equal 300, result[:total_discount_amount]
@@ -212,7 +213,7 @@ module Sales
       ]
       discount_ids = [ discounts(:expired_discount).id ]
 
-      result = Sales::PriceCalculator.apply_discounts(cart_items, discount_ids)
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).apply_discounts
 
       # 期限切れは含まれない
       assert_equal 0, result[:discount_details].length
@@ -227,7 +228,7 @@ module Sales
         { catalog: catalogs(:daily_bento_a), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.calculate(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).calculate
 
       assert_equal 550, result[:subtotal]
       assert_equal 550, result[:final_total]
@@ -240,7 +241,7 @@ module Sales
         { catalog: catalogs(:daily_bento_b), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.calculate(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).calculate
 
       assert_equal 1600, result[:subtotal]
       assert_equal 1600, result[:final_total]
@@ -253,7 +254,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.calculate(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).calculate
 
       assert_equal 700, result[:subtotal]
       assert_equal 700, result[:final_total]
@@ -266,7 +267,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 3 }
       ]
 
-      result = Sales::PriceCalculator.calculate(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).calculate
 
       # 550 + 150 + 500 = 1200
       assert_equal 1200, result[:subtotal]
@@ -279,7 +280,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.calculate(cart_items, discount_ids)
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
 
       assert_equal 1100, result[:subtotal]
       assert_equal 100, result[:total_discount_amount]
@@ -295,7 +296,7 @@ module Sales
       ]
       discount_ids = [ discounts(:fifty_yen_discount).id ]
 
-      result = Sales::PriceCalculator.calculate(cart_items, discount_ids)
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
 
       assert_equal 700, result[:subtotal]
       assert_equal 50, result[:total_discount_amount]
@@ -307,7 +308,7 @@ module Sales
         { catalog: catalogs(:daily_bento_a), quantity: 2 }
       ]
 
-      result = Sales::PriceCalculator.calculate(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).calculate
 
       assert_equal 1, result[:items_with_prices].length
       item = result[:items_with_prices].first
@@ -325,7 +326,7 @@ module Sales
       ]
       discount_ids = [ discounts(:hundred_yen_discount).id ]
 
-      result = Sales::PriceCalculator.calculate(cart_items, discount_ids)
+      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
 
       assert_equal 550, result[:subtotal]
       assert_equal 100, result[:total_discount_amount]
@@ -342,7 +343,7 @@ module Sales
       ]
 
       error = assert_raises(Sales::PriceCalculator::MissingPriceError) do
-        Sales::PriceCalculator.calculate(cart_items)
+        Sales::PriceCalculator.new(cart_items).calculate
       end
 
       assert_includes error.message, "味噌汁"
@@ -359,7 +360,7 @@ module Sales
       ]
 
       error = assert_raises(Sales::PriceCalculator::MissingPriceError) do
-        Sales::PriceCalculator.calculate(cart_items)
+        Sales::PriceCalculator.new(cart_items).calculate
       end
 
       assert_equal 2, error.missing_prices.length
@@ -374,7 +375,7 @@ module Sales
       ]
 
       error = assert_raises(Sales::PriceCalculator::MissingPriceError) do
-        Sales::PriceCalculator.calculate(cart_items)
+        Sales::PriceCalculator.new(cart_items).calculate
       end
 
       missing = error.missing_prices.first
@@ -390,7 +391,7 @@ module Sales
         { catalog: catalogs(:salad), quantity: 1 }
       ]
 
-      result = Sales::PriceCalculator.calculate(cart_items)
+      result = Sales::PriceCalculator.new(cart_items).calculate
 
       assert_not_nil result[:items_with_prices]
       assert_equal 700, result[:subtotal]

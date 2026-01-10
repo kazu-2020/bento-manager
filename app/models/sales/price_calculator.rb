@@ -14,30 +14,38 @@ module Sales
         super("価格設定エラー: #{messages.join('; ')}")
       end
     end
-    # 価格計算を実行
-    #
+
+    attr_reader :cart_items, :discount_ids
+
     # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
     # @param discount_ids [Array<Integer>] 適用する割引の ID リスト
+    def initialize(cart_items, discount_ids: [])
+      @cart_items = cart_items
+      @discount_ids = discount_ids
+    end
+
+    # 価格計算を実行
+    #
     # @return [Hash] 計算結果
     #   - :items_with_prices [Array<Hash>] 価格情報を付加したアイテム
     #   - :subtotal [Integer] 小計（割引前）
     #   - :discount_details [Array<Hash>] 割引詳細
     #   - :total_discount_amount [Integer] 割引合計
     #   - :final_total [Integer] 最終金額（割引後）
-    def self.calculate(cart_items, discount_ids = [])
+    def calculate
       return empty_result if cart_items.empty?
 
       # Step 1: 価格存在検証（必要な価格がすべて設定されているかチェック）
-      validate_required_prices!(cart_items)
+      validate_required_prices!
 
       # Step 2: 価格ルール適用（セット価格判定）
-      items_with_prices = apply_pricing_rules(cart_items)
+      items_with_prices = apply_pricing_rules
 
       # Step 3: 小計計算
       subtotal = items_with_prices.sum { |item| item[:unit_price] * item[:quantity] }
 
       # Step 4: 割引適用
-      discount_result = apply_discounts(cart_items, discount_ids)
+      discount_result = apply_discounts
 
       # Step 5: 最終金額計算
       # NOTE: ビジネスルール上 final_total = 0 になるケースは発生しない想定だが、
@@ -55,9 +63,8 @@ module Sales
 
     # 価格ルールを適用してアイテムに価格情報を付加
     #
-    # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
     # @return [Array<Hash>] 価格情報を付加したアイテム
-    def self.apply_pricing_rules(cart_items)
+    def apply_pricing_rules
       result = []
 
       cart_items.each do |item|
@@ -68,7 +75,7 @@ module Sales
 
         if pricing_rules.any? { |rule| rule.applicable?(cart_items) }
           # セット価格適用可能な場合
-          result.concat(split_item_by_pricing_rule(item, cart_items, pricing_rules))
+          result.concat(split_item_by_pricing_rule(item, pricing_rules))
         else
           # 通常価格
           result << apply_regular_price(item)
@@ -80,12 +87,10 @@ module Sales
 
     # 割引を適用
     #
-    # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
-    # @param discount_ids [Array<Integer>] 適用する割引の ID リスト
     # @return [Hash] 割引適用結果
     #   - :discount_details [Array<Hash>] 各割引の詳細
     #   - :total_discount_amount [Integer] 割引合計
-    def self.apply_discounts(cart_items, discount_ids)
+    def apply_discounts
       return { discount_details: [], total_discount_amount: 0 } if discount_ids.empty?
 
       discounts = Discount.active.where(id: discount_ids)
@@ -111,7 +116,9 @@ module Sales
       }
     end
 
-    def self.empty_result
+    private
+
+    def empty_result
       {
         items_with_prices: [],
         subtotal: 0,
@@ -123,7 +130,7 @@ module Sales
 
     # アイテムを価格ルールに基づいて分割
     # 例: 弁当1個 + サラダ3個 → サラダ1個@150円 + サラダ2個@250円
-    def self.split_item_by_pricing_rule(item, cart_items, pricing_rules)
+    def split_item_by_pricing_rule(item, pricing_rules)
       catalog = item[:catalog]
       quantity = item[:quantity]
 
@@ -155,7 +162,7 @@ module Sales
     end
 
     # 通常価格を適用
-    def self.apply_regular_price(item)
+    def apply_regular_price(item)
       catalog = item[:catalog]
       price = catalog.price_by_kind(:regular)
 
@@ -166,15 +173,14 @@ module Sales
     end
 
     # 必要な価格がすべて設定されているか検証
-    # @param cart_items [Array<Hash>] カート内アイテム
     # @raise [MissingPriceError] 価格が設定されていない商品がある場合
-    def self.validate_required_prices!(cart_items)
+    def validate_required_prices!
       validator = Catalogs::PriceValidator.new
       missing = []
 
       cart_items.each do |item|
         catalog = item[:catalog]
-        required_kinds = determine_required_price_kinds(catalog, cart_items)
+        required_kinds = determine_required_price_kinds(catalog)
 
         required_kinds.each do |kind|
           next if validator.price_exists?(catalog, kind)
@@ -187,9 +193,8 @@ module Sales
 
     # 商品に必要な価格種別を決定
     # @param catalog [Catalog] 商品
-    # @param cart_items [Array<Hash>] カート内アイテム
     # @return [Array<Symbol>] 必要な価格種別
-    def self.determine_required_price_kinds(catalog, cart_items)
+    def determine_required_price_kinds(catalog)
       kinds = [ :regular ]
 
       # 価格ルールが適用可能な場合は bundle 価格も必要
@@ -200,8 +205,5 @@ module Sales
 
       kinds.uniq
     end
-
-    private_class_method :empty_result, :split_item_by_pricing_rule, :apply_regular_price,
-                         :validate_required_prices!, :determine_required_price_kinds
   end
 end
