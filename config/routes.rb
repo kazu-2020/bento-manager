@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  # Lookbook - ViewComponent preview UI (development only)
+  mount Lookbook::Engine, at: "/lookbook" if Rails.env.development?
+
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # テスト環境専用ルート（RecordNotFoundハンドリングのテスト用）
