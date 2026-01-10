@@ -1,4 +1,12 @@
 ja:
+  activemodel:
+    errors:
+      models:
+        catalogs/pricing_rule_creator:
+          attributes:
+            base:
+              missing_price: "商品「%{catalog_name}」に価格種別「%{price_kind}」の価格が設定されていません"
+
   activerecord:
     models:
       admin: "管理者"
