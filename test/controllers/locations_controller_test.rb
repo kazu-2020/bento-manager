@@ -182,39 +182,22 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # ============================================================
-  # バリデーションエラーのテスト
+  # バリデーションエラー時のレスポンステスト
+  # ※バリデーションロジック自体のテストはモデルテストで担保
   # ============================================================
 
-  test "create with blank name renders new with errors" do
+  test "create with invalid params renders new with unprocessable_entity" do
     login_as(@admin)
     assert_no_difference("Location.count") do
-      post locations_path, params: {
-        location: {
-          name: ""
-        }
-      }
+      post locations_path, params: { location: { name: "" } }
     end
     assert_response :unprocessable_entity
   end
 
-  test "create with duplicate name renders new with errors" do
-    login_as(@admin)
-    assert_no_difference("Location.count") do
-      post locations_path, params: {
-        location: {
-          name: @location.name  # 既存の名前を使用
-        }
-      }
-    end
-    assert_response :unprocessable_entity
-  end
-
-  test "update with blank name renders edit with errors" do
+  test "update with invalid params renders edit with unprocessable_entity" do
     login_as(@admin)
     original_name = @location.name
-    patch location_path(@location), params: {
-      location: { name: "" }
-    }
+    patch location_path(@location), params: { location: { name: "" } }
     assert_response :unprocessable_entity
     @location.reload
     assert_equal original_name, @location.name
