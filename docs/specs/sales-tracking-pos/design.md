@@ -947,7 +947,7 @@ class Sale < ApplicationRecord
   def self.create_with_items_and_discounts!(sale_params, items_params, discount_ids: [])
     transaction do
       # 価格計算
-      pricing = Sales::PriceCalculator.calculate(items_params, discount_ids)
+      pricing = Sales::PriceCalculator.new(items_params, discount_ids: discount_ids).calculate
 
       sale = create!(
         sale_params.merge(
@@ -1272,12 +1272,11 @@ module Sales
     # @param sale_params [Hash] Sale の属性
     # @param items_params [Array<Hash>] [{ catalog_id:, quantity: }, ...]
     # @param discount_ids [Array<Integer>] 適用する割引の ID
-    # @param coupon_count [Integer] クーポン枚数
     # @return [Sale] 作成された Sale
     # @raise [Sales::PriceCalculator::MissingPriceError] 価格未設定時（Requirement 17）
     # @raise [DailyInventory::InsufficientStockError] 在庫不足時
     # @raise [ActiveRecord::RecordNotFound] 在庫レコード未存在時
-    def record(sale_params, items_params, discount_ids: [], coupon_count: 0)
+    def record(sale_params, items_params, discount_ids: [])
       # Step 1: カート構築
       cart_items = items_params.map do |p|
         { catalog: Catalog.find(p[:catalog_id]), quantity: p[:quantity] }
@@ -1287,7 +1286,7 @@ module Sales
       # - determine_price_kinds: 価格ルール適用（どの kind が必要かを決定）
       # - validate_prices!: Catalogs::PriceValidator を使って価格存在を検証
       # - fetch_prices: 価格取得
-      pricing = PriceCalculator.calculate(cart_items, discount_ids, coupon_count: coupon_count)
+      pricing = PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
 
       Sale.transaction do
         sale = Sale.create!(
@@ -1395,51 +1394,65 @@ module Sales
       end
     end
 
-    def self.calculate(cart_items, discount_ids = [], coupon_count: 0)
-      # Step 1: 価格ルール適用（どの kind が必要かを決定）
-      items_with_kinds = determine_price_kinds(cart_items)
+    attr_reader :cart_items, :discount_ids
 
-      # Step 2: 価格存在検証（決定した kind に対応する価格が存在するか）
-      validate_prices!(items_with_kinds)
+    # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
+    # @param discount_ids [Array<Integer>] 適用する割引の ID リスト
+    def initialize(cart_items, discount_ids: [])
+      @cart_items = cart_items
+      @discount_ids = discount_ids
+    end
 
-      # Step 3: 価格取得
-      items_with_prices = fetch_prices(items_with_kinds)
+    def calculate
+      return empty_result if cart_items.empty?
 
-      # Step 4: 小計計算
+      # Step 1: 価格存在検証（必要な価格がすべて設定されているかチェック）
+      validate_required_prices!
+
+      # Step 2: 価格ルール適用（セット価格判定）
+      items_with_prices = apply_pricing_rules
+
+      # Step 3: 小計計算
       subtotal = items_with_prices.sum { |item| item[:unit_price] * item[:quantity] }
 
-      # Step 5: 割引適用
-      discount_details = []
-      total_discount_amount = 0
+      # Step 4: 割引適用
+      discount_result = apply_discounts
 
-      discounts = Discount.where(id: discount_ids)
-      discounts.each do |discount|
-        applicable = discount.applicable?(cart_items)
-        if applicable
-          discount_amount = discount.calculate_discount(cart_items, coupon_count: coupon_count)
-          discount_details << {
-            discount_id: discount.id,
-            discount_name: discount.name,
-            discount_amount: discount_amount,
-            applicable: true
-          }
-          total_discount_amount += discount_amount
-        else
-          discount_details << {
-            discount_id: discount.id,
-            discount_name: discount.name,
-            discount_amount: 0,
-            applicable: false
-          }
-        end
-      end
+      # Step 5: 最終金額計算
+      final_total = [ subtotal - discount_result[:total_discount_amount], 0 ].max
 
       {
         items_with_prices: items_with_prices,
         subtotal: subtotal,
+        discount_details: discount_result[:discount_details],
+        total_discount_amount: discount_result[:total_discount_amount],
+        final_total: final_total
+      }
+    end
+
+    def apply_discounts
+      return { discount_details: [], total_discount_amount: 0 } if discount_ids.empty?
+
+      discounts = Discount.active.where(id: discount_ids)
+      discount_details = []
+      total_discount_amount = 0
+
+      discounts.each do |discount|
+        discount_amount = discount.calculate_discount(cart_items)
+
+        discount_details << {
+          discount_id: discount.id,
+          discount_name: discount.name,
+          discount_amount: discount_amount,
+          applicable: discount_amount > 0
+        }
+
+        total_discount_amount += discount_amount
+      end
+
+      {
         discount_details: discount_details,
-        total_discount_amount: total_discount_amount,
-        final_total: [subtotal - total_discount_amount, 0].max
+        total_discount_amount: total_discount_amount
       }
     end
 
@@ -1818,7 +1831,7 @@ def create
   )
 
   redirect_to sales_path, notice: '販売記録を保存しました'
-rescue Catalogs::PriceValidator::MissingPriceError => e
+rescue Sales::PriceCalculator::MissingPriceError => e
   # Requirement 17: 価格未設定エラー
   flash[:error] = e.message
   render :new, status: :unprocessable_entity
