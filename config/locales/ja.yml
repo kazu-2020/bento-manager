@@ -169,3 +169,22 @@ ja:
       success: "販売先情報を更新しました。"
     destroy:
       success: "販売先を無効化しました。"
+
+  catalogs:
+    index:
+      title: "商品カタログ一覧"
+    show:
+      title: "商品カタログ詳細"
+    new:
+      title: "商品カタログ登録"
+    edit:
+      title: "商品カタログ編集"
+    create:
+      success: "商品カタログを登録しました。"
+    update:
+      success: "商品カタログを更新しました。"
+    destroy:
+      success: "商品カタログを提供終了にしました。"
+      failure: "商品カタログの提供終了に失敗しました。"
+      already_discontinued: "この商品カタログは既に提供終了です。"
+      default_reason: "管理者による提供終了"

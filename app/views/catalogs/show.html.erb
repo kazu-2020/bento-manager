@@ -1,0 +1,23 @@
+<h1><%= t("catalogs.show.title") %></h1>
+
+<dl>
+  <dt><%= Catalog.human_attribute_name(:name) %></dt>
+  <dd><%= @catalog.name %></dd>
+
+  <dt><%= Catalog.human_attribute_name(:category) %></dt>
+  <dd><%= t("enums.catalog.category.#{@catalog.category}") %></dd>
+
+  <dt><%= Catalog.human_attribute_name(:description) %></dt>
+  <dd><%= @catalog.description %></dd>
+
+  <% if @catalog.discontinued? %>
+    <dt><%= CatalogDiscontinuation.human_attribute_name(:discontinued_at) %></dt>
+    <dd><%= l(@catalog.discontinuation.discontinued_at, format: :long) %></dd>
+
+    <dt><%= CatalogDiscontinuation.human_attribute_name(:reason) %></dt>
+    <dd><%= @catalog.discontinuation.reason %></dd>
+  <% end %>
+</dl>
+
+<%= link_to t("helpers.link.edit"), edit_catalog_path(@catalog) %>
+<%= link_to t("helpers.link.back"), catalogs_path %>

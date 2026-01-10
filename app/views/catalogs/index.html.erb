@@ -1,0 +1,30 @@
+<h1><%= t("catalogs.index.title") %></h1>
+
+<%= link_to t("helpers.link.new"), new_catalog_path, class: "btn" %>
+
+<table>
+  <thead>
+    <tr>
+      <th><%= Catalog.human_attribute_name(:name) %></th>
+      <th><%= Catalog.human_attribute_name(:category) %></th>
+      <th><%= Catalog.human_attribute_name(:description) %></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @catalogs.each do |catalog| %>
+      <tr class="<%= 'discontinued' if catalog.discontinued? %>">
+        <td><%= catalog.name %></td>
+        <td><%= t("enums.catalog.category.#{catalog.category}") %></td>
+        <td><%= catalog.description %></td>
+        <td>
+          <%= link_to t("helpers.link.show"), catalog_path(catalog) %>
+          <%= link_to t("helpers.link.edit"), edit_catalog_path(catalog) %>
+          <% unless catalog.discontinued? %>
+            <%= link_to t("helpers.link.delete"), catalog_path(catalog), data: { turbo_method: :delete, turbo_confirm: t("helpers.confirm.delete") } %>
+          <% end %>
+        </td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
