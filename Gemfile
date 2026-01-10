@@ -49,7 +49,7 @@ gem "reactionview" # https://github.com/marcoroth/reactionview
 
 group :development, :test do
   # Pin minitest to 5.x for Rails 8.1.1 compatibility (minitest 6.x has known issues)
-  gem "minitest", "~> 6.0"
+  gem "minitest", "~> 5.25"
 
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
