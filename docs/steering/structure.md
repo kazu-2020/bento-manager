@@ -38,6 +38,34 @@ export default class extends Controller {
 }
 ```
 
+### View Components (ViewComponent)
+**Location**: `/app/views/components/`
+**Purpose**: 再利用可能なUIコンポーネント（Sidecar構造）
+**Structure**:
+- `application_component.rb` - 基底クラス（全コンポーネントが継承）
+- `component_name.rb` - コンポーネントクラス
+- `component_name/` - Sidecar ディレクトリ
+  - `component_name.html.erb` - テンプレート
+  - `component_name_controller.js` - Stimulus コントローラー（任意）
+  - `component_name.yml` - Lookbook メタデータ / i18n（任意）
+
+Example:
+```ruby
+# app/views/components/example_component.rb
+class ExampleComponent < ApplicationComponent
+  def initialize(title:)
+    @title = title
+  end
+end
+```
+
+**Stimulus Controller Registration**:
+`app/frontend/controllers/index.js` でコンポーネント内のコントローラーも自動登録される:
+```javascript
+const componentControllers = import.meta.glob('../../views/components/**/*_controller.js', { eager: true })
+registerControllers(application, componentControllers)
+```
+
 ### Configuration
 **Location**: `/config/`
 **Purpose**: Application and environment configuration
@@ -110,3 +138,5 @@ require_relative "boot"
 
 ---
 _Document patterns, not file trees. New files following patterns shouldn't require updates_
+
+_updated_at: 2026-01-11_

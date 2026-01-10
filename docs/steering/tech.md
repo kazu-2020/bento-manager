@@ -27,6 +27,10 @@ Full-stack Rails application with Hotwire for SPA-like interactivity without hea
 - **Tailwind CSS**: 4.1.18 (utility-first styling)
 - **Vite Plugins**: Full reload, Stimulus HMR for development experience
 
+### Component Architecture
+- **ViewComponent**: サーバーサイドコンポーネントフレームワーク（Sidecar構造）
+- **Lookbook**: コンポーネント開発・プレビュー環境（開発環境のみ、`/lookbook`）
+
 ## Development Standards
 
 ### Code Quality
@@ -86,5 +90,13 @@ Separate databases for primary, cache, queue, and cable to optimize performance 
 ### Tailwind CSS v4
 Leverage Vite integration for utility-first styling with latest Tailwind features.
 
+### ViewComponent for Reusable UI
+ViewComponent + Sidecar 構造を採用。ERB パーシャルより：
+- テスト容易性が高い（`ViewComponent::TestCase`）
+- ロジックとテンプレートが同一ディレクトリ
+- Stimulus コントローラーとの連携が自然
+
 ---
 _Document standards and patterns, not every dependency_
+
+_updated_at: 2026-01-11_

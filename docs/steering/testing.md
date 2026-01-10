@@ -228,5 +228,63 @@ bundle exec rails test test/models/catalog_test.rb
 bundle exec rails test test/models/catalog_test.rb:96
 ```
 
+## Component Testing
+
+ViewComponent のテストパターン。
+
+### 構成
+
+```
+test/
+└── components/
+    ├── example_component_test.rb   # コンポーネントテスト
+    └── previews/
+        └── example_component_preview.rb  # Lookbook プレビュー
+```
+
+### テストパターン
+
+```ruby
+# test/components/example_component_test.rb
+require "test_helper"
+
+class ExampleComponentTest < ViewComponent::TestCase
+  def test_renders_title
+    render_inline(ExampleComponent.new(title: "Hello"))
+
+    assert_text "Hello"
+    assert_selector "h2"
+  end
+
+  def test_renders_with_block_content
+    render_inline(ExampleComponent.new(title: "Test")) do
+      "Block content"
+    end
+
+    assert_text "Block content"
+  end
+end
+```
+
+### プレビュー（Lookbook 用）
+
+```ruby
+# test/components/previews/example_component_preview.rb
+class ExampleComponentPreview < ViewComponent::Preview
+  # @param title text
+  def default(title: "サンプルタイトル")
+    render(ExampleComponent.new(title: title))
+  end
+
+  def with_long_title
+    render(ExampleComponent.new(title: "これは非常に長いタイトルの例です"))
+  end
+end
+```
+
+開発環境で `/lookbook` にアクセスしてプレビューを確認できる。
+
 ---
 _フィクスチャの明示的宣言により、各テストの依存関係が明確になり、認知負荷が軽減される。_
+
+_updated_at: 2026-01-11_
