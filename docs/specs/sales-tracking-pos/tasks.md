@@ -256,30 +256,31 @@
 
 ### Phase 7b: Price Validation Domain (Requirements 17-19)
 
-- [ ] 41. Catalog::PriceValidator（価格存在検証 PORO）実装
-- [ ] 41.1 Catalog::PriceValidator クラス作成
-  - app/models/catalog ディレクトリ作成
+- [x] 41. Catalogs::PriceValidator（価格存在検証 PORO）実装
+- [x] 41.1 Catalogs::PriceValidator クラス作成
+  - app/models/catalogs ディレクトリ作成
   - PriceValidator クラスの基本構造（薄い部品として設計 - 決定18）
-  - price_exists? クラスメソッド（catalog_id, kind, at の3引数）
+  - price_exists? インスタンスメソッド（catalog, kind の2引数、at はコンストラクタで指定）
+  - MissingPriceError カスタム例外クラス（catalog_name, price_kind 属性を保持）
   - _Requirements: 17.1, 17.2_
 
-- [ ] 41.2 find_price / find_price! メソッド実装
+- [x] 41.2 find_price / find_price! メソッド実装
   - find_price: 価格取得（存在しない場合は nil）
   - find_price!: 価格取得（存在しない場合は MissingPriceError）
-  - CatalogPrice.current_price_by_kind! に委譲
+  - Catalog#price_by_kind に委譲
   - _Requirements: 17.2, 17.3_
 
-- [ ] 41.3 catalogs_with_missing_prices メソッド実装
+- [x] 41.3 catalogs_with_missing_prices メソッド実装
   - 管理画面用: 価格設定に不備がある全商品を返す
   - 有効な価格ルールが参照する価格種別に対応する CatalogPrice が存在しない商品を検出
-  - 戻り値: 商品と不足価格種別のリスト
+  - 戻り値: 商品と不足価格種別のリスト `[{ catalog: Catalog, missing_kinds: [String] }]`
   - _Requirements: 18.1, 18.2, 18.3, 18.6_
 
-- [ ] 41.4 Sales::PriceCalculator への価格存在検証統合（決定18）
-  - PriceCalculator.calculate 内で価格ルール適用後に検証を実行
-  - 「何の kind が必要か」は PriceCalculator が決定
-  - Catalog::PriceValidator.find_price! を呼び出して価格存在を検証
-  - 価格不足時は MissingPriceError を発生（商品名と価格種別を含む）
+- [x] 41.4 Sales::PriceCalculator への価格存在検証統合（決定18）
+  - PriceCalculator.calculate 内で価格ルール適用前に検証を実行
+  - 「何の kind が必要か」は PriceCalculator#determine_required_price_kinds が決定
+  - Catalogs::PriceValidator#price_exists? を呼び出して価格存在を検証
+  - 価格不足時は Sales::PriceCalculator::MissingPriceError を発生（商品名と価格種別を含む）
   - _Requirements: 17.1, 17.2, 17.3, 17.4_
 
 - [ ] 41.5 Sales::Recorder への統合（決定18）
@@ -289,10 +290,10 @@
   - トランザクション開始前に検証が完了するため、在庫減算なし
   - _Requirements: 17.5, 17.6, 17.7_
 
-- [ ] 42. Catalog::PricingRuleCreator（価格ルール作成 PORO）実装
-- [ ] 42.1 Catalog::PricingRuleCreator クラス作成
-  - app/models/catalog ディレクトリ内に PricingRuleCreator クラス作成
-  - MissingPriceError カスタム例外クラス（catalog_name, price_kind 属性を保持）
+- [ ] 42. Catalogs::PricingRuleCreator（価格ルール作成 PORO）実装
+- [ ] 42.1 Catalogs::PricingRuleCreator クラス作成
+  - app/models/catalogs ディレクトリ内に PricingRuleCreator クラス作成
+  - MissingPriceError は Catalogs::PriceValidator::MissingPriceError を再利用
   - _Requirements: 19.1, 19.3, 19.4_
 
 - [ ] 42.2 create メソッド実装
@@ -315,7 +316,7 @@
 
 - [ ] 43. Admin 画面での価格設定警告表示実装
 - [ ] 43.1 (P) CatalogsController index アクション更新
-  - Catalog::PriceValidator.catalogs_with_missing_prices を呼び出し
+  - Catalogs::PriceValidator#catalogs_with_missing_prices を呼び出し
   - 警告対象の商品リストをビューに渡す
   - _Requirements: 18.1, 18.2_
 
@@ -886,7 +887,7 @@
 
 ## Requirements Coverage
 
-全 19 の要件がカバーされています:
+全 19 の要件にマッピング済み:
 
 - **Requirement 1**: 弁当商品マスタ管理 → Tasks 4, 15.2, 20, 34.2, 36.2, 38.2
 - **Requirement 2**: 販売先ごとの在庫登録 → Tasks 6, 15.4, 22, 34.4, 36.4, 38.2
@@ -916,7 +917,7 @@
 - **並列実行可能タスク**: 48 tasks marked with `(P)`
 - **オプショナルテストタスク**: 45 tasks marked with `*` (deferrable post-MVP)
 - **平均タスクサイズ**: 1-3 hours per sub-task
-- **全要件カバレッジ**: 19/19 requirements (100%)
+- **要件マッピング**: 19/19 requirements
 
 ---
 

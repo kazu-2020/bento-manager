@@ -873,22 +873,22 @@ end
 
 **本システムでの適用**:
 1. **CatalogPricingRule の作成・更新（Requirement 19）**:
-   - `Catalog::PricingRuleCreator` PORO で実装
+   - `Catalogs::PricingRuleCreator` PORO で実装
    - 理由: 他モデル（CatalogPrice）への依存を避けるため、ユーザーイベント起点の PORO で検証
    - モデルバリデーションでは他モデルのレコード存在チェックを行わない
 
 2. **会計時の価格検証（Requirement 17）**:
-   - `Catalog::PriceValidator` PORO で実装
+   - `Catalogs::PriceValidator` PORO で実装
    - 理由: 複数モデルを跨ぐビジネスプロセス検証のため、PORO が適切
    - 専用例外 `MissingPriceError` で検証失敗を通知
 
 3. **管理画面での警告表示（Requirement 18）**:
-   - `Catalog::PriceValidator.catalogs_with_missing_prices` で検出
+   - `Catalogs::PriceValidator.catalogs_with_missing_prices` で検出
    - 理由: 例外を発生させず、表示用データを返すメソッドが適切
 
 **設計への影響**:
-- `app/models/catalog/price_validator.rb` を新規作成
-- `app/models/catalog/pricing_rule_creator.rb` を新規作成（Requirement 19）
+- `app/models/catalogs/price_validator.rb` を新規作成
+- `app/models/catalogs/pricing_rule_creator.rb` を新規作成（Requirement 19）
 - `Sales::Recorder` に価格検証呼び出しを追加
 - CatalogPricingRule モデルには価格存在バリデーションを設置しない
 
@@ -920,10 +920,10 @@ end
 - デメリット: Controller/PORO 経由でない直接操作では検証がスキップされる（ただし意図的な設計）
 
 **設計詳細**:
-- `Catalog::PriceValidator.validate!(cart_items)`: 会計時検証（例外発生）
-- `Catalog::PriceValidator.find_missing_prices(cart_items)`: 検証のみ（例外なし）
-- `Catalog::PriceValidator.catalogs_with_missing_prices`: 管理画面用
-- `Catalog::PricingRuleCreator#create, #update`: ルール作成/有効化時検証（PORO で実行）
+- `Catalogs::PriceValidator.validate!(cart_items)`: 会計時検証（例外発生）
+- `Catalogs::PriceValidator.find_missing_prices(cart_items)`: 検証のみ（例外なし）
+- `Catalogs::PriceValidator.catalogs_with_missing_prices`: 管理画面用
+- `Catalogs::PricingRuleCreator#create, #update`: ルール作成/有効化時検証（PORO で実行）
 
 **補足**: CatalogPricingRule モデルには価格存在バリデーションを設置しない。これはモデルが他モデルのレコードに依存することを避けるため。
 
