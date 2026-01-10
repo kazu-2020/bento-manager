@@ -290,25 +290,25 @@
   - トランザクション開始前に検証が完了するため、在庫減算なし
   - _Requirements: 17.5, 17.6, 17.7_
 
-- [ ] 42. Catalogs::PricingRuleCreator（価格ルール作成 PORO）実装
-- [ ] 42.1 Catalogs::PricingRuleCreator クラス作成
+- [x] 42. Catalogs::PricingRuleCreator（価格ルール作成 PORO）実装
+- [x] 42.1 Catalogs::PricingRuleCreator クラス作成
   - app/models/catalogs ディレクトリ内に PricingRuleCreator クラス作成
-  - MissingPriceError は Catalogs::PriceValidator::MissingPriceError を再利用
+  - MissingPriceError は Errors::MissingPriceError を再利用
   - _Requirements: 19.1, 19.3, 19.4_
 
-- [ ] 42.2 create メソッド実装
+- [x] 42.2 create メソッド実装
   - CatalogPricingRule のインスタンス作成
   - 今日時点で有効化される場合は価格存在検証を実行
   - 検証成功時のみ save! を実行
   - _Requirements: 19.1, 19.5, 19.6_
 
-- [ ] 42.3 update メソッド実装
+- [x] 42.3 update メソッド実装
   - 既存 CatalogPricingRule の属性更新
   - 有効化（active）される場合は価格存在検証を実行
   - 無効化（inactive）の場合は検証をスキップ
   - _Requirements: 19.2, 19.5, 19.6, 19.7_
 
-- [ ] 42.4 validate_price_existence! プライベートメソッド実装
+- [x] 42.4 validate_price_existence! プライベートメソッド実装
   - 参照する価格種別（kind）に対応する CatalogPrice の存在確認
   - 今日時点（Date.current）で有効な価格のみを検証対象
   - 不足時は MissingPriceError を発生

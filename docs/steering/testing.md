@@ -73,6 +73,8 @@ end
 | sale_test.rb | `:locations, :employees, :sales` |
 | sale_item_test.rb | `:locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items` |
 | sales/recorder_test.rb | `:locations, :employees, :catalogs, :catalog_prices, :daily_inventories` |
+| catalogs/price_validator_test.rb | `:catalogs, :catalog_prices, :catalog_pricing_rules` |
+| catalogs/pricing_rule_creator_test.rb | `:catalogs, :catalog_prices, :catalog_pricing_rules` |
 | admin_authentication_test.rb | `:admins` |
 | employee_authentication_test.rb | `:employees` |
 | error_handling_test.rb | `:admins, :employees` |
