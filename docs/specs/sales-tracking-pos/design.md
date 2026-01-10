@@ -373,6 +373,9 @@ sequenceDiagram
 | 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8 | サイドメニュー（サラダ）の条件付き価格設定 | CatalogPricingRule, CatalogPrice, Sales::PriceCalculator, Catalog (category enum) | CatalogPricingRule#applicable?, apply_pricing_rules, CatalogPrice.by_kind | 販売フロー |
 | 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 15.11, 15.12 | 返品・返金処理（取消・再販売・差額返金） | Sale, Refund, SalesController#void, Sales::PriceCalculator, DailyInventory | Sale#void!, Refund, corrected_from_sale_id | 返品・返金フロー |
 | 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7 | 販売先（ロケーション）管理 | Location, LocationsController, DailyInventory, Sale, AdditionalOrder | LocationsController CRUD, Location#soft_delete | - |
+| 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7 | 価格ルール適用時の価格存在検証（会計時） | Sales::Recorder, Sales::PriceCalculator, Catalog::PriceValidator | Sales::PriceCalculator.validate_prices!, Catalog::PriceValidator.validate! | 販売フロー |
+| 18.1, 18.2, 18.3, 18.4, 18.5, 18.6 | 管理画面での価格設定不備の警告表示 | Catalog, CatalogPricingRule, CatalogsController, catalogs/index view | Catalog#missing_prices_for_rules, Catalog.with_missing_prices | - |
+| 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7 | 価格ルール作成・有効化時の価格存在バリデーション | Catalog::PricingRuleCreator, CatalogPricingRule | Catalog::PricingRuleCreator#create, #update | - |
 
 ## Components & Interface Contracts
 
@@ -393,8 +396,10 @@ sequenceDiagram
 | Sale | Sales Domain | 販売記録（販売先ごと、void 対応、取消→再販売） | 3.1-3.8, 15.1-15.12, 16.1-16.7 | Location (P0), DailyInventory (P0), Discount (P1), SaleItem (P0) | API |
 | SaleItem | Sales Domain | 販売明細（単価確定、価格履歴管理、純粋データモデル） | 3.1-3.8, 14.1-14.8 | Sale (P0), Catalog (P0), CatalogPrice (P0) | Service |
 | Refund | Refund Domain | 差額返金記録（元Sale - 新Sale） | 15.1-15.12 | Sale (P0) | API |
-| Sales::Recorder | Sales PORO | 販売記録と在庫減算の一括処理 | 3.1-3.8, 12.1-12.2 | Sale (P0), SaleItem (P0), DailyInventory (P0) | Service |
-| Sales::PriceCalculator | Sales PORO | 販売価格計算（価格ルール + 複数割引） | 3.1-3.8, 13.1-13.9, 14.1-14.8 | CatalogPricingRule (P0), Discount (P0) | Service |
+| Sales::Recorder | Sales PORO | 販売記録と在庫減算の一括処理（PriceCalculator経由で価格検証）※決定18 | 3.1-3.8, 12.1-12.2, 17.1-17.7 | Sale (P0), SaleItem (P0), DailyInventory (P0), Sales::PriceCalculator (P0) | Service |
+| Sales::PriceCalculator | Sales PORO | 販売価格計算（kind 決定 + 価格存在検証 + 価格ルール + 割引）※決定18 | 3.1-3.8, 13.1-13.9, 14.1-14.8, 17.1-17.7 | CatalogPricingRule (P0), Discount (P0), Catalog::PriceValidator (P0) | Service |
+| Catalog::PriceValidator | Catalog PORO | (catalog_id, kind, at) の価格存在検証（薄い部品）※決定18 | 17.1-17.7, 18.1-18.6 | CatalogPrice (P0) | Service |
+| Catalog::PricingRuleCreator | Catalog PORO | 価格ルールの作成・更新と価格存在検証 | 19.1-19.7 | CatalogPricingRule (P0), CatalogPrice (P0) | Service |
 | Sales::AnalysisCalculator | Sales PORO | 販売予測・統計 | 6.1-6.5 | Sale (P0) | Service |
 | Reports::Generator | Reports PORO | レポート生成 | 7.1-7.5 | Sale (P0), DailyInventory (P0) | Service |
 | pos_controller.js | Frontend Stimulus | POS UI制御（クーポン枚数入力、価格内訳表示） | 3.1-3.8, 13.1-13.9, 14.1-14.8 | SalesController (P0) | State |
@@ -672,6 +677,7 @@ end
 - どの商品（target_catalog）にどの価格種別（price_kind）を適用するか定義
 - 適用条件（trigger_category, max_per_trigger）の管理
 - 有効期間管理（valid_from, valid_until）
+- **注意**: 価格存在検証はモデルバリデーションではなく `Catalog::PricingRuleCreator` PORO で実行
 
 **Service Interface**:
 ```ruby
@@ -707,6 +713,7 @@ end
   - max_per_trigger: 1（弁当1個につきサラダ1個まで）
 - `applicable?` で適用可否を判定
 - `max_applicable_quantity` で最大適用数を計算
+- **Requirement 19 対応**: 価格存在検証は `Catalog::PricingRuleCreator` PORO で実行（モデルバリデーションでは他モデルに依存しない）
 
 ### Discount Domain
 
@@ -1044,6 +1051,191 @@ end
 - corrected_sale_id: nullable（全額返金の場合は nil）
 - 返金理由を reason に記録
 
+### Catalog PORO
+
+#### Catalog::PriceValidator
+
+| Field | Detail |
+|-------|--------|
+| Intent | 指定された (catalog_id, kind, at) の価格が存在するかを検証する薄い PORO |
+| Requirements | 17.1-17.7, 18.1-18.6 |
+
+**Responsibilities**:
+- 指定された (catalog_id, kind, at) に対応する CatalogPrice の存在を検証（単一責務）
+- 価格の取得（存在しない場合は nil または例外）
+- 商品一覧画面での価格設定不備の検出（Requirement 18）
+- **注意**: 「何の kind が必要か」の判定は Sales::PriceCalculator が担当（決定18参照）
+
+**Dependencies**:
+- CatalogPrice (P0)
+
+**Service Interface**:
+```ruby
+module Catalog
+  class PriceValidator
+    # 指定された (catalog_id, kind, at) の価格が存在するか検証
+    # @param catalog_id [Integer]
+    # @param kind [String] 'regular' | 'bundle'
+    # @param at [Date] 基準日（デフォルト: 今日）
+    # @return [Boolean]
+    def self.price_exists?(catalog_id, kind, at: Date.current)
+      CatalogPrice
+        .where(catalog_id: catalog_id, kind: kind)
+        .where('effective_from <= ?', at)
+        .where('effective_until IS NULL OR effective_until >= ?', at)
+        .exists?
+    end
+
+    # 価格を取得（存在しない場合は nil）
+    # @param catalog_id [Integer]
+    # @param kind [String]
+    # @param at [Date]
+    # @return [CatalogPrice, nil]
+    def self.find_price(catalog_id, kind, at: Date.current)
+      CatalogPrice.current_price_by_kind!(catalog_id, kind, at)
+    rescue CatalogPrice::NotFoundError
+      nil
+    end
+
+    # 価格を取得（存在しない場合は例外）
+    # @param catalog_id [Integer]
+    # @param kind [String]
+    # @param at [Date]
+    # @return [CatalogPrice]
+    # @raise [CatalogPrice::NotFoundError] 価格が存在しない場合
+    def self.find_price!(catalog_id, kind, at: Date.current)
+      CatalogPrice.current_price_by_kind!(catalog_id, kind, at)
+    end
+
+    # 商品一覧用: 価格設定に不備がある商品を取得（Requirement 18）
+    # @return [Array<Hash>] [{ catalog:, missing_kinds: [...] }, ...]
+    def self.catalogs_with_missing_prices
+      result = []
+
+      ::Catalog.available.includes(:catalog_prices, :catalog_pricing_rules).find_each do |catalog|
+        missing_kinds = []
+
+        # 通常価格チェック（全商品で必須）
+        unless price_exists?(catalog.id, 'regular')
+          missing_kinds << "regular"
+        end
+
+        # 有効な価格ルールが参照する価格種別をチェック
+        catalog.active_pricing_rules.each do |rule|
+          next if rule.price_kind == "regular"
+          unless price_exists?(catalog.id, rule.price_kind)
+            missing_kinds << rule.price_kind
+          end
+        end
+
+        result << { catalog: catalog, missing_kinds: missing_kinds.uniq } if missing_kinds.any?
+      end
+
+      result
+    end
+  end
+end
+```
+
+**Implementation Notes**:
+- **薄い部品**: 価格ルールの適用判定は行わず、指定された (catalog_id, kind, at) の価格存在のみを検証
+- **決定18 対応**: 「何の kind が必要か」は Sales::PriceCalculator が決定し、PriceValidator を呼び出して検証
+- `price_exists?`: Boolean を返す軽量な存在チェック
+- `find_price` / `find_price!`: 価格取得（CatalogPrice.current_price_by_kind! に委譲）
+- `catalogs_with_missing_prices`: 管理画面警告表示用（Requirement 18）、価格ルールが参照する kind を静的にチェック
+
+---
+
+#### Catalog::PricingRuleCreator
+
+| Field | Detail |
+|-------|--------|
+| Intent | 価格ルールの作成・更新と価格存在検証を行う PORO |
+| Requirements | 19.1-19.7 |
+
+**Responsibilities**:
+- 価格ルール作成時に対応する CatalogPrice の存在を検証（19.1）
+- 価格ルール有効化時に対応する CatalogPrice の存在を検証（19.2）
+- 検証失敗時にエラーメッセージを返す（19.3, 19.4）
+- 今日時点で有効な CatalogPrice が存在すれば許可（19.5）
+- 無効化時は価格存在の検証をスキップ（19.7）
+
+**Dependencies**:
+- CatalogPricingRule (P0)
+- CatalogPrice (P0)
+
+**Service Interface**:
+```ruby
+module Catalog
+  class PricingRuleCreator
+    # 価格存在検証エラー
+    class MissingPriceError < StandardError
+      attr_reader :catalog_name, :price_kind
+
+      def initialize(catalog_name, price_kind)
+        @catalog_name = catalog_name
+        @price_kind = price_kind
+        super("価格種別「#{price_kind}」に対応する価格が商品「#{catalog_name}」に設定されていません")
+      end
+    end
+
+    # 価格ルールを作成する
+    # @param rule_params [Hash] CatalogPricingRule の属性
+    # @return [CatalogPricingRule] 作成されたルール
+    # @raise [MissingPriceError] 対応する価格が存在しない場合
+    # @raise [ActiveRecord::RecordInvalid] バリデーションエラー
+    def create(rule_params)
+      rule = CatalogPricingRule.new(rule_params)
+      validate_price_existence!(rule) if should_validate?(rule)
+      rule.save!
+      rule
+    end
+
+    # 価格ルールを更新する
+    # @param rule [CatalogPricingRule] 更新対象のルール
+    # @param rule_params [Hash] 更新する属性
+    # @return [CatalogPricingRule] 更新されたルール
+    # @raise [MissingPriceError] 対応する価格が存在しない場合
+    # @raise [ActiveRecord::RecordInvalid] バリデーションエラー
+    def update(rule, rule_params)
+      rule.assign_attributes(rule_params)
+      validate_price_existence!(rule) if should_validate?(rule)
+      rule.save!
+      rule
+    end
+
+    private
+
+    # 価格存在検証を実行すべきか判定
+    # - 有効化（valid_from が今日以前）の場合: 検証する
+    # - 無効化（valid_from が将来）の場合: スキップ（19.7）
+    def should_validate?(rule)
+      rule.valid_from <= Date.current
+    end
+
+    # 価格存在検証（Requirement 19）
+    def validate_price_existence!(rule)
+      catalog = rule.target_catalog
+      return if catalog.nil?
+
+      price_exists = catalog.prices.by_kind(rule.price_kind).current.exists?
+      return if price_exists
+
+      raise MissingPriceError.new(catalog.name, rule.price_kind)
+    end
+  end
+end
+```
+
+**Implementation Notes**:
+- `create`: 新規ルール作成時に価格存在検証を実行（19.1）
+- `update`: ルール更新時に価格存在検証を実行（19.2）
+- `should_validate?`: 有効化時のみ検証、無効化時はスキップ（19.7）
+- 今日時点で有効な CatalogPrice が存在すれば許可（19.5）
+- モデルバリデーションで他モデルに依存せず、PORO でユーザーイベント起点の検証を担保
+
+---
+
 ### Sales PORO
 
 #### Sales::Recorder
@@ -1051,18 +1243,20 @@ end
 | Field | Detail |
 |-------|--------|
 | Intent | 販売記録と在庫減算を一括で処理する PORO |
-| Requirements | 3.1-3.8, 12.1-12.2 |
+| Requirements | 3.1-3.8, 12.1-12.2, 17.1-17.7 |
 
 **Responsibilities**:
 - Sale と SaleItem の作成を一括で実行
+- 価格計算（Sales::PriceCalculator 経由で価格存在検証も実行）
 - 在庫減算（DailyInventory）を明示的に実行
 - トランザクション内で原子性を保証
-- 在庫不足時にエラーを発生させる
+- 在庫不足時・価格不足時にエラーを発生させる
 
 **Dependencies**:
 - Sale (P0)
 - SaleItem (P0)
 - DailyInventory (P0)
+- Sales::PriceCalculator (P0)
 
 **Service Interface**:
 ```ruby
@@ -1070,21 +1264,60 @@ module Sales
   class Recorder
     # 販売を記録し、在庫を減算する
     # @param sale_params [Hash] Sale の属性
-    # @param items_params [Array<Hash>] SaleItem の属性配列
+    # @param items_params [Array<Hash>] [{ catalog_id:, quantity: }, ...]
+    # @param discount_ids [Array<Integer>] 適用する割引の ID
+    # @param coupon_count [Integer] クーポン枚数
     # @return [Sale] 作成された Sale
+    # @raise [Sales::PriceCalculator::MissingPriceError] 価格未設定時（Requirement 17）
     # @raise [DailyInventory::InsufficientStockError] 在庫不足時
     # @raise [ActiveRecord::RecordNotFound] 在庫レコード未存在時
-    def record(sale_params, items_params)
-      Sale.transaction do
-        sale = Sale.create!(sale_params)
+    def record(sale_params, items_params, discount_ids: [], coupon_count: 0)
+      # Step 1: カート構築
+      cart_items = items_params.map do |p|
+        { catalog: Catalog.find(p[:catalog_id]), quantity: p[:quantity] }
+      end
 
-        items_params.each do |item_params|
-          sale_item = sale.sale_items.create!(item_params)
+      # Step 2: 価格計算（内部で価格存在検証を実行）
+      # - determine_price_kinds: 価格ルール適用（どの kind が必要かを決定）
+      # - validate_prices!: Catalog::PriceValidator を使って価格存在を検証
+      # - fetch_prices: 価格取得
+      pricing = PriceCalculator.calculate(cart_items, discount_ids, coupon_count: coupon_count)
+
+      Sale.transaction do
+        sale = Sale.create!(
+          sale_params.merge(
+            total_amount: pricing[:subtotal],
+            final_amount: pricing[:final_total],
+            status: :completed
+          )
+        )
+
+        pricing[:items_with_prices].each do |item|
+          sale_item = sale.sale_items.create!(
+            catalog_id: item[:catalog].id,
+            catalog_price_id: item[:catalog_price_id],
+            quantity: item[:quantity],
+            unit_price: item[:unit_price],
+            sold_at: sale.sale_datetime
+          )
           decrement_inventory(sale, sale_item)
+        end
+
+        # 割引適用
+        pricing[:discount_details].each do |detail|
+          next unless detail[:applicable]
+          sale.sale_discounts.create!(
+            discount_id: detail[:discount_id],
+            discount_amount: detail[:discount_amount]
+          )
         end
 
         sale
       end
+    rescue Sales::PriceCalculator::MissingPriceError => e
+      # Requirement 17.7: エラーログを記録
+      Rails.logger.error("[PriceCalculator] #{e.message}")
+      raise
     end
 
     private
@@ -1102,28 +1335,74 @@ end
 ```
 
 **Implementation Notes**:
+- **決定18 対応**: 価格存在検証は PriceCalculator.calculate 内で実行（Catalog::PriceValidator を直接呼び出さない）
 - SaleItem は純粋なデータモデル（コールバックなし）
 - 在庫減算は Sales::Recorder で明示的に実行
 - プロジェクト方針（PORO パターン）に準拠
 - 2ホップ先のモデル操作をコールバックから分離し、結合度を低減
 - テスト容易性向上（SaleItem を単独でテスト可能）
+- **Requirement 17 対応**: PriceCalculator.calculate が内部で価格存在検証を実行
+  - 価格不足時は MissingPriceError を発生、トランザクションは開始されない（17.6）
+  - エラーログを記録（17.7）
 
 ---
 
 #### Sales::PriceCalculator
 
+| Field | Detail |
+|-------|--------|
+| Intent | 価格ルール適用、価格存在検証、価格計算を一括で行う PORO |
+| Requirements | 3.1-3.8, 13.1-13.9, 14.1-14.8, 17.1-17.7 |
+
+**Responsibilities**:
+- 価格ルール適用判定（どの kind が必要かを決定）
+- **価格存在検証**（決定した kind に対応する価格が存在するか）
+- 価格取得と小計計算
+- 割引適用と最終金額計算
+- **注意**: 「何の kind が必要か」の決定はこのクラスの責務（決定18参照）
+
+**Dependencies**:
+- CatalogPricingRule (P0)
+- Catalog::PriceValidator (P0)
+- Discount (P0)
+
 **Service Interface**:
 ```ruby
 module Sales
   class PriceCalculator
-    def self.calculate(cart_items, discount_ids = [])
-      # Step 1: 価格ルール適用（セット価格判定）
-      items_with_prices = apply_pricing_rules(cart_items)
+    # 価格存在検証エラー（Requirement 17）
+    class MissingPriceError < StandardError
+      attr_reader :missing_prices
 
-      # Step 2: 小計計算
+      def initialize(missing_prices)
+        @missing_prices = missing_prices
+        super(build_message)
+      end
+
+      private
+
+      def build_message
+        details = missing_prices.map do |mp|
+          "商品「#{mp[:catalog_name]}」に価格種別「#{mp[:price_kind]}」の価格が設定されていません"
+        end.join("; ")
+        "価格設定エラー: #{details}"
+      end
+    end
+
+    def self.calculate(cart_items, discount_ids = [], coupon_count: 0)
+      # Step 1: 価格ルール適用（どの kind が必要かを決定）
+      items_with_kinds = determine_price_kinds(cart_items)
+
+      # Step 2: 価格存在検証（決定した kind に対応する価格が存在するか）
+      validate_prices!(items_with_kinds)
+
+      # Step 3: 価格取得
+      items_with_prices = fetch_prices(items_with_kinds)
+
+      # Step 4: 小計計算
       subtotal = items_with_prices.sum { |item| item[:unit_price] * item[:quantity] }
 
-      # Step 3: 割引適用
+      # Step 5: 割引適用
       discount_details = []
       total_discount_amount = 0
 
@@ -1131,7 +1410,7 @@ module Sales
       discounts.each do |discount|
         applicable = discount.applicable?(cart_items)
         if applicable
-          discount_amount = discount.calculate_discount(cart_items)
+          discount_amount = discount.calculate_discount(cart_items, coupon_count: coupon_count)
           discount_details << {
             discount_id: discount.id,
             discount_name: discount.name,
@@ -1154,11 +1433,11 @@ module Sales
         subtotal: subtotal,
         discount_details: discount_details,
         total_discount_amount: total_discount_amount,
-        final_total: subtotal - total_discount_amount
+        final_total: [subtotal - total_discount_amount, 0].max
       }
     end
 
-    def self.apply_pricing_rules(cart_items)
+    private_class_method def self.determine_price_kinds(cart_items)
       cart_items.map do |item|
         catalog = item[:catalog]
         quantity = item[:quantity]
@@ -1166,22 +1445,41 @@ module Sales
         # デフォルトは通常価格
         price_kind = 'regular'
 
-        # 価格ルール適用判定
+        # 価格ルール適用判定（どの kind を使うか決定）
         pricing_rules = CatalogPricingRule.active.for_target(catalog.id)
         pricing_rules.each do |rule|
           if rule.applicable?(cart_items)
             max_quantity = rule.max_applicable_quantity(cart_items)
-            if quantity <= max_quantity
-              price_kind = rule.price_kind
-            end
+            price_kind = rule.price_kind if quantity <= max_quantity
           end
         end
 
-        # 価格取得
-        price = CatalogPrice.current_price_by_kind(catalog.id, price_kind)
-        unit_price = price&.price || catalog.current_price.price
+        item.merge(required_kind: price_kind)
+      end
+    end
 
-        item.merge(unit_price: unit_price, catalog_price_id: price&.id)
+    # 価格存在検証（Requirement 17.1, 17.2, 17.5）
+    private_class_method def self.validate_prices!(items_with_kinds)
+      missing = []
+      items_with_kinds.each do |item|
+        catalog = item[:catalog]
+        kind = item[:required_kind]
+
+        unless Catalog::PriceValidator.price_exists?(catalog.id, kind)
+          missing << { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind }
+        end
+      end
+
+      raise MissingPriceError.new(missing) if missing.any?
+    end
+
+    private_class_method def self.fetch_prices(items_with_kinds)
+      items_with_kinds.map do |item|
+        catalog = item[:catalog]
+        kind = item[:required_kind]
+        price = Catalog::PriceValidator.find_price!(catalog.id, kind)
+
+        item.merge(unit_price: price.price, catalog_price_id: price.id)
       end
     end
   end
@@ -1189,8 +1487,11 @@ end
 ```
 
 **Implementation Notes**:
-- apply_pricing_rules: CatalogPricingRule を適用してセット価格を判定
-- calculate: 価格ルール適用 → 小計計算 → 割引適用
+- **決定18 対応**: 価格ルール適用と価格存在検証を統合し、「何の kind が必要か」をこのクラスが決定
+- `determine_price_kinds`: CatalogPricingRule を適用してセット価格を判定、`required_kind` を付与
+- `validate_prices!`: Catalog::PriceValidator を使って価格存在を検証（Requirement 17）
+- `fetch_prices`: 価格を取得して `unit_price` と `catalog_price_id` を付与
+- MissingPriceError: 不足している価格がある場合に発生、Requirement 17.3 のエラーメッセージを生成
 - 複数割引に対応し、各割引の適用可否と割引額を個別に計算
 
 ## Data Models
@@ -1483,6 +1784,7 @@ erDiagram
 - 割引適用不可: 「この割引には以下の条件が必要です: 弁当、サイドメニュー」→ カートに戻る
 - 価格ルール適用不可: 「セット価格を適用するには弁当が必要です」→ カートに戻る
 - Void 失敗: 「この販売は既に取り消されています」→ 一覧に戻る
+- **価格未設定（Requirement 17）**: 「商品「サラダ」に価格種別「bundle」の価格が設定されていません」→ 商品一覧で価格設定を促す
 
 ### Error Categories and Responses
 
@@ -1504,6 +1806,10 @@ def create
   )
 
   redirect_to sales_path, notice: '販売記録を保存しました'
+rescue Catalog::PriceValidator::MissingPriceError => e
+  # Requirement 17: 価格未設定エラー
+  flash[:error] = e.message
+  render :new, status: :unprocessable_entity
 rescue ActiveRecord::RecordInvalid => e
   flash[:error] = "入力エラー: #{e.message}"
   render :new, status: :unprocessable_entity
@@ -1565,17 +1871,20 @@ end
 - Catalog.current_price, Catalog.discontinued?
 - CatalogPrice.current_price_by_kind
 - CatalogPricingRule.applicable?, max_applicable_quantity
+- **Catalog::PricingRuleCreator.create, #update（Requirement 19: 価格存在バリデーション）**
 - Discount.applicable?, Discount.calculate_discount (Coupon)
 - DailyInventory.bulk_create_for_date, DailyInventory.available_count_for
 - SaleItem.calculate_line_total（純粋なデータモデルとしてテスト）
 - Sale.void!, Sale.create_with_items_and_discounts!
-- Sales::Recorder.record（在庫減算、エラーケース、トランザクション）
+- Sales::Recorder.record（在庫減算、エラーケース、トランザクション、**価格検証**）
 - Sales::PriceCalculator.calculate, apply_pricing_rules (価格ルール適用の各パターン)
 - Sales::AnalysisCalculator.calculate_sma (データ不足時の挙動含む)
+- **Catalog::PriceValidator.validate!, find_missing_prices, catalogs_with_missing_prices（Requirement 17-18）**
 
 ### Integration Tests
 
-- 販売フロー: POS画面 → SalesController → Sales::Recorder → Sale + SaleItem + DailyInventory 更新 + 価格ルール適用 + 割引適用 → Turbo Streams
+- 販売フロー: POS画面 → SalesController → Sales::Recorder → **価格検証** → Sale + SaleItem + DailyInventory 更新 + 価格ルール適用 + 割引適用 → Turbo Streams
+- **価格未設定エラーフロー（Requirement 17）**: 会計 → 価格検証失敗 → エラーメッセージ表示 → 在庫減算なし
 - Void フロー: 取消 → 在庫復元 → 再販売 → Refund 記録 → Turbo Streams
 - オフライン同期フロー: LocalStorage保存 → /api/sales/sync → 競合検出 → エラー通知
 - 追加発注フロー: AdditionalOrdersController → DailyInventory 加算 → Turbo Streams
@@ -1585,6 +1894,8 @@ end
 ### E2E/UI Tests
 
 - POS画面での販売記録 (価格ルール + 割引適用含む)
+- **価格未設定時の会計エラー表示（Requirement 17）**
+- **商品一覧での価格設定不備警告表示（Requirement 18）**
 - 返品・返金処理 (取消 → 再販売 → 返金額表示)
 - リアルタイム在庫確認 (Turbo Streams)
 - オフライン状態での販売記録とネットワーク復旧後の同期

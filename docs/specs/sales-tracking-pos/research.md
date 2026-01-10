@@ -858,3 +858,274 @@ end
 - `test/models/sales/recorder_test.rb` - 新規作成
 
 ---
+
+## Discovery Phase 7 - 2026-01-10（Requirement 17-19: 価格存在検証）
+
+### R12: Rails カスタムバリデーションと例外パターン
+
+**調査目的**: 価格ルール適用時の価格存在検証を実装するための最適なパターンを調査
+
+**調査結果**:
+- **カスタムバリデーション（ActiveModel）**: モデルの `validate` メソッドで検証ロジックを実装
+- **PORO + 例外**: ビジネスルール検証を PORO に分離し、専用例外で通知
+- **Rails の慣習**: モデルバリデーションは「保存前検証」、PORO/Service は「ビジネスプロセス検証」
+- **重要な原則**: モデルバリデーション内で他モデルのレコードに依存すべきでない（結合度が高くなり、テストが複雑になる）
+
+**本システムでの適用**:
+1. **CatalogPricingRule の作成・更新（Requirement 19）**:
+   - `Catalog::PricingRuleCreator` PORO で実装
+   - 理由: 他モデル（CatalogPrice）への依存を避けるため、ユーザーイベント起点の PORO で検証
+   - モデルバリデーションでは他モデルのレコード存在チェックを行わない
+
+2. **会計時の価格検証（Requirement 17）**:
+   - `Catalog::PriceValidator` PORO で実装
+   - 理由: 複数モデルを跨ぐビジネスプロセス検証のため、PORO が適切
+   - 専用例外 `MissingPriceError` で検証失敗を通知
+
+3. **管理画面での警告表示（Requirement 18）**:
+   - `Catalog::PriceValidator.catalogs_with_missing_prices` で検出
+   - 理由: 例外を発生させず、表示用データを返すメソッドが適切
+
+**設計への影響**:
+- `app/models/catalog/price_validator.rb` を新規作成
+- `app/models/catalog/pricing_rule_creator.rb` を新規作成（Requirement 19）
+- `Sales::Recorder` に価格検証呼び出しを追加
+- CatalogPricingRule モデルには価格存在バリデーションを設置しない
+
+**情報源**:
+- [ActiveModel::Validations - Rails API](https://api.rubyonrails.org/classes/ActiveModel/Validations.html)
+- [Custom Validators - Rails Guides](https://guides.rubyonrails.org/active_record_validations.html#custom-validators)
+
+---
+
+### 決定16: 価格存在検証の実装方針（Requirement 17-19）
+
+**コンテキスト**: Requirement 17-19 で価格ルールに対応する価格の存在検証が必要
+
+**検討した選択肢**:
+1. **モデルバリデーションのみ**: CatalogPricingRule の validate で検証
+2. **PORO のみ**: すべての検証を PORO で実行
+3. **ハイブリッド**: ルール作成時はモデルバリデーション、会計時は PORO
+
+**選択したアプローチ**: PORO のみ（全検証を PORO で実行）
+
+**理由**:
+- **モデルバリデーションで他モデルに依存すべきでない**: モデル間の結合度が高くなり、テストも複雑になる
+- **ユーザーイベント起点**: ルール作成・有効化は明確なユーザーイベントであり、PORO で処理を担保すべき
+- **一貫性**: 会計時検証（Requirement 17）もルール作成時検証（Requirement 19）も同じパターン（PORO）で統一
+- プロジェクト方針（PORO パターン）に完全準拠
+
+**トレードオフ**:
+- メリット: 責務分離、テスト容易性、モデルの純粋性維持、一貫したパターン
+- デメリット: Controller/PORO 経由でない直接操作では検証がスキップされる（ただし意図的な設計）
+
+**設計詳細**:
+- `Catalog::PriceValidator.validate!(cart_items)`: 会計時検証（例外発生）
+- `Catalog::PriceValidator.find_missing_prices(cart_items)`: 検証のみ（例外なし）
+- `Catalog::PriceValidator.catalogs_with_missing_prices`: 管理画面用
+- `Catalog::PricingRuleCreator#create, #update`: ルール作成/有効化時検証（PORO で実行）
+
+**補足**: CatalogPricingRule モデルには価格存在バリデーションを設置しない。これはモデルが他モデルのレコードに依存することを避けるため。
+
+---
+
+### 決定17: 価格検証エラーメッセージの設計
+
+**コンテキスト**: Requirement 17.3 で「エラーメッセージに該当商品名と不足している価格種別を含める」ことが求められている
+
+**選択したアプローチ**: 構造化エラー情報 + 人間可読メッセージ
+
+**理由**:
+- 管理者がエラー原因を即座に特定できる
+- プログラム的なエラーハンドリングも可能（`missing_prices` 配列）
+- 国際化対応の準備が容易
+
+**エラーメッセージ例**:
+```
+価格設定エラー: 商品「サラダ」に価格種別「bundle」の価格が設定されていません
+```
+
+**複数商品の場合**:
+```
+価格設定エラー: 商品「サラダ」に価格種別「bundle」の価格が設定されていません; 商品「日替わり弁当A」に価格種別「regular」の価格が設定されていません
+```
+
+---
+
+### 決定18: Catalog::PriceValidator と Sales::PriceCalculator の責務分担リファクタリング
+
+**コンテキスト**: 現在の `Catalog::PriceValidator.validate!(cart_items)` は「カートに存在する商品」の価格種別しか見ておらず、実際に必要な「ルール適用後に必要になる kind（bundle 等）」を判定できない。これにより、PriceValidator と PriceCalculator のロジックが二重管理になりやすい問題がある。
+
+**現状の問題点**:
+1. **二重管理**: PriceValidator がカート商品の価格ルールを見て kind を判定 → PriceCalculator も同じルールを適用して kind を決定
+2. **責務の曖昧さ**: PriceValidator が「どの kind が必要か」を知る必要があり、PriceCalculator の責務と重複
+3. **保守性の低下**: 価格ルールのロジック変更時に両方のクラスを修正する必要がある
+
+**検討した選択肢**:
+1. **案A: 現状維持（PriceValidator がルール適用を判定）**
+   - 問題点: 二重管理、保守性低下
+   - テスト: ❌ 複雑（PriceValidator のテストに価格ルールの知識が必要）
+
+2. **案B: PriceValidator を薄い部品にする（推奨）**
+   - PriceValidator: `(catalog_id, kind, at)` の価格が取れるかの検証のみ
+   - PriceCalculator: 価格ルールを適用して「何の kind が必要か」を決定
+   - PriceCalculator が PriceValidator を呼び出して価格存在を検証
+   - 問題点: なし
+   - テスト: ✅ シンプル（各クラスが単一責務）
+
+3. **案C: PriceCalculator に PriceValidator を統合**
+   - 問題点: PriceCalculator の肥大化、責務混在、Requirement 18（管理画面警告）での再利用が困難
+
+**選択したアプローチ**: 案B（PriceValidator を薄い部品にする）
+
+**理由**:
+- **単一責務の原則**: 各クラスが明確な責務を持つ
+  - `Catalog::PriceValidator`: 「指定された (catalog_id, kind, at) に価格が存在するか」を検証
+  - `Sales::PriceCalculator`: 「カート内の商品に対してどの kind が必要か」を決定し、価格存在検証を委譲
+- **二重管理の解消**: 価格ルール適用ロジックは PriceCalculator のみに集約
+- **テスト容易性向上**: PriceValidator は価格ルールを知らずにテスト可能
+- **保守性向上**: 価格ルール変更時は PriceCalculator のみ修正
+
+**設計詳細**:
+
+1. **Catalog::PriceValidator（薄い部品）**:
+   ```ruby
+   module Catalog
+     class PriceValidator
+       # 指定された (catalog_id, kind, at) の価格が存在するか検証
+       # @param catalog_id [Integer]
+       # @param kind [String] 'regular' | 'bundle'
+       # @param at [Date] 基準日（デフォルト: 今日）
+       # @return [Boolean]
+       def self.price_exists?(catalog_id, kind, at: Date.current)
+         CatalogPrice
+           .where(catalog_id: catalog_id, kind: kind)
+           .where('effective_from <= ?', at)
+           .where('effective_until IS NULL OR effective_until >= ?', at)
+           .exists?
+       end
+
+       # 価格を取得（存在しない場合は nil）
+       # @return [CatalogPrice, nil]
+       def self.find_price(catalog_id, kind, at: Date.current)
+         CatalogPrice.current_price_by_kind!(catalog_id, kind, at)
+       rescue CatalogPrice::NotFoundError
+         nil
+       end
+
+       # 価格を取得（存在しない場合は例外）
+       # @return [CatalogPrice]
+       # @raise [CatalogPrice::NotFoundError]
+       def self.find_price!(catalog_id, kind, at: Date.current)
+         CatalogPrice.current_price_by_kind!(catalog_id, kind, at)
+       end
+     end
+   end
+   ```
+
+2. **Sales::PriceCalculator（kind 決定と価格検証）**:
+   ```ruby
+   module Sales
+     class PriceCalculator
+       class MissingPriceError < StandardError
+         attr_reader :missing_prices
+         # ...
+       end
+
+       def self.calculate(cart_items, discount_ids = [], coupon_count: 0)
+         # Step 1: 価格ルール適用（どの kind が必要かを決定）
+         items_with_kinds = determine_price_kinds(cart_items)
+
+         # Step 2: 価格存在検証（決定した kind に対応する価格が存在するか）
+         validate_prices!(items_with_kinds)
+
+         # Step 3: 価格取得と計算
+         items_with_prices = fetch_prices(items_with_kinds)
+
+         # ... 以下の計算ロジックは同じ
+       end
+
+       private
+
+       def self.determine_price_kinds(cart_items)
+         cart_items.map do |item|
+           catalog = item[:catalog]
+           quantity = item[:quantity]
+
+           # 価格ルール適用判定（どの kind を使うか決定）
+           price_kind = 'regular' # デフォルト
+           pricing_rules = CatalogPricingRule.active.for_target(catalog.id)
+           pricing_rules.each do |rule|
+             if rule.applicable?(cart_items)
+               max_quantity = rule.max_applicable_quantity(cart_items)
+               price_kind = rule.price_kind if quantity <= max_quantity
+             end
+           end
+
+           item.merge(required_kind: price_kind)
+         end
+       end
+
+       def self.validate_prices!(items_with_kinds)
+         missing = []
+         items_with_kinds.each do |item|
+           catalog = item[:catalog]
+           kind = item[:required_kind]
+
+           unless Catalog::PriceValidator.price_exists?(catalog.id, kind)
+             missing << { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind }
+           end
+         end
+
+         raise MissingPriceError.new(missing) if missing.any?
+       end
+
+       def self.fetch_prices(items_with_kinds)
+         items_with_kinds.map do |item|
+           catalog = item[:catalog]
+           kind = item[:required_kind]
+           price = Catalog::PriceValidator.find_price!(catalog.id, kind)
+
+           item.merge(unit_price: price.price, catalog_price_id: price.id)
+         end
+       end
+     end
+   end
+   ```
+
+3. **Sales::Recorder（PriceValidator 呼び出しを削除）**:
+   ```ruby
+   module Sales
+     class Recorder
+       def record(sale_params, items_params)
+         Sale.transaction do
+           # Step 1: 価格計算（内部で価格存在検証を実行）
+           pricing = PriceCalculator.calculate(cart_items, discount_ids, coupon_count: coupon_count)
+
+           # ... 以下同じ
+         end
+       rescue Sales::PriceCalculator::MissingPriceError => e
+         Rails.logger.error("[PriceCalculator] #{e.message}")
+         raise
+       end
+     end
+   end
+   ```
+
+**影響範囲**:
+- `app/models/catalog/price_validator.rb` - インターフェース簡素化
+- `app/models/sales/price_calculator.rb` - 価格存在検証ロジック追加
+- `app/models/sales/recorder.rb` - PriceValidator 呼び出しを削除
+- `test/models/catalog/price_validator_test.rb` - テスト簡素化
+- `test/models/sales/price_calculator_test.rb` - 価格存在検証テスト追加
+
+**トレードオフ**:
+- メリット: 単一責務、二重管理解消、テスト容易性、保守性向上
+- デメリット: PriceCalculator の複雑性が若干増加（ただし責務は明確）
+
+**Requirement 18（管理画面警告）への影響**:
+- `Catalog::PriceValidator.catalogs_with_missing_prices` は引き続き管理画面用に使用
+- ただし、管理画面では価格ルールの適用条件を判定せず、「有効なルールが参照する kind の価格が存在するか」をチェック
+- 会計時の動的な kind 決定（カート内容に依存）とは異なるため、別メソッドとして維持
+
+---

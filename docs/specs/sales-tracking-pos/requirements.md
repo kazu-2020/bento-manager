@@ -234,4 +234,58 @@
 6. The システム shall 販売先名称を必須項目として管理する
 7. When 販売先が削除される, the システム shall 該当販売先に紐づく在庫登録や販売記録を継続して参照可能にする
 
+### Requirement 17: 価格ルール適用時の価格存在検証
+
+**Objective:** As a 販売員, I want 価格ルールに対応する価格が存在しない商品を会計に含めようとした際にエラーが発生する, so that 不正な価格での販売を防止できる
+
+**Background:**
+- CatalogPricingRule は、特定の条件（例: 弁当と一緒に購入したサラダ）に適用される価格ルールを定義する
+- CatalogPrice は、商品の実際の価格を価格種別（kind）ごとに管理する
+- 価格ルール（CatalogPricingRule）が特定の価格種別（例: set_price）を参照しても、対応する CatalogPrice レコードが存在しない場合がある
+- このような状態で会計を実行すると、価格が取得できず不正な計算または実行時エラーが発生する可能性がある
+
+#### Acceptance Criteria
+1. When 販売員が会計を確定しようとする, the システム shall 各商品に適用される価格ルールに対応する CatalogPrice が存在することを検証する
+2. If 価格ルールが参照する価格種別（kind）に対応する CatalogPrice が存在しない, then the システム shall 会計処理を拒否しエラーメッセージを表示する
+3. The システム shall エラーメッセージに該当商品名と不足している価格種別を含める
+4. If すべての価格ルールに対応する CatalogPrice が存在する, then the システム shall 通常どおり会計処理を続行する
+5. The システム shall この検証を Sales::Recorder（会計処理クラス）内で販売確定前に実行する
+6. When 価格が存在しないエラーが発生する, the システム shall 在庫を減算せず、トランザクションをロールバックする
+7. The システム shall 価格未設定の商品を管理者に通知するためのエラーログを記録する
+
+### Requirement 18: 管理画面での価格設定不備の警告表示
+
+**Objective:** As a オーナー, I want 価格ルールに対応する価格が設定されていない商品を管理画面で確認できる, so that 販売前に価格設定の不備を発見・修正できる
+
+**Background:**
+- 価格ルール（CatalogPricingRule）は特定の価格種別（kind）を参照する（例: set_price, regular）
+- 対応する CatalogPrice が存在しない場合、販売時にエラーが発生する（Requirement 17）
+- オーナーが事前に不備を確認できることで、販売現場でのトラブルを未然に防止できる
+
+#### Acceptance Criteria
+1. When オーナーが商品一覧画面にアクセスする, the システム shall 価格設定に不備がある商品を視覚的に警告表示する
+2. The システム shall 警告対象として「有効な価格ルールが参照する価格種別に対応する CatalogPrice が存在しない商品」を検出する
+3. The システム shall 警告表示に不足している価格種別（kind）を含める
+4. When オーナーが警告表示をクリックする, the システム shall 該当商品の価格設定画面に遷移する
+5. The システム shall 警告がある商品を一覧の上部または別セクションにまとめて表示する機能を提供する
+6. When すべての価格ルールに対応する価格が設定されている, the システム shall その商品を正常状態として表示する
+
+### Requirement 19: 価格ルール作成・有効化時の価格存在バリデーション
+
+**Objective:** As a オーナー, I want 価格ルールを作成・有効化する際に対応する価格が存在するか検証される, so that 不完全な価格ルールが有効化されることを防止できる
+
+**Background:**
+- CatalogPricingRule を作成または有効化（active）する際、対応する CatalogPrice が存在しないとルールが機能しない
+- 事前にバリデーションすることで、設定ミスによる販売時エラーを防止できる
+- バリデーション時点で「今日時点」で有効な価格が存在すれば許可する（将来の価格設定は考慮しない）
+
+#### Acceptance Criteria
+1. When オーナーが価格ルールを新規作成する, the システム shall 参照する価格種別（kind）に対応する CatalogPrice が存在することを検証する
+2. When オーナーが既存の価格ルールを有効化（active）する, the システム shall 参照する価格種別（kind）に対応する CatalogPrice が存在することを検証する
+3. If 対応する CatalogPrice が存在しない, then the システム shall ルールの作成・有効化を拒否しエラーメッセージを表示する
+4. The システム shall エラーメッセージに不足している価格種別と該当商品名を含める
+5. The システム shall 検証時点（今日時点）で有効な CatalogPrice が存在すれば許可する
+6. If 対応する CatalogPrice が存在する, then the システム shall 通常どおりルールの作成・有効化を許可する
+7. When 価格ルールが無効化（inactive）される, the システム shall 価格存在の検証をスキップする
+
 
