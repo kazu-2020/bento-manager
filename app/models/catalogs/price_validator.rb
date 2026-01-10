@@ -3,16 +3,16 @@
 module Catalogs
   # 価格存在検証 PORO
   #
-  # 指定された (catalog_id, kind, at) の価格が存在するかを検証する薄い部品。
+  # 指定された (catalog, kind, at) の価格が存在するかを検証する薄い部品。
   # 「何の kind が必要か」の判定は Sales::PriceCalculator が担当する（決定18参照）。
   #
   # @example 基本的な使い方
-  #   validator = Catalog::PriceValidator.new
-  #   validator.price_exists?(catalog_id, :regular)  # => true/false
+  #   validator = Catalogs::PriceValidator.new
+  #   validator.price_exists?(catalog, :regular)  # => true/false
   #
   # @example 過去の日付で検証
-  #   validator = Catalog::PriceValidator.new(at: 1.month.ago.to_date)
-  #   validator.find_price(catalog_id, :bundle)  # => CatalogPrice or nil
+  #   validator = Catalogs::PriceValidator.new(at: 1.month.ago.to_date)
+  #   validator.find_price(catalog, :bundle)  # => CatalogPrice or nil
   #
   class PriceValidator
     # 価格が存在しない場合に発生する例外

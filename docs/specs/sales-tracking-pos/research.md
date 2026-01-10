@@ -952,9 +952,9 @@ end
 
 ---
 
-### 決定18: Catalog::PriceValidator と Sales::PriceCalculator の責務分担リファクタリング
+### 決定18: Catalogs::PriceValidator と Sales::PriceCalculator の責務分担リファクタリング
 
-**コンテキスト**: 現在の `Catalog::PriceValidator.validate!(cart_items)` は「カートに存在する商品」の価格種別しか見ておらず、実際に必要な「ルール適用後に必要になる kind（bundle 等）」を判定できない。これにより、PriceValidator と PriceCalculator のロジックが二重管理になりやすい問題がある。
+**コンテキスト**: PriceValidator と PriceCalculator のロジックが二重管理になりやすい問題を解消するため、責務を明確に分担する。
 
 **現状の問題点**:
 1. **二重管理**: PriceValidator がカート商品の価格ルールを見て kind を判定 → PriceCalculator も同じルールを適用して kind を決定
@@ -967,7 +967,7 @@ end
    - テスト: ❌ 複雑（PriceValidator のテストに価格ルールの知識が必要）
 
 2. **案B: PriceValidator を薄い部品にする（推奨）**
-   - PriceValidator: `(catalog_id, kind, at)` の価格が取れるかの検証のみ
+   - PriceValidator: `(catalog, kind, at)` の価格が取れるかの検証のみ
    - PriceCalculator: 価格ルールを適用して「何の kind が必要か」を決定
    - PriceCalculator が PriceValidator を呼び出して価格存在を検証
    - 問題点: なし
@@ -980,7 +980,7 @@ end
 
 **理由**:
 - **単一責務の原則**: 各クラスが明確な責務を持つ
-  - `Catalog::PriceValidator`: 「指定された (catalog_id, kind, at) に価格が存在するか」を検証
+  - `Catalogs::PriceValidator`: 「指定された (catalog, kind, at) に価格が存在するか」を検証
   - `Sales::PriceCalculator`: 「カート内の商品に対してどの kind が必要か」を決定し、価格存在検証を委譲
 - **二重管理の解消**: 価格ルール適用ロジックは PriceCalculator のみに集約
 - **テスト容易性向上**: PriceValidator は価格ルールを知らずにテスト可能
@@ -988,36 +988,44 @@ end
 
 **設計詳細**:
 
-1. **Catalog::PriceValidator（薄い部品）**:
+1. **Catalogs::PriceValidator（薄い部品）**:
    ```ruby
-   module Catalog
+   module Catalogs
      class PriceValidator
-       # 指定された (catalog_id, kind, at) の価格が存在するか検証
-       # @param catalog_id [Integer]
-       # @param kind [String] 'regular' | 'bundle'
-       # @param at [Date] 基準日（デフォルト: 今日）
+       class MissingPriceError < StandardError
+         attr_reader :catalog_name, :price_kind
+         # ...
+       end
+
+       attr_reader :at
+
+       def initialize(at: Date.current)
+         @at = at
+       end
+
+       # 指定された (catalog, kind) の価格が存在するか検証
+       # @param catalog [Catalog] カタログ
+       # @param kind [String, Symbol] 価格種別
        # @return [Boolean]
-       def self.price_exists?(catalog_id, kind, at: Date.current)
-         CatalogPrice
-           .where(catalog_id: catalog_id, kind: kind)
-           .where('effective_from <= ?', at)
-           .where('effective_until IS NULL OR effective_until >= ?', at)
-           .exists?
+       def price_exists?(catalog, kind)
+         catalog.price_exists?(kind, at: at)
        end
 
        # 価格を取得（存在しない場合は nil）
+       # @param catalog [Catalog] カタログ
+       # @param kind [String, Symbol] 価格種別
        # @return [CatalogPrice, nil]
-       def self.find_price(catalog_id, kind, at: Date.current)
-         CatalogPrice.current_price_by_kind!(catalog_id, kind, at)
-       rescue CatalogPrice::NotFoundError
-         nil
+       def find_price(catalog, kind)
+         catalog.price_by_kind(kind)
        end
 
-       # 価格を取得（存在しない場合は例外）
+       # 価格を取得（存在しない場合は MissingPriceError）
+       # @param catalog [Catalog] カタログ
+       # @param kind [String, Symbol] 価格種別
        # @return [CatalogPrice]
-       # @raise [CatalogPrice::NotFoundError]
-       def self.find_price!(catalog_id, kind, at: Date.current)
-         CatalogPrice.current_price_by_kind!(catalog_id, kind, at)
+       # @raise [MissingPriceError] 価格が存在しない場合
+       def find_price!(catalog, kind)
+         catalog.price_by_kind(kind) || raise(MissingPriceError.new(catalog.name, kind.to_s))
        end
      end
    end
@@ -1032,91 +1040,52 @@ end
          # ...
        end
 
-       def self.calculate(cart_items, discount_ids = [], coupon_count: 0)
-         # Step 1: 価格ルール適用（どの kind が必要かを決定）
-         items_with_kinds = determine_price_kinds(cart_items)
+       def self.calculate(cart_items, discount_ids = [])
+         # Step 1: 価格存在検証（必要な価格がすべて設定されているかチェック）
+         validate_required_prices!(cart_items)
 
-         # Step 2: 価格存在検証（決定した kind に対応する価格が存在するか）
-         validate_prices!(items_with_kinds)
+         # Step 2: 価格ルール適用（セット価格判定）
+         items_with_prices = apply_pricing_rules(cart_items)
 
-         # Step 3: 価格取得と計算
-         items_with_prices = fetch_prices(items_with_kinds)
-
-         # ... 以下の計算ロジックは同じ
+         # ... 以下の計算ロジック
        end
 
-       private
-
-       def self.determine_price_kinds(cart_items)
-         cart_items.map do |item|
-           catalog = item[:catalog]
-           quantity = item[:quantity]
-
-           # 価格ルール適用判定（どの kind を使うか決定）
-           price_kind = 'regular' # デフォルト
-           pricing_rules = CatalogPricingRule.active.for_target(catalog.id)
-           pricing_rules.each do |rule|
-             if rule.applicable?(cart_items)
-               max_quantity = rule.max_applicable_quantity(cart_items)
-               price_kind = rule.price_kind if quantity <= max_quantity
-             end
-           end
-
-           item.merge(required_kind: price_kind)
-         end
-       end
-
-       def self.validate_prices!(items_with_kinds)
+       private_class_method def self.validate_required_prices!(cart_items)
+         validator = Catalogs::PriceValidator.new
          missing = []
-         items_with_kinds.each do |item|
-           catalog = item[:catalog]
-           kind = item[:required_kind]
 
-           unless Catalog::PriceValidator.price_exists?(catalog.id, kind)
-             missing << { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind }
+         cart_items.each do |item|
+           catalog = item[:catalog]
+           required_kinds = determine_required_price_kinds(catalog, cart_items)
+
+           required_kinds.each do |kind|
+             next if validator.price_exists?(catalog, kind)
+             missing << { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind.to_s }
            end
          end
 
          raise MissingPriceError.new(missing) if missing.any?
        end
 
-       def self.fetch_prices(items_with_kinds)
-         items_with_kinds.map do |item|
-           catalog = item[:catalog]
-           kind = item[:required_kind]
-           price = Catalog::PriceValidator.find_price!(catalog.id, kind)
+       private_class_method def self.determine_required_price_kinds(catalog, cart_items)
+         kinds = [:regular]
 
-           item.merge(unit_price: price.price, catalog_price_id: price.id)
+         catalog.active_pricing_rules.each do |rule|
+           next unless rule.applicable?(cart_items)
+           kinds << rule.price_kind.to_sym
          end
-       end
-     end
-   end
-   ```
 
-3. **Sales::Recorder（PriceValidator 呼び出しを削除）**:
-   ```ruby
-   module Sales
-     class Recorder
-       def record(sale_params, items_params)
-         Sale.transaction do
-           # Step 1: 価格計算（内部で価格存在検証を実行）
-           pricing = PriceCalculator.calculate(cart_items, discount_ids, coupon_count: coupon_count)
-
-           # ... 以下同じ
-         end
-       rescue Sales::PriceCalculator::MissingPriceError => e
-         Rails.logger.error("[PriceCalculator] #{e.message}")
-         raise
+         kinds.uniq
        end
      end
    end
    ```
 
 **影響範囲**:
-- `app/models/catalog/price_validator.rb` - インターフェース簡素化
+- `app/models/catalogs/price_validator.rb` - インスタンスベースのインターフェース
 - `app/models/sales/price_calculator.rb` - 価格存在検証ロジック追加
 - `app/models/sales/recorder.rb` - PriceValidator 呼び出しを削除
-- `test/models/catalog/price_validator_test.rb` - テスト簡素化
+- `test/models/catalogs/price_validator_test.rb` - テスト簡素化
 - `test/models/sales/price_calculator_test.rb` - 価格存在検証テスト追加
 
 **トレードオフ**:
@@ -1124,8 +1093,8 @@ end
 - デメリット: PriceCalculator の複雑性が若干増加（ただし責務は明確）
 
 **Requirement 18（管理画面警告）への影響**:
-- `Catalog::PriceValidator.catalogs_with_missing_prices` は引き続き管理画面用に使用
-- ただし、管理画面では価格ルールの適用条件を判定せず、「有効なルールが参照する kind の価格が存在するか」をチェック
+- `Catalogs::PriceValidator#catalogs_with_missing_prices` は引き続き管理画面用に使用
+- `preload(:active_pricing_rules)` で N+1 を回避
 - 会計時の動的な kind 決定（カート内容に依存）とは異なるため、別メソッドとして維持
 
 ---

@@ -373,7 +373,7 @@ sequenceDiagram
 | 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8 | サイドメニュー（サラダ）の条件付き価格設定 | CatalogPricingRule, CatalogPrice, Sales::PriceCalculator, Catalog (category enum) | CatalogPricingRule#applicable?, apply_pricing_rules, CatalogPrice.by_kind | 販売フロー |
 | 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 15.11, 15.12 | 返品・返金処理（取消・再販売・差額返金） | Sale, Refund, SalesController#void, Sales::PriceCalculator, DailyInventory | Sale#void!, Refund, corrected_from_sale_id | 返品・返金フロー |
 | 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7 | 販売先（ロケーション）管理 | Location, LocationsController, DailyInventory, Sale, AdditionalOrder | LocationsController CRUD, Location#soft_delete | - |
-| 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7 | 価格ルール適用時の価格存在検証（会計時） | Sales::Recorder, Sales::PriceCalculator, Catalog::PriceValidator | Sales::PriceCalculator.validate_prices!, Catalog::PriceValidator.validate! | 販売フロー |
+| 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7 | 価格ルール適用時の価格存在検証（会計時） | Sales::Recorder, Sales::PriceCalculator, Catalogs::PriceValidator | Sales::PriceCalculator.validate_prices!, Catalogs::PriceValidator.validate! | 販売フロー |
 | 18.1, 18.2, 18.3, 18.4, 18.5, 18.6 | 管理画面での価格設定不備の警告表示 | Catalog, CatalogPricingRule, CatalogsController, catalogs/index view | Catalog#missing_prices_for_rules, Catalog.with_missing_prices | - |
 | 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7 | 価格ルール作成・有効化時の価格存在バリデーション | Catalog::PricingRuleCreator, CatalogPricingRule | Catalog::PricingRuleCreator#create, #update | - |
 
@@ -397,8 +397,8 @@ sequenceDiagram
 | SaleItem | Sales Domain | 販売明細（単価確定、価格履歴管理、純粋データモデル） | 3.1-3.8, 14.1-14.8 | Sale (P0), Catalog (P0), CatalogPrice (P0) | Service |
 | Refund | Refund Domain | 差額返金記録（元Sale - 新Sale） | 15.1-15.12 | Sale (P0) | API |
 | Sales::Recorder | Sales PORO | 販売記録と在庫減算の一括処理（PriceCalculator経由で価格検証）※決定18 | 3.1-3.8, 12.1-12.2, 17.1-17.7 | Sale (P0), SaleItem (P0), DailyInventory (P0), Sales::PriceCalculator (P0) | Service |
-| Sales::PriceCalculator | Sales PORO | 販売価格計算（kind 決定 + 価格存在検証 + 価格ルール + 割引）※決定18 | 3.1-3.8, 13.1-13.9, 14.1-14.8, 17.1-17.7 | CatalogPricingRule (P0), Discount (P0), Catalog::PriceValidator (P0) | Service |
-| Catalog::PriceValidator | Catalog PORO | (catalog_id, kind, at) の価格存在検証（薄い部品）※決定18 | 17.1-17.7, 18.1-18.6 | CatalogPrice (P0) | Service |
+| Sales::PriceCalculator | Sales PORO | 販売価格計算（kind 決定 + 価格存在検証 + 価格ルール + 割引）※決定18 | 3.1-3.8, 13.1-13.9, 14.1-14.8, 17.1-17.7 | CatalogPricingRule (P0), Discount (P0), Catalogs::PriceValidator (P0) | Service |
+| Catalogs::PriceValidator | Catalog PORO | (catalog, kind, at) の価格存在検証（薄い部品）※決定18 | 17.1-17.7, 18.1-18.6 | CatalogPrice (P0) | Service |
 | Catalog::PricingRuleCreator | Catalog PORO | 価格ルールの作成・更新と価格存在検証 | 19.1-19.7 | CatalogPricingRule (P0), CatalogPrice (P0) | Service |
 | Sales::AnalysisCalculator | Sales PORO | 販売予測・統計 | 6.1-6.5 | Sale (P0) | Service |
 | Reports::Generator | Reports PORO | レポート生成 | 7.1-7.5 | Sale (P0), DailyInventory (P0) | Service |
@@ -1053,79 +1053,84 @@ end
 
 ### Catalog PORO
 
-#### Catalog::PriceValidator
+#### Catalogs::PriceValidator
 
 | Field | Detail |
 |-------|--------|
-| Intent | 指定された (catalog_id, kind, at) の価格が存在するかを検証する薄い PORO |
+| Intent | 指定された (catalog, kind, at) の価格が存在するかを検証する薄い PORO |
 | Requirements | 17.1-17.7, 18.1-18.6 |
 
 **Responsibilities**:
-- 指定された (catalog_id, kind, at) に対応する CatalogPrice の存在を検証（単一責務）
-- 価格の取得（存在しない場合は nil または例外）
+- 指定された (catalog, kind, at) に対応する CatalogPrice の存在を検証（単一責務）
+- 価格の取得（存在しない場合は nil または MissingPriceError）
 - 商品一覧画面での価格設定不備の検出（Requirement 18）
 - **注意**: 「何の kind が必要か」の判定は Sales::PriceCalculator が担当（決定18参照）
 
 **Dependencies**:
 - CatalogPrice (P0)
+- Catalog (P0)
 
 **Service Interface**:
 ```ruby
-module Catalog
+module Catalogs
   class PriceValidator
-    # 指定された (catalog_id, kind, at) の価格が存在するか検証
-    # @param catalog_id [Integer]
-    # @param kind [String] 'regular' | 'bundle'
+    class MissingPriceError < StandardError
+      attr_reader :catalog_name, :price_kind
+
+      def initialize(catalog_name, price_kind)
+        @catalog_name = catalog_name
+        @price_kind = price_kind
+        super("商品「#{catalog_name}」に価格種別「#{price_kind}」の価格が設定されていません")
+      end
+    end
+
+    attr_reader :at
+
     # @param at [Date] 基準日（デフォルト: 今日）
+    def initialize(at: Date.current)
+      @at = at
+    end
+
+    # 指定された (catalog, kind) の価格が存在するか検証
+    # @param catalog [Catalog] カタログ
+    # @param kind [String, Symbol] 価格種別 ('regular' または 'bundle')
     # @return [Boolean]
-    def self.price_exists?(catalog_id, kind, at: Date.current)
-      CatalogPrice
-        .where(catalog_id: catalog_id, kind: kind)
-        .where('effective_from <= ?', at)
-        .where('effective_until IS NULL OR effective_until >= ?', at)
-        .exists?
+    def price_exists?(catalog, kind)
+      catalog.price_exists?(kind, at: at)
     end
 
     # 価格を取得（存在しない場合は nil）
-    # @param catalog_id [Integer]
-    # @param kind [String]
-    # @param at [Date]
+    # @param catalog [Catalog] カタログ
+    # @param kind [String, Symbol] 価格種別
     # @return [CatalogPrice, nil]
-    def self.find_price(catalog_id, kind, at: Date.current)
-      CatalogPrice.current_price_by_kind!(catalog_id, kind, at)
-    rescue CatalogPrice::NotFoundError
-      nil
+    def find_price(catalog, kind)
+      catalog.price_by_kind(kind)
     end
 
-    # 価格を取得（存在しない場合は例外）
-    # @param catalog_id [Integer]
-    # @param kind [String]
-    # @param at [Date]
+    # 価格を取得（存在しない場合は MissingPriceError）
+    # @param catalog [Catalog] カタログ
+    # @param kind [String, Symbol] 価格種別
     # @return [CatalogPrice]
-    # @raise [CatalogPrice::NotFoundError] 価格が存在しない場合
-    def self.find_price!(catalog_id, kind, at: Date.current)
-      CatalogPrice.current_price_by_kind!(catalog_id, kind, at)
+    # @raise [MissingPriceError] 価格が存在しない場合
+    def find_price!(catalog, kind)
+      catalog.price_by_kind(kind) || raise(MissingPriceError.new(catalog.name, kind.to_s))
     end
 
     # 商品一覧用: 価格設定に不備がある商品を取得（Requirement 18）
     # @return [Array<Hash>] [{ catalog:, missing_kinds: [...] }, ...]
-    def self.catalogs_with_missing_prices
+    def catalogs_with_missing_prices
       result = []
 
-      ::Catalog.available.includes(:catalog_prices, :catalog_pricing_rules).find_each do |catalog|
+      ::Catalog.available.preload(:active_pricing_rules).find_each do |catalog|
         missing_kinds = []
 
         # 通常価格チェック（全商品で必須）
-        unless price_exists?(catalog.id, 'regular')
-          missing_kinds << "regular"
-        end
+        missing_kinds << "regular" unless catalog.price_exists?(:regular, at: at)
 
         # 有効な価格ルールが参照する価格種別をチェック
         catalog.active_pricing_rules.each do |rule|
           next if rule.price_kind == "regular"
-          unless price_exists?(catalog.id, rule.price_kind)
-            missing_kinds << rule.price_kind
-          end
+          missing_kinds << rule.price_kind unless catalog.price_exists?(rule.price_kind, at: at)
         end
 
         result << { catalog: catalog, missing_kinds: missing_kinds.uniq } if missing_kinds.any?
@@ -1138,11 +1143,12 @@ end
 ```
 
 **Implementation Notes**:
-- **薄い部品**: 価格ルールの適用判定は行わず、指定された (catalog_id, kind, at) の価格存在のみを検証
+- **薄い部品**: 価格ルールの適用判定は行わず、指定された (catalog, kind, at) の価格存在のみを検証
 - **決定18 対応**: 「何の kind が必要か」は Sales::PriceCalculator が決定し、PriceValidator を呼び出して検証
-- `price_exists?`: Boolean を返す軽量な存在チェック
-- `find_price` / `find_price!`: 価格取得（CatalogPrice.current_price_by_kind! に委譲）
-- `catalogs_with_missing_prices`: 管理画面警告表示用（Requirement 18）、価格ルールが参照する kind を静的にチェック
+- **インスタンスベース**: `at` パラメータをインスタンス変数として保持し、基準日を統一
+- `price_exists?`: Catalog#price_exists? に委譲（Boolean を返す軽量な存在チェック）
+- `find_price` / `find_price!`: Catalog#price_by_kind に委譲（nil または MissingPriceError）
+- `catalogs_with_missing_prices`: 管理画面警告表示用（Requirement 18）、`preload(:active_pricing_rules)` で N+1 を回避
 
 ---
 
@@ -1279,7 +1285,7 @@ module Sales
 
       # Step 2: 価格計算（内部で価格存在検証を実行）
       # - determine_price_kinds: 価格ルール適用（どの kind が必要かを決定）
-      # - validate_prices!: Catalog::PriceValidator を使って価格存在を検証
+      # - validate_prices!: Catalogs::PriceValidator を使って価格存在を検証
       # - fetch_prices: 価格取得
       pricing = PriceCalculator.calculate(cart_items, discount_ids, coupon_count: coupon_count)
 
@@ -1335,7 +1341,7 @@ end
 ```
 
 **Implementation Notes**:
-- **決定18 対応**: 価格存在検証は PriceCalculator.calculate 内で実行（Catalog::PriceValidator を直接呼び出さない）
+- **決定18 対応**: 価格存在検証は PriceCalculator.calculate 内で実行（Catalogs::PriceValidator を直接呼び出さない）
 - SaleItem は純粋なデータモデル（コールバックなし）
 - 在庫減算は Sales::Recorder で明示的に実行
 - プロジェクト方針（PORO パターン）に準拠
@@ -1363,7 +1369,7 @@ end
 
 **Dependencies**:
 - CatalogPricingRule (P0)
-- Catalog::PriceValidator (P0)
+- Catalogs::PriceValidator (P0)
 - Discount (P0)
 
 **Service Interface**:
@@ -1458,29 +1464,35 @@ module Sales
       end
     end
 
-    # 価格存在検証（Requirement 17.1, 17.2, 17.5）
-    private_class_method def self.validate_prices!(items_with_kinds)
+    # 必要な価格がすべて設定されているか検証（Requirement 17.1, 17.2, 17.5）
+    private_class_method def self.validate_required_prices!(cart_items)
+      validator = Catalogs::PriceValidator.new
       missing = []
-      items_with_kinds.each do |item|
-        catalog = item[:catalog]
-        kind = item[:required_kind]
 
-        unless Catalog::PriceValidator.price_exists?(catalog.id, kind)
-          missing << { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind }
+      cart_items.each do |item|
+        catalog = item[:catalog]
+        required_kinds = determine_required_price_kinds(catalog, cart_items)
+
+        required_kinds.each do |kind|
+          next if validator.price_exists?(catalog, kind)
+          missing << { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind.to_s }
         end
       end
 
       raise MissingPriceError.new(missing) if missing.any?
     end
 
-    private_class_method def self.fetch_prices(items_with_kinds)
-      items_with_kinds.map do |item|
-        catalog = item[:catalog]
-        kind = item[:required_kind]
-        price = Catalog::PriceValidator.find_price!(catalog.id, kind)
+    # 商品に必要な価格種別を決定
+    private_class_method def self.determine_required_price_kinds(catalog, cart_items)
+      kinds = [:regular]
 
-        item.merge(unit_price: price.price, catalog_price_id: price.id)
+      # 価格ルールが適用可能な場合は bundle 価格も必要
+      catalog.active_pricing_rules.each do |rule|
+        next unless rule.applicable?(cart_items)
+        kinds << rule.price_kind.to_sym
       end
+
+      kinds.uniq
     end
   end
 end
@@ -1488,9 +1500,9 @@ end
 
 **Implementation Notes**:
 - **決定18 対応**: 価格ルール適用と価格存在検証を統合し、「何の kind が必要か」をこのクラスが決定
-- `determine_price_kinds`: CatalogPricingRule を適用してセット価格を判定、`required_kind` を付与
-- `validate_prices!`: Catalog::PriceValidator を使って価格存在を検証（Requirement 17）
-- `fetch_prices`: 価格を取得して `unit_price` と `catalog_price_id` を付与
+- `determine_required_price_kinds`: カート内容に基づいて必要な価格種別を決定（:regular + ルール適用時の :bundle など）
+- `validate_required_prices!`: Catalogs::PriceValidator を使って価格存在を検証（Requirement 17）
+- `apply_pricing_rules` / `split_item_by_pricing_rule`: 価格ルールを適用して価格情報を付与
 - MissingPriceError: 不足している価格がある場合に発生、Requirement 17.3 のエラーメッセージを生成
 - 複数割引に対応し、各割引の適用可否と割引額を個別に計算
 
@@ -1806,7 +1818,7 @@ def create
   )
 
   redirect_to sales_path, notice: '販売記録を保存しました'
-rescue Catalog::PriceValidator::MissingPriceError => e
+rescue Catalogs::PriceValidator::MissingPriceError => e
   # Requirement 17: 価格未設定エラー
   flash[:error] = e.message
   render :new, status: :unprocessable_entity
@@ -1879,7 +1891,7 @@ end
 - Sales::Recorder.record（在庫減算、エラーケース、トランザクション、**価格検証**）
 - Sales::PriceCalculator.calculate, apply_pricing_rules (価格ルール適用の各パターン)
 - Sales::AnalysisCalculator.calculate_sma (データ不足時の挙動含む)
-- **Catalog::PriceValidator.validate!, find_missing_prices, catalogs_with_missing_prices（Requirement 17-18）**
+- **Catalogs::PriceValidator.validate!, find_missing_prices, catalogs_with_missing_prices（Requirement 17-18）**
 
 ### Integration Tests
 
