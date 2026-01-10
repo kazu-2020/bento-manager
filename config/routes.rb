@@ -26,6 +26,7 @@ Rails.application.routes.draw do
 
   # 共有リソース（Admin と Employee 両方がアクセス可能）
   resources :locations
+  resources :catalogs
 
   # Defines the root path route ("/")
   root "home#index"

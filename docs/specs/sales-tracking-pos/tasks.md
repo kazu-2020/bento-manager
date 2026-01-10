@@ -425,7 +425,7 @@
   - /locations パスで Admin と Employee 両方がアクセス可能
   - _Requirements: 16.1, 16.2, 16.3, 16.4_
 
-- [ ] 15.2 (P) CatalogsController 実装
+- [x] 15.2 (P) CatalogsController 実装
   - CRUD アクション（index, show, new, create, edit, update, destroy）
   - destroy アクションで CatalogDiscontinuation 作成
   - CatalogPrice の nested attributes 対応
