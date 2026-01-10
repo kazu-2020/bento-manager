@@ -132,16 +132,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_10_200000) do
 
   create_table "refunds", force: :cascade do |t|
     t.integer "amount", null: false
-    t.bigint "corrected_sale_id"
+    t.integer "corrected_sale_id"
     t.datetime "created_at", null: false
     t.integer "employee_id"
-    t.bigint "original_sale_id", null: false
+    t.integer "original_sale_id", null: false
     t.string "reason", null: false
     t.datetime "refund_datetime", null: false
     t.datetime "updated_at", null: false
-    t.index ["corrected_sale_id"], name: "idx_refunds_corrected_sale"
+    t.index ["corrected_sale_id"], name: "index_refunds_on_corrected_sale_id"
     t.index ["employee_id"], name: "index_refunds_on_employee_id"
-    t.index ["original_sale_id"], name: "idx_refunds_original_sale"
+    t.index ["original_sale_id"], name: "index_refunds_on_original_sale_id"
   end
 
   create_table "sale_discounts", force: :cascade do |t|
@@ -200,8 +200,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_10_200000) do
   add_foreign_key "employee_lockouts", "employees", column: "id"
   add_foreign_key "employee_login_failures", "employees", column: "id"
   add_foreign_key "refunds", "employees"
-  add_foreign_key "refunds", "sales", column: "corrected_sale_id"
-  add_foreign_key "refunds", "sales", column: "original_sale_id"
+  add_foreign_key "refunds", "sales", column: "corrected_sale_id", on_delete: :restrict
+  add_foreign_key "refunds", "sales", column: "original_sale_id", on_delete: :restrict
   add_foreign_key "sale_discounts", "discounts", on_delete: :restrict
   add_foreign_key "sale_discounts", "sales", on_delete: :cascade
   add_foreign_key "sale_items", "catalog_prices", on_delete: :restrict
