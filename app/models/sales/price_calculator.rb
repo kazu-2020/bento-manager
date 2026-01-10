@@ -7,6 +7,9 @@ module Sales
     # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
     # @param discount_ids [Array<Integer>] 適用する割引の ID リスト
     # @param calculation_time [Time] 計算基準時刻（デフォルト: 現在）
+    #
+    # @note cart_items について
+    #   - 各 category の quontitiy は 1 つにまとめられている前提
     def initialize(cart_items, discount_ids: [], calculation_time: Time.current)
       @cart_items = cart_items
       @discount_ids = discount_ids
@@ -109,6 +112,10 @@ module Sales
     # @param item [Hash] カートアイテム
     # @param applicable_rules [Array<PricingRule>] 適用可能な価格ルール（事前にフィルタ済み）
     def split_item_by_pricing_rule(item, applicable_rules)
+      # NOTE: 最大適用数量が最も多いルールを優先的に適用する
+      #
+      # 将来的に同一商品に複数ルールが併存する場合、「数量が多いルール」ではなく「最終金額が安いルール」や「優先度」等の条件で
+      # ルール選択ロジックを変更する可能性があることに注意
       selected_rule = applicable_rules.max_by { |rule| rule.max_applicable_quantity(cart_items) }
       max_quantity = selected_rule.max_applicable_quantity(cart_items)
 
