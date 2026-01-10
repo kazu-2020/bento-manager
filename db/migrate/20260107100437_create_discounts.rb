@@ -1,8 +1,7 @@
 class CreateDiscounts < ActiveRecord::Migration[8.1]
   def change
     create_table :discounts, comment: "割引マスタ（delegated_type パターン）" do |t|
-      t.string :discountable_type, null: false, comment: "割引種別（Coupon等）"
-      t.bigint :discountable_id, null: false, comment: "割引種別ID"
+      t.references :discountable, polymorphic: true, null: false, comment: "割引種別"
       t.string :name, null: false, comment: "割引名称（例: 50円割引クーポン）"
       t.date :valid_from, null: false, comment: "有効開始日"
       t.date :valid_until, comment: "有効終了日（null=無期限）"
