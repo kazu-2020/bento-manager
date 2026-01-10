@@ -342,7 +342,7 @@ module Sales
         { catalog: catalogs(:miso_soup), quantity: 1 }
       ]
 
-      error = assert_raises(Sales::PriceCalculator::MissingPriceError) do
+      error = assert_raises(Errors::MissingPriceError) do
         Sales::PriceCalculator.new(cart_items).calculate
       end
 
@@ -359,7 +359,7 @@ module Sales
         { catalog: catalogs(:discontinued_bento), quantity: 1 }
       ]
 
-      error = assert_raises(Sales::PriceCalculator::MissingPriceError) do
+      error = assert_raises(Errors::MissingPriceError) do
         Sales::PriceCalculator.new(cart_items).calculate
       end
 
@@ -374,7 +374,7 @@ module Sales
         { catalog: catalogs(:miso_soup), quantity: 1 }
       ]
 
-      error = assert_raises(Sales::PriceCalculator::MissingPriceError) do
+      error = assert_raises(Errors::MissingPriceError) do
         Sales::PriceCalculator.new(cart_items).calculate
       end
 

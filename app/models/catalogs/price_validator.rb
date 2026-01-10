@@ -15,17 +15,6 @@ module Catalogs
   #   validator.find_price(catalog, :bundle)  # => CatalogPrice or nil
   #
   class PriceValidator
-    # 価格が存在しない場合に発生する例外
-    class MissingPriceError < StandardError
-      attr_reader :catalog_name, :price_kind
-
-      def initialize(catalog_name, price_kind)
-        @catalog_name = catalog_name
-        @price_kind = price_kind
-        super("商品「#{catalog_name}」に価格種別「#{price_kind}」の価格が設定されていません")
-      end
-    end
-
     attr_reader :at
 
     # @param at [Time] 基準日時（デフォルト: 現在）
@@ -56,9 +45,10 @@ module Catalogs
     # @param catalog [Catalog] カタログ
     # @param kind [String, Symbol] 価格種別
     # @return [CatalogPrice] 価格
-    # @raise [MissingPriceError] 価格が存在しない場合
+    # @raise [Errors::MissingPriceError] 価格が存在しない場合
     def find_price!(catalog, kind)
-      catalog.price_by_kind(kind, at: at) || raise(MissingPriceError.new(catalog.name, kind.to_s))
+      catalog.price_by_kind(kind, at: at) ||
+        raise(Errors::MissingPriceError.new([ { catalog_name: catalog.name, price_kind: kind.to_s } ]))
     end
 
     # 商品一覧用: 価格設定に不備がある商品を取得（Requirement 18）

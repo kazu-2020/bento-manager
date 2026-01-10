@@ -86,12 +86,13 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     validator = Catalogs::PriceValidator.new
     catalog = catalogs(:miso_soup)
 
-    error = assert_raises(Catalogs::PriceValidator::MissingPriceError) do
+    error = assert_raises(Errors::MissingPriceError) do
       validator.find_price!(catalog, :regular)
     end
 
-    assert_equal "味噌汁", error.catalog_name
-    assert_equal "regular", error.price_kind
+    assert_equal 1, error.missing_prices.length
+    assert_equal "味噌汁", error.missing_prices.first[:catalog_name]
+    assert_equal "regular", error.missing_prices.first[:price_kind]
     assert_match(/味噌汁/, error.message)
     assert_match(/regular/, error.message)
   end

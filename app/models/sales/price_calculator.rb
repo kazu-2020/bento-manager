@@ -2,19 +2,6 @@
 # カート内アイテムの価格ルール適用と割引計算を行う
 module Sales
   class PriceCalculator
-    # 必要な価格が存在しない場合に発生する例外
-    class MissingPriceError < StandardError
-      attr_reader :missing_prices
-
-      def initialize(missing_prices)
-        @missing_prices = missing_prices
-        messages = missing_prices.map do |mp|
-          "商品「#{mp[:catalog_name]}」に価格種別「#{mp[:price_kind]}」の価格が設定されていません"
-        end
-        super("価格設定エラー: #{messages.join('; ')}")
-      end
-    end
-
     attr_reader :cart_items, :discount_ids, :calculation_time
 
     # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
@@ -172,7 +159,7 @@ module Sales
           .map { |kind| { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind.to_s } }
       end
 
-      raise MissingPriceError.new(missing) if missing.any?
+      raise Errors::MissingPriceError.new(missing) if missing.any?
     end
 
     # 商品に必要な価格種別を決定
@@ -197,9 +184,9 @@ module Sales
     # 価格が存在しない場合のエラーを発生
     # @param catalog [Catalog] 商品
     # @param price_kind [Symbol, String] 価格種別
-    # @raise [MissingPriceError]
+    # @raise [Errors::MissingPriceError]
     def raise_missing_price_error(catalog, price_kind)
-      raise MissingPriceError.new([ {
+      raise Errors::MissingPriceError.new([ {
         catalog_id: catalog.id,
         catalog_name: catalog.name,
         price_kind: price_kind.to_s
