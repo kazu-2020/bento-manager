@@ -6,7 +6,7 @@
 }
 
 @plugin "daisyui" {
-  themes: bumblebee --default;
+  themes: caramellatte --default;
 }
 
 @source "../../views/**/*.html.erb";

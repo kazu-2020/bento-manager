@@ -29,7 +29,7 @@ Full-stack Rails application with Hotwire for SPA-like interactivity without hea
 - **Vite Plugins**: Full reload, Stimulus HMR for development experience
 
 ### UI スタイリング
-- **テーマ**: bumblebee（daisyUI デフォルトテーマ）
+- **テーマ**: caramellatte（daisyUI デフォルトテーマ）
 - **フォント**: Noto Sans JP（本文）, Noto Sans Mono（コード）
 - **設定場所**: `app/frontend/stylesheets/application.tailwind.css`
 
