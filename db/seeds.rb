@@ -1,9 +1,30 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
+# frozen_string_literal: true
+
+# Employee アカウント（ログイン用）
+puts "Creating Employee..."
+employee = Employee.find_or_create_by!(email: "demo@example.com") do |e|
+  e.password = "password123"
+  e.name = "デモユーザー"
+  e.status = :verified
+end
+puts "  Employee: #{employee.email} (password: password123)"
+
+# Location サンプルデータ
+puts "Creating Locations..."
+
+locations_data = [
+  { name: "市役所", status: :active },
+  { name: "県庁", status: :active },
+  { name: "区役所", status: :active },
+  { name: "保健センター", status: :active },
+  { name: "旧庁舎", status: :inactive }
+]
+
+locations_data.each do |data|
+  location = Location.find_or_create_by!(name: data[:name]) do |l|
+    l.status = data[:status]
+  end
+  puts "  Location: #{location.name} (#{location.status})"
+end
+
+puts "Seed completed!"

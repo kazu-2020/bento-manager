@@ -1,4 +1,13 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Noto Sans Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@plugin "daisyui" {
+  themes: bumblebee --default;
+}
+
 @source "../../views/**/*.html.erb";
 @source "../../helpers/**/*.rb";

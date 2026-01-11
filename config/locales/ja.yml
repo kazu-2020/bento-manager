@@ -137,6 +137,18 @@ ja:
   helpers:
     hint:
       password_optional: "空欄の場合、パスワードは変更されません"
+    link:
+      new: "新規登録"
+      show: "詳細"
+      edit: "編集"
+      delete: "削除"
+      back: "戻る"
+    confirm:
+      delete: "本当に削除しますか？"
+    filter:
+      all: "すべて"
+      active: "有効"
+      inactive: "無効"
 
   employees:
     index:
