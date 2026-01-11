@@ -2,7 +2,7 @@
 <div class="navbar bg-base-100 border-b border-base-300 sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
   <%# モバイル用ハンバーガーメニュー %>
   <div class="flex-none lg:hidden">
-    <label for="main-drawer" aria-label="メニューを開く" class="btn btn-square btn-ghost">
+    <label for="<%= drawer_id %>" aria-label="メニューを開く" class="btn btn-square btn-ghost">
       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block h-6 w-6 stroke-current">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
       </svg>
@@ -13,8 +13,8 @@
   <div class="flex-1">
     <%= link_to root_path, class: "btn btn-ghost text-xl font-bold tracking-tight hover:bg-transparent" do %>
       <span class="text-2xl">🍱</span>
-      <span class="bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
-        Bento Manager
+      <span class="bg-linear-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
+        弁当販売管理
       </span>
     <% end %>
   </div>

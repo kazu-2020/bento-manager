@@ -9,4 +9,7 @@ Rails.application.config.view_component.tap do |config|
   config.generate.preview = true
   config.generate.stimulus_controller = true
   config.generate.locale = true
+
+  # プレビュー用デフォルトレイアウト
+  config.previews.default_layout = "component_preview"
 end

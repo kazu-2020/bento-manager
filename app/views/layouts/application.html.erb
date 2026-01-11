@@ -12,7 +12,7 @@
       <%# メインコンテンツエリア %>
       <div class="drawer-content flex flex-col">
         <%# ナビゲーションバー %>
-        <%= render "shared/navbar" %>
+        <%= render(NavbarComponent.new) %>
 
         <%# Flash メッセージ %>
         <% if notice.present? %>
@@ -49,7 +49,7 @@
       <%# サイドバー（ドロワー） %>
       <div class="drawer-side z-40">
         <label for="main-drawer" aria-label="メニューを閉じる" class="drawer-overlay"></label>
-        <%= render "shared/sidebar" %>
+        <%= render(SidebarComponent.new(current_path: request.path)) %>
       </div>
     </div>
   </body>
