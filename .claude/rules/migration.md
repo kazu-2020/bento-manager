@@ -1,5 +1,6 @@
 ---
-paths: db/migrate/*.rb
+paths:
+  - "db/migrate/*.rb"
 ---
 
 # Migration Standards

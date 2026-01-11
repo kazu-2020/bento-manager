@@ -1,5 +1,6 @@
 ---
-paths: app/models/**/*.rb
+paths:
+  - "app/models/**/*.rb"
 ---
 
 # Enum 定義ルール

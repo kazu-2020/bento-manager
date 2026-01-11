@@ -25,7 +25,13 @@ Full-stack Rails application with Hotwire for SPA-like interactivity without hea
 - **Stimulus**: @hotwired/stimulus 3.2.2 (JavaScript framework)
 - **Turbo**: @hotwired/turbo-rails 8.0.20 (SPA acceleration)
 - **Tailwind CSS**: 4.1.18 (utility-first styling)
+- **daisyUI**: 5.x (Tailwind CSS コンポーネントライブラリ)
 - **Vite Plugins**: Full reload, Stimulus HMR for development experience
+
+### UI スタイリング
+- **テーマ**: bumblebee（daisyUI デフォルトテーマ）
+- **フォント**: Noto Sans JP（本文）, Noto Sans Mono（コード）
+- **設定場所**: `app/frontend/stylesheets/application.tailwind.css`
 
 ### Component Architecture
 - **ViewComponent**: サーバーサイドコンポーネントフレームワーク（Sidecar構造）
@@ -99,4 +105,4 @@ ViewComponent + Sidecar 構造を採用。ERB パーシャルより：
 ---
 _Document standards and patterns, not every dependency_
 
-_updated_at: 2026-01-11_
+_updated_at: 2026-01-11_ (daisyUI, フォント設定を追加)
