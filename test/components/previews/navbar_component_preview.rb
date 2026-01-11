@@ -2,11 +2,11 @@
 
 class NavbarComponentPreview < ViewComponent::Preview
   def default
-    render(NavbarComponent.new)
+    render(Navbar::Component.new)
   end
 
   # @param drawer_id text
   def with_custom_drawer_id(drawer_id: "custom-drawer")
-    render(NavbarComponent.new(drawer_id: drawer_id))
+    render(Navbar::Component.new(drawer_id: drawer_id))
   end
 end

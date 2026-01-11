@@ -2,7 +2,7 @@
   <div class="card-body p-4">
     <div class="flex items-center justify-between gap-2">
       <h2 class="card-title text-lg"><%= location.name %></h2>
-      <%= render(StatusBadgeComponent.new(status: location.status)) %>
+      <%= component "status_badge", status: location.status %>
     </div>
   </div>
 <% end %>

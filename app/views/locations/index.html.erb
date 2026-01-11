@@ -1,12 +1,9 @@
-<%= render(PageHeaderComponent.new(
-  title: t("locations.index.title"),
-  new_path: new_location_path
-)) %>
+<%= component "page_header", title: t("locations.index.title"), new_path: new_location_path %>
 
 <% if @locations.any? %>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
     <% @locations.each do |location| %>
-      <%= render(LocationCardComponent.new(location: location)) %>
+      <%= component "location_card", location: location %>
     <% end %>
   </div>
 <% else %>

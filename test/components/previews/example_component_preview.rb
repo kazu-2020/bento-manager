@@ -2,6 +2,6 @@
 
 class ExampleComponentPreview < ViewComponent::Preview
   def default
-    render(ExampleComponent.new(title: "title"))
+    render(Example::Component.new(title: "title"))
   end
 end

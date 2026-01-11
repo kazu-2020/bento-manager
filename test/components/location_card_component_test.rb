@@ -11,33 +11,33 @@ class LocationCardComponentTest < ViewComponent::TestCase
   end
 
   def test_renders_location_name
-    result = render_inline(LocationCardComponent.new(location: @active_location))
+    result = render_inline(LocationCard::Component.new(location: @active_location))
 
     assert_includes result.to_html, @active_location.name
   end
 
   def test_renders_status_badge
-    result = render_inline(LocationCardComponent.new(location: @active_location))
+    result = render_inline(LocationCard::Component.new(location: @active_location))
 
     assert result.css(".badge").present?
   end
 
   def test_renders_active_status_badge
-    result = render_inline(LocationCardComponent.new(location: @active_location))
+    result = render_inline(LocationCard::Component.new(location: @active_location))
 
     assert result.css(".badge.badge-success").present?
     assert_includes result.to_html, "有効"
   end
 
   def test_renders_inactive_status_badge
-    result = render_inline(LocationCardComponent.new(location: @inactive_location))
+    result = render_inline(LocationCard::Component.new(location: @inactive_location))
 
     assert result.css(".badge.badge-error").present?
     assert_includes result.to_html, "無効"
   end
 
   def test_card_is_clickable_link
-    result = render_inline(LocationCardComponent.new(location: @active_location))
+    result = render_inline(LocationCard::Component.new(location: @active_location))
 
     link = result.css("a.card").first
     assert link.present?
@@ -45,7 +45,7 @@ class LocationCardComponentTest < ViewComponent::TestCase
   end
 
   def test_renders_card_structure
-    result = render_inline(LocationCardComponent.new(location: @active_location))
+    result = render_inline(LocationCard::Component.new(location: @active_location))
 
     assert result.css(".card").present?
     assert result.css(".card-body").present?
@@ -53,7 +53,7 @@ class LocationCardComponentTest < ViewComponent::TestCase
   end
 
   def test_card_has_hover_effect
-    result = render_inline(LocationCardComponent.new(location: @active_location))
+    result = render_inline(LocationCard::Component.new(location: @active_location))
 
     link = result.css("a.card").first
     assert_includes link["class"], "hover:shadow-md"
