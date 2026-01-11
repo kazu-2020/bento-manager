@@ -1,0 +1,8 @@
+<%= link_to show_path, class: "card bg-base-100 shadow-sm border-2 border-base-300 hover:shadow-md transition-shadow" do %>
+  <div class="card-body p-4">
+    <div class="flex items-center justify-between gap-2">
+      <h2 class="card-title text-lg"><%= location.name %></h2>
+      <%= render(StatusBadgeComponent.new(status: location.status)) %>
+    </div>
+  </div>
+<% end %>

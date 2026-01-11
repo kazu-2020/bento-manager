@@ -4,7 +4,7 @@
     <%= render "shared/head" %>
   </head>
 
-  <body class="min-h-screen bg-base-100">
+  <body class="min-h-screen bg-base-200">
     <%# Drawer レイアウト: lg以上でサイドバー常時表示 %>
     <div class="drawer lg:drawer-open">
       <input id="main-drawer" type="checkbox" class="drawer-toggle" />
@@ -34,7 +34,7 @@
         <% end %>
 
         <%# ページコンテンツ %>
-        <main class="flex-1 p-6">
+        <main class="flex-1 p-6 ">
           <div class="max-w-6xl mx-auto">
             <%= yield %>
           </div>
@@ -42,7 +42,7 @@
 
         <%# フッター %>
         <footer class="footer footer-center p-4 bg-base-200 text-base-content border-t border-base-300 lg:hidden">
-          <p class="text-sm">&copy; <%= Date.current.year %> Bento Manager</p>
+          <p class="text-sm">&copy; <%= Date.current.year %> 弁当販売管理</p>
         </footer>
       </div>
 
