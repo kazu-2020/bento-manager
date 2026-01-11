@@ -14,7 +14,7 @@ paths:
 
 ## プロジェクト設定
 
-- **テーマ**: bumblebee（daisyUI）
+- **テーマ**: caramellatte（daisyUI）
 - **フォント**: Noto Sans JP（本文）, Noto Sans Mono（コード）
 - **設定ファイル**: `app/frontend/stylesheets/application.tailwind.css`
 

@@ -1,36 +1,56 @@
 <!DOCTYPE html>
-<html>
+<html data-theme="bumblebee">
   <head>
-    <title><%= content_for(:title) || "Bento Manager" %></title>
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="Bento Manager">
-    <meta name="mobile-web-app-capable" content="yes">
-    <%= csrf_meta_tags %>
-    <%= csp_meta_tag %>
-
-    <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="icon" href="/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icon.png">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
-
-    <%= vite_stylesheet_tag 'stylesheets/application.tailwind.css' %>
-
-    <%= vite_client_tag %>
-    <%= vite_javascript_tag 'application' %>
+    <%= render "shared/head" %>
   </head>
 
-  <body>
-    <main class="container mx-auto mt-28 px-5 flex">
-      <%= yield %>
-    </main>
+  <body class="min-h-screen bg-base-100">
+    <%# Drawer レイアウト: lg以上でサイドバー常時表示 %>
+    <div class="drawer lg:drawer-open">
+      <input id="main-drawer" type="checkbox" class="drawer-toggle" />
+
+      <%# メインコンテンツエリア %>
+      <div class="drawer-content flex flex-col">
+        <%# ナビゲーションバー %>
+        <%= render "shared/navbar" %>
+
+        <%# Flash メッセージ %>
+        <% if notice.present? %>
+          <div class="alert alert-success mx-4 mt-4 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span><%= notice %></span>
+          </div>
+        <% end %>
+
+        <% if alert.present? %>
+          <div class="alert alert-error mx-4 mt-4 shadow-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span><%= alert %></span>
+          </div>
+        <% end %>
+
+        <%# ページコンテンツ %>
+        <main class="flex-1 p-6">
+          <div class="max-w-6xl mx-auto">
+            <%= yield %>
+          </div>
+        </main>
+
+        <%# フッター %>
+        <footer class="footer footer-center p-4 bg-base-200 text-base-content border-t border-base-300 lg:hidden">
+          <p class="text-sm">&copy; <%= Date.current.year %> Bento Manager</p>
+        </footer>
+      </div>
+
+      <%# サイドバー（ドロワー） %>
+      <div class="drawer-side z-40">
+        <label for="main-drawer" aria-label="メニューを閉じる" class="drawer-overlay"></label>
+        <%= render "shared/sidebar" %>
+      </div>
+    </div>
   </body>
 </html>
