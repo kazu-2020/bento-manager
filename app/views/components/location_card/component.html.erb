@@ -1,8 +1,16 @@
-<%= link_to show_path, class: "card bg-base-100 shadow-sm border-2 border-base-300 hover:shadow-md transition-shadow" do %>
+<% if inactive? %>
+  <div class="indicator w-full">
+    <%= link_to show_path, class: "indicator-item indicator-center indicator-middle badge badge-soft badge-error font-bold" do %>
+      取引停止
+    <% end %>
+<% end %>
+
+<%= link_to show_path, class: card_classes do %>
   <div class="card-body p-4">
-    <div class="flex items-center justify-between gap-2">
-      <h2 class="card-title text-lg"><%= location.name %></h2>
-      <%= component "status_badge", status: location.status %>
-    </div>
+    <h2 class="card-title text-lg"><%= location.name %></h2>
+  </div>
+<% end %>
+
+<% if inactive? %>
   </div>
 <% end %>
