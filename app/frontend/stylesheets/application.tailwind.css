@@ -1,4 +1,8 @@
 @import "tailwindcss";
 
+@plugin "daisyui" {
+  themes: bumblebee --default;
+}
+
 @source "../../views/**/*.html.erb";
 @source "../../helpers/**/*.rb";
