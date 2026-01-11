@@ -4,7 +4,7 @@ class LocationsController < ApplicationController
   before_action :set_location, only: %i[show edit update destroy]
 
   def index
-    @locations = Location.all
+    @locations = Location.display_order
   end
 
   def show
