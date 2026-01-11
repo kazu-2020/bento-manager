@@ -1,6 +1,4 @@
-<%# Sidebar - サイドバーメニュー %>
 <aside class="bg-base-200 min-h-full w-72 flex flex-col">
-  <%# モバイル用ヘッダー %>
   <div class="lg:hidden p-4 border-b border-base-300">
     <div class="flex items-center gap-2">
       <span class="text-2xl">🍱</span>
@@ -10,19 +8,21 @@
     </div>
   </div>
 
-  <%# メインメニュー %>
   <ul class="menu p-4 text-base-content flex-1">
     <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 mb-2">
       メインメニュー
     </li>
-
-    <% menu_items.each_with_index do |item, index| %>
-      <% if index == 1 %>
-        <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 mt-6 mb-2">
-          管理
-        </li>
+    <li>
+      <%= link_to home_item.path, class: menu_item_class(home_item) do %>
+        <%= render_icon(home_item.icon) %>
+        <span><%= home_item.label %></span>
       <% end %>
+    </li>
 
+    <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 mt-6 mb-2">
+      管理
+    </li>
+    <% admin_items.each do |item| %>
       <li>
         <%= link_to item.path, class: menu_item_class(item) do %>
           <%= render_icon(item.icon) %>
@@ -32,7 +32,6 @@
     <% end %>
   </ul>
 
-  <%# フッター %>
   <div class="p-4 border-t border-base-300 text-xs text-base-content/50">
     <p>&copy; <%= Date.current.year %> Bento Manager</p>
   </div>

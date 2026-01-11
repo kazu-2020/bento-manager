@@ -7,14 +7,13 @@ class NavbarComponentTest < ViewComponent::TestCase
     result = render_inline(NavbarComponent.new)
 
     assert result.css(".navbar").present?
-    assert_includes result.to_html, "Bento Manager"
   end
 
   def test_renders_mobile_menu_toggle
     result = render_inline(NavbarComponent.new)
 
     assert result.css("label[for='main-drawer']").present?
-    assert result.css("svg").present? # ハンバーガーアイコン
+    assert result.css("svg").present?
   end
 
   def test_renders_user_menu

@@ -62,7 +62,6 @@ class SidebarComponentTest < ViewComponent::TestCase
   def test_renders_menu_icons
     result = render_inline(SidebarComponent.new(current_path: "/"))
 
-    # 4つのメニュー項目それぞれにアイコン
     assert result.css("svg").count >= 4
   end
 
