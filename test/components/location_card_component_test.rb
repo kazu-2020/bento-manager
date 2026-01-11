@@ -3,8 +3,6 @@
 require "test_helper"
 
 class LocationCardComponentTest < ViewComponent::TestCase
-  include ActiveSupport::Testing::SetupAndTeardown
-
   def setup
     @active_location = Location.new(id: 1, name: "市役所", status: :active)
     @inactive_location = Location.new(id: 2, name: "県庁", status: :inactive)
@@ -16,24 +14,17 @@ class LocationCardComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, @active_location.name
   end
 
-  def test_renders_status_badge
+  def test_active_location_does_not_render_badge
     result = render_inline(LocationCard::Component.new(location: @active_location))
 
-    assert result.css(".badge").present?
+    assert_not result.css(".badge").present?
   end
 
-  def test_renders_active_status_badge
-    result = render_inline(LocationCard::Component.new(location: @active_location))
-
-    assert result.css(".badge.badge-success").present?
-    assert_includes result.to_html, "有効"
-  end
-
-  def test_renders_inactive_status_badge
+  def test_inactive_location_renders_status_badge
     result = render_inline(LocationCard::Component.new(location: @inactive_location))
 
-    assert result.css(".badge.badge-error").present?
-    assert_includes result.to_html, "無効"
+    assert result.css(".badge.badge-soft.badge-error").present?
+    assert_includes result.to_html, "取引停止"
   end
 
   def test_card_is_clickable_link

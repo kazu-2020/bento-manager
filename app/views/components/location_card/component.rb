@@ -2,7 +2,7 @@
 
 module LocationCard
   class Component < Application::Component
-    BASE_CARD_CLASSES = "card bg-base-100 shadow-sm border-2 border-base-300"
+    BASE_CARD_CLASSES = "card bg-base-100 shadow-sm border-2 border-base-300 w-full"
 
     def initialize(location:)
       @location = location
@@ -20,7 +20,7 @@ module LocationCard
 
     def card_classes
       if inactive?
-        "#{BASE_CARD_CLASSES} opacity-50 w-full"
+        "#{BASE_CARD_CLASSES} opacity-50"
       else
         "#{BASE_CARD_CLASSES} hover:shadow-md transition-shadow"
       end

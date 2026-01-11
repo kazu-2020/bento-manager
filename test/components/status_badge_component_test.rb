@@ -7,14 +7,14 @@ class StatusBadgeComponentTest < ViewComponent::TestCase
     result = render_inline(StatusBadge::Component.new(status: :active))
 
     assert result.css(".badge.badge-success").present?
-    assert_includes result.to_html, "有効"
+    assert_includes result.to_html, "取引中"
   end
 
   def test_renders_inactive_badge
     result = render_inline(StatusBadge::Component.new(status: :inactive))
 
     assert result.css(".badge.badge-error").present?
-    assert_includes result.to_html, "無効"
+    assert_includes result.to_html, "取引停止"
   end
 
   def test_accepts_string_status
@@ -26,6 +26,6 @@ class StatusBadgeComponentTest < ViewComponent::TestCase
   def test_renders_with_custom_model
     result = render_inline(StatusBadge::Component.new(status: :active, model: :location))
 
-    assert_includes result.to_html, "有効"
+    assert_includes result.to_html, "取引中"
   end
 end
