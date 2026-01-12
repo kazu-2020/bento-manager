@@ -8,8 +8,6 @@
   </div>
 <% else %>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <% locations.each do |location| %>
-      <%= component "location_card", location: location %>
-    <% end %>
+    <%= component "location_card", collection: locations %>
   </div>
 <% end %>

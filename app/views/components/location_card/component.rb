@@ -2,6 +2,8 @@
 
 module LocationCard
   class Component < Application::Component
+    with_collection_parameter :location
+
     BASE_CARD_CLASSES = "card bg-base-100 shadow-sm border-2 border-base-300 w-full"
 
     def initialize(location:)
