@@ -9,5 +9,5 @@
   themes: caramellatte --default;
 }
 
-@source "../../views/**/*.html.erb";
+@source "../../views/**/*.erb";
 @source "../../helpers/**/*.rb";

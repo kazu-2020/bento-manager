@@ -1,0 +1,22 @@
+<%= form_with model: location, url: location.persisted? ? location_path(location) : locations_path do |form| %>
+  <div class="form-control w-full">
+    <%= form.label :name, class: "label" do %>
+      <span class="text-base-content"><%= Location.human_attribute_name(:name) %></span>
+    <% end %>
+    <%= form.text_field :name,
+                        required: true,
+                        autofocus: true,
+                        class: "input input-bordered w-full #{location.errors.where(:name).any? ? 'input-error' : ''}",
+                        placeholder: "例: 本庁舎1F売店" %>
+    <% location.errors.where(:name).each do |error| %>
+      <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+    <% end %>
+  </div>
+
+  <div class="modal-action mt-6">
+    <form method="dialog" class="inline">
+      <button class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+    </form>
+    <%= form.submit class: "btn btn-neutral" %>
+  </div>
+<% end %>

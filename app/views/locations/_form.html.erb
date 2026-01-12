@@ -1,21 +1,29 @@
 <%= form_with model: location, url: location.persisted? ? location_path(location) : locations_path do |form| %>
   <% if location.errors.any? %>
-    <div id="error_explanation">
-      <h2><%= t("errors.template.header", model: Location.model_name.human, count: location.errors.count) %></h2>
-      <ul>
+    <div class="alert alert-error mb-4">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <div>
         <% location.errors.full_messages.each do |message| %>
-          <li><%= message %></li>
+          <p><%= message %></p>
         <% end %>
-      </ul>
+      </div>
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :name %>
-    <%= form.text_field :name, required: true %>
+  <div class="form-control w-full">
+    <%= form.label :name, class: "label" do %>
+      <span class="label-text"><%= Location.human_attribute_name(:name) %></span>
+    <% end %>
+    <%= form.text_field :name,
+                        required: true,
+                        class: "input input-bordered w-full",
+                        placeholder: "例: 本庁舎1F売店" %>
   </div>
 
-  <div>
-    <%= form.submit %>
+  <div class="flex justify-end gap-2 mt-6">
+    <%= link_to t("helpers.link.back"), locations_path, class: "btn btn-ghost" %>
+    <%= form.submit class: "btn btn-neutral" %>
   </div>
 <% end %>

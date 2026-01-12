@@ -143,6 +143,7 @@ ja:
       edit: "編集"
       delete: "削除"
       back: "戻る"
+      cancel: "キャンセル"
     confirm:
       delete: "本当に削除しますか？"
     filter:
