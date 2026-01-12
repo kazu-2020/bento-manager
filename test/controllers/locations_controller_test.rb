@@ -30,7 +30,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
 
   test "admin can access new" do
     login_as(@admin)
-    get new_location_path
+    get new_location_path, as: :turbo_stream
     assert_response :success
   end
 
@@ -41,9 +41,9 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
         location: {
           name: "新規販売先"
         }
-      }
+      }, as: :turbo_stream
     end
-    assert_redirected_to locations_path
+    assert_response :success
   end
 
   test "admin can access edit" do
@@ -90,7 +90,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
 
   test "employee can access new" do
     login_as_employee(@employee)
-    get new_location_path
+    get new_location_path, as: :turbo_stream
     assert_response :success
   end
 
@@ -101,9 +101,9 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
         location: {
           name: "従業員作成販売先"
         }
-      }
+      }, as: :turbo_stream
     end
-    assert_redirected_to locations_path
+    assert_response :success
   end
 
   test "employee can access edit" do
@@ -189,7 +189,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "create with invalid params renders new with unprocessable_entity" do
     login_as(@admin)
     assert_no_difference("Location.count") do
-      post locations_path, params: { location: { name: "" } }
+      post locations_path, params: { location: { name: "" } }, as: :turbo_stream
     end
     assert_response :unprocessable_entity
   end

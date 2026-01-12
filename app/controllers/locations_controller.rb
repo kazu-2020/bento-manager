@@ -12,15 +12,21 @@ class LocationsController < ApplicationController
 
   def new
     @location = Location.new
+
+    respond_to do |format|
+      format.turbo_stream
+    end
   end
 
   def create
     @location = Location.new(location_params)
 
-    if @location.save
-      redirect_to locations_path, notice: t("locations.create.success")
-    else
-      render :new, status: :unprocessable_entity
+    respond_to do |format|
+      if @location.save
+        format.turbo_stream
+      else
+        format.turbo_stream { render :new, status: :unprocessable_entity }
+      end
     end
   end
 

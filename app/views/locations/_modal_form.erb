@@ -18,12 +18,15 @@
     <% end %>
     <%= form.text_field :name,
                         required: true,
+                        autofocus: true,
                         class: "input input-bordered w-full",
                         placeholder: "例: 本庁舎1F売店" %>
   </div>
 
-  <div class="flex justify-end gap-2 mt-6">
-    <%= link_to t("helpers.link.back"), locations_path, class: "btn btn-ghost" %>
+  <div class="modal-action mt-6">
+    <form method="dialog" class="inline">
+      <button class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+    </form>
     <%= form.submit class: "btn btn-neutral" %>
   </div>
 <% end %>
