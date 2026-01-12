@@ -23,6 +23,7 @@ class LocationsController < ApplicationController
 
     respond_to do |format|
       if @location.save
+        @locations = Location.display_order
         format.turbo_stream
       else
         format.turbo_stream { render :new, status: :unprocessable_entity }
