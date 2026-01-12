@@ -1,0 +1,7 @@
+<div class="p-8 bg-neutral min-h-screen">
+  <div class="flex flex-wrap gap-6">
+    <% IconsPreview::ICON_NAMES.each do |icon| %>
+      <%= render "Icons::#{icon.camelize}::Component".constantize.new(size: :lg, extra_class: "text-neutral-content") %>
+    <% end %>
+  </div>
+</div>

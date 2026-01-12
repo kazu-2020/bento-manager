@@ -6,9 +6,7 @@
 <%# Flash メッセージを表示 %>
 <%= turbo_stream.prepend "flash_messages" do %>
   <div class="alert alert-success shadow-sm mb-4">
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
+    <%= component "icons/success", extra_class: "shrink-0" %>
     <span><%= t("locations.create.success") %></span>
   </div>
 <% end %>
