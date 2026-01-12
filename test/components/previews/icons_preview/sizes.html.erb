@@ -1,0 +1,29 @@
+<div class="p-6 bg-base-100">
+  <h2 class="text-lg font-bold mb-4">Icon Sizes</h2>
+  <div class="overflow-x-auto">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Icon</th>
+          <th>xs</th>
+          <th>sm</th>
+          <th>md</th>
+          <th>lg</th>
+          <th>xl</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% IconsPreview::ICON_NAMES.each do |icon| %>
+          <tr>
+            <td class="font-mono text-sm"><%= icon %></td>
+            <% %i[xs sm md lg xl].each do |size| %>
+              <td class="text-center">
+                <%= render "Icons::#{icon.camelize}::Component".constantize.new(size: size) %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>
