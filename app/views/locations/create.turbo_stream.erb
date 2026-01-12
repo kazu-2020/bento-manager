@@ -1,11 +1,6 @@
 <%# 一覧を更新（新しいカードを追加、空の状態も解消） %>
 <%= turbo_stream.update "locations_grid" do %>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-    <%= component "location_card", location: @location %>
-    <% Location.display_order.where.not(id: @location.id).each do |location| %>
-      <%= component "location_card", location: location %>
-    <% end %>
-  </div>
+  <%= component "locations/location_list", locations: Location.display_order %>
 <% end %>
 
 <%# Flash メッセージを表示 %>
