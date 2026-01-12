@@ -99,8 +99,8 @@ ja:
         closed: "閉鎖"
     location:
       status:
-        active: "有効"
-        inactive: "無効"
+        active: "取引中"
+        inactive: "取引停止"
     catalog:
       category:
         bento: "弁当"

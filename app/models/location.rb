@@ -7,6 +7,9 @@ class Location < ApplicationRecord
   # ===== Enum =====
   enum :status, { active: 0, inactive: 1 }, validate: true
 
+  # ===== Scope =====
+  scope :display_order, -> { in_order_of(:status, %w[active inactive]).order(:id) }
+
   # ===== バリデーション =====
   validates :name, presence: true, uniqueness: { case_sensitive: false }
 end

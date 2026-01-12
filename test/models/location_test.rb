@@ -65,4 +65,16 @@ class LocationTest < ActiveSupport::TestCase
     location.active!
     assert location.active?
   end
+
+  test "display_order は active を先に、同じ status 内では id 昇順" do
+    inactive1 = Location.create!(name: "販売先A", status: :inactive)
+    active1 = Location.create!(name: "販売先B", status: :active)
+    inactive2 = Location.create!(name: "販売先C", status: :inactive)
+    active2 = Location.create!(name: "販売先D", status: :active)
+
+    test_ids = [ inactive1.id, active1.id, inactive2.id, active2.id ]
+    ordered_ids = Location.display_order.where(id: test_ids).ids
+
+    assert_equal [ active1.id, active2.id, inactive1.id, inactive2.id ], ordered_ids
+  end
 end
