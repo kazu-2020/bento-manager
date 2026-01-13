@@ -484,16 +484,19 @@
 
 ### Phase 12: Frontend - Admin Views
 
-- [ ] 19. Location 管理画面実装
-- [ ] 19.1 (P) Location 一覧・フォーム画面
-  - locations/index.html.erb（販売先一覧、active/inactive フィルタ）
-  - locations/new.html.erb, locations/edit.html.erb（販売先登録・編集フォーム）
-  - Tailwind CSS でスタイリング
+- [x] 19. Location 管理画面実装
+- [x] 19.1 (P) Location 一覧・フォーム画面
+  - locations/index.html.erb（販売先一覧）- `Locations::List::Component` で実装
+  - 新規作成: `new.turbo_stream.erb` + `_modal_form.erb`（モーダル形式）
+  - 編集: `Locations::BasicInfoForm::Component`（インライン編集、Turbo Frame）
+  - Tailwind CSS + DaisyUI でスタイリング
+  - ~~active/inactive フィルタ~~ → 仕様変更により廃止
   - _Requirements: 16.1, 16.2, 16.4_
 
-- [ ] 19.2 (P) Location 削除確認モーダル
-  - 削除確認ダイアログ（Turbo Frame）
-  - deactivate アクション呼び出し
+- [x] 19.2 (P) Location 状態変更機能（削除機能から変更）
+  - ~~削除確認ダイアログ（Turbo Frame）~~ → 仕様変更により廃止
+  - 編集画面で status (active/inactive) を変更可能
+  - `Locations::BasicInfoForm::Component` に status セレクトボックス実装
   - _Requirements: 16.3_
 
 - [ ] 20. Catalog 管理画面実装
