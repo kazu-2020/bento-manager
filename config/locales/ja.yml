@@ -137,6 +137,9 @@ ja:
         production: "予期しないエラーが発生しました。しばらく時間をおいてから再度お試しください。"
 
   helpers:
+    submit:
+      update: "%{model}を更新"
+      create: "%{model}を作成"
     hint:
       password_optional: "空欄の場合、パスワードは変更されません"
     link:
@@ -182,8 +185,6 @@ ja:
       success: "販売先を登録しました。"
     update:
       success: "販売先情報を更新しました。"
-    destroy:
-      success: "販売先を無効化しました。"
 
   catalogs:
     index:

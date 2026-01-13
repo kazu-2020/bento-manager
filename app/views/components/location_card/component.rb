@@ -21,11 +21,11 @@ module LocationCard
     end
 
     def card_classes
-      if inactive?
-        "#{BASE_CARD_CLASSES} opacity-50"
-      else
-        "#{BASE_CARD_CLASSES} hover:shadow-md transition-shadow"
-      end
+      helpers.class_names(
+        BASE_CARD_CLASSES,
+        "opacity-50" => inactive?,
+        "hover:shadow-md transition-shadow" => !inactive?
+      )
     end
   end
 end

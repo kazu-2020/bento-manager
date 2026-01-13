@@ -36,10 +36,11 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
   def test_renders_edit_link
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
+    # 編集リンクは基本情報セクション内にあり、edit へのリンク（Turbo Frame で処理）
     edit_link = result.css("a[href='/locations/1/edit']").first
     assert edit_link.present?
     assert_includes edit_link["class"], "btn"
-    assert_includes edit_link["class"], "btn-neutral"
+    assert_includes edit_link["class"], "btn-ghost"
   end
 
   def test_renders_back_link_at_top

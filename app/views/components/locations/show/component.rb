@@ -13,28 +13,8 @@ module Locations
 
       delegate :name, :status, :active?, :inactive?, to: :location
 
-      def edit_path
-        helpers.edit_location_path(location)
-      end
-
       def back_path
         helpers.locations_path
-      end
-
-      def created_at_formatted
-        helpers.l(location.created_at, format: :long) if location.created_at
-      end
-
-      def updated_at_formatted
-        helpers.l(location.updated_at, format: :long) if location.updated_at
-      end
-
-      def card_classes
-        if inactive?
-          "#{CARD_CLASSES} opacity-75"
-        else
-          CARD_CLASSES
-        end
       end
 
       def has_sales_history?

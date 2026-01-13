@@ -6,70 +6,15 @@
   <% end %>
 </nav>
 
-<%# ヘッダーセクション: タイトル + ステータス + アクションボタン %>
-<header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-  <div class="flex items-center gap-3">
-    <%= component "icons/location", size: :lg, extra_class: "text-primary" %>
-    <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
-    <%= component "status_badge", status: status %>
-  </div>
-
-  <%= link_to edit_path, class: "btn btn-neutral" do %>
-    <%= component "icons/edit", size: :sm %>
-    <%= t("helpers.link.edit") %>
-  <% end %>
+<%# ヘッダーセクション: タイトル + ステータス %>
+<header class="flex items-center gap-3 mb-6">
+  <%= component "icons/location", size: :lg, extra_class: "text-primary" %>
+  <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
+  <%= component "status_badge", status: status %>
 </header>
 
-<%# 基本情報カード %>
-<section class="<%= card_classes %> mb-6" aria-labelledby="basic-info-heading">
-  <div class="card-body">
-    <h2 id="basic-info-heading" class="card-title text-lg mb-4">
-      <%= t(".sections.basic_info") %>
-    </h2>
-
-    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-      <div>
-        <dt class="text-sm font-medium text-base-content/60">
-          <%= Location.human_attribute_name(:name) %>
-        </dt>
-        <dd class="mt-1 text-base-content font-medium">
-          <%= name %>
-        </dd>
-      </div>
-
-      <div>
-        <dt class="text-sm font-medium text-base-content/60">
-          <%= Location.human_attribute_name(:status) %>
-        </dt>
-        <dd class="mt-1">
-          <%= component "status_badge", status: status %>
-        </dd>
-      </div>
-
-      <% if created_at_formatted %>
-        <div>
-          <dt class="text-sm font-medium text-base-content/60">
-            <%= Location.human_attribute_name(:created_at) %>
-          </dt>
-          <dd class="mt-1 text-base-content/80">
-            <%= created_at_formatted %>
-          </dd>
-        </div>
-      <% end %>
-
-      <% if updated_at_formatted %>
-        <div>
-          <dt class="text-sm font-medium text-base-content/60">
-            <%= Location.human_attribute_name(:updated_at) %>
-          </dt>
-          <dd class="mt-1 text-base-content/80">
-            <%= updated_at_formatted %>
-          </dd>
-        </div>
-      <% end %>
-    </dl>
-  </div>
-</section>
+<%# 基本情報カード（インライン編集対応） %>
+<%= component "locations/basic_info", location: location %>
 
 <%# 関連データセクション（将来拡張用プレースホルダー） %>
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">

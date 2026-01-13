@@ -1,0 +1,59 @@
+<%= helpers.turbo_frame_tag frame_id do %>
+  <section class="<%= card_classes %> mb-6 animate-fade-in" aria-labelledby="basic-info-form-heading">
+    <div class="card-body">
+      <%= form_with model: location, url: location_path, method: :patch, data: { turbo_frame: frame_id } do |f| %>
+        <%# ヘッダー: タイトル + アクションボタン %>
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="basic-info-form-heading" class="card-title text-lg">
+            <%= t(".title") %>
+          </h2>
+          <div class="flex items-center gap-2">
+            <%= link_to t("helpers.link.cancel"),
+                location_path,
+                class: "btn btn-ghost btn-sm",
+                data: { turbo_frame: frame_id } %>
+            <%= f.submit t(".update"),
+                class: "btn btn-neutral btn-sm" %>
+          </div>
+        </div>
+
+        <%# エラー表示 %>
+        <% if location.errors.any? %>
+          <div class="alert alert-error mb-4" role="alert">
+            <%= component "icons/error", extra_class: "shrink-0" %>
+            <ul class="list-disc list-inside">
+              <% location.errors.full_messages.each do |message| %>
+                <li><%= message %></li>
+              <% end %>
+            </ul>
+          </div>
+        <% end %>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <%# 名前フィールド %>
+          <div class="form-control w-full">
+            <%= f.label :name, class: "label" do %>
+              <span class="label-text font-medium"><%= Location.human_attribute_name(:name) %></span>
+            <% end %>
+            <%= f.text_field :name,
+                required: true,
+                autofocus: true,
+                class: "input input-bordered w-full #{location.errors[:name].any? ? 'input-error' : ''}",
+                placeholder: t(".placeholder.name") %>
+          </div>
+
+          <%# ステータスフィールド %>
+          <div class="form-control w-full">
+            <%= f.label :status, class: "label" do %>
+              <span class="label-text font-medium"><%= Location.human_attribute_name(:status) %></span>
+            <% end %>
+            <%= f.select :status,
+                status_options,
+                {},
+                class: "select select-bordered w-full" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% end %>
