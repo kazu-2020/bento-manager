@@ -3,7 +3,7 @@
 module Locations
   module BasicInfoForm
     class Component < Application::Component
-      CARD_CLASSES = "card bg-base-100 shadow-sm border-2 border-base-300 border-l-4 border-l-primary"
+      CARD_CLASSES = "card bg-base-100 shadow-sm border-2 border-base-300"
 
       def initialize(location:)
         @location = location
@@ -22,11 +22,7 @@ module Locations
       end
 
       def card_classes
-        if inactive?
-          "#{CARD_CLASSES} opacity-75"
-        else
-          CARD_CLASSES
-        end
+        helpers.class_names(CARD_CLASSES, "opacity-75" => inactive?)
       end
 
       def status_options

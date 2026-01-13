@@ -1,5 +1,6 @@
 ---
 ja:
-  title: 基本情報を編集
+  title: 基本情報
+  update: 基本情報を更新
   placeholder:
     name: "例: 本庁舎1F売店"

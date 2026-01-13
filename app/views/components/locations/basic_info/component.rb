@@ -23,11 +23,7 @@ module Locations
       end
 
       def card_classes
-        if inactive?
-          "#{CARD_CLASSES} opacity-75"
-        else
-          CARD_CLASSES
-        end
+        helpers.class_names(CARD_CLASSES, "opacity-75" => inactive?)
       end
 
       def created_at_formatted

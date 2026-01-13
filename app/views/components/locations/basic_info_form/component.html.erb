@@ -1,11 +1,22 @@
 <%= helpers.turbo_frame_tag frame_id do %>
   <section class="<%= card_classes %> mb-6 animate-fade-in" aria-labelledby="basic-info-form-heading">
     <div class="card-body">
-      <h2 id="basic-info-form-heading" class="card-title text-lg mb-4">
-        <%= t(".title") %>
-      </h2>
-
       <%= form_with model: location, url: location_path, method: :patch, data: { turbo_frame: frame_id } do |f| %>
+        <%# ヘッダー: タイトル + アクションボタン %>
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="basic-info-form-heading" class="card-title text-lg">
+            <%= t(".title") %>
+          </h2>
+          <div class="flex items-center gap-2">
+            <%= link_to t("helpers.link.cancel"),
+                location_path,
+                class: "btn btn-ghost btn-sm",
+                data: { turbo_frame: frame_id } %>
+            <%= f.submit t(".update"),
+                class: "btn btn-neutral btn-sm" %>
+          </div>
+        </div>
+
         <%# エラー表示 %>
         <% if location.errors.any? %>
           <div class="alert alert-error mb-4" role="alert">
@@ -41,16 +52,6 @@
                 {},
                 class: "select select-bordered w-full" %>
           </div>
-        </div>
-
-        <%# アクションボタン %>
-        <div class="flex justify-end gap-3 mt-6">
-          <%= link_to t("helpers.link.cancel"),
-              location_path,
-              class: "btn btn-ghost",
-              data: { turbo_frame: frame_id } %>
-          <%= f.submit t("helpers.submit.update", model: Location.model_name.human),
-              class: "btn btn-neutral" %>
         </div>
       <% end %>
     </div>
