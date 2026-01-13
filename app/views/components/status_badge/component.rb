@@ -3,7 +3,7 @@
 module StatusBadge
   class Component < Application::Component
     VARIANTS = {
-      active: "badge-success badge-soft ",
+      active:   "badge-success badge-soft",
       inactive: "badge-error badge-soft"
     }.freeze
 
