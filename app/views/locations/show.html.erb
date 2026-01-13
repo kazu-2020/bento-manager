@@ -1,12 +1,1 @@
-<h1><%= t("locations.show.title") %></h1>
-
-<dl>
-  <dt><%= Location.human_attribute_name(:name) %></dt>
-  <dd><%= @location.name %></dd>
-
-  <dt><%= Location.human_attribute_name(:status) %></dt>
-  <dd><%= t("enums.location.status.#{@location.status}") %></dd>
-</dl>
-
-<%= link_to t("helpers.link.edit"), edit_location_path(@location) %>
-<%= link_to t("helpers.link.back"), locations_path %>
+<%= component "locations/show", location: @location %>
