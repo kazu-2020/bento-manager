@@ -62,16 +62,6 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "更新された販売先名", @location.name
   end
 
-  test "admin can destroy location (sets inactive)" do
-    login_as(@admin)
-    assert_no_difference("Location.count") do
-      delete location_path(@location)
-    end
-    assert_redirected_to locations_path
-    @location.reload
-    assert @location.inactive?
-  end
-
   # ============================================================
   # Employee認証時のテスト（アクセス可能）
   # ============================================================
@@ -122,16 +112,6 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "従業員更新販売先名", @location.name
   end
 
-  test "employee can destroy location (sets inactive)" do
-    login_as_employee(@employee)
-    assert_no_difference("Location.count") do
-      delete location_path(@location)
-    end
-    assert_redirected_to locations_path
-    @location.reload
-    assert @location.inactive?
-  end
-
   # ============================================================
   # 未認証時のテスト（ログインページにリダイレクト）
   # ============================================================
@@ -172,13 +152,6 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
       location: { name: "不正な更新" }
     }
     assert_redirected_to "/employee/login"
-  end
-
-  test "unauthenticated user is redirected to login on destroy" do
-    delete location_path(@location)
-    assert_redirected_to "/employee/login"
-    @location.reload
-    assert @location.active?  # 変更されていないことを確認
   end
 
   # ============================================================

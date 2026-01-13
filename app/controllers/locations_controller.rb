@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class LocationsController < ApplicationController
-  before_action :set_location, only: %i[show edit update destroy]
+  before_action :set_location, only: %i[show edit update]
 
   def index
     @locations = Location.display_order
@@ -47,11 +47,6 @@ class LocationsController < ApplicationController
         Locations::BasicInfoForm::Component.new(location: @location)
       ), status: :unprocessable_entity
     end
-  end
-
-  def destroy
-    @location.inactive!
-    redirect_to locations_path, notice: t("locations.destroy.success")
   end
 
   private

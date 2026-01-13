@@ -185,8 +185,6 @@ ja:
       success: "販売先を登録しました。"
     update:
       success: "販売先情報を更新しました。"
-    destroy:
-      success: "販売先を無効化しました。"
 
   catalogs:
     index:
