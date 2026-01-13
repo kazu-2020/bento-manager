@@ -32,6 +32,8 @@ ja:
       location:
         name: "販売先名"
         status: "販売状態"
+        created_at: "登録日時"
+        updated_at: "更新日時"
       catalog:
         name: "商品名"
         category: "商品カテゴリ"

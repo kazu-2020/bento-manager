@@ -49,7 +49,7 @@
       <% if created_at_formatted %>
         <div>
           <dt class="text-sm font-medium text-base-content/60">
-            <%= t(".labels.created_at") %>
+            <%= Location.human_attribute_name(:created_at) %>
           </dt>
           <dd class="mt-1 text-base-content/80">
             <%= created_at_formatted %>
@@ -60,7 +60,7 @@
       <% if updated_at_formatted %>
         <div>
           <dt class="text-sm font-medium text-base-content/60">
-            <%= t(".labels.updated_at") %>
+            <%= Location.human_attribute_name(:updated_at) %>
           </dt>
           <dd class="mt-1 text-base-content/80">
             <%= updated_at_formatted %>

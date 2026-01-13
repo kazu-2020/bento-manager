@@ -5,9 +5,6 @@ ja:
     basic_info: 基本情報
     sales_history: 販売履歴
     inventory: 在庫状況
-  labels:
-    created_at: 登録日時
-    updated_at: 更新日時
   empty_states:
     no_sales: 販売履歴はありません
     no_inventory: 在庫情報はありません
