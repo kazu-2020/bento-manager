@@ -11,14 +11,6 @@ module Icons
         xl: "h-8 w-8"
       }.freeze
 
-      PIXEL_SIZES = {
-        xs: 12,
-        sm: 16,
-        md: 20,
-        lg: 24,
-        xl: 32
-      }.freeze
-
       def initialize(size: :md, extra_class: nil, stroke_width: 2)
         @size = size.to_sym
         @extra_class = extra_class
@@ -34,10 +26,6 @@ module Icons
       end
 
       attr_reader :stroke_width
-
-      def pixel_size
-        PIXEL_SIZES.fetch(size, PIXEL_SIZES[:md])
-      end
 
       private
 
