@@ -32,13 +32,20 @@ class LocationsController < ApplicationController
   end
 
   def edit
+    render Locations::BasicInfoForm::Component.new(location: @location)
   end
 
   def update
     if @location.update(location_params)
-      redirect_to locations_path, notice: t("locations.update.success")
+      render turbo_stream: turbo_stream.replace(
+        Locations::BasicInfo::Component::FRAME_ID,
+        Locations::BasicInfo::Component.new(location: @location)
+      )
     else
-      render :edit, status: :unprocessable_entity
+      render turbo_stream: turbo_stream.replace(
+        Locations::BasicInfo::Component::FRAME_ID,
+        Locations::BasicInfoForm::Component.new(location: @location)
+      ), status: :unprocessable_entity
     end
   end
 
@@ -54,6 +61,6 @@ class LocationsController < ApplicationController
   end
 
   def location_params
-    params.require(:location).permit(:name)
+    params.require(:location).permit(:name, :status)
   end
 end

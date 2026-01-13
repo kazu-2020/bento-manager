@@ -1,0 +1,63 @@
+<%= helpers.turbo_frame_tag frame_id do %>
+  <section class="<%= card_classes %> mb-6" aria-labelledby="basic-info-heading">
+    <div class="card-body">
+      <%# ヘッダー: タイトル + 編集ボタン %>
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="basic-info-heading" class="card-title text-lg">
+          <%= t(".title") %>
+        </h2>
+        <%= link_to edit_path,
+            class: "btn btn-ghost btn-sm gap-1 group",
+            data: { turbo_frame: frame_id } do %>
+          <span class="transition-transform group-hover:rotate-12">
+            <%= component "icons/edit", size: :sm %>
+          </span>
+          <%= t(".edit") %>
+        <% end %>
+      </div>
+
+      <%# データ表示 %>
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+        <div>
+          <dt class="text-sm font-medium text-base-content/60">
+            <%= Location.human_attribute_name(:name) %>
+          </dt>
+          <dd class="mt-1 text-base-content font-medium">
+            <%= name %>
+          </dd>
+        </div>
+
+        <div>
+          <dt class="text-sm font-medium text-base-content/60">
+            <%= Location.human_attribute_name(:status) %>
+          </dt>
+          <dd class="mt-1">
+            <%= component "status_badge", status: status %>
+          </dd>
+        </div>
+
+        <% if created_at_formatted %>
+          <div>
+            <dt class="text-sm font-medium text-base-content/60">
+              <%= Location.human_attribute_name(:created_at) %>
+            </dt>
+            <dd class="mt-1 text-base-content/80">
+              <%= created_at_formatted %>
+            </dd>
+          </div>
+        <% end %>
+
+        <% if updated_at_formatted %>
+          <div>
+            <dt class="text-sm font-medium text-base-content/60">
+              <%= Location.human_attribute_name(:updated_at) %>
+            </dt>
+            <dd class="mt-1 text-base-content/80">
+              <%= updated_at_formatted %>
+            </dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+  </section>
+<% end %>

@@ -12,3 +12,25 @@
 @source "../../views/**/*.erb";
 @source "../../views/components/**/*.rb";
 @source "../../helpers/**/*.rb";
+
+/* Turbo Frame インライン編集用アニメーション */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+
+/* Turbo Frame ローディング状態 */
+turbo-frame[busy] {
+  opacity: 0.7;
+  pointer-events: none;
+}

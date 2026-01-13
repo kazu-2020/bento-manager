@@ -1,6 +1,6 @@
 <%# 一覧を更新（新しいカードを追加、空の状態も解消） %>
 <%= turbo_stream.update "locations_grid" do %>
-  <%= component "locations/location_list", locations: @locations %>
+  <%= component "locations/list", locations: @locations %>
 <% end %>
 
 <%# Flash メッセージを表示 %>

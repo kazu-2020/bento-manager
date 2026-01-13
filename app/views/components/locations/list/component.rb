@@ -1,5 +1,5 @@
 module Locations
-  module LocationList
+  module List
     class Component < Application::Component
       def initialize(locations:)
         @locations = locations

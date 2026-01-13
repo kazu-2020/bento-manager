@@ -57,7 +57,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     patch location_path(@location), params: {
       location: { name: "更新された販売先名" }
     }
-    assert_redirected_to locations_path
+    assert_response :success
     @location.reload
     assert_equal "更新された販売先名", @location.name
   end
@@ -117,7 +117,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     patch location_path(@location), params: {
       location: { name: "従業員更新販売先名" }
     }
-    assert_redirected_to locations_path
+    assert_response :success
     @location.reload
     assert_equal "従業員更新販売先名", @location.name
   end
