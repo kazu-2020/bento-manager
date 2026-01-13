@@ -3,8 +3,8 @@
 module StatusBadge
   class Component < Application::Component
     VARIANTS = {
-      active: "badge-success",
-      inactive: "badge-error badge-outline"
+      active: "badge-success badge-soft ",
+      inactive: "badge-error badge-soft"
     }.freeze
 
     def initialize(status:, model: :location)

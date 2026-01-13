@@ -10,4 +10,5 @@
 }
 
 @source "../../views/**/*.erb";
+@source "../../views/components/**/*.rb";
 @source "../../helpers/**/*.rb";

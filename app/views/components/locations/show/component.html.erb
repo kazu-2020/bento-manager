@@ -1,0 +1,111 @@
+<%# 戻るリンク（左上） %>
+<nav class="mb-4">
+  <%= link_to back_path, class: "inline-flex items-center gap-1 text-sm text-base-content/70 hover:text-base-content transition-colors" do %>
+    <%= component "icons/arrow_left", size: :sm %>
+    <%= t(".back_to_list") %>
+  <% end %>
+</nav>
+
+<%# ヘッダーセクション: タイトル + ステータス + アクションボタン %>
+<header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+  <div class="flex items-center gap-3">
+    <%= component "icons/location", size: :lg, extra_class: "text-primary" %>
+    <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
+    <%= component "status_badge", status: status %>
+  </div>
+
+  <%= link_to edit_path, class: "btn btn-neutral" do %>
+    <%= component "icons/edit", size: :sm %>
+    <%= t("helpers.link.edit") %>
+  <% end %>
+</header>
+
+<%# 基本情報カード %>
+<section class="<%= card_classes %> mb-6" aria-labelledby="basic-info-heading">
+  <div class="card-body">
+    <h2 id="basic-info-heading" class="card-title text-lg mb-4">
+      <%= t(".sections.basic_info") %>
+    </h2>
+
+    <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+      <div>
+        <dt class="text-sm font-medium text-base-content/60">
+          <%= Location.human_attribute_name(:name) %>
+        </dt>
+        <dd class="mt-1 text-base-content font-medium">
+          <%= name %>
+        </dd>
+      </div>
+
+      <div>
+        <dt class="text-sm font-medium text-base-content/60">
+          <%= Location.human_attribute_name(:status) %>
+        </dt>
+        <dd class="mt-1">
+          <%= component "status_badge", status: status %>
+        </dd>
+      </div>
+
+      <% if created_at_formatted %>
+        <div>
+          <dt class="text-sm font-medium text-base-content/60">
+            <%= t(".labels.created_at") %>
+          </dt>
+          <dd class="mt-1 text-base-content/80">
+            <%= created_at_formatted %>
+          </dd>
+        </div>
+      <% end %>
+
+      <% if updated_at_formatted %>
+        <div>
+          <dt class="text-sm font-medium text-base-content/60">
+            <%= t(".labels.updated_at") %>
+          </dt>
+          <dd class="mt-1 text-base-content/80">
+            <%= updated_at_formatted %>
+          </dd>
+        </div>
+      <% end %>
+    </dl>
+  </div>
+</section>
+
+<%# 関連データセクション（将来拡張用プレースホルダー） %>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  <%# 販売履歴セクション %>
+  <section class="<%= CARD_CLASSES %>" aria-labelledby="sales-history-heading">
+    <div class="card-body">
+      <h2 id="sales-history-heading" class="card-title text-lg">
+        <%= t(".sections.sales_history") %>
+      </h2>
+
+      <% if has_sales_history? %>
+        <%# 将来: 販売履歴リストを表示 %>
+      <% else %>
+        <div class="text-center py-8 text-base-content/50">
+          <%= component "icons/catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50", stroke_width: 1 %>
+          <p class="text-sm"><%= t(".empty_states.no_sales") %></p>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <%# 在庫状況セクション %>
+  <section class="<%= CARD_CLASSES %>" aria-labelledby="inventory-heading">
+    <div class="card-body">
+      <h2 id="inventory-heading" class="card-title text-lg">
+        <%= t(".sections.inventory") %>
+      </h2>
+
+      <% if has_inventory? %>
+        <%# 将来: 在庫状況を表示 %>
+      <% else %>
+        <div class="text-center py-8 text-base-content/50">
+          <%= component "icons/catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50", stroke_width: 1 %>
+          <p class="text-sm"><%= t(".empty_states.no_inventory") %></p>
+        </div>
+      <% end %>
+    </div>
+  </section>
+</div>
