@@ -27,7 +27,7 @@ module Locations
 
       def status_options
         Location.statuses.keys.map do |key|
-          [I18n.t("enums.location.status.#{key}"), key]
+          [ I18n.t("enums.location.status.#{key}"), key ]
         end
       end
     end
