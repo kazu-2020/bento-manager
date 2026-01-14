@@ -3,6 +3,32 @@
 @theme {
   --font-sans: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "Noto Sans Mono", ui-monospace, SFMono-Regular, monospace;
+
+  /* Toast アニメーション */
+  --animate-toast-in: toast-slide-in 0.3s ease-out forwards;
+  --animate-toast-out: toast-slide-out 0.3s ease-in forwards;
+
+  @keyframes toast-slide-in {
+    0% {
+      opacity: 0;
+      transform: translateX(-100%);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes toast-slide-out {
+    0% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateX(-100%);
+    }
+  }
 }
 
 @plugin "daisyui" {
@@ -33,4 +59,10 @@
 turbo-frame[busy] {
   opacity: 0.7;
   pointer-events: none;
+}
+
+/* Toast アラート幅調整 */
+#toast-container .alert {
+  min-width: 280px;
+  max-width: 400px;
 }

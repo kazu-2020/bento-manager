@@ -1,0 +1,9 @@
+<div class="alert <%= alert_classes %> shadow-lg" role="status" aria-live="polite">
+  <%= component icon_name, size: :md, extra_class: "shrink-0" %>
+  <span><%= message %></span>
+  <% if dismissible %>
+    <button type="button" class="btn btn-ghost btn-xs btn-circle toast-dismiss" aria-label="閉じる">
+      <%= component "icons/close", size: :sm %>
+    </button>
+  <% end %>
+</div>
