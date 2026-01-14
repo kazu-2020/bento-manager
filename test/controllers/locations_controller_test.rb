@@ -56,7 +56,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     login_as(@admin)
     patch location_path(@location), params: {
       location: { name: "更新された販売先名" }
-    }
+    }, as: :turbo_stream
     assert_response :success
     @location.reload
     assert_equal "更新された販売先名", @location.name
@@ -106,7 +106,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     login_as_employee(@employee)
     patch location_path(@location), params: {
       location: { name: "従業員更新販売先名" }
-    }
+    }, as: :turbo_stream
     assert_response :success
     @location.reload
     assert_equal "従業員更新販売先名", @location.name
@@ -170,7 +170,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "update with invalid params renders edit with unprocessable_entity" do
     login_as(@admin)
     original_name = @location.name
-    patch location_path(@location), params: { location: { name: "" } }
+    patch location_path(@location), params: { location: { name: "" } }, as: :turbo_stream
     assert_response :unprocessable_entity
     @location.reload
     assert_equal original_name, @location.name

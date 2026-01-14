@@ -1,6 +1,7 @@
 import '@hotwired/turbo-rails'
 import '../controllers'
 import '../stream_actions/show_modal'
+import '../stream_actions/show_toast'
 
 console.log('Vite ⚡️ Rails')
 

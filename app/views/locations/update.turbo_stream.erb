@@ -1,0 +1,7 @@
+<%# 基本情報コンポーネントを更新 %>
+<%= turbo_stream.replace Locations::BasicInfo::Component::FRAME_ID do %>
+  <%= component "locations/basic_info", location: @location %>
+<% end %>
+
+<%# トースト通知を表示 %>
+<%= toast_stream_show(t("locations.update.success"), type: :success) %>

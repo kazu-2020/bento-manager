@@ -3,10 +3,5 @@
   <%= component "locations/list", locations: @locations %>
 <% end %>
 
-<%# Flash メッセージを表示 %>
-<%= turbo_stream.prepend "flash_messages" do %>
-  <div class="alert alert-success shadow-sm mb-4">
-    <%= component "icons/success", extra_class: "shrink-0" %>
-    <span><%= t("locations.create.success") %></span>
-  </div>
-<% end %>
+<%# トースト通知を表示 %>
+<%= toast_stream_show(t("locations.create.success"), type: :success) %>
