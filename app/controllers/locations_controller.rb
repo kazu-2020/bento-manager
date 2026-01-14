@@ -36,16 +36,17 @@ class LocationsController < ApplicationController
   end
 
   def update
-    if @location.update(location_params)
-      render turbo_stream: turbo_stream.replace(
-        Locations::BasicInfo::Component::FRAME_ID,
-        Locations::BasicInfo::Component.new(location: @location)
-      )
-    else
-      render turbo_stream: turbo_stream.replace(
-        Locations::BasicInfo::Component::FRAME_ID,
-        Locations::BasicInfoForm::Component.new(location: @location)
-      ), status: :unprocessable_entity
+    respond_to do |format|
+      if @location.update(location_params)
+        format.turbo_stream
+      else
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.replace(
+            Locations::BasicInfo::Component::FRAME_ID,
+            Locations::BasicInfoForm::Component.new(location: @location)
+          ), status: :unprocessable_entity
+        end
+      end
     end
   end
 
