@@ -12,15 +12,30 @@ class CatalogsController < ApplicationController
 
   def new
     @catalog = Catalog.new
+
+    respond_to do |format|
+      format.html
+      format.turbo_stream
+    end
   end
 
   def create
-    @catalog = Catalog.new(catalog_params)
+    @creator = Catalogs::Creator.new(catalog_create_params)
 
-    if @catalog.save
-      redirect_to catalogs_path, notice: t("catalogs.create.success")
-    else
-      render :new, status: :unprocessable_entity
+    respond_to do |format|
+      if @creator.valid?
+        @creator.create!
+        @catalogs = Catalog.all
+        format.turbo_stream
+        format.html { redirect_to catalogs_path, notice: t("catalogs.create.success") }
+      else
+        @errors = @creator.errors
+        @selected_category = catalog_create_params[:category]
+        @catalog = Catalog.new(catalog_create_params.slice(:name, :category, :description))
+        @catalog.errors.merge!(@creator.errors)
+        format.turbo_stream { render :new, status: :unprocessable_entity }
+        format.html { render :new, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -60,5 +75,9 @@ class CatalogsController < ApplicationController
 
   def catalog_params
     params.require(:catalog).permit(:name, :category, :description)
+  end
+
+  def catalog_create_params
+    params.require(:catalog).permit(:name, :category, :description, :regular_price, :bundle_price)
   end
 end

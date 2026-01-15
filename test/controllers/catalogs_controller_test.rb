@@ -41,13 +41,16 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "admin can create catalog" do
     login_as(@admin)
     assert_difference("Catalog.count") do
-      post catalogs_path, params: {
-        catalog: {
-          name: "新規弁当",
-          category: "bento",
-          description: "新商品の説明"
+      assert_difference("CatalogPrice.count") do
+        post catalogs_path, params: {
+          catalog: {
+            name: "新規弁当",
+            category: "bento",
+            description: "新商品の説明",
+            regular_price: 450
+          }
         }
-      }
+      end
     end
     assert_redirected_to catalogs_path
   end
@@ -105,13 +108,16 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "employee can create catalog" do
     login_as_employee(@employee)
     assert_difference("Catalog.count") do
-      post catalogs_path, params: {
-        catalog: {
-          name: "従業員作成弁当",
-          category: "bento",
-          description: "従業員が作成"
+      assert_difference("CatalogPrice.count") do
+        post catalogs_path, params: {
+          catalog: {
+            name: "従業員作成弁当",
+            category: "bento",
+            description: "従業員が作成",
+            regular_price: 400
+          }
         }
-      }
+      end
     end
     assert_redirected_to catalogs_path
   end
@@ -204,7 +210,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "create with blank name renders new with unprocessable_entity" do
     login_as(@admin)
     assert_no_difference("Catalog.count") do
-      post catalogs_path, params: { catalog: { name: "", category: "bento" } }
+      post catalogs_path, params: { catalog: { name: "", category: "bento", regular_price: 450 } }
     end
     assert_response :unprocessable_entity
   end
@@ -212,7 +218,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "create with blank category renders new with unprocessable_entity" do
     login_as(@admin)
     assert_no_difference("Catalog.count") do
-      post catalogs_path, params: { catalog: { name: "テスト弁当", category: "" } }
+      post catalogs_path, params: { catalog: { name: "テスト弁当", category: "", regular_price: 450 } }
     end
     assert_response :unprocessable_entity
   end
