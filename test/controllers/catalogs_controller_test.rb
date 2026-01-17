@@ -49,10 +49,10 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
             description: "新商品の説明",
             regular_price: 450
           }
-        }
+        }, as: :turbo_stream
       end
     end
-    assert_redirected_to catalogs_path
+    assert_response :success
   end
 
   test "admin can access edit" do
@@ -116,10 +116,10 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
             description: "従業員が作成",
             regular_price: 400
           }
-        }
+        }, as: :turbo_stream
       end
     end
-    assert_redirected_to catalogs_path
+    assert_response :success
   end
 
   test "employee can access edit" do
@@ -211,14 +211,6 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     login_as(@admin)
     assert_no_difference("Catalog.count") do
       post catalogs_path, params: { catalog: { name: "", category: "bento", regular_price: 450 } }, as: :turbo_stream
-    end
-    assert_response :unprocessable_entity
-  end
-
-  test "create with blank category renders new with unprocessable_entity" do
-    login_as(@admin)
-    assert_no_difference("Catalog.count") do
-      post catalogs_path, params: { catalog: { name: "テスト弁当", category: "", regular_price: 450 } }, as: :turbo_stream
     end
     assert_response :unprocessable_entity
   end

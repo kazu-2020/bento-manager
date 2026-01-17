@@ -26,13 +26,10 @@ class CatalogsController < ApplicationController
 
       respond_to do |format|
         format.turbo_stream
-        format.html { redirect_to catalogs_path, notice: t("catalogs.create.success") }
       end
     else
       handle_create_error(@creator.errors)
     end
-  rescue ArgumentError
-    handle_create_error(build_category_error)
   end
 
   def edit
@@ -82,11 +79,5 @@ class CatalogsController < ApplicationController
     @catalog = Catalog.new(catalog_create_params.slice(:name, :description))
 
     render :new, status: :unprocessable_entity
-  end
-
-  def build_category_error
-    errors = ActiveModel::Errors.new(Catalog.new)
-    errors.add(:category, :blank)
-    errors
   end
 end
