@@ -28,7 +28,7 @@ class CatalogsController < ApplicationController
         format.turbo_stream
       end
     else
-      handle_create_error(@creator.errors)
+      handle_create_error(@creator)
     end
   end
 
@@ -74,8 +74,8 @@ class CatalogsController < ApplicationController
     params.require(:catalog).permit(:name, :category, :description, :regular_price, :bundle_price)
   end
 
-  def handle_create_error(errors)
-    @errors = errors
+  def handle_create_error(creator)
+    @creator = creator
     @catalog = Catalog.new(catalog_create_params.slice(:name, :description))
 
     render :new, status: :unprocessable_entity

@@ -25,6 +25,11 @@ module Catalogs
     # 外部から参照するためのエイリアス
     alias catalog built_catalog
 
+    # 通常価格レコードへの公開アクセサ（ビューからエラー参照用）
+    def regular_price_record
+      built_regular_price
+    end
+
     # form_with で使用するためのメソッド
     def persisted?
       false

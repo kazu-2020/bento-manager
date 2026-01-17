@@ -14,8 +14,8 @@
            autofocus
            class="input input-bordered w-full <%= 'input-error' if name_error? %>"
            placeholder="<%= t('catalogs.new.placeholder.side_menu_name') %>">
-    <% errors[:name].each do |message| %>
-      <p class="text-sm text-error mt-1"><%= message %></p>
+    <% creator&.catalog&.errors&.where(:name)&.each do |error| %>
+      <p class="text-sm text-error mt-1"><%= error.full_message %></p>
     <% end %>
   </div>
 
@@ -38,8 +38,8 @@
              class="grow bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
              placeholder="<%= t('catalogs.new.placeholder.regular_price') %>">
     </label>
-    <% errors[:regular_price].each do |message| %>
-      <p class="text-sm text-error mt-1"><%= message %></p>
+    <% creator&.regular_price_record&.errors&.where(:price)&.each do |error| %>
+      <p class="text-sm text-error mt-1"><%= error.full_message %></p>
     <% end %>
   </div>
 
@@ -60,8 +60,8 @@
              class="grow bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
              placeholder="<%= t('catalogs.new.placeholder.bundle_price') %>">
     </label>
-    <% errors[:bundle_price].each do |message| %>
-      <p class="text-sm text-error mt-1"><%= message %></p>
+    <% creator&.bundle_price_record&.errors&.where(:price)&.each do |error| %>
+      <p class="text-sm text-error mt-1"><%= error.full_message %></p>
     <% end %>
     <div class="label">
       <span class="label-text-alt flex items-center gap-1 text-info">

@@ -26,6 +26,11 @@ module Catalogs
 
     validate :validate_bundle_price, if: -> { bundle_price.present? }
 
+    # セット価格レコードへの公開アクセサ（ビューからエラー参照用）
+    def bundle_price_record
+      built_bundle_price
+    end
+
     def create!
       ActiveRecord::Base.transaction do
         built_regular_price

@@ -1,3 +1,6 @@
+<%# カテゴリ選択セクションを削除 %>
+<%= turbo_stream.remove Catalogs::NewForm::Component::CATEGORY_SELECTOR_SECTION_ID %>
+
 <%= turbo_stream.update Catalogs::NewForm::Component::FORM_FIELDS_FRAME_ID do %>
   <% if @category == "bento" %>
     <%= component "catalogs/bento_fields" %>
@@ -7,12 +10,12 @@
 <% end %>
 
 <%# 隠しフィールドを更新 %>
-<%= turbo_stream.update "catalog_category_hidden" do %>
+<%= turbo_stream.update Catalogs::NewForm::Component::CATEGORY_HIDDEN_ID do %>
   <input type="hidden" name="catalog[category]" value="<%= @category %>" data-category-selector-target="hiddenInput">
 <% end %>
 
 <%# アクションボタンを更新（送信ボタンを追加） %>
-<%= turbo_stream.update "catalog_modal_actions" do %>
+<%= turbo_stream.update Catalogs::NewForm::Component::MODAL_ACTIONS_ID do %>
   <form method="dialog" class="inline">
     <button class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
   </form>

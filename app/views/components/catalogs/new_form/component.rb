@@ -4,13 +4,16 @@ module Catalogs
   module NewForm
     class Component < Application::Component
       FORM_FIELDS_FRAME_ID = "catalog_form_fields"
+      CATEGORY_SELECTOR_SECTION_ID = "catalog_category_selector_section"
+      CATEGORY_HIDDEN_ID = "catalog_category_hidden"
+      MODAL_ACTIONS_ID = "catalog_modal_actions"
 
-      def initialize(errors: nil, selected_category: nil)
-        @errors = errors
+      def initialize(creator: nil, selected_category: nil)
+        @creator = creator
         @selected_category = selected_category
       end
 
-      attr_reader :errors, :selected_category
+      attr_reader :creator, :selected_category
 
       def category_selected?
         selected_category.present?

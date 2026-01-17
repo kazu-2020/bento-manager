@@ -3,22 +3,22 @@
 module Catalogs
   module SideMenuFields
     class Component < Application::Component
-      def initialize(errors: nil)
-        @errors = errors || ActiveModel::Errors.new(nil)
+      def initialize(creator: nil)
+        @creator = creator
       end
 
-      attr_reader :errors
+      attr_reader :creator
 
       def name_error?
-        errors[:name].any?
+        creator&.catalog&.errors&.where(:name)&.any? || false
       end
 
       def regular_price_error?
-        errors[:regular_price].any?
+        creator&.regular_price_record&.errors&.where(:price)&.any? || false
       end
 
       def bundle_price_error?
-        errors[:bundle_price].any?
+        creator&.bundle_price_record&.errors&.where(:price)&.any? || false
       end
     end
   end

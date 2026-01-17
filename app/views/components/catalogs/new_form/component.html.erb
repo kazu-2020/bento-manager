@@ -1,31 +1,14 @@
 <%= form_with url: helpers.catalogs_path, method: :post, data: { turbo: true } do |form| %>
-  <%# エラー表示 %>
-  <% if errors&.any? %>
-    <div class="alert alert-error mb-4" role="alert">
-      <%= component "icons/error", extra_class: "shrink-0" %>
-      <ul class="list-disc list-inside">
-        <% errors.full_messages.each do |message| %>
-          <li><%= message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
   <% if category_selected? %>
-    <%# カテゴリ選択済み: 選択されたカテゴリを表示 + フォームフィールド %>
-    <div class="mb-6">
-      <%= component "catalogs/category_selector", selected: selected_category %>
-    </div>
-
     <%# 隠しフィールド: カテゴリ %>
     <input type="hidden" name="catalog[category]" value="<%= selected_category %>">
 
     <%# フォームフィールド %>
     <div id="<%= form_fields_frame_id %>">
       <% if bento_selected? %>
-        <%= component "catalogs/bento_fields", errors: errors %>
+        <%= component "catalogs/bento_fields", creator: creator %>
       <% elsif side_menu_selected? %>
-        <%= component "catalogs/side_menu_fields", errors: errors %>
+        <%= component "catalogs/side_menu_fields", creator: creator %>
       <% end %>
     </div>
 
@@ -38,12 +21,13 @@
     </div>
   <% else %>
     <%# カテゴリ未選択: カテゴリ選択カードを表示 %>
-    <p class="text-base-content/70 mb-4"><%= t("catalogs.new.select_category") %></p>
-
-    <%= component "catalogs/category_selector", selected: nil %>
+    <div id="<%= Catalogs::NewForm::Component::CATEGORY_SELECTOR_SECTION_ID %>">
+      <p class="text-base-content/70 mb-4"><%= t("catalogs.new.select_category") %></p>
+      <%= component "catalogs/category_selector", selected: nil %>
+    </div>
 
     <%# 隠しフィールド（Stimulus で更新） %>
-    <div id="catalog_category_hidden">
+    <div id="<%= Catalogs::NewForm::Component::CATEGORY_HIDDEN_ID %>">
       <input type="hidden" name="catalog[category]" value="" data-category-selector-target="hiddenInput">
     </div>
 
@@ -51,7 +35,7 @@
     <div id="<%= form_fields_frame_id %>" class="mt-6"></div>
 
     <%# キャンセルボタンのみ（カテゴリ未選択時） %>
-    <div class="modal-action mt-6" id="catalog_modal_actions">
+    <div class="modal-action mt-6" id="<%= Catalogs::NewForm::Component::MODAL_ACTIONS_ID %>">
       <form method="dialog" class="inline">
         <button class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
       </form>

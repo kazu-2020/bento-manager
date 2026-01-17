@@ -1,4 +1,4 @@
-<% new_form = Catalogs::NewForm::Component.new(errors: @errors, selected_category: @selected_category) %>
+<% new_form = Catalogs::NewForm::Component.new(creator: @creator, selected_category: @selected_category) %>
 
 <%= modal_stream_show do %>
   <dialog class="modal">
