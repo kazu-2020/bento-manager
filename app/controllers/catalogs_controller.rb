@@ -13,7 +13,6 @@ class CatalogsController < ApplicationController
   def new
     @selected_category = params[:category]
     @creator = Catalogs::CreatorFactory.build(@selected_category) if @selected_category
-    @catalog = Catalog.new
   end
 
   def create
@@ -76,8 +75,6 @@ class CatalogsController < ApplicationController
 
   def handle_create_error(creator)
     @creator = creator
-    @catalog = Catalog.new(catalog_create_params.slice(:name, :description))
-
     render :new, status: :unprocessable_entity
   end
 end
