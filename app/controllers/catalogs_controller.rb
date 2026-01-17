@@ -11,6 +11,8 @@ class CatalogsController < ApplicationController
   end
 
   def new
+    @selected_category = params[:category]
+    @creator = Catalogs::CreatorFactory.build(@selected_category) if @selected_category
     @catalog = Catalog.new
 
     respond_to do |format|
@@ -20,23 +22,22 @@ class CatalogsController < ApplicationController
   end
 
   def create
-    @creator = Catalogs::Creator.new(catalog_create_params)
+    @selected_category = catalog_create_params[:category]
+    @creator = Catalogs::CreatorFactory.build(@selected_category, catalog_create_params.except(:category))
 
-    respond_to do |format|
-      if @creator.valid?
-        @creator.create!
-        @catalogs = Catalog.all
+    if @creator.valid?
+      @creator.create!
+      @catalogs = Catalog.all
+
+      respond_to do |format|
         format.turbo_stream
         format.html { redirect_to catalogs_path, notice: t("catalogs.create.success") }
-      else
-        @errors = @creator.errors
-        @selected_category = catalog_create_params[:category]
-        @catalog = Catalog.new(catalog_create_params.slice(:name, :category, :description))
-        @catalog.errors.merge!(@creator.errors)
-        format.turbo_stream { render :new, status: :unprocessable_entity }
-        format.html { render :new, status: :unprocessable_entity }
       end
+    else
+      handle_create_error(@creator.errors)
     end
+  rescue ArgumentError
+    handle_create_error(build_category_error)
   end
 
   def edit
@@ -79,5 +80,21 @@ class CatalogsController < ApplicationController
 
   def catalog_create_params
     params.require(:catalog).permit(:name, :category, :description, :regular_price, :bundle_price)
+  end
+
+  def handle_create_error(errors)
+    @errors = errors
+    @catalog = Catalog.new(catalog_create_params.slice(:name, :description))
+
+    respond_to do |format|
+      format.turbo_stream { render :new, status: :unprocessable_entity }
+      format.html { render :new, status: :unprocessable_entity }
+    end
+  end
+
+  def build_category_error
+    errors = ActiveModel::Errors.new(Catalog.new)
+    errors.add(:category, :blank)
+    errors
   end
 end
