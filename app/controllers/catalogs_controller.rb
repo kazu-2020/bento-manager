@@ -14,11 +14,6 @@ class CatalogsController < ApplicationController
     @selected_category = params[:category]
     @creator = Catalogs::CreatorFactory.build(@selected_category) if @selected_category
     @catalog = Catalog.new
-
-    respond_to do |format|
-      format.html
-      format.turbo_stream
-    end
   end
 
   def create
@@ -86,10 +81,7 @@ class CatalogsController < ApplicationController
     @errors = errors
     @catalog = Catalog.new(catalog_create_params.slice(:name, :description))
 
-    respond_to do |format|
-      format.turbo_stream { render :new, status: :unprocessable_entity }
-      format.html { render :new, status: :unprocessable_entity }
-    end
+    render :new, status: :unprocessable_entity
   end
 
   def build_category_error

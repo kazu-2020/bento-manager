@@ -34,7 +34,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
 
   test "admin can access new" do
     login_as(@admin)
-    get new_catalog_path
+    get new_catalog_path, as: :turbo_stream
     assert_response :success
   end
 
@@ -101,7 +101,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
 
   test "employee can access new" do
     login_as_employee(@employee)
-    get new_catalog_path
+    get new_catalog_path, as: :turbo_stream
     assert_response :success
   end
 
@@ -210,7 +210,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "create with blank name renders new with unprocessable_entity" do
     login_as(@admin)
     assert_no_difference("Catalog.count") do
-      post catalogs_path, params: { catalog: { name: "", category: "bento", regular_price: 450 } }
+      post catalogs_path, params: { catalog: { name: "", category: "bento", regular_price: 450 } }, as: :turbo_stream
     end
     assert_response :unprocessable_entity
   end
@@ -218,7 +218,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "create with blank category renders new with unprocessable_entity" do
     login_as(@admin)
     assert_no_difference("Catalog.count") do
-      post catalogs_path, params: { catalog: { name: "テスト弁当", category: "", regular_price: 450 } }
+      post catalogs_path, params: { catalog: { name: "テスト弁当", category: "", regular_price: 450 } }, as: :turbo_stream
     end
     assert_response :unprocessable_entity
   end
