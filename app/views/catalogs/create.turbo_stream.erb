@@ -1,0 +1,7 @@
+<%# 一覧を更新 %>
+<%= turbo_stream.update "catalogs_grid" do %>
+  <%= render partial: "catalogs/catalog_list", locals: { catalogs: @catalogs } %>
+<% end %>
+
+<%# トースト通知を表示 %>
+<%= toast_stream_show(t("catalogs.create.success"), type: :success) %>

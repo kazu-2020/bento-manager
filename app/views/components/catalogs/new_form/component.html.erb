@@ -1,0 +1,44 @@
+<%= form_with url: helpers.catalogs_path, method: :post, data: { turbo: true } do |form| %>
+  <% if category_selected? %>
+    <%# 隠しフィールド: カテゴリ %>
+    <input type="hidden" name="catalog[category]" value="<%= selected_category %>">
+
+    <%# フォームフィールド %>
+    <div id="<%= form_fields_frame_id %>">
+      <% if bento_selected? %>
+        <%= component "catalogs/bento_fields", creator: creator %>
+      <% elsif side_menu_selected? %>
+        <%= component "catalogs/side_menu_fields", creator: creator %>
+      <% end %>
+    </div>
+
+    <%# アクションボタン %>
+    <div class="modal-action mt-6">
+      <form method="dialog" class="inline">
+        <button class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+      </form>
+      <%= form.submit t("catalogs.new.submit"), class: "btn btn-neutral" %>
+    </div>
+  <% else %>
+    <%# カテゴリ未選択: カテゴリ選択カードを表示 %>
+    <div id="<%= Catalogs::NewForm::Component::CATEGORY_SELECTOR_SECTION_ID %>">
+      <p class="text-base-content/70 mb-4"><%= t("catalogs.new.select_category") %></p>
+      <%= component "catalogs/category_selector", selected: nil %>
+    </div>
+
+    <%# 隠しフィールド（Stimulus で更新） %>
+    <div id="<%= Catalogs::NewForm::Component::CATEGORY_HIDDEN_ID %>">
+      <input type="hidden" name="catalog[category]" value="" data-category-selector-target="hiddenInput">
+    </div>
+
+    <%# フォームフィールド用 turbo-frame（空状態） %>
+    <div id="<%= form_fields_frame_id %>" class="mt-6"></div>
+
+    <%# キャンセルボタンのみ（カテゴリ未選択時） %>
+    <div class="modal-action mt-6" id="<%= Catalogs::NewForm::Component::MODAL_ACTIONS_ID %>">
+      <form method="dialog" class="inline">
+        <button class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+      </form>
+    </div>
+  <% end %>
+<% end %>

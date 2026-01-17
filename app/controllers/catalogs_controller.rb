@@ -11,16 +11,23 @@ class CatalogsController < ApplicationController
   end
 
   def new
-    @catalog = Catalog.new
+    @selected_category = params[:category]
+    @creator = Catalogs::CreatorFactory.build(@selected_category) if @selected_category
   end
 
   def create
-    @catalog = Catalog.new(catalog_params)
+    @selected_category = catalog_create_params[:category]
+    @creator = Catalogs::CreatorFactory.build(@selected_category, catalog_create_params.except(:category))
 
-    if @catalog.save
-      redirect_to catalogs_path, notice: t("catalogs.create.success")
+    if @creator.valid?
+      @creator.create!
+      @catalogs = Catalog.all
+
+      respond_to do |format|
+        format.turbo_stream
+      end
     else
-      render :new, status: :unprocessable_entity
+      handle_create_error(@creator)
     end
   end
 
@@ -60,5 +67,14 @@ class CatalogsController < ApplicationController
 
   def catalog_params
     params.require(:catalog).permit(:name, :category, :description)
+  end
+
+  def catalog_create_params
+    params.require(:catalog).permit(:name, :category, :description, :regular_price, :bundle_price)
+  end
+
+  def handle_create_error(creator)
+    @creator = creator
+    render :new, status: :unprocessable_entity
   end
 end
