@@ -12,6 +12,7 @@
            name="catalog[name]"
            required
            autofocus
+           autocomplete="off"
            class="input input-bordered w-full <%= 'input-error' if name_error? %>"
            placeholder="<%= t('catalogs.new.placeholder.name') %>">
     <% creator&.catalog&.errors&.where(:name)&.each do |error| %>
@@ -33,6 +34,7 @@
              id="catalog_regular_price"
              name="catalog[regular_price]"
              required
+             autocomplete="off"
              min="1"
              step="1"
              class="grow bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
