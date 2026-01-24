@@ -55,8 +55,8 @@ ja:
       catalog_pricing_rule:
         target_catalog: "対象商品"
         price_kind: "適用価格種別"
-        trigger_category: "トリガーカテゴリ"
-        max_per_trigger: "トリガーあたりの最大適用数"
+        trigger_category: "組み合わせ対象"
+        max_per_trigger: "適用上限"
         valid_from: "有効開始日"
         valid_until: "有効終了日"
       catalog_discontinuation:
