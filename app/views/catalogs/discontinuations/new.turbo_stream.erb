@@ -1,0 +1,23 @@
+<% discontinue_form = Catalogs::DiscontinueForm::Component.new(catalog: @catalog) %>
+
+<%= modal_stream_show do %>
+  <dialog class="modal">
+    <div class="modal-box max-w-md">
+      <h3 class="text-lg font-bold mb-4">
+        <%= discontinue_form.modal_title %>
+      </h3>
+
+      <form method="dialog">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 modal-close-button">
+          <%= component "icons/close" %>
+        </button>
+      </form>
+
+      <%= render discontinue_form %>
+    </div>
+
+    <form method="dialog" class="modal-backdrop">
+      <button><span class="sr-only">close</span></button>
+    </form>
+  </dialog>
+<% end %>

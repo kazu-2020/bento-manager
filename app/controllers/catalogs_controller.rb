@@ -3,7 +3,7 @@
 class CatalogsController < ApplicationController
   rescue_from "Catalogs::CreatorFactory::InvalidCategoryError", with: :handle_invalid_category
 
-  before_action :set_catalog, only: %i[show edit update destroy]
+  before_action :set_catalog, only: %i[show edit update]
 
   def index
     @current_category = params[:category]&.to_sym || :bento
@@ -48,23 +48,6 @@ class CatalogsController < ApplicationController
         Catalogs::BasicInfo::Component::FRAME_ID,
         Catalogs::BasicInfoForm::Component.new(catalog: @catalog)
       ), status: :unprocessable_entity
-    end
-  end
-
-  def destroy
-    if @catalog.discontinued?
-      return redirect_to catalogs_path, alert: t("catalogs.destroy.already_discontinued")
-    end
-
-    discontinuation = @catalog.build_discontinuation(
-      discontinued_at: Time.current,
-      reason: params[:reason].presence || t("catalogs.destroy.default_reason")
-    )
-
-    if discontinuation.save
-      redirect_to catalogs_path, notice: t("catalogs.destroy.success")
-    else
-      redirect_to catalogs_path, alert: t("catalogs.destroy.failure")
     end
   end
 

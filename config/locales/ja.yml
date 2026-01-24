@@ -240,7 +240,8 @@ ja:
       success: "商品カタログを登録しました。"
     update:
       success: "商品カタログを更新しました。"
-    destroy:
+    discontinuations:
+      modal_title: "販売停止の確認"
       success: "商品カタログを提供終了にしました。"
       failure: "商品カタログの提供終了に失敗しました。"
       already_discontinued: "この商品カタログは既に提供終了です。"

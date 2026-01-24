@@ -1,0 +1,7 @@
+---
+ja:
+  title: 販売停止の確認
+  warning_message: この操作は取り消せません。販売停止後は編集できなくなります。
+  optional: 任意
+  reason_placeholder: "例: 季節限定商品のため終了"
+  submit: 販売を停止する

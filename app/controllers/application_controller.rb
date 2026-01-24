@@ -27,6 +27,7 @@ class ApplicationController < ActionController::Base
   end
 
   rescue_from StandardError do |exception|
+    raise exception if Rails.env.test?
     log_unexpected_error(exception)
     flash[:error] = error_message_for_environment(exception)
     redirect_to error_redirect_path

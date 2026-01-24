@@ -6,11 +6,30 @@
   <% end %>
 </nav>
 
-<%# ヘッダーセクション: タイトル + ステータス %>
-<header class="flex items-center gap-3 mb-6">
-  <%= component "icons/#{category_icon}", size: :lg, extra_class: "text-primary" %>
-  <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
-  <%= component "catalog_status_badge", catalog: catalog %>
+<%# ヘッダーセクション: タイトル + ステータス + ケバブメニュー %>
+<header class="flex items-center justify-between mb-6">
+  <div class="flex items-center gap-3">
+    <%= component "icons/#{category_icon}", size: :lg, extra_class: "text-primary" %>
+    <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
+    <%= component "catalog_status_badge", catalog: catalog %>
+  </div>
+
+  <% unless discontinued? %>
+    <%# ケバブメニュー %>
+    <div class="dropdown dropdown-end">
+      <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square">
+        <%= component "icons/kebab", size: :md %>
+      </div>
+      <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-10 w-48 p-2 shadow-lg border">
+        <li>
+          <%= link_to new_discontinuation_path, data: { turbo_stream: true } do %>
+            <%= component "icons/stop", size: :sm, extra_class: "text-error" %>
+            <span class="text-error"><%= t(".discontinue") %></span>
+          <% end %>
+        </li>
+      </ul>
+    </div>
+  <% end %>
 </header>
 
 <%# 基本情報カード %>
