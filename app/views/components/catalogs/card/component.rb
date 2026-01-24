@@ -64,10 +64,6 @@ module Catalogs
       def has_prices?
         regular_price.present? || bundle_price.present?
       end
-
-      def truncated_description
-        helpers.truncate(catalog.description, length: 60) if catalog.description.present?
-      end
     end
   end
 end

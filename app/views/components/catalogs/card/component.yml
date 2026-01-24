@@ -1,7 +1,6 @@
 ---
 ja:
   discontinued: 提供終了
-  no_description: 説明なし
   no_price: 価格未設定
   price:
     regular: "通常:"
