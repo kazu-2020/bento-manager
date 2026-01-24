@@ -14,9 +14,7 @@
 
     <%# アクションボタン %>
     <div class="modal-action mt-6">
-      <form method="dialog" class="inline">
-        <button class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
-      </form>
+      <button type="button" onclick="this.closest('dialog').close()" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
       <%= form.submit t("catalogs.new.submit"), class: "btn btn-neutral" %>
     </div>
   <% else %>
@@ -36,9 +34,7 @@
 
     <%# キャンセルボタンのみ（カテゴリ未選択時） %>
     <div class="modal-action mt-6" id="<%= Catalogs::NewForm::Component::MODAL_ACTIONS_ID %>">
-      <form method="dialog" class="inline">
-        <button class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
-      </form>
+      <button type="button" onclick="this.closest('dialog').close()" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
     </div>
   <% end %>
 <% end %>
