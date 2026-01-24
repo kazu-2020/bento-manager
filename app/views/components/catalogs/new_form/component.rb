@@ -31,10 +31,6 @@ module Catalogs
 
         I18n.t("catalogs.new.#{selected_category}_title")
       end
-
-      def form_fields_frame_id
-        FORM_FIELDS_FRAME_ID
-      end
     end
   end
 end

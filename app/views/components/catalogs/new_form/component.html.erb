@@ -1,10 +1,8 @@
 <%= form_with url: helpers.catalogs_path, method: :post, id: Catalogs::NewForm::Component::FORM_ID, data: { turbo: true } do |form| %>
   <% if category_selected? %>
-    <%# 隠しフィールド: カテゴリ %>
     <input type="hidden" name="catalog[category]" value="<%= selected_category %>">
 
-    <%# フォームフィールド %>
-    <div id="<%= form_fields_frame_id %>">
+    <div id="<%= Catalogs::NewForm::Component::FORM_FIELDS_FRAME_ID %>">
       <% if bento_selected? %>
         <%= component "catalogs/bento_fields", creator: creator %>
       <% elsif side_menu_selected? %>
@@ -12,19 +10,16 @@
       <% end %>
     </div>
 
-    <%# アクションボタン %>
     <div class="modal-action mt-6">
       <button type="button" onclick="this.closest('dialog').close()" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
       <%= form.submit t("catalogs.new.submit"), class: "btn btn-neutral" %>
     </div>
   <% else %>
-    <%# カテゴリ未選択: カテゴリ選択カードを表示 %>
     <div>
       <p class="text-base-content/70 mb-4"><%= t("catalogs.new.select_category") %></p>
       <%= component "catalogs/category_selector", selected: nil %>
     </div>
 
-    <%# キャンセルボタンのみ（カテゴリ未選択時） %>
     <div class="modal-action mt-6">
       <button type="button" onclick="this.closest('dialog').close()" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
     </div>
