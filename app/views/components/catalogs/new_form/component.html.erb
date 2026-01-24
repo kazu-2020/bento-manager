@@ -11,7 +11,7 @@
     </div>
 
     <div class="modal-action mt-6">
-      <button type="button" onclick="this.closest('dialog').close()" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+      <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
       <%= form.submit t("catalogs.new.submit"), class: "btn btn-neutral" %>
     </div>
   <% else %>
@@ -21,7 +21,7 @@
     </div>
 
     <div class="modal-action mt-6">
-      <button type="button" onclick="this.closest('dialog').close()" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+      <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
     </div>
   <% end %>
 <% end %>
