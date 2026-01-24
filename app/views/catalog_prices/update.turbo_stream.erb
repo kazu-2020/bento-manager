@@ -1,0 +1,7 @@
+<%# 価格コンポーネントを更新 %>
+<%= turbo_stream.replace Catalogs::Prices::Component::COMPONENT_ID do %>
+  <%= component "catalogs/prices", catalog: @catalog %>
+<% end %>
+
+<%# トースト通知を表示 %>
+<%= toast_stream_show(t("catalog_prices.update.success"), type: :success) %>

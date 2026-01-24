@@ -4,6 +4,7 @@ module Catalogs
   module Prices
     class Component < Application::Component
       CARD_CLASSES = "card bg-base-100 shadow-sm border-2 border-base-300"
+      COMPONENT_ID = "catalog_prices_component"
 
       def initialize(catalog:)
         @catalog = catalog
@@ -12,6 +13,10 @@ module Catalogs
       attr_reader :catalog
 
       delegate :discontinued?, to: :catalog
+
+      def component_id
+        COMPONENT_ID
+      end
 
       def card_classes
         helpers.class_names(CARD_CLASSES, "opacity-75" => discontinued?)
@@ -33,8 +38,16 @@ module Catalogs
         format_price(bundle_price)
       end
 
-      def has_any_price?
-        regular_price.present? || bundle_price.present?
+      def price_edit_path(kind)
+        helpers.edit_catalog_catalog_price_path(catalog, kind)
+      end
+
+      def show_edit_buttons?
+        !discontinued?
+      end
+
+      def show_bundle_price?
+        catalog.side_menu?
       end
 
       private
