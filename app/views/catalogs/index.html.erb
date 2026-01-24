@@ -3,6 +3,7 @@
             new_path: new_catalog_path,
             turbo_stream: true %>
 
-<div id="catalogs_grid">
-  <%= render partial: "catalogs/catalog_list", locals: { catalogs: @catalogs } %>
-</div>
+<turbo-frame id="catalogs_content">
+  <%= component "catalogs/tabs", current_category: @current_category %>
+  <%= component "catalogs/list", catalogs: @catalogs %>
+</turbo-frame>

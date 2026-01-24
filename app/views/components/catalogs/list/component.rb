@@ -1,16 +1,16 @@
 # frozen_string_literal: true
 
-module Locations
+module Catalogs
   module List
     class Component < Application::Component
-      def initialize(locations:)
-        @locations = locations
+      def initialize(catalogs:)
+        @catalogs = catalogs
       end
 
-      attr_reader :locations
+      attr_reader :catalogs
 
       def empty?
-        locations.empty?
+        catalogs.empty?
       end
     end
   end

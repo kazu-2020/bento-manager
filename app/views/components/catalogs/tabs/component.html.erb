@@ -1,0 +1,9 @@
+<div role="tablist" class="tabs tabs-lift mb-6">
+  <% tabs.each do |tab| %>
+    <%= link_to tab[:label],
+                tab[:path],
+                role: "tab",
+                class: tab_class(active: tab[:active]),
+                data: { turbo_frame: "catalogs_content", turbo_action: "advance" } %>
+  <% end %>
+</div>

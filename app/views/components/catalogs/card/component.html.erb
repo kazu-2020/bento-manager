@@ -1,0 +1,41 @@
+<% if discontinued? %>
+  <div class="indicator w-full">
+    <span class="indicator-item indicator-center indicator-middle badge badge-error badge-soft font-bold z-10">
+      <%= t(".discontinued") %>
+    </span>
+<% end %>
+
+<%= link_to show_path, class: card_classes, data: { turbo_frame: "_top" } do %>
+  <div class="card-body p-4 gap-3">
+    <h3 class="card-title text-base font-bold line-clamp-1">
+      <%= catalog.name %>
+    </h3>
+
+    <% if has_prices? %>
+      <div class="mt-auto pt-2 border-t border-base-200">
+        <div class="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          <% if regular_price %>
+            <div class="flex items-center gap-1">
+              <span class="text-base-content/60"><%= t(".price.regular") %></span>
+              <span class="font-bold text-base-content"><%= formatted_regular_price %></span>
+            </div>
+          <% end %>
+          <% if bundle_price %>
+            <div class="flex items-center gap-1">
+              <span class="text-base-content/60"><%= t(".price.bundle") %></span>
+              <span class="font-bold text-primary"><%= formatted_bundle_price %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="mt-auto pt-2 border-t border-base-200">
+        <span class="text-sm text-base-content/40 italic"><%= t(".no_price") %></span>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<% if discontinued? %>
+  </div>
+<% end %>
