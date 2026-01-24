@@ -254,4 +254,30 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     assert @catalog.discontinued?
     assert_equal I18n.t("catalogs.destroy.default_reason"), @catalog.discontinuation.reason
   end
+
+  # ============================================================
+  # 不正カテゴリのテスト
+  # ============================================================
+
+  test "new with invalid category returns unprocessable_entity" do
+    login_as(@admin)
+    get new_catalog_path, params: { category: "invalid_category" }
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => I18n.t("catalogs.errors.invalid_category") }, response.parsed_body)
+  end
+
+  test "create with invalid category returns unprocessable_entity" do
+    login_as(@admin)
+    assert_no_difference("Catalog.count") do
+      post catalogs_path, params: {
+        catalog: {
+          name: "テスト弁当",
+          category: "invalid_category",
+          regular_price: 450
+        }
+      }, as: :turbo_stream
+    end
+    assert_response :unprocessable_entity
+    assert_equal({ "error" => I18n.t("catalogs.errors.invalid_category") }, response.parsed_body)
+  end
 end

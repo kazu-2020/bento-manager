@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class CatalogsController < ApplicationController
+  rescue_from "Catalogs::InvalidCategoryError", with: :handle_invalid_category
+
   before_action :set_catalog, only: %i[show edit update destroy]
 
   def index
@@ -76,5 +78,9 @@ class CatalogsController < ApplicationController
   def handle_create_error(creator)
     @creator = creator
     render :new, status: :unprocessable_entity
+  end
+
+  def handle_invalid_category
+    render json: { error: I18n.t("catalogs.errors.invalid_category") }, status: :unprocessable_entity
   end
 end

@@ -187,6 +187,8 @@ ja:
       success: "販売先情報を更新しました。"
 
   catalogs:
+    errors:
+      invalid_category: "無効な商品カテゴリです"
     index:
       title: "商品カタログ一覧"
       empty_message: "商品カタログがまだ登録されていません"

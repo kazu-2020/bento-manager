@@ -22,8 +22,8 @@ class Catalogs::CreatorFactoryTest < ActiveSupport::TestCase
     assert_equal 100, creator.bundle_price
   end
 
-  test "不明なカテゴリの場合 ArgumentError を発生させること" do
-    assert_raises(ArgumentError) do
+  test "不明なカテゴリの場合 InvalidCategoryError を発生させること" do
+    assert_raises(Catalogs::InvalidCategoryError) do
       Catalogs::CreatorFactory.build("unknown")
     end
   end
@@ -49,8 +49,8 @@ class Catalogs::CreatorFactoryTest < ActiveSupport::TestCase
     assert_equal Catalogs::SideMenuCreator, klass
   end
 
-  test "creator_class_for で不明なカテゴリの場合 ArgumentError を発生させること" do
-    assert_raises(ArgumentError) do
+  test "creator_class_for で不明なカテゴリの場合 InvalidCategoryError を発生させること" do
+    assert_raises(Catalogs::InvalidCategoryError) do
       Catalogs::CreatorFactory.creator_class_for("invalid")
     end
   end

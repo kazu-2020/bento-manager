@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 module Catalogs
+  # 不正なカテゴリが指定された場合に発生するエラー
+  class InvalidCategoryError < ArgumentError; end
+
   # カタログ作成クラスのファクトリー
   #
   # カテゴリに応じた Creator クラスを生成する。
@@ -15,7 +18,7 @@ module Catalogs
     # @param category [String] カテゴリ ("bento" or "side_menu")
     # @param attributes [Hash] Creator の属性
     # @return [BentoCreator, SideMenuCreator] Creator インスタンス
-    # @raise [ArgumentError] 不明なカテゴリの場合
+    # @raise [InvalidCategoryError] 不明なカテゴリの場合
     def self.build(category, attributes = {})
       creator_class_for(category).new(attributes)
     end
@@ -24,13 +27,13 @@ module Catalogs
     #
     # @param category [String] カテゴリ ("bento" or "side_menu")
     # @return [Class] Creator クラス
-    # @raise [ArgumentError] 不明なカテゴリの場合
+    # @raise [InvalidCategoryError] 不明なカテゴリの場合
     def self.creator_class_for(category)
       case category
       when "bento" then BentoCreator
       when "side_menu" then SideMenuCreator
       else
-        raise ArgumentError, "Unknown category: #{category}"
+        raise InvalidCategoryError, "Unknown category: #{category}"
       end
     end
   end
