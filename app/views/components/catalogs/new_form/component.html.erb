@@ -1,0 +1,27 @@
+<%= form_with url: helpers.catalogs_path, method: :post, id: Catalogs::NewForm::Component::FORM_ID, data: { turbo: true } do |form| %>
+  <% if category_selected? %>
+    <input type="hidden" name="catalog[category]" value="<%= selected_category %>">
+
+    <div id="<%= Catalogs::NewForm::Component::FORM_FIELDS_FRAME_ID %>">
+      <% if bento_selected? %>
+        <%= component "catalogs/bento_fields", creator: creator %>
+      <% elsif side_menu_selected? %>
+        <%= component "catalogs/side_menu_fields", creator: creator %>
+      <% end %>
+    </div>
+
+    <div class="modal-action mt-6">
+      <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+      <%= form.submit t("catalogs.new.submit"), class: "btn btn-neutral" %>
+    </div>
+  <% else %>
+    <div>
+      <p class="text-base-content/70 mb-4"><%= t("catalogs.new.select_category") %></p>
+      <%= component "catalogs/category_selector", selected: nil %>
+    </div>
+
+    <div class="modal-action mt-6">
+      <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+    </div>
+  <% end %>
+<% end %>

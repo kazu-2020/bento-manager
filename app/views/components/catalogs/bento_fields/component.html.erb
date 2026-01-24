@@ -1,0 +1,47 @@
+<div class="space-y-4">
+  <%# 商品名フィールド %>
+  <div class="form-control w-full">
+    <label class="label" for="catalog_name">
+      <span class="label-text font-medium">
+        <%= Catalog.human_attribute_name(:name) %>
+        <span class="text-error">*</span>
+      </span>
+    </label>
+    <input type="text"
+           id="catalog_name"
+           name="catalog[name]"
+           required
+           autofocus
+           autocomplete="off"
+           class="input input-bordered w-full <%= 'input-error' if name_error? %>"
+           placeholder="<%= t('catalogs.new.placeholder.name') %>">
+    <% creator&.catalog&.errors&.where(:name)&.each do |error| %>
+      <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+    <% end %>
+  </div>
+
+  <%# 通常価格フィールド %>
+  <div class="form-control w-full">
+    <label class="label" for="catalog_regular_price">
+      <span class="label-text font-medium">
+        <%= t('catalogs.new.labels.regular_price') %>
+        <span class="text-error">*</span>
+      </span>
+    </label>
+    <label class="input input-bordered flex items-center gap-2 <%= 'input-error' if regular_price_error? %>">
+      <span class="text-base-content/50">¥</span>
+      <input type="number"
+             id="catalog_regular_price"
+             name="catalog[regular_price]"
+             required
+             autocomplete="off"
+             min="1"
+             step="1"
+             class="grow bg-transparent focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+             placeholder="<%= t('catalogs.new.placeholder.regular_price') %>">
+    </label>
+    <% creator&.regular_price_record&.errors&.where(:price)&.each do |error| %>
+      <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+    <% end %>
+  </div>
+</div>

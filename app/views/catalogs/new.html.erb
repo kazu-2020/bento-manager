@@ -1,5 +1,6 @@
-<h1><%= t("catalogs.new.title") %></h1>
+<% new_form = Catalogs::NewForm::Component.new(creator: @creator, selected_category: @selected_category) %>
 
-<%= render "form", catalog: @catalog %>
-
-<%= link_to t("helpers.link.back"), catalogs_path %>
+<turbo-frame id="<%= Catalogs::NewForm::Component::MODAL_FRAME_ID %>">
+  <%= render "modal_header", new_form: new_form %>
+  <%= render new_form %>
+</turbo-frame>
