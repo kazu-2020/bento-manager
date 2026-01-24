@@ -19,5 +19,5 @@
   <form method="dialog" class="inline">
     <button class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
   </form>
-  <button type="submit" class="btn btn-neutral"><%= t("catalogs.new.submit") %></button>
+  <button type="submit" form="<%= Catalogs::NewForm::Component::FORM_ID %>" class="btn btn-neutral"><%= t("catalogs.new.submit") %></button>
 <% end %>

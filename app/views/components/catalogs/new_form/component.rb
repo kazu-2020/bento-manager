@@ -3,6 +3,7 @@
 module Catalogs
   module NewForm
     class Component < Application::Component
+      FORM_ID = "new_catalog"
       FORM_FIELDS_FRAME_ID = "catalog_form_fields"
       CATEGORY_SELECTOR_SECTION_ID = "catalog_category_selector_section"
       CATEGORY_HIDDEN_ID = "catalog_category_hidden"

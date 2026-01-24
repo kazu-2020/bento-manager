@@ -1,4 +1,4 @@
-<%= form_with url: helpers.catalogs_path, method: :post, data: { turbo: true } do |form| %>
+<%= form_with url: helpers.catalogs_path, method: :post, id: Catalogs::NewForm::Component::FORM_ID, data: { turbo: true } do |form| %>
   <% if category_selected? %>
     <%# 隠しフィールド: カテゴリ %>
     <input type="hidden" name="catalog[category]" value="<%= selected_category %>">
