@@ -15,7 +15,7 @@ class CatalogPricesController < ApplicationController
 
   def update
     @kind = params[:kind]
-    @catalog.update_price!(kind: @kind, price: catalog_price_params[:price])
+    CatalogPrice.create_with_history!(catalog: @catalog, kind: @kind, price: catalog_price_params[:price])
     @catalog.reload
 
     respond_to do |format|
