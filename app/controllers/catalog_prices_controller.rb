@@ -1,7 +1,10 @@
 # frozen_string_literal: true
 
 class CatalogPricesController < ApplicationController
+  ALLOWED_KINDS = %w[regular bundle].freeze
+
   before_action :set_catalog
+  before_action :validate_kind
 
   def edit
     @kind = params[:kind]
@@ -32,6 +35,10 @@ class CatalogPricesController < ApplicationController
   end
 
   private
+
+  def validate_kind
+    head :not_found unless ALLOWED_KINDS.include?(params[:kind])
+  end
 
   def set_catalog
     @catalog = Catalog

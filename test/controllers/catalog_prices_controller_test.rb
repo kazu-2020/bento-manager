@@ -110,6 +110,24 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   end
 
   # ============================================================
+  # 無効なkindパラメータのテスト
+  # ============================================================
+
+  test "returns not found for invalid kind on edit" do
+    login_as(@admin)
+    get edit_catalog_catalog_price_path(@catalog, :invalid), as: :turbo_stream
+    assert_response :not_found
+  end
+
+  test "returns not found for invalid kind on update" do
+    login_as(@admin)
+    patch catalog_catalog_price_path(@catalog, :invalid), params: {
+      catalog_price: { price: 500 }
+    }, as: :turbo_stream
+    assert_response :not_found
+  end
+
+  # ============================================================
   # バリデーションエラーのテスト
   # ============================================================
 
