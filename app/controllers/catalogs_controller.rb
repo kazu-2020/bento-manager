@@ -81,6 +81,6 @@ class CatalogsController < ApplicationController
       .where(category: category)
       .eager_load(:discontinuation)
       .preload(:prices)
-      .order(created_at: :desc)
+      .display_order
   end
 end
