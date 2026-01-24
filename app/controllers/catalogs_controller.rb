@@ -7,11 +7,7 @@ class CatalogsController < ApplicationController
 
   def index
     @current_category = params[:category]&.to_sym || :bento
-    @catalogs = Catalog
-                  .where(category: @current_category)
-                  .eager_load(:discontinuation)
-                  .preload(:prices)
-                  .order(created_at: :desc)
+    @catalogs = catalogs_by_category(@current_category)
   end
 
   def show
@@ -29,11 +25,7 @@ class CatalogsController < ApplicationController
     begin
       catalog = @creator.create!
       @current_category = catalog.category.to_sym
-      @catalogs = Catalog
-                    .where(category: @current_category)
-                    .eager_load(:discontinuation)
-                    .preload(:prices)
-                    .order(created_at: :desc)
+      @catalogs = catalogs_by_category(@current_category)
 
       respond_to do |format|
         format.turbo_stream
@@ -96,5 +88,13 @@ class CatalogsController < ApplicationController
 
   def handle_invalid_category
     render json: { error: I18n.t("catalogs.errors.invalid_category") }, status: :unprocessable_entity
+  end
+
+  def catalogs_by_category(category)
+    Catalog
+      .where(category: category)
+      .eager_load(:discontinuation)
+      .preload(:prices)
+      .order(created_at: :desc)
   end
 end

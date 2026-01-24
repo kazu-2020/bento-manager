@@ -3,7 +3,9 @@
 module Catalogs
   module Tabs
     class Component < Application::Component
-      CATEGORIES = %i[bento side_menu].freeze
+      def self.categories
+        Catalog.categories.keys.map(&:to_sym)
+      end
 
       def initialize(current_category:)
         @current_category = current_category&.to_sym || :bento
@@ -12,7 +14,7 @@ module Catalogs
       attr_reader :current_category
 
       def tabs
-        CATEGORIES.map do |category|
+        self.class.categories.map do |category|
           {
             key: category,
             label: I18n.t("enums.catalog.category.#{category}"),
