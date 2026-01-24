@@ -7,7 +7,7 @@
     </h2>
 
     <% if has_any_price? %>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <%# 通常価格 %>
         <div class="bg-base-200/50 rounded-lg p-4 border border-base-300">
           <dt class="text-sm font-medium text-base-content/60 mb-1">
@@ -35,7 +35,7 @@
             <% end %>
           </dd>
         </div>
-      </div>
+      </dl>
     <% else %>
       <%# 価格未設定時のプレースホルダー %>
       <div class="text-center py-6 text-base-content/50">
