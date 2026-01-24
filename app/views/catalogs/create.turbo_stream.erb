@@ -1,10 +1,6 @@
-<%# タブを更新（作成した商品のカテゴリをアクティブに） %>
-<%= turbo_stream.update "catalogs_tabs" do %>
+<%# タブと一覧を更新 %>
+<%= turbo_stream.update "catalogs_content" do %>
   <%= component "catalogs/tabs", current_category: @current_category %>
-<% end %>
-
-<%# 一覧を更新 %>
-<%= turbo_stream.update "catalogs_list" do %>
   <%= component "catalogs/list", catalogs: @catalogs %>
 <% end %>
 
