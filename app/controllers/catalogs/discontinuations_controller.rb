@@ -26,9 +26,7 @@ module Catalogs
     private
 
     def set_catalog
-      @catalog = Catalog
-                   .eager_load(:discontinuation)
-                   .find(params[:catalog_id])
+      @catalog = Catalog.eager_load(:discontinuation).find(params[:catalog_id])
     end
   end
 end

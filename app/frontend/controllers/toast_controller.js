@@ -22,8 +22,8 @@ export default class extends Controller {
   }
 
   #remove() {
-    // toast-item wrapper があれば削除、なければ自身を削除
-    const wrapper = this.element.closest('.toast-item')
-    ;(wrapper || this.element).remove()
+    const wrapper = this.element.closest('.toast-item');
+    const target = wrapper || this.element;
+    target.remove();
   }
 }

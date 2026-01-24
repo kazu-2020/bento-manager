@@ -1,7 +1,5 @@
 import * as Turbo from '@hotwired/turbo';
 
-let toastIdCounter = 0;
-
 Turbo.StreamActions.show_toast = function () {
   const container = document.querySelector('#toast-container');
 
@@ -11,10 +9,8 @@ Turbo.StreamActions.show_toast = function () {
   }
 
   const wrapper = document.createElement('div');
-  wrapper.id = `toast-${++toastIdCounter}`;
   wrapper.className = 'toast-item';
   wrapper.appendChild(this.templateContent.cloneNode(true));
 
   container.appendChild(wrapper);
-  // dismiss は Toast::Component の Stimulus コントローラーが処理
 };
