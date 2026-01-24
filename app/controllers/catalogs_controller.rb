@@ -65,7 +65,7 @@ class CatalogsController < ApplicationController
   private
 
   def set_catalog
-    @catalog = Catalog.find(params[:id])
+    @catalog = Catalog.includes(:discontinuation, :prices, :active_pricing_rules).find(params[:id])
   end
 
   def catalog_params

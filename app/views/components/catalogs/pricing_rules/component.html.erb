@@ -1,0 +1,48 @@
+<section class="<%= card_classes %>" aria-labelledby="catalog-pricing-rules-heading">
+  <div class="card-body">
+    <%# ヘッダー %>
+    <h2 id="catalog-pricing-rules-heading" class="card-title text-lg flex items-center gap-2 mb-4">
+      <span class="text-xl">📏</span>
+      <%= t(".title") %>
+    </h2>
+
+    <% if has_rules? %>
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead>
+            <tr class="border-b border-base-300">
+              <th class="text-base-content/60 font-medium"><%= t(".headers.price_kind") %></th>
+              <th class="text-base-content/60 font-medium"><%= t(".headers.trigger_category") %></th>
+              <th class="text-base-content/60 font-medium text-center"><%= t(".headers.max_per_trigger") %></th>
+              <th class="text-base-content/60 font-medium"><%= t(".headers.valid_period") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% pricing_rules.each do |rule| %>
+              <tr class="hover:bg-base-200/50 border-b border-base-200">
+                <td>
+                  <span class="badge badge-outline badge-sm"><%= price_kind_label(rule) %></span>
+                </td>
+                <td>
+                  <span class="text-sm"><%= trigger_category_label(rule) %></span>
+                </td>
+                <td class="text-center">
+                  <span class="font-mono text-sm"><%= rule.max_per_trigger %></span>
+                </td>
+                <td>
+                  <span class="text-sm text-base-content/70"><%= valid_period(rule) %></span>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <%# ルールなし時の空状態 %>
+      <div class="text-center py-6 text-base-content/50">
+        <%= component "icons/catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50", stroke_width: 1 %>
+        <p class="text-sm"><%= t(".no_rules") %></p>
+      </div>
+    <% end %>
+  </div>
+</section>

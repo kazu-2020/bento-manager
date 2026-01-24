@@ -1,0 +1,29 @@
+<%# 戻るリンク（左上） %>
+<nav class="mb-4">
+  <%= link_to back_path, class: "inline-flex items-center gap-1 text-sm text-base-content/70 hover:text-base-content transition-colors" do %>
+    <%= component "icons/arrow_left", size: :sm %>
+    <%= t(".back_to_list") %>
+  <% end %>
+</nav>
+
+<%# ヘッダーセクション: タイトル + ステータス %>
+<header class="flex items-center gap-3 mb-6">
+  <%= component "icons/#{category_icon}", size: :lg, extra_class: "text-primary" %>
+  <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
+  <%= component "catalog_status_badge", catalog: catalog %>
+</header>
+
+<%# 基本情報カード %>
+<%= component "catalogs/basic_info", catalog: catalog %>
+
+<%# 価格・提供終了セクション（2カラム） %>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+  <%# 価格カード %>
+  <%= component "catalogs/prices", catalog: catalog %>
+
+  <%# 提供終了カード（終了時のみ表示） %>
+  <%= component "catalogs/discontinuation", catalog: catalog %>
+</div>
+
+<%# 価格ルールカード %>
+<%= component "catalogs/pricing_rules", catalog: catalog %>

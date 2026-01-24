@@ -1,0 +1,7 @@
+---
+ja:
+  title: 価格情報
+  regular_price: 通常価格
+  bundle_price: セット価格
+  not_set: 未設定
+  no_prices: 価格が設定されていません

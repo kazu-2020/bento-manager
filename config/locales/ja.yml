@@ -1,4 +1,12 @@
 ja:
+  number:
+    currency:
+      format:
+        unit: "¥"
+        format: "%u%n"
+        negative_format: "-%u%n"
+        precision: 0
+
   activemodel:
     errors:
       models:
@@ -187,6 +195,9 @@ ja:
       success: "販売先情報を更新しました。"
 
   catalogs:
+    status:
+      available: "販売中"
+      discontinued: "提供終了"
     errors:
       invalid_category: "無効な商品カテゴリです"
     index:

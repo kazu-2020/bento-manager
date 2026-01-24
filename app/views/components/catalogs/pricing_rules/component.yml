@@ -1,0 +1,9 @@
+---
+ja:
+  title: 価格ルール
+  headers:
+    price_kind: 適用価格
+    trigger_category: トリガー
+    max_per_trigger: 最大数
+    valid_period: 有効期間
+  no_rules: 価格ルールはありません
