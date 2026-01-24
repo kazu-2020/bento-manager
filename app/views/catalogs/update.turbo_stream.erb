@@ -1,0 +1,7 @@
+<%# 基本情報コンポーネントを更新 %>
+<%= turbo_stream.replace Catalogs::BasicInfo::Component::FRAME_ID do %>
+  <%= component "catalogs/basic_info", catalog: @catalog %>
+<% end %>
+
+<%# トースト通知を表示 %>
+<%= toast_stream_show(t("catalogs.update.success"), type: :success) %>

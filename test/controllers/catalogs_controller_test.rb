@@ -65,8 +65,8 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     login_as(@admin)
     patch catalog_path(@catalog), params: {
       catalog: { name: "更新された弁当名" }
-    }
-    assert_redirected_to catalogs_path
+    }, as: :turbo_stream
+    assert_response :success
     @catalog.reload
     assert_equal "更新された弁当名", @catalog.name
   end
@@ -132,8 +132,8 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     login_as_employee(@employee)
     patch catalog_path(@catalog), params: {
       catalog: { name: "従業員更新弁当名" }
-    }
-    assert_redirected_to catalogs_path
+    }, as: :turbo_stream
+    assert_response :success
     @catalog.reload
     assert_equal "従業員更新弁当名", @catalog.name
   end
@@ -218,7 +218,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "update with invalid params renders edit with unprocessable_entity" do
     login_as(@admin)
     original_name = @catalog.name
-    patch catalog_path(@catalog), params: { catalog: { name: "" } }
+    patch catalog_path(@catalog), params: { catalog: { name: "" } }, as: :turbo_stream
     assert_response :unprocessable_entity
     @catalog.reload
     assert_equal original_name, @catalog.name

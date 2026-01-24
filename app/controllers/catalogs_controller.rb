@@ -32,18 +32,22 @@ class CatalogsController < ApplicationController
       end
     rescue ActiveRecord::RecordInvalid
       @creator.valid?
-      handle_create_error(@creator)
+      handle_create_error
     end
   end
 
   def edit
+    render Catalogs::BasicInfoForm::Component.new(catalog: @catalog)
   end
 
   def update
     if @catalog.update(catalog_params)
-      redirect_to catalogs_path, notice: t("catalogs.update.success")
+      render :update, formats: :turbo_stream
     else
-      render :edit, status: :unprocessable_entity
+      render turbo_stream: turbo_stream.replace(
+        Catalogs::BasicInfo::Component::FRAME_ID,
+        Catalogs::BasicInfoForm::Component.new(catalog: @catalog)
+      ), status: :unprocessable_entity
     end
   end
 
@@ -81,8 +85,7 @@ class CatalogsController < ApplicationController
     params.require(:catalog).permit(:name, :category, :description, :regular_price, :bundle_price)
   end
 
-  def handle_create_error(creator)
-    @creator = creator
+  def handle_create_error
     render :new, status: :unprocessable_entity
   end
 

@@ -1,0 +1,38 @@
+<%= helpers.turbo_frame_tag frame_id do %>
+  <section class="<%= card_classes %> mb-6 animate-fade-in" aria-labelledby="catalog-form-heading">
+    <div class="card-body">
+      <%= form_with model: catalog, url: catalog_path, method: :patch, data: { turbo_frame: frame_id } do |f| %>
+        <%# ヘッダー: タイトル + アクションボタン %>
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="catalog-form-heading" class="card-title text-lg flex items-center gap-2">
+            <%= component "icons/catalog", size: :sm, extra_class: "text-primary" %>
+            <%= t(".title") %>
+          </h2>
+          <div class="flex items-center gap-2">
+            <%= link_to t("helpers.link.cancel"),
+                catalog_path,
+                class: "btn btn-ghost btn-sm",
+                data: { turbo_frame: frame_id } %>
+            <%= f.submit t(".update"),
+                class: "btn btn-neutral btn-sm" %>
+          </div>
+        </div>
+
+        <%# 商品名フィールド %>
+        <div class="form-control w-full">
+          <%= f.label :name, class: "label" do %>
+            <span class="label-text font-medium"><%= Catalog.human_attribute_name(:name) %></span>
+          <% end %>
+          <%= f.text_field :name,
+              required: true,
+              autofocus: true,
+              class: "input input-bordered w-full #{catalog.errors[:name].any? ? 'input-error' : ''}",
+              placeholder: t(".placeholder.name") %>
+          <% catalog.errors.where(:name).each do |error| %>
+            <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% end %>

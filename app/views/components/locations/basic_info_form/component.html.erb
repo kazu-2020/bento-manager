@@ -17,18 +17,6 @@
           </div>
         </div>
 
-        <%# エラー表示 %>
-        <% if location.errors.any? %>
-          <div class="alert alert-error mb-4" role="alert">
-            <%= component "icons/error", extra_class: "shrink-0" %>
-            <ul class="list-disc list-inside">
-              <% location.errors.full_messages.each do |message| %>
-                <li><%= message %></li>
-              <% end %>
-            </ul>
-          </div>
-        <% end %>
-
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <%# 名前フィールド %>
           <div class="form-control w-full">
@@ -40,6 +28,9 @@
                 autofocus: true,
                 class: "input input-bordered w-full #{location.errors[:name].any? ? 'input-error' : ''}",
                 placeholder: t(".placeholder.name") %>
+            <% location.errors.where(:name).each do |error| %>
+              <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+            <% end %>
           </div>
 
           <%# ステータスフィールド %>
@@ -50,7 +41,10 @@
             <%= f.select :status,
                 status_options,
                 {},
-                class: "select select-bordered w-full" %>
+                class: "select select-bordered w-full #{location.errors[:status].any? ? 'select-error' : ''}" %>
+            <% location.errors.where(:status).each do |error| %>
+              <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+            <% end %>
           </div>
         </div>
       <% end %>
