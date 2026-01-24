@@ -21,14 +21,15 @@ class CatalogsController < ApplicationController
     @selected_category = catalog_create_params[:category]
     @creator = Catalogs::CreatorFactory.build(@selected_category, catalog_create_params.except(:category))
 
-    if @creator.valid?
+    begin
       @creator.create!
       @catalogs = Catalog.all
 
       respond_to do |format|
         format.turbo_stream
       end
-    else
+    rescue ActiveRecord::RecordInvalid
+      @creator.valid?
       handle_create_error(@creator)
     end
   end
