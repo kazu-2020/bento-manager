@@ -3,10 +3,10 @@
 module Catalogs
   module Tabs
     class Component < Application::Component
-      CATEGORIES = %i[all bento side_menu].freeze
+      CATEGORIES = %i[bento side_menu].freeze
 
       def initialize(current_category:)
-        @current_category = current_category&.to_sym
+        @current_category = current_category&.to_sym || :bento
       end
 
       attr_reader :current_category
@@ -15,9 +15,9 @@ module Catalogs
         CATEGORIES.map do |category|
           {
             key: category,
-            label: tab_label(category),
-            path: tab_path(category),
-            active: active?(category)
+            label: I18n.t("enums.catalog.category.#{category}"),
+            path: helpers.catalogs_path(category: category),
+            active: current_category == category
           }
         end
       end
@@ -27,26 +27,6 @@ module Catalogs
           "tab",
           "tab-active" => active
         )
-      end
-
-      private
-
-      def tab_label(category)
-        case category
-        when :all then I18n.t("helpers.filter.all")
-        else I18n.t("enums.catalog.category.#{category}")
-        end
-      end
-
-      def tab_path(category)
-        case category
-        when :all then helpers.catalogs_path
-        else helpers.catalogs_path(category: category)
-        end
-      end
-
-      def active?(category)
-        category == :all ? current_category.nil? : current_category == category
       end
     end
   end

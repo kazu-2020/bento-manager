@@ -3,7 +3,9 @@
             new_path: new_catalog_path,
             turbo_stream: true %>
 
-<%= component "catalogs/tabs", current_category: @current_category %>
+<div id="catalogs_tabs">
+  <%= component "catalogs/tabs", current_category: @current_category %>
+</div>
 
 <turbo-frame id="catalogs_list">
   <%= component "catalogs/list", catalogs: @catalogs %>
