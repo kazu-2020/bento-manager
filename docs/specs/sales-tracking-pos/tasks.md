@@ -499,11 +499,12 @@
   - `Locations::BasicInfoForm::Component` に status セレクトボックス実装
   - _Requirements: 16.3_
 
-- [ ] 20. Catalog 管理画面実装
-- [ ] 20.1 (P) Catalog 一覧・フォーム画面
-  - catalogs/index.html.erb（商品一覧、カテゴリフィルタ）
-  - catalogs/new.html.erb, catalogs/edit.html.erb（商品登録・編集フォーム）
-  - CatalogPrice の nested form（kind: regular/bundle）
+- [x] 20. Catalog 管理画面実装
+- [x] 20.1 (P) Catalog 一覧・フォーム画面
+  - catalogs/index.html.erb（商品一覧、カテゴリフィルタ）- `Catalogs::Tabs::Component`, `Catalogs::List::Component` で実装
+  - catalogs/new.html.erb（商品登録フォーム）- `Catalogs::NewForm::Component` + `BentoFields` / `SideMenuFields` で実装
+  - 編集: `CatalogsController#edit` + `Catalogs::BasicInfoForm::Component`（基本情報）、`CatalogPricesController#edit/update` + `Catalogs::PriceForm::Component`（価格編集、履歴管理付き）
+  - CatalogPrice の kind（regular / bundle）対応 - `SideMenuCreator` が bundle_price 入力時に CatalogPricingRule を自動作成
   - _Requirements: 1.1, 1.2, 1.4, 14.1, 14.2_
 
 - [ ] 20.2 (P) Catalog 削除確認モーダル
