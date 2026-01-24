@@ -1,0 +1,35 @@
+<section class="<%= CARD_CLASSES %>" aria-labelledby="catalog-discontinuation-heading">
+  <div class="card-body">
+    <%# ヘッダー %>
+    <h2 id="catalog-discontinuation-heading" class="card-title text-lg flex items-center gap-2 text-error">
+      <%= component "icons/warning", size: :sm, extra_class: "text-error" %>
+      <%= t(".title") %>
+    </h2>
+
+    <div class="mt-2 p-3 bg-error/5 rounded-lg border border-error/20">
+      <dl class="space-y-3">
+        <%# 提供終了日時 %>
+        <div>
+          <dt class="text-sm font-medium text-base-content/60">
+            <%= CatalogDiscontinuation.human_attribute_name(:discontinued_at) %>
+          </dt>
+          <dd class="mt-1 text-base-content font-medium">
+            <%= discontinued_at_formatted %>
+          </dd>
+        </div>
+
+        <%# 提供終了理由 %>
+        <% if reason.present? %>
+          <div>
+            <dt class="text-sm font-medium text-base-content/60">
+              <%= CatalogDiscontinuation.human_attribute_name(:reason) %>
+            </dt>
+            <dd class="mt-1 text-base-content/80">
+              <%= reason %>
+            </dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+  </div>
+</section>
