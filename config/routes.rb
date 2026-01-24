@@ -29,9 +29,6 @@ Rails.application.routes.draw do
 
   # 共有リソース（Admin と Employee 両方がアクセス可能）
   resources :locations, except: [ :destroy ]
-  namespace :catalogs do
-    resource :form_fields, only: [ :show ]
-  end
   resources :catalogs
 
   # Defines the root path route ("/")

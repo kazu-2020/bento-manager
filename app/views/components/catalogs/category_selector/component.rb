@@ -39,6 +39,10 @@ module Catalogs
       def selected?(category_key)
         selected == category_key
       end
+
+      def new_with_category_path(category_key)
+        helpers.new_catalog_path(category: category_key)
+      end
     end
   end
 end

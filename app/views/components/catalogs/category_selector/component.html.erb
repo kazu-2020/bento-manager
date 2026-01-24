@@ -1,11 +1,8 @@
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4"
-     data-controller="category-selector"
-     data-category-selector-form-fields-url-value="<%= helpers.catalogs_form_fields_path %>">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
   <% categories.each do |category| %>
-    <div class="<%= card_classes(category[:key]) %>"
-         data-category-selector-target="card"
-         data-category="<%= category[:key] %>"
-         data-action="click->category-selector#select">
+    <a href="<%= new_with_category_path(category[:key]) %>"
+       class="<%= card_classes(category[:key]) %>"
+       data-turbo-frame="<%= Catalogs::NewForm::Component::MODAL_FRAME_ID %>">
       <div class="card-body items-center text-center py-6">
         <div class="mb-2">
           <%= component category[:icon], size: :xl %>
@@ -22,6 +19,6 @@
         </h3>
         <p class="text-sm text-base-content/70"><%= category[:description] %></p>
       </div>
-    </div>
+    </a>
   <% end %>
 </div>
