@@ -7,15 +7,18 @@ export default class extends Controller {
     this.element.classList.add('animate-toast-in')
 
     if (this.durationValue > 0) {
-      this.timeout = setTimeout(() => this.dismiss(), this.durationValue)
+      this.autoDismissTimeout = setTimeout(() => this.dismiss(), this.durationValue)
     }
   }
 
   disconnect() {
-    if (this.timeout) clearTimeout(this.timeout)
+    if (this.autoDismissTimeout) clearTimeout(this.autoDismissTimeout)
   }
 
   dismiss() {
+    clearTimeout(this.autoDismissTimeout)
+    this.autoDismissTimeout = null
+
     this.element.classList.add('animate-toast-out')
     this.element.addEventListener('animationend', () => this.#remove(), { once: true })
     setTimeout(() => this.#remove(), 400) // fallback
