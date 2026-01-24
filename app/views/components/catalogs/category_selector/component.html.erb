@@ -1,8 +1,8 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
   <% categories.each do |category| %>
-    <a href="<%= new_with_category_path(category[:key]) %>"
-       class="<%= card_classes(category[:key]) %>"
-       data-turbo-frame="<%= Catalogs::NewForm::Component::MODAL_FRAME_ID %>">
+    <%= link_to new_with_category_path(category[:key]),
+                class: card_classes(category[:key]),
+                data: { turbo_frame: Catalogs::NewForm::Component::MODAL_FRAME_ID } do %>
       <div class="card-body items-center text-center py-6">
         <div class="mb-2">
           <%= component category[:icon], size: :xl %>
@@ -19,6 +19,6 @@
         </h3>
         <p class="text-sm text-base-content/70"><%= category[:description] %></p>
       </div>
-    </a>
+    <% end %>
   <% end %>
 </div>
