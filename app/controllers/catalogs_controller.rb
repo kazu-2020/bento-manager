@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class CatalogsController < ApplicationController
-  rescue_from "Catalogs::InvalidCategoryError", with: :handle_invalid_category
+  rescue_from "Catalogs::CreatorFactory::InvalidCategoryError", with: :handle_invalid_category
 
   before_action :set_catalog, only: %i[show edit update destroy]
 

@@ -23,7 +23,7 @@ class Catalogs::CreatorFactoryTest < ActiveSupport::TestCase
   end
 
   test "不明なカテゴリの場合 InvalidCategoryError を発生させること" do
-    assert_raises(Catalogs::InvalidCategoryError) do
+    assert_raises(Catalogs::CreatorFactory::InvalidCategoryError) do
       Catalogs::CreatorFactory.build("unknown")
     end
   end
@@ -50,7 +50,7 @@ class Catalogs::CreatorFactoryTest < ActiveSupport::TestCase
   end
 
   test "creator_class_for で不明なカテゴリの場合 InvalidCategoryError を発生させること" do
-    assert_raises(Catalogs::InvalidCategoryError) do
+    assert_raises(Catalogs::CreatorFactory::InvalidCategoryError) do
       Catalogs::CreatorFactory.creator_class_for("invalid")
     end
   end

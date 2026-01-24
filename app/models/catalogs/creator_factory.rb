@@ -1,9 +1,6 @@
 # frozen_string_literal: true
 
 module Catalogs
-  # 不正なカテゴリが指定された場合に発生するエラー
-  class InvalidCategoryError < ArgumentError; end
-
   # カタログ作成クラスのファクトリー
   #
   # カテゴリに応じた Creator クラスを生成する。
@@ -13,6 +10,9 @@ module Catalogs
   #   creator.create!
   #
   class CreatorFactory
+    # 不正なカテゴリが指定された場合に発生するエラー
+    class InvalidCategoryError < ArgumentError; end
+
     # カテゴリに応じた Creator インスタンスを生成
     #
     # @param category [String] カテゴリ ("bento" or "side_menu")
