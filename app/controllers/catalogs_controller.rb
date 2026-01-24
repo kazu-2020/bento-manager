@@ -41,19 +41,13 @@ class CatalogsController < ApplicationController
   end
 
   def update
-    respond_to do |format|
-      if @catalog.update(catalog_params)
-        format.turbo_stream
-        format.html { redirect_to catalog_path(@catalog), notice: t("catalogs.update.success") }
-      else
-        format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
-            Catalogs::BasicInfo::Component::FRAME_ID,
-            Catalogs::BasicInfoForm::Component.new(catalog: @catalog)
-          ), status: :unprocessable_entity
-        end
-        format.html { render :edit, status: :unprocessable_entity }
-      end
+    if @catalog.update(catalog_params)
+      render :update, formats: :turbo_stream
+    else
+      render turbo_stream: turbo_stream.replace(
+        Catalogs::BasicInfo::Component::FRAME_ID,
+        Catalogs::BasicInfoForm::Component.new(catalog: @catalog)
+      ), status: :unprocessable_entity
     end
   end
 

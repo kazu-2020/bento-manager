@@ -66,7 +66,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     patch catalog_path(@catalog), params: {
       catalog: { name: "更新された弁当名" }
     }
-    assert_redirected_to catalog_path(@catalog)
+    assert_response :success
     @catalog.reload
     assert_equal "更新された弁当名", @catalog.name
   end
@@ -133,7 +133,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     patch catalog_path(@catalog), params: {
       catalog: { name: "従業員更新弁当名" }
     }
-    assert_redirected_to catalog_path(@catalog)
+    assert_response :success
     @catalog.reload
     assert_equal "従業員更新弁当名", @catalog.name
   end
