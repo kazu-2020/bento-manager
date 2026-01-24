@@ -194,6 +194,14 @@ ja:
     update:
       success: "販売先情報を更新しました。"
 
+  catalog_prices:
+    new:
+      title: "%{kind}を設定"
+    edit:
+      title: "%{kind}を編集"
+    update:
+      success: "価格を保存しました。"
+
   catalogs:
     status:
       available: "販売中"

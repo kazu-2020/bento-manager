@@ -22,6 +22,24 @@ class CatalogPrice < ApplicationRecord
     by_kind(kind).effective_at(at).order(effective_from: :desc).first
   end
 
+  # 新しい価格を作成し、既存の有効な価格があれば終了させる
+  # @param catalog [Catalog] 対象カタログ
+  # @param kind [String, Symbol] 価格種別
+  # @param price [Integer] 新しい価格
+  # @return [CatalogPrice] 作成された新しい価格レコード
+  # @raise [ActiveRecord::RecordInvalid] バリデーションエラー時
+  def self.create_with_history!(catalog:, kind:, price:)
+    current_price = catalog.price_by_kind(kind)
+    new_price = new(catalog: catalog, kind: kind, price: price, effective_from: Time.current)
+
+    transaction do
+      current_price&.update!(effective_until: Time.current)
+      new_price.save!
+    end
+
+    new_price
+  end
+
   private
 
   # effective_until が effective_from より後であることを検証

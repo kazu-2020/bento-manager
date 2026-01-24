@@ -45,6 +45,24 @@ class Catalog < ApplicationRecord
     price_by_kind(kind, at: at).present?
   end
 
+  # 指定した種別の価格を更新（履歴管理付き）
+  # 既存価格がある場合は effective_until を設定して終了し、新しい価格を作成
+  # @param kind [String, Symbol] 価格種別 ('regular' | 'bundle')
+  # @param price [Integer] 新しい価格
+  # @return [CatalogPrice] 作成された新しい価格レコード
+  # @raise [ActiveRecord::RecordInvalid] バリデーションエラー時
+  def update_price!(kind:, price:)
+    current_price = price_by_kind(kind)
+    new_price = prices.build(kind: kind, price: price, effective_from: Time.current)
+
+    transaction do
+      current_price&.update!(effective_until: Time.current)
+      new_price.save!
+    end
+
+    new_price
+  end
+
   # 提供終了かどうかを判定
   def discontinued?
     discontinuation.present?

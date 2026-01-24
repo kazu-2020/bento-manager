@@ -245,6 +245,46 @@ class CatalogPriceTest < ActiveSupport::TestCase
     assert_equal current_price, catalog.prices.price_by_kind(kind: :regular, at: Time.current)
   end
 
+  # ===== create_with_history! テスト =====
+
+  test "create_with_history! は新しい価格を作成する" do
+    catalog = catalogs(:daily_bento_b)
+
+    new_price = CatalogPrice.create_with_history!(catalog: catalog, kind: :regular, price: 700)
+
+    assert new_price.persisted?
+    assert_equal catalog, new_price.catalog
+    assert_equal "regular", new_price.kind
+    assert_equal 700, new_price.price
+    assert_not_nil new_price.effective_from
+    assert_nil new_price.effective_until
+  end
+
+  test "create_with_history! は既存価格があれば終了させる" do
+    catalog = catalogs(:daily_bento_a)
+    old_price = catalog_prices(:daily_bento_a_regular)
+    assert_nil old_price.effective_until, "テスト前提: 既存価格は終了していない"
+
+    new_price = CatalogPrice.create_with_history!(catalog: catalog, kind: :regular, price: 600)
+
+    old_price.reload
+    assert_not_nil old_price.effective_until, "既存価格に effective_until が設定されるべき"
+    assert new_price.persisted?
+    assert_equal 600, new_price.price
+  end
+
+  test "create_with_history! はバリデーションエラー時にロールバックする" do
+    catalog = catalogs(:daily_bento_a)
+    old_price = catalog_prices(:daily_bento_a_regular)
+
+    assert_raises(ActiveRecord::RecordInvalid) do
+      CatalogPrice.create_with_history!(catalog: catalog, kind: :regular, price: 0)
+    end
+
+    old_price.reload
+    assert_nil old_price.effective_until, "ロールバックにより既存価格は変更されないべき"
+  end
+
   # ===== アソシエーションテスト =====
 
   test "catalog との関連が正しく設定されている" do

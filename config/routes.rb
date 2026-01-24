@@ -29,7 +29,9 @@ Rails.application.routes.draw do
 
   # 共有リソース（Admin と Employee 両方がアクセス可能）
   resources :locations, except: [ :destroy ]
-  resources :catalogs
+  resources :catalogs do
+    resources :catalog_prices, only: %i[edit update], param: :kind
+  end
 
   # Defines the root path route ("/")
   root "home#index"
