@@ -22,7 +22,10 @@ module Catalogs
       end
 
       def category_icon
-        category == "bento" ? "bento" : "side_dish"
+        case category
+        when "bento" then "bento"
+        else "side_dish"
+        end
       end
     end
   end

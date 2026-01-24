@@ -15,16 +15,12 @@ module Catalogs
         return redirect_to catalogs_path, alert: t("catalogs.discontinuations.already_discontinued")
       end
 
-      discontinuation = @catalog.build_discontinuation(
+      @catalog.build_discontinuation(
         discontinued_at: Time.current,
         reason: params[:reason].presence || t("catalogs.discontinuations.default_reason")
-      )
+      ).save!
 
-      if discontinuation.save
-        redirect_to catalog_path(@catalog)
-      else
-        redirect_to catalog_path(@catalog)
-      end
+      redirect_to catalog_path(@catalog), notice: t("catalogs.discontinuations.success")
     end
 
     private
