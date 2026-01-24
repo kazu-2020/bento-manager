@@ -29,22 +29,6 @@ module Catalogs
         catalog.discontinued?
       end
 
-      def bento?
-        catalog.bento?
-      end
-
-      def category_icon_name
-        bento? ? "icons/bento" : "icons/side_dish"
-      end
-
-      def category_badge_classes
-        bento? ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
-      end
-
-      def category_label
-        I18n.t("enums.catalog.category.#{catalog.category}")
-      end
-
       def regular_price
         catalog.price_by_kind(:regular)&.price
       end

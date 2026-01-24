@@ -7,15 +7,6 @@
 
 <%= link_to show_path, class: card_classes, data: { turbo_frame: "_top" } do %>
   <div class="card-body p-4 gap-3">
-    <div class="flex items-center gap-2">
-      <div class="p-1.5 rounded-lg <%= category_badge_classes %>">
-        <%= component category_icon_name, size: :sm %>
-      </div>
-      <span class="text-xs font-medium text-base-content/60 uppercase tracking-wide">
-        <%= category_label %>
-      </span>
-    </div>
-
     <h3 class="card-title text-base font-bold line-clamp-1">
       <%= catalog.name %>
     </h3>
