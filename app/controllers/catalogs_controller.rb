@@ -6,7 +6,11 @@ class CatalogsController < ApplicationController
   before_action :set_catalog, only: %i[show edit update destroy]
 
   def index
-    @catalogs = Catalog.all
+    @current_category = params[:category]&.to_sym
+    @catalogs = catalog_scope
+                  .eager_load(:discontinuation)
+                  .preload(:prices)
+                  .order(created_at: :desc)
   end
 
   def show
@@ -23,7 +27,10 @@ class CatalogsController < ApplicationController
 
     begin
       @creator.create!
-      @catalogs = Catalog.all
+      @catalogs = Catalog
+                    .eager_load(:discontinuation)
+                    .preload(:prices)
+                    .order(created_at: :desc)
 
       respond_to do |format|
         format.turbo_stream
@@ -86,5 +93,9 @@ class CatalogsController < ApplicationController
 
   def handle_invalid_category
     render json: { error: I18n.t("catalogs.errors.invalid_category") }, status: :unprocessable_entity
+  end
+
+  def catalog_scope
+    @current_category ? Catalog.where(category: @current_category) : Catalog.all
   end
 end

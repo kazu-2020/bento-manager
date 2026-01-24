@@ -1,6 +1,6 @@
 <%# 一覧を更新 %>
-<%= turbo_stream.update "catalogs_grid" do %>
-  <%= render partial: "catalogs/catalog_list", locals: { catalogs: @catalogs } %>
+<%= turbo_stream.update "catalogs_list" do %>
+  <%= component "catalogs/list", catalogs: @catalogs %>
 <% end %>
 
 <%# トースト通知を表示 %>

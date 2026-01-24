@@ -1,0 +1,8 @@
+<div class="tabs tabs-box mb-6">
+  <% tabs.each do |tab| %>
+    <%= link_to tab[:label],
+                tab[:path],
+                class: tab_class(active: tab[:active]),
+                data: { turbo_frame: "catalogs_list" } %>
+  <% end %>
+</div>
