@@ -20,6 +20,13 @@ class Catalog < ApplicationRecord
   # 販売可能な商品（提供終了記録がない）を取得
   scope :available, -> { where.missing(:discontinuation) }
 
+  # 表示順序: 販売中を先、販売停止を後に表示（同じ状態内では新しいものを先に）
+  scope :display_order, -> {
+    left_outer_joins(:discontinuation)
+      .order(Arel.sql("catalog_discontinuations.id IS NOT NULL"))
+      .order(created_at: :desc)
+  }
+
   # ===== Enum =====
   enum :category, { bento: 0, side_menu: 1 }, validate: true
 
@@ -43,24 +50,6 @@ class Catalog < ApplicationRecord
   # @return [Boolean]
   def price_exists?(kind, at: Time.current)
     price_by_kind(kind, at: at).present?
-  end
-
-  # 指定した種別の価格を更新（履歴管理付き）
-  # 既存価格がある場合は effective_until を設定して終了し、新しい価格を作成
-  # @param kind [String, Symbol] 価格種別 ('regular' | 'bundle')
-  # @param price [Integer] 新しい価格
-  # @return [CatalogPrice] 作成された新しい価格レコード
-  # @raise [ActiveRecord::RecordInvalid] バリデーションエラー時
-  def update_price!(kind:, price:)
-    current_price = price_by_kind(kind)
-    new_price = prices.build(kind: kind, price: price, effective_from: Time.current)
-
-    transaction do
-      current_price&.update!(effective_until: Time.current)
-      new_price.save!
-    end
-
-    new_price
   end
 
   # 提供終了かどうかを判定

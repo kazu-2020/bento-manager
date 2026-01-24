@@ -71,18 +71,6 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "更新された弁当名", @catalog.name
   end
 
-  test "admin can destroy catalog (creates CatalogDiscontinuation)" do
-    login_as(@admin)
-    assert_no_difference("Catalog.count") do
-      assert_difference("CatalogDiscontinuation.count") do
-        delete catalog_path(@catalog)
-      end
-    end
-    assert_redirected_to catalogs_path
-    @catalog.reload
-    assert @catalog.discontinued?
-  end
-
   # ============================================================
   # Employee認証時のテスト（アクセス可能）
   # ============================================================
@@ -138,18 +126,6 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "従業員更新弁当名", @catalog.name
   end
 
-  test "employee can destroy catalog (creates CatalogDiscontinuation)" do
-    login_as_employee(@employee)
-    assert_no_difference("Catalog.count") do
-      assert_difference("CatalogDiscontinuation.count") do
-        delete catalog_path(@catalog)
-      end
-    end
-    assert_redirected_to catalogs_path
-    @catalog.reload
-    assert @catalog.discontinued?
-  end
-
   # ============================================================
   # 未認証時のテスト（ログインページにリダイレクト）
   # ============================================================
@@ -193,15 +169,6 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/employee/login"
   end
 
-  test "unauthenticated user is redirected to login on destroy" do
-    assert_no_difference("CatalogDiscontinuation.count") do
-      delete catalog_path(@catalog)
-    end
-    assert_redirected_to "/employee/login"
-    @catalog.reload
-    assert_not @catalog.discontinued?
-  end
-
   # ============================================================
   # バリデーションエラー時のレスポンステスト
   # ※バリデーションロジック自体のテストはモデルテストで担保
@@ -222,37 +189,6 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     @catalog.reload
     assert_equal original_name, @catalog.name
-  end
-
-  # ============================================================
-  # destroy 特有のテスト
-  # ============================================================
-
-  test "destroy already discontinued catalog redirects with alert" do
-    login_as(@admin)
-    assert_no_difference("CatalogDiscontinuation.count") do
-      delete catalog_path(@discontinued_catalog)
-    end
-    assert_redirected_to catalogs_path
-    assert_equal I18n.t("catalogs.destroy.already_discontinued"), flash[:alert]
-  end
-
-  test "destroy creates CatalogDiscontinuation with reason" do
-    login_as(@admin)
-    delete catalog_path(@catalog), params: { reason: "季節終了のため" }
-    assert_redirected_to catalogs_path
-    @catalog.reload
-    assert @catalog.discontinued?
-    assert_equal "季節終了のため", @catalog.discontinuation.reason
-  end
-
-  test "destroy creates CatalogDiscontinuation with default reason when not provided" do
-    login_as(@admin)
-    delete catalog_path(@catalog)
-    assert_redirected_to catalogs_path
-    @catalog.reload
-    assert @catalog.discontinued?
-    assert_equal I18n.t("catalogs.destroy.default_reason"), @catalog.discontinuation.reason
   end
 
   # ============================================================

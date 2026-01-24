@@ -1,8 +1,12 @@
-<div class="alert <%= alert_classes %> shadow-lg" role="status" aria-live="polite">
+<div class="alert <%= alert_classes %> shadow-lg"
+     role="status"
+     aria-live="polite"
+     data-controller="toast"
+     data-toast-duration-value="5000">
   <%= component icon_name, size: :md, extra_class: "shrink-0" %>
   <span><%= message %></span>
   <% if dismissible %>
-    <button type="button" class="btn btn-ghost btn-xs btn-circle toast-dismiss" aria-label="閉じる">
+    <button type="button" class="btn btn-ghost btn-xs btn-circle" aria-label="閉じる" data-action="toast#dismiss">
       <%= component "icons/close", size: :sm %>
     </button>
   <% end %>

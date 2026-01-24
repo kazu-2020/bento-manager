@@ -17,8 +17,15 @@ module Catalogs
         helpers.catalogs_path
       end
 
+      def new_discontinuation_path
+        helpers.new_catalog_discontinuation_path(catalog)
+      end
+
       def category_icon
-        category == "bento" ? "bento" : "side_dish"
+        case category
+        when "bento" then "bento"
+        else "side_dish"
+        end
       end
     end
   end

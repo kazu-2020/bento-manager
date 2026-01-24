@@ -1,0 +1,31 @@
+<%= helpers.turbo_frame_tag frame_id do %>
+  <%= form_with url: form_url, method: :post, data: { turbo_frame: "_top" } do |f| %>
+    <%# 警告メッセージ %>
+    <div role="alert" class="alert alert-warning mb-6">
+      <%= component "icons/warning", size: :md, extra_class: "shrink-0" %>
+      <span><%= t(".warning_message") %></span>
+    </div>
+
+    <%# 理由入力 %>
+    <div class="form-control mb-6">
+      <%= f.label :reason, class: "label" do %>
+        <span class="label-text font-medium">
+          <%= CatalogDiscontinuation.human_attribute_name(:reason) %>
+          <span class="text-base-content/50 text-sm">(<%= t(".optional") %>)</span>
+        </span>
+      <% end %>
+      <%= f.text_area :reason,
+          rows: 3,
+          class: "textarea textarea-bordered w-full",
+          placeholder: t(".reason_placeholder") %>
+    </div>
+
+    <%# アクションボタン %>
+    <div class="modal-action">
+      <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost">
+        <%= t("helpers.link.cancel") %>
+      </button>
+      <%= f.submit t(".submit"), class: "btn btn-error text-white" %>
+    </div>
+  <% end %>
+<% end %>

@@ -11,22 +11,6 @@
       <div class="drawer-content flex flex-col">
         <%= component "navbar" %>
 
-        <div id="flash_messages" class="mx-4 mt-4">
-          <% if notice.present? %>
-            <div class="alert alert-success shadow-sm mb-4">
-              <%= component "icons/success", extra_class: "shrink-0" %>
-              <span><%= notice %></span>
-            </div>
-          <% end %>
-
-          <% if alert.present? %>
-            <div class="alert alert-error shadow-sm mb-4">
-              <%= component "icons/error", extra_class: "shrink-0" %>
-              <span><%= alert %></span>
-            </div>
-          <% end %>
-        </div>
-
         <main class="flex-1 p-6">
           <div class="max-w-6xl mx-auto">
             <%= yield %>
@@ -45,6 +29,17 @@
     </div>
 
     <turbo-stream-modal-container></turbo-stream-modal-container>
-    <div id="toast-container" class="toast toast-start toast-bottom z-50" aria-label="通知"></div>
+    <div id="toast-container" class="toast toast-start toast-bottom z-50" aria-label="通知">
+      <% if notice.present? %>
+        <div class="toast-item">
+          <%= component "toast", message: notice, type: :success %>
+        </div>
+      <% end %>
+      <% if alert.present? %>
+        <div class="toast-item">
+          <%= component "toast", message: alert, type: :error %>
+        </div>
+      <% end %>
+    </div>
   </body>
 </html>
