@@ -34,7 +34,7 @@ module Catalogs
       end
 
       def has_any_price?
-        regular_price || bundle_price
+        regular_price.present? || bundle_price.present?
       end
 
       private
