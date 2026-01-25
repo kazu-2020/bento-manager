@@ -22,14 +22,6 @@ module DailyInventories
       self.selected = !selected
     end
 
-    def increment
-      self.stock += 1 if stock < MAX_STOCK
-    end
-
-    def decrement
-      self.stock -= 1 if stock > MIN_STOCK
-    end
-
     def update_stock(value)
       self.stock = [ [ value.to_i, MIN_STOCK ].max, MAX_STOCK ].min
     end

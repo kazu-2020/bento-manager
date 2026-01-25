@@ -32,14 +32,6 @@ module DailyInventories
       find_item(catalog_id)&.update_stock(stock)
     end
 
-    def increment(catalog_id)
-      find_item(catalog_id)&.increment
-    end
-
-    def decrement(catalog_id)
-      find_item(catalog_id)&.decrement
-    end
-
     def selected_items
       @items.select(&:selected?)
     end

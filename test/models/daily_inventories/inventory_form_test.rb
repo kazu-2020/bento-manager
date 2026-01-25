@@ -53,44 +53,6 @@ module DailyInventories
       assert_not item.selected?
     end
 
-    test "increment increases stock by 1" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
-      form.increment(@bento_a.id)
-
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert_equal 11, item.stock
-    end
-
-    test "increment does not exceed 999" do
-      state = { @bento_a.id.to_s => { selected: true, stock: 999 } }
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
-
-      form.increment(@bento_a.id)
-
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert_equal 999, item.stock
-    end
-
-    test "decrement decreases stock by 1" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
-      form.decrement(@bento_a.id)
-
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert_equal 9, item.stock
-    end
-
-    test "decrement does not go below 1" do
-      state = { @bento_a.id.to_s => { selected: true, stock: 1 } }
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
-
-      form.decrement(@bento_a.id)
-
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert_equal 1, item.stock
-    end
-
     test "update_stock sets stock value" do
       form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
@@ -148,7 +110,7 @@ module DailyInventories
     test "to_state returns serializable hash" do
       form = InventoryForm.new(location: @location, catalogs: @catalogs)
       form.toggle(@bento_a.id)
-      form.increment(@bento_a.id)
+      form.update_stock(@bento_a.id, 11)
 
       state = form.to_state
 

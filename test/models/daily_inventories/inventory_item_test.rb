@@ -32,34 +32,6 @@ module DailyInventories
       assert_not @item.selected?
     end
 
-    test "increment increases stock by 1" do
-      @item.increment
-
-      assert_equal InventoryItem::DEFAULT_STOCK + 1, @item.stock
-    end
-
-    test "increment does not exceed MAX_STOCK" do
-      @item.stock = InventoryItem::MAX_STOCK
-
-      @item.increment
-
-      assert_equal InventoryItem::MAX_STOCK, @item.stock
-    end
-
-    test "decrement decreases stock by 1" do
-      @item.decrement
-
-      assert_equal InventoryItem::DEFAULT_STOCK - 1, @item.stock
-    end
-
-    test "decrement does not go below MIN_STOCK" do
-      @item.stock = InventoryItem::MIN_STOCK
-
-      @item.decrement
-
-      assert_equal InventoryItem::MIN_STOCK, @item.stock
-    end
-
     test "update_stock sets value within bounds" do
       @item.update_stock(25)
       assert_equal 25, @item.stock
