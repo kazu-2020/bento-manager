@@ -7,9 +7,8 @@ module Pos
         before_action :set_location
         before_action :set_catalogs
 
-        # Ghost Form からの画面更新リクエスト
         def create
-          @form = build_form(ghost_inventory_params)
+          @form = build_form(parse_inventory_params(:ghost_inventory))
 
           respond_to do |format|
             format.turbo_stream { render "pos/locations/daily_inventories/form_state" }
@@ -28,20 +27,14 @@ module Pos
         end
 
         def build_form(state = {})
-          ::DailyInventories::InventoryForm.new(
-            catalogs: @catalogs,
-            state: state
-          )
+          ::DailyInventories::InventoryForm.new(catalogs: @catalogs, state: state)
         end
 
-        def ghost_inventory_params
-          return {} unless params[:ghost_inventory]
+        def parse_inventory_params(key)
+          return {} unless params[key]
 
-          params[:ghost_inventory].to_unsafe_h.transform_values do |item|
-            {
-              selected: item[:selected] == "1",
-              stock: item[:stock].to_i
-            }
+          params[key].to_unsafe_h.transform_values do |item|
+            { selected: item[:selected] == "1", stock: item[:stock].to_i }
           end
         end
       end

@@ -36,21 +36,15 @@ module Pos
           end
 
           def card_classes
-            base = "card bg-base-100 border-2 transition-all duration-200"
-            if selected?
-              "#{base} border-accent bg-accent/10"
-            else
-              "#{base} border-base-300 opacity-50"
-            end
+            base_classes = %w[card bg-base-100 border-2 transition-all duration-200]
+            state_classes = selected? ? %w[border-accent bg-accent/10] : %w[border-base-300 opacity-50]
+            (base_classes + state_classes).join(" ")
           end
 
           def checkbox_visual_classes
-            base = "w-6 h-6 rounded border-2 flex items-center justify-center transition-colors pointer-events-none"
-            if selected?
-              "#{base} bg-accent border-accent"
-            else
-              "#{base} border-base-300"
-            end
+            base_classes = %w[w-6 h-6 rounded border-2 flex items-center justify-center transition-colors pointer-events-none]
+            state_classes = selected? ? %w[bg-accent border-accent] : %w[border-base-300]
+            (base_classes + state_classes).join(" ")
           end
         end
       end

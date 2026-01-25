@@ -11,7 +11,7 @@ module Pos
       end
 
       def create
-        @form = build_form(inventory_params)
+        @form = build_form(parse_inventory_params(:inventory))
 
         creator = ::DailyInventories::BulkCreator.new(
           location: @location,
@@ -38,20 +38,14 @@ module Pos
       end
 
       def build_form(state = {})
-        ::DailyInventories::InventoryForm.new(
-          catalogs: @catalogs,
-          state: state
-        )
+        ::DailyInventories::InventoryForm.new(catalogs: @catalogs, state: state)
       end
 
-      def inventory_params
-        return {} unless params[:inventory]
+      def parse_inventory_params(key)
+        return {} unless params[key]
 
-        params[:inventory].to_unsafe_h.transform_values do |item|
-          {
-            selected: item[:selected] == "1",
-            stock: item[:stock].to_i
-          }
+        params[key].to_unsafe_h.transform_values do |item|
+          { selected: item[:selected] == "1", stock: item[:stock].to_i }
         end
       end
     end

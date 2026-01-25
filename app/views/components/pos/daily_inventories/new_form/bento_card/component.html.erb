@@ -2,7 +2,9 @@
   <div class="card-body p-4">
     <%# カード選択エリア %>
     <label class="flex items-center gap-3 cursor-pointer">
-      <%# 実際のチェックボックス（非表示） %>
+      <%# hidden field (未チェック時に "0" を送信) %>
+      <input type="hidden" name="<%= field_name_prefix %>[selected]" value="0">
+      <%# checkbox (チェック時に "1" で上書き) %>
       <input type="checkbox"
              name="<%= field_name_prefix %>[selected]"
              value="1"

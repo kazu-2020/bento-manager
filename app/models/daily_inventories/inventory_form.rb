@@ -53,7 +53,7 @@ module DailyInventories
     end
 
     def can_submit?
-      selected_count > 0
+      selected_count.positive?
     end
 
     def to_state
