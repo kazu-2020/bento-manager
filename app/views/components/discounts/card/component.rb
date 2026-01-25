@@ -43,21 +43,6 @@ module Discounts
         helpers.number_to_currency(amount_per_unit) if amount_per_unit
       end
 
-      def status
-        return :expired if expired?
-        return :upcoming if upcoming?
-
-        :active
-      end
-
-      def status_badge_class
-        case status
-        when :active then "badge-success"
-        when :expired then "badge-error"
-        when :upcoming then "badge-warning"
-        end
-      end
-
       def formatted_valid_period
         from = helpers.l(valid_from, format: :short)
         to = valid_until ? helpers.l(valid_until, format: :short) : t(".no_end_date")
@@ -68,10 +53,6 @@ module Discounts
 
       def expired?
         valid_until.present? && valid_until < Date.current
-      end
-
-      def upcoming?
-        valid_from > Date.current
       end
     end
   end

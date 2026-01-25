@@ -7,14 +7,9 @@
 
 <%= link_to show_path, class: card_classes, data: { turbo_frame: "_top" } do %>
   <div class="card-body p-4 gap-3">
-    <div class="flex items-center justify-between">
-      <h3 class="card-title text-base font-bold line-clamp-1">
-        <%= name %>
-      </h3>
-      <span class="badge <%= status_badge_class %> badge-sm">
-        <%= t(".status.#{status}") %>
-      </span>
-    </div>
+    <h3 class="card-title text-base font-bold line-clamp-1">
+      <%= name %>
+    </h3>
 
     <div class="space-y-1 text-sm">
       <div class="flex items-center gap-2">
