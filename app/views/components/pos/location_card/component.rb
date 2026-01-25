@@ -18,8 +18,12 @@ module Pos
       def card_classes
         helpers.class_names(
           BASE_CARD_CLASSES,
-          "cursor-pointer hover:shadow-md transition-shadow"
+          "cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]"
         )
+      end
+
+      def card_url
+        helpers.pos_location_path(location)
       end
     end
   end

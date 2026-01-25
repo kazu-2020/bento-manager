@@ -95,5 +95,36 @@ module Pos
       # city_hall はフィクスチャで当日在庫が設定されている
       # そのカードには警告が表示されないことを確認
     end
+
+    # ============================================================
+    # show アクションのテスト
+    # ============================================================
+
+    test "show redirects to sales page when location has today inventory" do
+      login_as(@admin)
+      # city_hall has today inventories from fixtures
+      get pos_location_path(@active_location)
+      assert_redirected_to new_pos_location_sale_path(@active_location)
+    end
+
+    test "show redirects to daily inventory page when location has no today inventory" do
+      login_as(@admin)
+      # Create a new location without inventory
+      no_inventory_location = Location.create!(name: "新規販売先", status: :active)
+      get pos_location_path(no_inventory_location)
+      assert_redirected_to new_pos_location_daily_inventory_path(no_inventory_location)
+    end
+
+    test "show returns 404 for inactive location" do
+      login_as(@admin)
+      get pos_location_path(@inactive_location)
+      assert_response :not_found
+    end
+
+    test "show returns 404 for non-existent location" do
+      login_as(@admin)
+      get pos_location_path(id: 999999)
+      assert_response :not_found
+    end
   end
 end

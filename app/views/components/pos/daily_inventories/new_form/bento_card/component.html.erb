@@ -1,0 +1,58 @@
+<div id="<%= dom_id %>" class="<%= card_classes %>">
+  <div class="card-body p-4">
+    <%# カード選択エリア %>
+    <label class="flex items-center gap-3 cursor-pointer">
+      <%# 実際のチェックボックス（非表示） %>
+      <input type="checkbox"
+             name="<%= field_name_prefix %>[selected]"
+             value="1"
+             class="hidden"
+             <%= "checked" if selected? %>
+             data-action="change->ghost-form#submit">
+
+      <%# ビジュアルチェックボックス %>
+      <div class="<%= checkbox_visual_classes %>">
+        <% if selected? %>
+          <%= component "icons/check", extra_class: "h-4 w-4 text-accent-content" %>
+        <% end %>
+      </div>
+
+      <span class="font-medium text-lg flex-1"><%= catalog_name %></span>
+    </label>
+
+    <%# ステッパー（選択時のみ表示） %>
+    <% if selected? %>
+      <div class="mt-4">
+        <div class="flex items-center justify-center gap-4">
+          <%# 減算ボタン（ローカルで完結） %>
+          <button type="button"
+                  class="btn btn-circle btn-outline btn-lg"
+                  aria-label="<%= t(".decrement") %>"
+                  onclick="const input = this.parentElement.querySelector('input[type=number]'); const v = parseInt(input.value) || 1; if (v > 1) input.value = v - 1;">
+            <%= component "icons/minus", extra_class: "h-6 w-6" %>
+          </button>
+
+          <%# 数量入力（ローカルで完結） %>
+          <div class="flex items-center gap-2">
+            <input type="number"
+                   name="<%= field_name_prefix %>[stock]"
+                   value="<%= stock %>"
+                   autocomplete="off"
+                   min="1"
+                   max="999"
+                   class="input input-bordered w-20 text-center text-2xl font-bold">
+            <span class="text-lg"><%= t(".unit") %></span>
+          </div>
+
+          <%# 加算ボタン（ローカルで完結） %>
+          <button type="button"
+                  class="btn btn-circle btn-outline btn-lg"
+                  aria-label="<%= t(".increment") %>"
+                  onclick="const input = this.parentElement.querySelector('input[type=number]'); const v = parseInt(input.value) || 0; if (v < 999) input.value = v + 1;">
+            <%= component "icons/plus", extra_class: "h-6 w-6" %>
+          </button>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,34 @@
+<%# 各弁当カードを更新 %>
+<% @form.items.each do |item| %>
+  <%= turbo_stream.replace "bento-card-#{item[:catalog_id]}" do %>
+    <%= component "pos/daily_inventories/new_form/bento_card",
+                  item: item %>
+  <% end %>
+<% end %>
+
+<%# 送信ボタンを更新 %>
+<%= turbo_stream.replace "submit-button" do %>
+  <div id="submit-button">
+    <button type="submit"
+            class="btn btn-accent btn-lg w-full gap-2"
+            <%= "disabled" unless @form.can_submit? %>>
+      <span class="text-xl">🍱</span>
+      <span><%= t("pos.locations.daily_inventories.new_form.submit_label") %></span>
+      <span class="badge badge-neutral"><%= @form.selected_count %></span>
+      <span><%= t("pos.locations.daily_inventories.new_form.submit_unit") %></span>
+    </button>
+  </div>
+<% end %>
+
+<%# Ghost Form の hidden fields を更新 %>
+<%= turbo_stream.replace "ghost-form" do %>
+  <%= form_with url: pos_location_daily_inventories_form_state_path(@location),
+                method: :post,
+                id: "ghost-form",
+                data: { turbo_stream: true, ghost_form_target: "ghostForm" } do |f| %>
+    <% @form.items.each do |item| %>
+      <%= hidden_field_tag "ghost_inventory[#{item[:catalog_id]}][selected]", item[:selected] ? "1" : "0" %>
+      <%= hidden_field_tag "ghost_inventory[#{item[:catalog_id]}][stock]", item[:stock] %>
+    <% end %>
+  <% end %>
+<% end %>
