@@ -12,10 +12,10 @@ module Discounts
       def badge_class
         base = "badge-soft font-bold"
         color = case status
-                when :active then "badge-success"
-                when :expired then "badge-error"
-                when :upcoming then "badge-warning"
-                end
+        when :active then "badge-success"
+        when :expired then "badge-error"
+        when :upcoming then "badge-warning"
+        end
         "#{base} #{color}"
       end
     end
