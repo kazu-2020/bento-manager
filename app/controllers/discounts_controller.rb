@@ -16,8 +16,8 @@ class DiscountsController < ApplicationController
   end
 
   def create
-    @discount = Discount.new(discount_params.except(:discountable_attributes))
-    @discount.discountable = Coupon.new(discount_params[:discountable_attributes])
+    @discount = Discount.new(discount_params.except(:discountable))
+    @discount.discountable = Coupon.new(discount_params[:discountable])
 
     if @discount.save
       @discounts = Discount.preload(:discountable).order(created_at: :desc)
@@ -52,7 +52,7 @@ class DiscountsController < ApplicationController
   def discount_params
     params.require(:discount).permit(
       :name, :valid_from, :valid_until,
-      discountable_attributes: [ :description, :amount_per_unit, :max_per_bento_quantity ]
+      discountable: [ :description, :amount_per_unit, :max_per_bento_quantity ]
     )
   end
 

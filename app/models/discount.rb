@@ -2,7 +2,7 @@ class Discount < ApplicationRecord
   # ===== アソシエーション =====
   has_many :sale_discounts, dependent: :restrict_with_exception
   has_many :sales, through: :sale_discounts
-  delegated_type :discountable, types: %w[Coupon]
+  delegated_type :discountable, types: %w[Coupon], autosave: true
 
   # ===== 委譲 =====
   delegate :applicable?, to: :discountable
