@@ -10,11 +10,13 @@ module Discounts
       attr_reader :status
 
       def badge_class
-        case status
-        when :active then "badge-success"
-        when :expired then "badge-error"
-        when :upcoming then "badge-warning"
-        end
+        base = "badge-soft font-bold"
+        color = case status
+                when :active then "badge-success"
+                when :expired then "badge-error"
+                when :upcoming then "badge-warning"
+                end
+        "#{base} #{color}"
       end
     end
   end
