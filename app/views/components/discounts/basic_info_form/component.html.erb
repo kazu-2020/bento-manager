@@ -18,25 +18,7 @@
           </div>
         </div>
 
-        <%# 名前フィールド %>
-        <div class="form-control w-full mb-4">
-          <%= f.label :name, class: "label" do %>
-            <span class="label-text font-medium">
-              <%= Discount.human_attribute_name(:name) %>
-              <span class="text-error">*</span>
-            </span>
-          <% end %>
-          <%= f.text_field :name,
-              required: true,
-              autofocus: true,
-              class: "input input-bordered w-full #{discount.errors[:name].any? ? 'input-error' : ''}",
-              placeholder: t(".placeholder.name") %>
-          <% discount.errors.where(:name).each do |error| %>
-            <p class="text-sm text-error mt-1"><%= error.full_message %></p>
-          <% end %>
-        </div>
-
-        <%# 有効開始日 %>
+        <%# 有効期間のみ編集可能（名前・クーポン情報は新規作成で対応） %>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="form-control w-full">
             <%= f.label :valid_from, class: "label" do %>

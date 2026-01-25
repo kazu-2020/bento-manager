@@ -55,45 +55,54 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "admin can access edit for basic_info" do
+  test "admin can access edit" do
     login_as(@admin)
-    get edit_discount_path(@discount, section: :basic_info)
+    get edit_discount_path(@discount)
     assert_response :success
   end
 
-  test "admin can access edit for coupon_info" do
+  # 有効期間のみ編集可能（名前・クーポン情報は新規作成で対応）
+  test "admin can update discount validity period" do
     login_as(@admin)
-    get edit_discount_path(@discount, section: :coupon_info)
+    new_valid_from = Date.current + 1.week
+    new_valid_until = Date.current + 1.month
+    patch discount_path(@discount), params: {
+      discount: { valid_from: new_valid_from, valid_until: new_valid_until }
+    }, as: :turbo_stream
     assert_response :success
+    @discount.reload
+    assert_equal new_valid_from, @discount.valid_from
+    assert_equal new_valid_until, @discount.valid_until
   end
 
-  test "admin can update discount basic_info" do
+  test "admin cannot update discount name" do
     login_as(@admin)
-    patch discount_path(@discount, section: :basic_info), params: {
+    original_name = @discount.name
+    patch discount_path(@discount), params: {
       discount: { name: "更新されたクーポン名" }
     }, as: :turbo_stream
     assert_response :success
     @discount.reload
-    assert_equal "更新されたクーポン名", @discount.name
+    assert_equal original_name, @discount.name
   end
 
-  test "admin can update discount coupon_info" do
+  test "admin cannot update coupon info" do
     login_as(@admin)
-    patch discount_path(@discount, section: :coupon_info), params: {
+    original_description = @discount.discountable.description
+    original_amount = @discount.discountable.amount_per_unit
+    patch discount_path(@discount), params: {
       discount: {
         discountable_attributes: {
           id: @discount.discountable.id,
           description: "更新された説明",
-          amount_per_unit: 100,
-          max_per_bento_quantity: 2
+          amount_per_unit: 999
         }
       }
     }, as: :turbo_stream
     assert_response :success
     @discount.discountable.reload
-    assert_equal "更新された説明", @discount.discountable.description
-    assert_equal 100, @discount.discountable.amount_per_unit
-    assert_equal 2, @discount.discountable.max_per_bento_quantity
+    assert_equal original_description, @discount.discountable.description
+    assert_equal original_amount, @discount.discountable.amount_per_unit
   end
 
   # ============================================================
@@ -140,18 +149,20 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
 
   test "employee can access edit" do
     login_as_employee(@employee)
-    get edit_discount_path(@discount, section: :basic_info)
+    get edit_discount_path(@discount)
     assert_response :success
   end
 
-  test "employee can update discount" do
+  # 有効期間のみ編集可能
+  test "employee can update discount validity period" do
     login_as_employee(@employee)
-    patch discount_path(@discount, section: :basic_info), params: {
-      discount: { name: "従業員更新クーポン名" }
+    new_valid_from = Date.current + 2.weeks
+    patch discount_path(@discount), params: {
+      discount: { valid_from: new_valid_from }
     }, as: :turbo_stream
     assert_response :success
     @discount.reload
-    assert_equal "従業員更新クーポン名", @discount.name
+    assert_equal new_valid_from, @discount.valid_from
   end
 
   # ============================================================
@@ -186,7 +197,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "unauthenticated user is redirected to login on edit" do
-    get edit_discount_path(@discount, section: :basic_info)
+    get edit_discount_path(@discount)
     assert_redirected_to "/employee/login"
   end
 
@@ -219,14 +230,15 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
   end
 
-  test "update with invalid params renders edit with unprocessable_entity" do
+  test "update with invalid date range renders edit with unprocessable_entity" do
     login_as(@admin)
-    original_name = @discount.name
-    patch discount_path(@discount, section: :basic_info), params: {
-      discount: { name: "" }
+    original_valid_from = @discount.valid_from
+    # valid_until を valid_from より前に設定してバリデーションエラーを発生させる
+    patch discount_path(@discount), params: {
+      discount: { valid_from: Date.current + 1.month, valid_until: Date.current }
     }, as: :turbo_stream
     assert_response :unprocessable_entity
     @discount.reload
-    assert_equal original_name, @discount.name
+    assert_equal original_valid_from, @discount.valid_from
   end
 end

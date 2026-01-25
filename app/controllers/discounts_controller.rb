@@ -31,24 +31,19 @@ class DiscountsController < ApplicationController
     end
   end
 
+  # 有効期間のみ編集可能（名前・クーポン情報は新規作成で対応）
   def edit
-    @edit_section = params[:section]&.to_sym || :basic_info
-
-    case @edit_section
-    when :basic_info
-      render Discounts::BasicInfoForm::Component.new(discount: @discount)
-    when :coupon_info
-      render Discounts::CouponInfoForm::Component.new(discount: @discount)
-    end
+    render Discounts::BasicInfoForm::Component.new(discount: @discount)
   end
 
   def update
-    @edit_section = params[:section]&.to_sym || :basic_info
-
-    if @discount.update(discount_params)
+    if @discount.update(update_params)
       render :update, formats: :turbo_stream
     else
-      handle_update_error
+      render turbo_stream: turbo_stream.replace(
+        Discounts::BasicInfo::Component::FRAME_ID,
+        Discounts::BasicInfoForm::Component.new(discount: @discount)
+      ), status: :unprocessable_entity
     end
   end
 
@@ -58,6 +53,7 @@ class DiscountsController < ApplicationController
     @discount = Discount.preload(:discountable).find(params[:id])
   end
 
+  # 新規作成時のパラメータ（全項目）
   def discount_params
     params.require(:discount).permit(
       :name, :valid_from, :valid_until,
@@ -65,18 +61,8 @@ class DiscountsController < ApplicationController
     )
   end
 
-  def handle_update_error
-    case @edit_section
-    when :basic_info
-      render turbo_stream: turbo_stream.replace(
-        Discounts::BasicInfo::Component::FRAME_ID,
-        Discounts::BasicInfoForm::Component.new(discount: @discount)
-      ), status: :unprocessable_entity
-    when :coupon_info
-      render turbo_stream: turbo_stream.replace(
-        Discounts::CouponInfo::Component::FRAME_ID,
-        Discounts::CouponInfoForm::Component.new(discount: @discount)
-      ), status: :unprocessable_entity
-    end
+  # 更新時のパラメータ（有効期間のみ）
+  def update_params
+    params.require(:discount).permit(:valid_from, :valid_until)
   end
 end

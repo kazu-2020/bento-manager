@@ -1,13 +1,6 @@
-<%# 編集されたセクションを更新 %>
-<% case @edit_section %>
-<% when :basic_info %>
-  <%= turbo_stream.replace Discounts::BasicInfo::Component::FRAME_ID do %>
-    <%= component "discounts/basic_info", discount: @discount %>
-  <% end %>
-<% when :coupon_info %>
-  <%= turbo_stream.replace Discounts::CouponInfo::Component::FRAME_ID do %>
-    <%= component "discounts/coupon_info", discount: @discount %>
-  <% end %>
+<%# 有効期間セクションを更新 %>
+<%= turbo_stream.replace Discounts::BasicInfo::Component::FRAME_ID do %>
+  <%= component "discounts/basic_info", discount: @discount %>
 <% end %>
 
 <%# トースト通知を表示 %>

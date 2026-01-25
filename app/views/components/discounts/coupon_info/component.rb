@@ -16,10 +16,6 @@ module Discounts
         FRAME_ID
       end
 
-      def edit_path
-        helpers.edit_discount_path(discount, section: :coupon_info)
-      end
-
       def card_classes
         helpers.class_names(CARD_CLASSES)
       end
