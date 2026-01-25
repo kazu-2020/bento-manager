@@ -7,13 +7,15 @@
 </nav>
 
 <%# ヘッダーセクション: タイトル + ステータス %>
-<header class="flex items-center justify-between mb-6">
-  <div class="flex items-center gap-3">
-    <%= component "icons/ticket", size: :lg, extra_class: "text-primary" %>
-    <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
-    <%= component "discounts/status_badge", status: status %>
-  </div>
-</header>
+<%= helpers.turbo_frame_tag header_frame_id do %>
+  <header class="flex items-center justify-between mb-6">
+    <div class="flex items-center gap-3">
+      <%= component "icons/ticket", size: :lg, extra_class: "text-primary" %>
+      <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
+      <%= component "discounts/status_badge", status: status %>
+    </div>
+  </header>
+<% end %>
 
 <%# 基本情報カード %>
 <%= component "discounts/basic_info", discount: discount %>
