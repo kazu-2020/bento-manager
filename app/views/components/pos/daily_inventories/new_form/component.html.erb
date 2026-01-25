@@ -57,8 +57,8 @@
                   id: "ghost-form",
                   data: { turbo_stream: true, ghost_form_target: "ghostForm" } do |f| %>
       <% items.each do |item| %>
-        <%= hidden_field_tag "ghost_inventory[#{item[:catalog_id]}][selected]", item[:selected] ? "1" : "0" %>
-        <%= hidden_field_tag "ghost_inventory[#{item[:catalog_id]}][stock]", item[:stock] %>
+        <%= hidden_field_tag "ghost_inventory[#{item.catalog_id}][selected]", item.selected? ? "1" : "0" %>
+        <%= hidden_field_tag "ghost_inventory[#{item.catalog_id}][stock]", item.stock %>
       <% end %>
     <% end %>
   </div>

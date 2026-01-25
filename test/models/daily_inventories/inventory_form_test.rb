@@ -17,8 +17,8 @@ module DailyInventories
 
       assert_equal @catalogs.count, form.items.count
       form.items.each do |item|
-        assert_not item[:selected]
-        assert_equal 10, item[:stock]
+        assert_not item.selected?
+        assert_equal 10, item.stock
       end
     end
 
@@ -28,9 +28,9 @@ module DailyInventories
       }
       form = InventoryForm.new(catalogs: @catalogs, state: state)
 
-      item_a = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert item_a[:selected]
-      assert_equal 15, item_a[:stock]
+      item_a = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert item_a.selected?
+      assert_equal 15, item_a.stock
     end
 
     test "toggle selects unselected item" do
@@ -38,8 +38,8 @@ module DailyInventories
 
       form.toggle(@bento_a.id)
 
-      item = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert item[:selected]
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert item.selected?
     end
 
     test "toggle deselects selected item" do
@@ -48,8 +48,8 @@ module DailyInventories
 
       form.toggle(@bento_a.id)
 
-      item = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert_not item[:selected]
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert_not item.selected?
     end
 
     test "increment increases stock by 1" do
@@ -57,8 +57,8 @@ module DailyInventories
 
       form.increment(@bento_a.id)
 
-      item = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert_equal 11, item[:stock]
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert_equal 11, item.stock
     end
 
     test "increment does not exceed 999" do
@@ -67,8 +67,8 @@ module DailyInventories
 
       form.increment(@bento_a.id)
 
-      item = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert_equal 999, item[:stock]
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert_equal 999, item.stock
     end
 
     test "decrement decreases stock by 1" do
@@ -76,8 +76,8 @@ module DailyInventories
 
       form.decrement(@bento_a.id)
 
-      item = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert_equal 9, item[:stock]
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert_equal 9, item.stock
     end
 
     test "decrement does not go below 1" do
@@ -86,8 +86,8 @@ module DailyInventories
 
       form.decrement(@bento_a.id)
 
-      item = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert_equal 1, item[:stock]
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert_equal 1, item.stock
     end
 
     test "update_stock sets stock value" do
@@ -95,20 +95,20 @@ module DailyInventories
 
       form.update_stock(@bento_a.id, 25)
 
-      item = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert_equal 25, item[:stock]
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert_equal 25, item.stock
     end
 
     test "update_stock clamps value between 1 and 999" do
       form = InventoryForm.new(catalogs: @catalogs)
 
       form.update_stock(@bento_a.id, 0)
-      item = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert_equal 1, item[:stock]
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert_equal 1, item.stock
 
       form.update_stock(@bento_a.id, 1000)
-      item = form.items.find { |i| i[:catalog_id] == @bento_a.id }
-      assert_equal 999, item[:stock]
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert_equal 999, item.stock
     end
 
     test "selected_items returns only selected items" do
@@ -116,7 +116,7 @@ module DailyInventories
       form.toggle(@bento_a.id)
 
       assert_equal 1, form.selected_items.count
-      assert_equal @bento_a.id, form.selected_items.first[:catalog_id]
+      assert_equal @bento_a.id, form.selected_items.first.catalog_id
     end
 
     test "selected_count returns number of selected items" do

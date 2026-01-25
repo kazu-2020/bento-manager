@@ -29,12 +29,12 @@ Rails.application.routes.draw do
 
   # POS（販売員用）
   namespace :pos do
-    resources :locations, only: [:index, :show] do
-      resources :daily_inventories, only: [:new, :create], module: :locations
+    resources :locations, only: [ :index, :show ] do
+      resources :daily_inventories, only: [ :new, :create ], module: :locations
       namespace :daily_inventories, module: "locations/daily_inventories" do
-        resource :form_state, only: [:create]
+        resource :form_state, only: [ :create ]
       end
-      resources :sales, only: [:new], module: :locations
+      resources :sales, only: [ :new ], module: :locations
     end
   end
 

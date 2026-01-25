@@ -11,24 +11,10 @@ module Pos
 
           attr_reader :item
 
-          def catalog_id
-            item[:catalog_id]
-          end
-
-          def catalog_name
-            item[:catalog_name]
-          end
+          delegate :catalog_id, :catalog_name, :selected?, :stock, to: :item
 
           def dom_id
             "bento-card-#{catalog_id}"
-          end
-
-          def selected?
-            item[:selected]
-          end
-
-          def stock
-            item[:stock]
           end
 
           def field_name_prefix

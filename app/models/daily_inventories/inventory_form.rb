@@ -5,7 +5,7 @@ module DailyInventories
     include ActiveModel::Model
     include ActiveModel::Attributes
 
-    DEFAULT_STOCK = 10
+    ITEM_TYPE = InventoryItemType.new
 
     attr_reader :items
 
@@ -15,37 +15,23 @@ module DailyInventories
     end
 
     def toggle(catalog_id)
-      item = find_item(catalog_id)
-      return unless item
-
-      item[:selected] = !item[:selected]
+      find_item(catalog_id)&.toggle
     end
 
     def update_stock(catalog_id, stock)
-      item = find_item(catalog_id)
-      return unless item
-
-      item[:stock] = [[stock.to_i, 1].max, 999].min
+      find_item(catalog_id)&.update_stock(stock)
     end
 
     def increment(catalog_id)
-      item = find_item(catalog_id)
-      return unless item
-      return if item[:stock] >= 999
-
-      item[:stock] += 1
+      find_item(catalog_id)&.increment
     end
 
     def decrement(catalog_id)
-      item = find_item(catalog_id)
-      return unless item
-      return if item[:stock] <= 1
-
-      item[:stock] -= 1
+      find_item(catalog_id)&.decrement
     end
 
     def selected_items
-      @items.select { |item| item[:selected] }
+      @items.select(&:selected?)
     end
 
     def selected_count
@@ -58,18 +44,13 @@ module DailyInventories
 
     def to_state
       @items.each_with_object({}) do |item, hash|
-        hash[item[:catalog_id].to_s] = {
-          selected: item[:selected],
-          stock: item[:stock]
-        }
+        hash[item.catalog_id.to_s] = item.to_state_entry
       end
     end
 
     def to_inventory_params
       {
-        inventories: selected_items.map do |item|
-          { catalog_id: item[:catalog_id], stock: item[:stock] }
-        end
+        inventories: selected_items.map(&:to_inventory_param)
       }
     end
 
@@ -78,17 +59,14 @@ module DailyInventories
     def build_items(state)
       @catalogs.map do |catalog|
         saved = state[catalog.id.to_s] || {}
-        {
-          catalog_id: catalog.id,
-          catalog_name: catalog.name,
-          selected: saved[:selected] || saved["selected"] || false,
-          stock: saved[:stock] || saved["stock"] || DEFAULT_STOCK
-        }
+        ITEM_TYPE.cast(
+          saved.symbolize_keys.merge(catalog_id: catalog.id, catalog_name: catalog.name)
+        )
       end
     end
 
     def find_item(catalog_id)
-      @items.find { |item| item[:catalog_id] == catalog_id.to_i }
+      @items.find { |item| item.catalog_id == catalog_id.to_i }
     end
   end
 end

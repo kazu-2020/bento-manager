@@ -1,6 +1,6 @@
 <%# 各弁当カードを更新 %>
 <% @form.items.each do |item| %>
-  <%= turbo_stream.replace "bento-card-#{item[:catalog_id]}" do %>
+  <%= turbo_stream.replace "bento-card-#{item.catalog_id}" do %>
     <%= component "pos/daily_inventories/new_form/bento_card",
                   item: item %>
   <% end %>
@@ -27,8 +27,8 @@
                 id: "ghost-form",
                 data: { turbo_stream: true, ghost_form_target: "ghostForm" } do |f| %>
     <% @form.items.each do |item| %>
-      <%= hidden_field_tag "ghost_inventory[#{item[:catalog_id]}][selected]", item[:selected] ? "1" : "0" %>
-      <%= hidden_field_tag "ghost_inventory[#{item[:catalog_id]}][stock]", item[:stock] %>
+      <%= hidden_field_tag "ghost_inventory[#{item.catalog_id}][selected]", item.selected? ? "1" : "0" %>
+      <%= hidden_field_tag "ghost_inventory[#{item.catalog_id}][stock]", item.stock %>
     <% end %>
   <% end %>
 <% end %>
