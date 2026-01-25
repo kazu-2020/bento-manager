@@ -3,9 +3,10 @@ import { registerControllers } from 'stimulus-vite-helpers'
 
 // Stimulusコントローラー登録
 const controllers = import.meta.glob('./**/*_controller.js', { eager: true })
-const componentControllers = import.meta.glob('../../views/components/**/*_controller.js', { eager: true })
-
 registerControllers(application, controllers)
-registerControllers(application, componentControllers)
+
+// ViewComponent内のコントローラーを手動登録
+import ToastController from "../../views/components/toast/toast_controller"
+application.register("toast", ToastController)
 
 export { application }
