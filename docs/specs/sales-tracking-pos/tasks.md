@@ -431,7 +431,7 @@
   - CatalogPrice の nested attributes 対応
   - _Requirements: 1.1, 1.2, 1.3, 1.4_
 
-- [ ] 15.3 (P) DiscountsController 実装
+- [x] 15.3 (P) DiscountsController 実装
   - CRUD アクション（index, show, new, create, edit, update, destroy）
   - Coupon の nested attributes 対応
   - 有効期限の設定
@@ -507,13 +507,13 @@
   - CatalogPrice の kind（regular / bundle）対応 - `SideMenuCreator` が bundle_price 入力時に CatalogPricingRule を自動作成
   - _Requirements: 1.1, 1.2, 1.4, 14.1, 14.2_
 
-- [ ] 20.2 (P) Catalog 削除確認モーダル
+- [x] 20.2 (P) Catalog 削除確認モーダル
   - 削除確認ダイアログ（Turbo Frame）
   - CatalogDiscontinuation 作成
   - _Requirements: 1.3_
 
-- [ ] 21. Discount 管理画面実装
-- [ ] 21.1 (P) Discount 一覧・フォーム画面
+- [x] 21. Discount 管理画面実装
+- [x] 21.1 (P) Discount 一覧・フォーム画面
   - discounts/index.html.erb（割引一覧、有効期限フィルタ）
   - discounts/new.html.erb, discounts/edit.html.erb（割引登録・編集フォーム）
   - Coupon の nested form（amount_per_unit, max_per_bento_quantity）
