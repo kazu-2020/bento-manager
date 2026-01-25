@@ -38,14 +38,13 @@
       <%# 固定フッター %>
       <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
         <div id="submit-button">
-          <button type="submit"
-                  class="btn btn-accent btn-lg w-full gap-2"
-                  <%= "disabled" unless can_submit? %>>
+          <%= f.button class: "btn btn-accent btn-lg w-full gap-2",
+                      disabled: !can_submit? do %>
             <span class="text-xl">🍱</span>
             <span><%= t(".submit_label") %></span>
             <span class="badge badge-neutral"><%= selected_count %></span>
             <span><%= t(".submit_unit") %></span>
-          </button>
+          <% end %>
         </div>
       </footer>
     <% end %>
