@@ -43,7 +43,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
             name: "新規クーポン",
             valid_from: Date.current,
             valid_until: 1.month.from_now.to_date,
-            discountable_attributes: {
+            discountable: {
               description: "テストクーポン",
               amount_per_unit: 50,
               max_per_bento_quantity: 1
@@ -92,7 +92,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     original_amount = @discount.discountable.amount_per_unit
     patch discount_path(@discount), params: {
       discount: {
-        discountable_attributes: {
+        discountable: {
           id: @discount.discountable.id,
           description: "更新された説明",
           amount_per_unit: 999
@@ -135,7 +135,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
           discount: {
             name: "従業員作成クーポン",
             valid_from: Date.current,
-            discountable_attributes: {
+            discountable: {
               description: "従業員が作成",
               amount_per_unit: 30,
               max_per_bento_quantity: 1
@@ -219,7 +219,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
         discount: {
           name: "",
           valid_from: Date.current,
-          discountable_attributes: {
+          discountable: {
             description: "テスト",
             amount_per_unit: 50,
             max_per_bento_quantity: 1
