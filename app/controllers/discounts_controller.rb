@@ -52,7 +52,7 @@ class DiscountsController < ApplicationController
   def discount_params
     params.require(:discount).permit(
       :name, :valid_from, :valid_until,
-      discountable_attributes: [ :id, :description, :amount_per_unit, :max_per_bento_quantity ]
+      discountable_attributes: [ :description, :amount_per_unit, :max_per_bento_quantity ]
     )
   end
 
