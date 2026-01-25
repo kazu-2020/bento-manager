@@ -257,6 +257,11 @@ ja:
       already_discontinued: "この商品カタログは既に提供終了です。"
       default_reason: "管理者による提供終了"
 
+  pos:
+    locations:
+      index:
+        title: "販売先を選択"
+
   discounts:
     index:
       title: "割引クーポン"

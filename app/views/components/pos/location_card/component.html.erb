@@ -1,0 +1,11 @@
+<div class="<%= card_classes %>">
+  <div class="card-body p-4">
+    <h2 class="card-title text-lg"><%= name %></h2>
+    <% unless has_today_inventory? %>
+      <div class="flex items-center gap-1 text-warning text-sm">
+        <%= component "icons/warning", extra_class: "h-4 w-4" %>
+        <span><%= t(".no_inventory_warning") %></span>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -27,6 +27,11 @@ Rails.application.routes.draw do
     resources :employees
   end
 
+  # POS（販売員用）
+  namespace :pos do
+    resources :locations, only: [:index]
+  end
+
   # 共有リソース（Admin と Employee 両方がアクセス可能）
   resources :locations, except: [ :destroy ]
   resources :discounts, except: [ :destroy ]
