@@ -1,0 +1,6 @@
+---
+ja:
+  title: "基本情報"
+  update: "更新"
+  hint:
+    valid_until: "空欄の場合は無期限となります"

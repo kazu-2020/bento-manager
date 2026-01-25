@@ -28,6 +28,8 @@ ja:
       sale: "販売"
       sale_item: "販売明細"
       additional_order: "追加発注"
+      discount: "割引"
+      coupon: "クーポン"
     attributes:
       admin:
         email: "メールアドレス"
@@ -95,6 +97,14 @@ ja:
         order_at: "発注日時"
         quantity: "数量"
         employee: "担当者"
+      discount:
+        name: "名前"
+        valid_from: "有効開始日"
+        valid_until: "有効終了日"
+      coupon:
+        description: "説明"
+        amount_per_unit: "1枚あたりの割引額"
+        max_per_bento_quantity: "弁当1個あたりの最大適用枚数"
 
   enums:
     admin:
@@ -246,3 +256,17 @@ ja:
       failure: "商品カタログの提供終了に失敗しました。"
       already_discontinued: "この商品カタログは既に提供終了です。"
       default_reason: "管理者による提供終了"
+
+  discounts:
+    index:
+      title: "割引クーポン"
+    show:
+      title: "割引クーポン詳細"
+    new:
+      title: "割引クーポン登録"
+    edit:
+      title: "割引クーポン編集"
+    create:
+      success: "割引クーポンを作成しました。"
+    update:
+      success: "割引クーポンを更新しました。"

@@ -1,0 +1,9 @@
+<h3 class="text-lg font-bold mb-4">
+  <%= new_form.modal_title %>
+</h3>
+
+<form method="dialog">
+  <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 modal-close-button" aria-label="<%= t('helpers.link.close', default: '閉じる') %>">
+    <%= component "icons/close" %>
+  </button>
+</form>

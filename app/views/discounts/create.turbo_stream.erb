@@ -1,0 +1,7 @@
+<%# 一覧を更新 %>
+<%= turbo_stream.update "discounts_content" do %>
+  <%= component "discounts/list", discounts: @discounts %>
+<% end %>
+
+<%# トースト通知を表示 %>
+<%= toast_stream_show(t("discounts.create.success"), type: :success) %>

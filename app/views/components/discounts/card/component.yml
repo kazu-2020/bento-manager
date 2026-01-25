@@ -1,0 +1,10 @@
+---
+ja:
+  discount_amount: "割引額"
+  max_application: "最大適用"
+  per_bento: "弁当1個につき%{count}枚"
+  no_end_date: "無期限"
+  status:
+    active: "有効"
+    expired: "期限切れ"
+    upcoming: "期間前"

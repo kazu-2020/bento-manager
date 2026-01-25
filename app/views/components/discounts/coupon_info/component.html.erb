@@ -1,0 +1,48 @@
+<%= helpers.turbo_frame_tag frame_id do %>
+  <section class="<%= card_classes %> mb-6" aria-labelledby="discount-coupon-info-heading">
+    <div class="card-body">
+      <%# ヘッダー: タイトルのみ（クーポン情報は編集不可、新規作成で対応） %>
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="discount-coupon-info-heading" class="card-title text-lg flex items-center gap-2">
+          <%= component "icons/ticket", size: :sm, extra_class: "text-primary" %>
+          <%= t(".title") %>
+        </h2>
+      </div>
+
+      <%# データ表示 %>
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+        <%# 説明 %>
+        <% if coupon&.description.present? %>
+          <div class="sm:col-span-2">
+            <dt class="text-sm font-medium text-base-content/60">
+              <%= Coupon.human_attribute_name(:description) %>
+            </dt>
+            <dd class="mt-1 text-base-content/80 whitespace-pre-wrap">
+              <%= coupon.description %>
+            </dd>
+          </div>
+        <% end %>
+
+        <%# 1枚あたりの割引額 %>
+        <div>
+          <dt class="text-sm font-medium text-base-content/60">
+            <%= Coupon.human_attribute_name(:amount_per_unit) %>
+          </dt>
+          <dd class="mt-1 text-base-content font-bold text-lg text-primary">
+            <%= formatted_amount %>
+          </dd>
+        </div>
+
+        <%# 弁当1個あたりの最大適用枚数 %>
+        <div>
+          <dt class="text-sm font-medium text-base-content/60">
+            <%= Coupon.human_attribute_name(:max_per_bento_quantity) %>
+          </dt>
+          <dd class="mt-1 text-base-content font-medium">
+            <%= t(".per_bento", count: coupon&.max_per_bento_quantity) %>
+          </dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+<% end %>
