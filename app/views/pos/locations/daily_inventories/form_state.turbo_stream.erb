@@ -22,8 +22,7 @@
 
 <%# Ghost Form の hidden fields を更新 %>
 <%= turbo_stream.replace "ghost-form" do %>
-  <%= form_with url: pos_location_daily_inventories_form_state_path(@location),
-                method: :post,
+  <%= form_with **@form.form_state_options,
                 id: "ghost-form",
                 data: { turbo_stream: true, ghost_form_target: "ghostForm" } do |f| %>
     <% @form.items.each do |item| %>

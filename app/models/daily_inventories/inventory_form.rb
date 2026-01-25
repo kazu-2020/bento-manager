@@ -4,14 +4,24 @@ module DailyInventories
   class InventoryForm
     include ActiveModel::Model
     include ActiveModel::Attributes
+    include Rails.application.routes.url_helpers
 
     ITEM_TYPE = InventoryItemType.new
 
-    attr_reader :items
+    attr_reader :items, :location
 
-    def initialize(catalogs:, state: {})
+    def initialize(location:, catalogs:, state: {})
+      @location = location
       @catalogs = catalogs
       @items = build_items(state)
+    end
+
+    def form_with_options
+      { url: pos_location_daily_inventories_path(location), method: :post }
+    end
+
+    def form_state_options
+      { url: pos_location_daily_inventories_form_state_path(location), method: :post }
     end
 
     def toggle(catalog_id)

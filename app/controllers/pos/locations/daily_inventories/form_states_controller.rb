@@ -27,7 +27,7 @@ module Pos
         end
 
         def build_form(state = {})
-          ::DailyInventories::InventoryForm.new(catalogs: @catalogs, state: state)
+          ::DailyInventories::InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
         end
 
         def parse_inventory_params(key)

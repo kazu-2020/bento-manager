@@ -11,26 +11,19 @@ module Pos
 
         attr_reader :location, :form
 
-        delegate :items, :can_submit?, :selected_count, to: :form
+        delegate :items, :can_submit?, :selected_count,
+                 :form_with_options, :form_state_options, to: :form
 
         def location_name
           location.name
         end
 
-        def today_date
-          I18n.l(Date.current, format: :long)
-        end
-
-        def form_url
-          helpers.pos_location_daily_inventories_path(location)
-        end
-
-        def form_state_url
-          helpers.pos_location_daily_inventories_form_state_path(location)
-        end
-
         def back_url
           helpers.pos_locations_path
+        end
+
+        def today_date
+          I18n.l(Date.current, format: :long)
         end
 
         def has_items?

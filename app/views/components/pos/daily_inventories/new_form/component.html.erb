@@ -16,8 +16,7 @@
     </header>
 
     <%# Original Form (本来の処理を行うフォーム) %>
-    <%= form_with url: form_url,
-                  method: :post,
+    <%= form_with **form_with_options,
                   data: { ghost_form_target: "originalForm" } do |f| %>
       <main class="flex-1 p-4 pb-24">
         <p class="text-center text-base-content/70 mb-6"><%= t(".instruction") %></p>
@@ -52,8 +51,7 @@
     <% end %>
 
     <%# Ghost Form (画面更新用の幽霊フォーム) %>
-    <%= form_with url: form_state_url,
-                  method: :post,
+    <%= form_with **form_state_options,
                   id: "ghost-form",
                   data: { turbo_stream: true, ghost_form_target: "ghostForm" } do |f| %>
       <% items.each do |item| %>

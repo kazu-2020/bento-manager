@@ -4,16 +4,17 @@ require "test_helper"
 
 module DailyInventories
   class InventoryFormTest < ActiveSupport::TestCase
-    fixtures :catalogs
+    fixtures :catalogs, :locations
 
     setup do
+      @location = locations(:city_hall)
       @catalogs = Catalog.available.bento.order(:name)
       @bento_a = catalogs(:daily_bento_a)
       @bento_b = catalogs(:daily_bento_b)
     end
 
     test "initializes with all catalogs unselected" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
       assert_equal @catalogs.count, form.items.count
       form.items.each do |item|
@@ -26,7 +27,7 @@ module DailyInventories
       state = {
         @bento_a.id.to_s => { selected: true, stock: 15 }
       }
-      form = InventoryForm.new(catalogs: @catalogs, state: state)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
 
       item_a = form.items.find { |i| i.catalog_id == @bento_a.id }
       assert item_a.selected?
@@ -34,7 +35,7 @@ module DailyInventories
     end
 
     test "toggle selects unselected item" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
       form.toggle(@bento_a.id)
 
@@ -44,7 +45,7 @@ module DailyInventories
 
     test "toggle deselects selected item" do
       state = { @bento_a.id.to_s => { selected: true, stock: 10 } }
-      form = InventoryForm.new(catalogs: @catalogs, state: state)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
 
       form.toggle(@bento_a.id)
 
@@ -53,7 +54,7 @@ module DailyInventories
     end
 
     test "increment increases stock by 1" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
       form.increment(@bento_a.id)
 
@@ -63,7 +64,7 @@ module DailyInventories
 
     test "increment does not exceed 999" do
       state = { @bento_a.id.to_s => { selected: true, stock: 999 } }
-      form = InventoryForm.new(catalogs: @catalogs, state: state)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
 
       form.increment(@bento_a.id)
 
@@ -72,7 +73,7 @@ module DailyInventories
     end
 
     test "decrement decreases stock by 1" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
       form.decrement(@bento_a.id)
 
@@ -82,7 +83,7 @@ module DailyInventories
 
     test "decrement does not go below 1" do
       state = { @bento_a.id.to_s => { selected: true, stock: 1 } }
-      form = InventoryForm.new(catalogs: @catalogs, state: state)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
 
       form.decrement(@bento_a.id)
 
@@ -91,7 +92,7 @@ module DailyInventories
     end
 
     test "update_stock sets stock value" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
       form.update_stock(@bento_a.id, 25)
 
@@ -100,7 +101,7 @@ module DailyInventories
     end
 
     test "update_stock clamps value between 1 and 999" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
       form.update_stock(@bento_a.id, 0)
       item = form.items.find { |i| i.catalog_id == @bento_a.id }
@@ -112,7 +113,7 @@ module DailyInventories
     end
 
     test "selected_items returns only selected items" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
       form.toggle(@bento_a.id)
 
       assert_equal 1, form.selected_items.count
@@ -120,7 +121,7 @@ module DailyInventories
     end
 
     test "selected_count returns number of selected items" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
       assert_equal 0, form.selected_count
 
@@ -132,20 +133,20 @@ module DailyInventories
     end
 
     test "can_submit? returns false when nothing selected" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
       assert_not form.can_submit?
     end
 
     test "can_submit? returns true when at least one item selected" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
       form.toggle(@bento_a.id)
 
       assert form.can_submit?
     end
 
     test "to_state returns serializable hash" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
       form.toggle(@bento_a.id)
       form.increment(@bento_a.id)
 
@@ -156,7 +157,7 @@ module DailyInventories
     end
 
     test "to_inventory_params returns params for BulkCreator" do
-      form = InventoryForm.new(catalogs: @catalogs)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
       form.toggle(@bento_a.id)
       form.toggle(@bento_b.id)
       form.update_stock(@bento_a.id, 15)
@@ -168,5 +169,20 @@ module DailyInventories
       assert params[:inventories].any? { |i| i[:catalog_id] == @bento_a.id && i[:stock] == 15 }
       assert params[:inventories].any? { |i| i[:catalog_id] == @bento_b.id && i[:stock] == 20 }
     end
+
+    test "form_with_options returns url and method for daily inventories" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
+
+      expected = { url: "/pos/locations/#{@location.id}/daily_inventories", method: :post }
+      assert_equal expected, form.form_with_options
+    end
+
+    test "form_state_options returns url and method for form state" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
+
+      expected = { url: "/pos/locations/#{@location.id}/daily_inventories/form_state", method: :post }
+      assert_equal expected, form.form_state_options
+    end
+
   end
 end
