@@ -12,13 +12,13 @@
       <%# データ表示 %>
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
         <%# 説明 %>
-        <% if description.present? %>
+        <% if coupon&.description.present? %>
           <div class="sm:col-span-2">
             <dt class="text-sm font-medium text-base-content/60">
               <%= Coupon.human_attribute_name(:description) %>
             </dt>
             <dd class="mt-1 text-base-content/80 whitespace-pre-wrap">
-              <%= description %>
+              <%= coupon.description %>
             </dd>
           </div>
         <% end %>
@@ -39,7 +39,7 @@
             <%= Coupon.human_attribute_name(:max_per_bento_quantity) %>
           </dt>
           <dd class="mt-1 text-base-content font-medium">
-            <%= t(".per_bento", count: max_per_bento_quantity) %>
+            <%= t(".per_bento", count: coupon&.max_per_bento_quantity) %>
           </dd>
         </div>
       </dl>

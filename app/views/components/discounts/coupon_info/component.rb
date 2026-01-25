@@ -17,27 +17,15 @@ module Discounts
       end
 
       def card_classes
-        helpers.class_names(CARD_CLASSES)
+        CARD_CLASSES
       end
 
       def coupon
         discount.discountable
       end
 
-      def description
-        coupon&.description
-      end
-
-      def amount_per_unit
-        coupon&.amount_per_unit
-      end
-
-      def max_per_bento_quantity
-        coupon&.max_per_bento_quantity
-      end
-
       def formatted_amount
-        helpers.number_to_currency(amount_per_unit) if amount_per_unit
+        helpers.number_to_currency(coupon&.amount_per_unit) if coupon&.amount_per_unit
       end
     end
   end

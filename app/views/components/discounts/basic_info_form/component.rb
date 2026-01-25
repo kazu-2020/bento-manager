@@ -24,7 +24,7 @@ module Discounts
       end
 
       def card_classes
-        helpers.class_names(CARD_CLASSES)
+        CARD_CLASSES
       end
     end
   end

@@ -21,13 +21,8 @@ class DiscountsController < ApplicationController
 
     if @discount.save
       @discounts = Discount.preload(:discountable).order(created_at: :desc)
-      respond_to do |format|
-        format.turbo_stream
-      end
     else
-      respond_to do |format|
-        format.turbo_stream { render :new, status: :unprocessable_entity }
-      end
+      render :new, status: :unprocessable_entity
     end
   end
 
