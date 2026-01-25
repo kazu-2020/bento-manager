@@ -3,6 +3,7 @@ class Discount < ApplicationRecord
   has_many :sale_discounts, dependent: :restrict_with_exception
   has_many :sales, through: :sale_discounts
   delegated_type :discountable, types: %w[Coupon]
+  accepts_nested_attributes_for :discountable
 
   # ===== 委譲 =====
   delegate :applicable?, to: :discountable

@@ -1,0 +1,38 @@
+<% if expired? %>
+  <div class="indicator w-full">
+    <span class="indicator-item indicator-center indicator-middle badge badge-error badge-soft font-bold z-10">
+      <%= t(".status.expired") %>
+    </span>
+<% end %>
+
+<%= link_to show_path, class: card_classes, data: { turbo_frame: "_top" } do %>
+  <div class="card-body p-4 gap-3">
+    <div class="flex items-center justify-between">
+      <h3 class="card-title text-base font-bold line-clamp-1">
+        <%= name %>
+      </h3>
+      <span class="badge <%= status_badge_class %> badge-sm">
+        <%= t(".status.#{status}") %>
+      </span>
+    </div>
+
+    <div class="space-y-1 text-sm">
+      <div class="flex items-center gap-2">
+        <span class="text-base-content/60"><%= t(".discount_amount") %></span>
+        <span class="font-bold text-primary"><%= formatted_amount %>/枚</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-base-content/60"><%= t(".max_application") %></span>
+        <span class="font-medium"><%= t(".per_bento", count: max_per_bento_quantity) %></span>
+      </div>
+    </div>
+
+    <div class="mt-auto pt-2 border-t border-base-200">
+      <span class="text-xs text-base-content/60"><%= formatted_valid_period %></span>
+    </div>
+  </div>
+<% end %>
+
+<% if expired? %>
+  </div>
+<% end %>

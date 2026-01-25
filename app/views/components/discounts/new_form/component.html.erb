@@ -1,0 +1,116 @@
+<%= form_with model: discount, url: helpers.discounts_path, method: :post, id: Discounts::NewForm::Component::FORM_ID, data: { turbo: true } do |f| %>
+  <%# 基本情報 %>
+  <div class="form-control w-full mb-4">
+    <%= f.label :name, class: "label" do %>
+      <span class="label-text font-medium">
+        <%= Discount.human_attribute_name(:name) %>
+        <span class="text-error">*</span>
+      </span>
+    <% end %>
+    <%= f.text_field :name,
+        required: true,
+        autofocus: true,
+        class: "input input-bordered w-full #{discount.errors[:name].any? ? 'input-error' : ''}",
+        placeholder: t(".placeholder.name") %>
+    <% discount.errors.where(:name).each do |error| %>
+      <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+    <% end %>
+  </div>
+
+  <%# 有効期間 %>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+    <div class="form-control w-full">
+      <%= f.label :valid_from, class: "label" do %>
+        <span class="label-text font-medium">
+          <%= Discount.human_attribute_name(:valid_from) %>
+          <span class="text-error">*</span>
+        </span>
+      <% end %>
+      <%= f.date_field :valid_from,
+          required: true,
+          class: "input input-bordered w-full #{discount.errors[:valid_from].any? ? 'input-error' : ''}" %>
+      <% discount.errors.where(:valid_from).each do |error| %>
+        <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+      <% end %>
+    </div>
+
+    <div class="form-control w-full">
+      <%= f.label :valid_until, class: "label" do %>
+        <span class="label-text font-medium"><%= Discount.human_attribute_name(:valid_until) %></span>
+      <% end %>
+      <%= f.date_field :valid_until,
+          class: "input input-bordered w-full #{discount.errors[:valid_until].any? ? 'input-error' : ''}" %>
+      <p class="text-xs text-base-content/60 mt-1"><%= t(".hint.valid_until") %></p>
+      <% discount.errors.where(:valid_until).each do |error| %>
+        <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="divider"><%= t(".coupon_settings") %></div>
+
+  <%# クーポン情報 %>
+  <%= f.fields_for :discountable, coupon do |coupon_form| %>
+    <div class="form-control w-full mb-4">
+      <%= coupon_form.label :description, class: "label" do %>
+        <span class="label-text font-medium">
+          <%= Coupon.human_attribute_name(:description) %>
+          <span class="text-error">*</span>
+        </span>
+      <% end %>
+      <%= coupon_form.text_area :description,
+          rows: 2,
+          required: true,
+          class: "textarea textarea-bordered w-full #{coupon.errors[:description].any? ? 'textarea-error' : ''}",
+          placeholder: t(".placeholder.description") %>
+      <% coupon.errors.where(:description).each do |error| %>
+        <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+      <% end %>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="form-control w-full">
+        <%= coupon_form.label :amount_per_unit, class: "label" do %>
+          <span class="label-text font-medium">
+            <%= Coupon.human_attribute_name(:amount_per_unit) %>
+            <span class="text-error">*</span>
+          </span>
+        <% end %>
+        <div class="join w-full">
+          <span class="join-item btn btn-disabled">¥</span>
+          <%= coupon_form.number_field :amount_per_unit,
+              required: true,
+              min: 1,
+              class: "join-item input input-bordered w-full #{coupon.errors[:amount_per_unit].any? ? 'input-error' : ''}",
+              placeholder: t(".placeholder.amount_per_unit") %>
+        </div>
+        <% coupon.errors.where(:amount_per_unit).each do |error| %>
+          <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+        <% end %>
+      </div>
+
+      <div class="form-control w-full">
+        <%= coupon_form.label :max_per_bento_quantity, class: "label" do %>
+          <span class="label-text font-medium">
+            <%= Coupon.human_attribute_name(:max_per_bento_quantity) %>
+            <span class="text-error">*</span>
+          </span>
+        <% end %>
+        <%= coupon_form.number_field :max_per_bento_quantity,
+            required: true,
+            min: 0,
+            class: "input input-bordered w-full #{coupon.errors[:max_per_bento_quantity].any? ? 'input-error' : ''}",
+            placeholder: t(".placeholder.max_per_bento_quantity") %>
+        <p class="text-xs text-base-content/60 mt-1"><%= t(".hint.max_per_bento_quantity") %></p>
+        <% coupon.errors.where(:max_per_bento_quantity).each do |error| %>
+          <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="modal-action mt-6">
+    <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+    <%= f.submit t(".submit"), class: "btn btn-neutral" %>
+  </div>
+<% end %>

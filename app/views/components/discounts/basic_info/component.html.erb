@@ -1,0 +1,68 @@
+<%= helpers.turbo_frame_tag frame_id do %>
+  <section class="<%= card_classes %> mb-6" aria-labelledby="discount-basic-info-heading">
+    <div class="card-body">
+      <%# ヘッダー: タイトル + 編集ボタン %>
+      <div class="flex items-center justify-between mb-4">
+        <h2 id="discount-basic-info-heading" class="card-title text-lg flex items-center gap-2">
+          <%= component "icons/info", size: :sm, extra_class: "text-primary" %>
+          <%= t(".title") %>
+        </h2>
+        <%= link_to edit_path,
+            class: "btn btn-ghost btn-sm gap-1 group",
+            data: { turbo_frame: frame_id } do %>
+          <span class="transition-transform group-hover:rotate-12">
+            <%= component "icons/edit", size: :sm %>
+          </span>
+          <%= t(".edit") %>
+        <% end %>
+      </div>
+
+      <%# データ表示 %>
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
+        <%# 名前 %>
+        <div>
+          <dt class="text-sm font-medium text-base-content/60">
+            <%= Discount.human_attribute_name(:name) %>
+          </dt>
+          <dd class="mt-1 text-base-content font-medium text-lg">
+            <%= name %>
+          </dd>
+        </div>
+
+        <%# 有効期間 %>
+        <div>
+          <dt class="text-sm font-medium text-base-content/60">
+            <%= t(".valid_period") %>
+          </dt>
+          <dd class="mt-1 text-base-content">
+            <%= formatted_valid_from %> 〜 <%= formatted_valid_until %>
+          </dd>
+        </div>
+
+        <%# 登録日時 %>
+        <% if created_at_formatted %>
+          <div>
+            <dt class="text-sm font-medium text-base-content/60">
+              <%= t(".created_at") %>
+            </dt>
+            <dd class="mt-1 text-base-content/80 text-sm">
+              <%= created_at_formatted %>
+            </dd>
+          </div>
+        <% end %>
+
+        <%# 更新日時 %>
+        <% if updated_at_formatted %>
+          <div>
+            <dt class="text-sm font-medium text-base-content/60">
+              <%= t(".updated_at") %>
+            </dt>
+            <dd class="mt-1 text-base-content/80 text-sm">
+              <%= updated_at_formatted %>
+            </dd>
+          </div>
+        <% end %>
+      </dl>
+    </div>
+  </section>
+<% end %>

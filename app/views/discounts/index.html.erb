@@ -1,0 +1,8 @@
+<%= component "page_header",
+            title: t("discounts.index.title"),
+            new_path: new_discount_path,
+            turbo_stream: true %>
+
+<turbo-frame id="discounts_content">
+  <%= component "discounts/list", discounts: @discounts %>
+</turbo-frame>

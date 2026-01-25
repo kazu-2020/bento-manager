@@ -1,0 +1,11 @@
+<% if empty? %>
+  <div class="text-center py-16 text-base-content/60">
+    <%= component "icons/ticket", extra_class: "h-16 w-16 mx-auto mb-4 opacity-40", stroke_width: 1 %>
+    <p class="text-lg font-medium mb-2"><%= t(".empty_message") %></p>
+    <p class="text-sm text-base-content/50"><%= t(".empty_hint") %></p>
+  </div>
+<% else %>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <%= component "discounts/card", collection: discounts %>
+  </div>
+<% end %>

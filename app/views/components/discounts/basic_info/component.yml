@@ -1,0 +1,8 @@
+---
+ja:
+  title: "基本情報"
+  edit: "編集"
+  valid_period: "有効期間"
+  no_end_date: "無期限"
+  created_at: "登録日時"
+  updated_at: "更新日時"

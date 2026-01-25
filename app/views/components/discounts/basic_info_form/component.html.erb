@@ -1,0 +1,72 @@
+<%= helpers.turbo_frame_tag frame_id do %>
+  <section class="<%= card_classes %> mb-6 animate-fade-in" aria-labelledby="discount-form-heading">
+    <div class="card-body">
+      <%= form_with model: discount, url: discount_path, method: :patch, data: { turbo_frame: frame_id } do |f| %>
+        <%# ヘッダー: タイトル + アクションボタン %>
+        <div class="flex items-center justify-between mb-4">
+          <h2 id="discount-form-heading" class="card-title text-lg flex items-center gap-2">
+            <%= component "icons/info", size: :sm, extra_class: "text-primary" %>
+            <%= t(".title") %>
+          </h2>
+          <div class="flex items-center gap-2">
+            <%= link_to t("helpers.link.cancel"),
+                cancel_path,
+                class: "btn btn-ghost btn-sm",
+                data: { turbo_frame: frame_id } %>
+            <%= f.submit t(".update"),
+                class: "btn btn-neutral btn-sm" %>
+          </div>
+        </div>
+
+        <%# 名前フィールド %>
+        <div class="form-control w-full mb-4">
+          <%= f.label :name, class: "label" do %>
+            <span class="label-text font-medium">
+              <%= Discount.human_attribute_name(:name) %>
+              <span class="text-error">*</span>
+            </span>
+          <% end %>
+          <%= f.text_field :name,
+              required: true,
+              autofocus: true,
+              class: "input input-bordered w-full #{discount.errors[:name].any? ? 'input-error' : ''}",
+              placeholder: t(".placeholder.name") %>
+          <% discount.errors.where(:name).each do |error| %>
+            <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+          <% end %>
+        </div>
+
+        <%# 有効開始日 %>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="form-control w-full">
+            <%= f.label :valid_from, class: "label" do %>
+              <span class="label-text font-medium">
+                <%= Discount.human_attribute_name(:valid_from) %>
+                <span class="text-error">*</span>
+              </span>
+            <% end %>
+            <%= f.date_field :valid_from,
+                required: true,
+                class: "input input-bordered w-full #{discount.errors[:valid_from].any? ? 'input-error' : ''}" %>
+            <% discount.errors.where(:valid_from).each do |error| %>
+              <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+            <% end %>
+          </div>
+
+          <%# 有効終了日 %>
+          <div class="form-control w-full">
+            <%= f.label :valid_until, class: "label" do %>
+              <span class="label-text font-medium"><%= Discount.human_attribute_name(:valid_until) %></span>
+            <% end %>
+            <%= f.date_field :valid_until,
+                class: "input input-bordered w-full #{discount.errors[:valid_until].any? ? 'input-error' : ''}" %>
+            <p class="text-xs text-base-content/60 mt-1"><%= t(".hint.valid_until") %></p>
+            <% discount.errors.where(:valid_until).each do |error| %>
+              <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </section>
+<% end %>
