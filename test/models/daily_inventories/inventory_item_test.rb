@@ -21,6 +21,5 @@ module DailyInventories
       assert item.selected?
       assert_equal 20, item.stock
     end
-
   end
 end
