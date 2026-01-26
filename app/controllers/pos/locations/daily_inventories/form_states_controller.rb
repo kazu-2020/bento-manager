@@ -11,8 +11,7 @@ module Pos
           @form = build_form(submitted_params(:ghost_inventory))
 
           respond_to do |format|
-            format.turbo_stream { render "pos/locations/daily_inventories/form_state" }
-            format.html { render "pos/locations/daily_inventories/new" }
+            format.turbo_stream
           end
         end
 
