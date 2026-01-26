@@ -92,6 +92,5 @@ module DailyInventories
       expected = { url: "/pos/locations/#{@location.id}/daily_inventories/form_state", method: :post }
       assert_equal expected, form.form_state_options
     end
-
   end
 end

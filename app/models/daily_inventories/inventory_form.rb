@@ -52,6 +52,5 @@ module DailyInventories
         )
       end
     end
-
   end
 end
