@@ -14,6 +14,10 @@ ja:
           attributes:
             base:
               missing_price: "商品「%{catalog_name}」に価格種別「%{price_kind}」の価格が設定されていません"
+        daily_inventories/inventory_form:
+          attributes:
+            base:
+              save_failed: "保存に失敗しました。もう一度お試しください。"
 
   activerecord:
     models:
@@ -256,6 +260,17 @@ ja:
       failure: "商品カタログの提供終了に失敗しました。"
       already_discontinued: "この商品カタログは既に提供終了です。"
       default_reason: "管理者による提供終了"
+
+  pos:
+    locations:
+      index:
+        title: "販売先を選択"
+      daily_inventories:
+        create:
+          success: "%{count}種類の弁当を登録しました"
+        new_form:
+          submit_label: "販売開始"
+          submit_unit: "種類"
 
   discounts:
     index:

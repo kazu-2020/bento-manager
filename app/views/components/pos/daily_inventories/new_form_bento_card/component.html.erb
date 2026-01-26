@@ -1,0 +1,35 @@
+<%= fields_for item_field_name, item do |f| %>
+  <div id="<%= dom_id %>" class="<%= card_classes %>">
+    <div class="card-body p-4">
+      <%# カード選択エリア %>
+      <label class="flex items-center gap-3 cursor-pointer">
+        <%= f.check_box :selected,
+              { class: "hidden", data: { action: "change->ghost-form#submit" } },
+              "1", "0" %>
+
+        <%# ビジュアルチェックボックス %>
+        <div class="<%= checkbox_visual_classes %>">
+          <% if selected? %>
+            <%= component "icons/check", extra_class: "h-4 w-4 text-accent-content" %>
+          <% end %>
+        </div>
+
+        <span class="font-medium text-lg flex-1"><%= catalog_name %></span>
+      </label>
+
+      <%# ステッパー（選択時のみ表示） %>
+      <% if selected? %>
+        <div class="mt-4">
+          <%= component "inputs/quantity_stepper", unit: t(".unit") do |c| %>
+            <% c.with_input do %>
+              <%= f.number_field :stock,
+                    min: 1, autocomplete: "off",
+                    class: "input input-bordered w-20 text-center text-2xl font-bold",
+                    data: { quantity_stepper_target: "input" } %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>

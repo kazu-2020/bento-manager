@@ -66,3 +66,8 @@ turbo-frame[busy] {
   min-width: 280px;
   max-width: 400px;
 }
+
+/* セーフエリアパディング（iPhone対応） */
+.safe-area-pb {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}

@@ -1,0 +1,47 @@
+<div data-controller="ghost-form">
+  <div class="min-h-screen bg-base-200 flex flex-col">
+    <%# ヘッダー %>
+    <header class="sticky top-0 bg-base-100 shadow-sm z-10">
+      <div class="px-4 py-3">
+        <div class="flex items-center gap-3">
+          <%= link_to back_url, class: "btn btn-ghost btn-sm btn-circle" do %>
+            <%= component "icons/arrow_left", extra_class: "h-5 w-5" %>
+          <% end %>
+          <div class="flex-1">
+            <h1 class="text-lg font-bold"><%= location_name %> <%= t(".title_suffix") %></h1>
+            <p class="text-sm text-base-content/60"><%= today_date %></p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <%# Original Form (本来の処理を行うフォーム) %>
+    <%= form_with **form_with_options,
+                  data: { ghost_form_target: "originalForm" } do |f| %>
+      <main class="flex-1 p-4 pb-24">
+        <p class="text-center text-base-content/70 mb-6"><%= t(".instruction") %></p>
+
+        <% if has_items? %>
+          <div id="bento-cards" class="space-y-3">
+            <% items.each do |item| %>
+              <%= render_bento_card(item) %>
+            <% end %>
+          </div>
+        <% else %>
+          <div class="text-center py-12 text-base-content/60">
+            <%= component "icons/bento", extra_class: "h-12 w-12 mx-auto mb-4 opacity-50" %>
+            <p><%= t(".no_catalogs") %></p>
+          </div>
+        <% end %>
+      </main>
+
+      <%# 固定フッター %>
+      <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
+        <%= render_submit_button %>
+      </footer>
+    <% end %>
+
+    <%# Ghost Form (画面更新用の幽霊フォーム) %>
+    <%= render_ghost_form %>
+  </div>
+</div>

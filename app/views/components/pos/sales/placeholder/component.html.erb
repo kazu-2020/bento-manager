@@ -1,0 +1,48 @@
+<div class="min-h-screen bg-base-200 flex flex-col">
+  <%# ヘッダー %>
+  <header class="sticky top-0 bg-base-100 shadow-sm z-10">
+    <div class="px-4 py-3">
+      <div class="flex items-center gap-3">
+        <%= link_to back_url, class: "btn btn-ghost btn-sm btn-circle" do %>
+          <%= component "icons/arrow_left", extra_class: "h-5 w-5" %>
+        <% end %>
+        <div class="flex-1">
+          <h1 class="text-lg font-bold"><%= location_name %></h1>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <%# メインコンテンツ %>
+  <main class="flex-1 p-4 flex flex-col items-center justify-center">
+    <div class="text-center mb-8">
+      <div class="text-6xl mb-4">🍱</div>
+      <h2 class="text-2xl font-bold mb-2"><%= t(".title") %></h2>
+      <p class="text-base-content/60"><%= t(".subtitle") %></p>
+    </div>
+
+    <% if inventories.any? %>
+      <div class="card bg-base-100 shadow-sm w-full max-w-md mb-6">
+        <div class="card-body">
+          <h3 class="card-title text-base"><%= t(".inventory_title") %></h3>
+          <div class="divider my-0"></div>
+          <ul class="space-y-2">
+            <% inventories.each do |inventory| %>
+              <li class="flex justify-between items-center py-2">
+                <span class="font-medium"><%= inventory.catalog.name %></span>
+                <span class="badge badge-lg badge-outline">
+                  <%= inventory.stock %><%= t(".unit") %>
+                </span>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      </div>
+    <% end %>
+
+    <%= link_to edit_inventory_url, class: "btn btn-outline btn-primary" do %>
+      <%= component "icons/edit", extra_class: "h-5 w-5" %>
+      <%= t(".edit_inventory") %>
+    <% end %>
+  </main>
+</div>

@@ -9,4 +9,7 @@ registerControllers(application, controllers)
 import ToastController from "../../views/components/toast/toast_controller"
 application.register("toast", ToastController)
 
+import QuantityStepperController from "../../views/components/inputs/quantity_stepper/quantity_stepper_controller"
+application.register("quantity-stepper", QuantityStepperController)
+
 export { application }

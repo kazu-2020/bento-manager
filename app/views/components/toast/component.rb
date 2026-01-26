@@ -4,6 +4,13 @@ module Toast
   class Component < Application::Component
     VALID_TYPES = %i[success error warning info].freeze
 
+    TYPE_ALERT_CLASSES = {
+      success: "alert-success alert-soft",
+      error: "alert-error alert-soft",
+      warning: "alert-warning alert-soft",
+      info: "alert-info alert-soft"
+    }.freeze
+
     attr_reader :message, :type, :dismissible
 
     def initialize(message:, type: :success, dismissible: true)
@@ -13,11 +20,11 @@ module Toast
     end
 
     def alert_classes
-      "alert-soft alert-#{type}"
+      TYPE_ALERT_CLASSES[type]
     end
 
     def icon_name
-      "icons/#{type}"
+      helpers.class_names("icons/#{type}")
     end
 
     private

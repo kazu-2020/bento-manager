@@ -1,0 +1,11 @@
+<% if none? %>
+  <div class="text-center py-12 text-base-content/60">
+    <%= component "icons/location", extra_class: "h-12 w-12 mx-auto mb-4 opacity-50", stroke_width: 1 %>
+    <p class="mb-4"><%= t(".empty_message") %></p>
+    <%= link_to t(".register_location"), helpers.locations_path, class: "btn btn-primary" %>
+  </div>
+<% else %>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <%= component "pos/location_card", collection: locations %>
+  </div>
+<% end %>

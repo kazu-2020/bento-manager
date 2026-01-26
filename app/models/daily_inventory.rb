@@ -11,7 +11,6 @@ class DailyInventory < ApplicationRecord
   validates :stock, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :reserved_stock, presence: true, numericality: { greater_than_or_equal_to: 0 }
 
-  # Task 6.3: ユニーク制約（location_id, catalog_id, inventory_date）
   validates :inventory_date, uniqueness: {
     scope: [ :location_id, :catalog_id ],
     message: "同じ販売先・商品・日付の組み合わせは既に存在します"
@@ -19,6 +18,28 @@ class DailyInventory < ApplicationRecord
 
   # カスタムバリデーション
   validate :available_stock_must_be_non_negative
+
+  # ===== クラスメソッド =====
+
+  def self.bulk_create(location:, items:)
+    inventories = items.map do |item|
+      new(
+        location: location,
+        catalog_id: item.catalog_id,
+        inventory_date: Date.current,
+        stock: item.stock,
+        reserved_stock: 0
+      )
+    end
+
+    result = transaction do
+      inventories.each do |inventory|
+        inventory.save || raise(ActiveRecord::Rollback)
+      end
+    end
+
+    result.nil? ? 0 : inventories.size
+  end
 
   # ===== ビジネスロジック =====
 

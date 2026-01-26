@@ -1,0 +1,21 @@
+<%# 各弁当カードを更新 %>
+<% @form.items.each do |item| %>
+  <%= turbo_stream.replace "bento-card-#{item.catalog_id}" do %>
+    <%= component "pos/daily_inventories/new_form_bento_card",
+                  item: item %>
+  <% end %>
+<% end %>
+
+<%# 送信ボタンを更新 %>
+<%= turbo_stream.replace "submit-button" do %>
+  <%= component "pos/daily_inventories/new_form_submit_button",
+                disabled: !@form.valid?,
+                selected_count: @form.selected_count %>
+<% end %>
+
+<%# Ghost Form の hidden fields を更新 %>
+<%= turbo_stream.replace "ghost-form" do %>
+  <%= component "pos/daily_inventories/new_form_ghost_form",
+                form_state_options: @form.form_state_options,
+                items: @form.items %>
+<% end %>
