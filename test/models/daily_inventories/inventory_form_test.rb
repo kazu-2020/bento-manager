@@ -65,20 +65,6 @@ module DailyInventories
       assert form.valid?
     end
 
-    test "to_inventory_params returns params for BulkCreator" do
-      submitted = {
-        @bento_a.id.to_s => { selected: true, stock: 15 },
-        @bento_b.id.to_s => { selected: true, stock: 20 }
-      }
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
-
-      params = form.to_inventory_params
-
-      assert_equal 2, params[:inventories].count
-      assert params[:inventories].any? { |i| i[:catalog_id] == @bento_a.id && i[:stock] == 15 }
-      assert params[:inventories].any? { |i| i[:catalog_id] == @bento_b.id && i[:stock] == 20 }
-    end
-
     test "form_with_options returns url and method for daily inventories" do
       form = InventoryForm.new(location: @location, catalogs: @catalogs)
 

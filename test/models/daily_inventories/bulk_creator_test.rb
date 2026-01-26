@@ -13,14 +13,12 @@ module DailyInventories
     end
 
     test "creates daily inventories for selected items" do
-      params = ActionController::Parameters.new({
-        inventories: [
-          { catalog_id: @bento_a.id, stock: 10 },
-          { catalog_id: @bento_b.id, stock: 5 }
-        ]
-      }).permit!
+      items = [
+        InventoryItem.new(catalog_id: @bento_a.id, stock: 10),
+        InventoryItem.new(catalog_id: @bento_b.id, stock: 5)
+      ]
 
-      creator = BulkCreator.new(location: @location, inventory_params: params)
+      creator = BulkCreator.new(location: @location, items: items)
 
       assert_difference "DailyInventory.count", 2 do
         assert creator.call
@@ -31,14 +29,12 @@ module DailyInventories
     end
 
     test "skips items with zero stock" do
-      params = ActionController::Parameters.new({
-        inventories: [
-          { catalog_id: @bento_a.id, stock: 10 },
-          { catalog_id: @bento_b.id, stock: 0 }
-        ]
-      }).permit!
+      items = [
+        InventoryItem.new(catalog_id: @bento_a.id, stock: 10),
+        InventoryItem.new(catalog_id: @bento_b.id, stock: 0)
+      ]
 
-      creator = BulkCreator.new(location: @location, inventory_params: params)
+      creator = BulkCreator.new(location: @location, items: items)
 
       assert_difference "DailyInventory.count", 1 do
         assert creator.call
@@ -47,30 +43,13 @@ module DailyInventories
       assert_equal 1, creator.created_count
     end
 
-    test "skips items with blank stock" do
-      params = ActionController::Parameters.new({
-        inventories: [
-          { catalog_id: @bento_a.id, stock: 10 },
-          { catalog_id: @bento_b.id, stock: "" }
-        ]
-      }).permit!
-
-      creator = BulkCreator.new(location: @location, inventory_params: params)
-
-      assert_difference "DailyInventory.count", 1 do
-        assert creator.call
-      end
-    end
-
     test "skips items with negative stock" do
-      params = ActionController::Parameters.new({
-        inventories: [
-          { catalog_id: @bento_a.id, stock: 10 },
-          { catalog_id: @bento_b.id, stock: -5 }
-        ]
-      }).permit!
+      items = [
+        InventoryItem.new(catalog_id: @bento_a.id, stock: 10),
+        InventoryItem.new(catalog_id: @bento_b.id, stock: -5)
+      ]
 
-      creator = BulkCreator.new(location: @location, inventory_params: params)
+      creator = BulkCreator.new(location: @location, items: items)
 
       assert_difference "DailyInventory.count", 1 do
         assert creator.call
@@ -78,13 +57,11 @@ module DailyInventories
     end
 
     test "returns false when no valid items" do
-      params = ActionController::Parameters.new({
-        inventories: [
-          { catalog_id: @bento_a.id, stock: 0 }
-        ]
-      }).permit!
+      items = [
+        InventoryItem.new(catalog_id: @bento_a.id, stock: 0)
+      ]
 
-      creator = BulkCreator.new(location: @location, inventory_params: params)
+      creator = BulkCreator.new(location: @location, items: items)
 
       assert_no_difference "DailyInventory.count" do
         assert_not creator.call
@@ -93,34 +70,19 @@ module DailyInventories
       assert_equal 0, creator.created_count
     end
 
-    test "returns false when inventories is empty" do
-      params = ActionController::Parameters.new({
-        inventories: []
-      }).permit!
-
-      creator = BulkCreator.new(location: @location, inventory_params: params)
-
-      assert_not creator.call
-      assert_equal 0, creator.created_count
-    end
-
-    test "returns false when inventories is nil" do
-      params = ActionController::Parameters.new({}).permit!
-
-      creator = BulkCreator.new(location: @location, inventory_params: params)
+    test "returns false when items is empty" do
+      creator = BulkCreator.new(location: @location, items: [])
 
       assert_not creator.call
       assert_equal 0, creator.created_count
     end
 
     test "sets inventory_date to current date" do
-      params = ActionController::Parameters.new({
-        inventories: [
-          { catalog_id: @bento_a.id, stock: 10 }
-        ]
-      }).permit!
+      items = [
+        InventoryItem.new(catalog_id: @bento_a.id, stock: 10)
+      ]
 
-      creator = BulkCreator.new(location: @location, inventory_params: params)
+      creator = BulkCreator.new(location: @location, items: items)
       creator.call
 
       inventory = DailyInventory.last
@@ -128,13 +90,11 @@ module DailyInventories
     end
 
     test "sets reserved_stock to zero" do
-      params = ActionController::Parameters.new({
-        inventories: [
-          { catalog_id: @bento_a.id, stock: 10 }
-        ]
-      }).permit!
+      items = [
+        InventoryItem.new(catalog_id: @bento_a.id, stock: 10)
+      ]
 
-      creator = BulkCreator.new(location: @location, inventory_params: params)
+      creator = BulkCreator.new(location: @location, items: items)
       creator.call
 
       inventory = DailyInventory.last
@@ -151,14 +111,12 @@ module DailyInventories
         reserved_stock: 0
       )
 
-      params = ActionController::Parameters.new({
-        inventories: [
-          { catalog_id: @bento_b.id, stock: 10 },  # This would succeed alone
-          { catalog_id: @bento_a.id, stock: 15 }   # This will fail (duplicate)
-        ]
-      }).permit!
+      items = [
+        InventoryItem.new(catalog_id: @bento_b.id, stock: 10),  # This would succeed alone
+        InventoryItem.new(catalog_id: @bento_a.id, stock: 15)   # This will fail (duplicate)
+      ]
 
-      creator = BulkCreator.new(location: @location, inventory_params: params)
+      creator = BulkCreator.new(location: @location, items: items)
 
       assert_no_difference "DailyInventory.count" do
         assert_not creator.call
@@ -177,13 +135,11 @@ module DailyInventories
         reserved_stock: 0
       )
 
-      params = ActionController::Parameters.new({
-        inventories: [
-          { catalog_id: @bento_a.id, stock: 15 }
-        ]
-      }).permit!
+      items = [
+        InventoryItem.new(catalog_id: @bento_a.id, stock: 15)
+      ]
 
-      creator = BulkCreator.new(location: @location, inventory_params: params)
+      creator = BulkCreator.new(location: @location, items: items)
       creator.call
 
       assert_not_nil creator.error_message

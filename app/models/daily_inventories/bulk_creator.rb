@@ -2,11 +2,11 @@
 
 module DailyInventories
   class BulkCreator
-    attr_reader :location, :inventory_params, :created_count, :error_message
+    attr_reader :location, :items, :created_count, :error_message
 
-    def initialize(location:, inventory_params:)
+    def initialize(location:, items:)
       @location = location
-      @inventory_params = inventory_params
+      @items = items
       @created_count = 0
       @error_message = nil
     end
@@ -31,16 +31,16 @@ module DailyInventories
     private
 
     def build_inventories
-      return [] unless inventory_params[:inventories].present?
+      return [] unless items.present?
 
-      inventory_params[:inventories].filter_map do |inv|
-        next if inv[:stock].blank? || inv[:stock].to_i <= 0
+      items.filter_map do |item|
+        next if item.stock <= 0
 
         DailyInventory.new(
           location: location,
-          catalog_id: inv[:catalog_id],
+          catalog_id: item.catalog_id,
           inventory_date: Date.current,
-          stock: inv[:stock].to_i,
+          stock: item.stock,
           reserved_stock: 0
         )
       end

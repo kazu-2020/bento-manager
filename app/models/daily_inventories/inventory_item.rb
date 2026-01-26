@@ -15,9 +15,5 @@ module DailyInventories
     def selected?
       !!selected
     end
-
-    def to_inventory_param
-      { catalog_id: catalog_id, stock: stock }
-    end
   end
 end

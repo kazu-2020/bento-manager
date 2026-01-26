@@ -22,10 +22,5 @@ module DailyInventories
       assert_equal 20, item.stock
     end
 
-    test "to_inventory_param returns param hash" do
-      @item.stock = 15
-
-      assert_equal({ catalog_id: 1, stock: 15 }, @item.to_inventory_param)
-    end
   end
 end

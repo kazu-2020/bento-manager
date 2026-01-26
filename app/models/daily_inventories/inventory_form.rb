@@ -40,12 +40,6 @@ module DailyInventories
       selected_items.count
     end
 
-    def to_inventory_params
-      {
-        inventories: selected_items.map(&:to_inventory_param)
-      }
-    end
-
     private
 
     def at_least_one_item_selected

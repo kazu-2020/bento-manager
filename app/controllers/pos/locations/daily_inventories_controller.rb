@@ -15,7 +15,7 @@ module Pos
 
         creator = ::DailyInventories::BulkCreator.new(
           location: @location,
-          inventory_params: @form.to_inventory_params
+          items: @form.selected_items
         )
 
         if creator.call
