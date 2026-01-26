@@ -11,7 +11,7 @@
   <div id="submit-button">
     <button type="submit"
             class="btn btn-accent btn-lg w-full gap-2"
-            <%= "disabled" unless @form.can_submit? %>>
+            <%= "disabled" unless @form.valid? %>>
       <span class="text-xl">🍱</span>
       <span><%= t("pos.locations.daily_inventories.new_form.submit_label") %></span>
       <span class="badge badge-neutral"><%= @form.selected_count %></span>

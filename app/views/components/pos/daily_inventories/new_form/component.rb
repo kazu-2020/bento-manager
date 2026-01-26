@@ -11,7 +11,7 @@ module Pos
 
         attr_reader :location, :form
 
-        delegate :items, :can_submit?, :selected_count,
+        delegate :items, :valid?, :selected_count,
                  :form_with_options, :form_state_options, to: :form
 
         def location_name

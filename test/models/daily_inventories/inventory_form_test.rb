@@ -52,17 +52,17 @@ module DailyInventories
       assert_equal 2, form.selected_count
     end
 
-    test "can_submit? returns false when nothing selected" do
+    test "valid? returns false when nothing selected" do
       form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
-      assert_not form.can_submit?
+      assert_not form.valid?
     end
 
-    test "can_submit? returns true when at least one item selected" do
+    test "valid? returns true when at least one item selected" do
       submitted = { @bento_a.id.to_s => { selected: true } }
       form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
 
-      assert form.can_submit?
+      assert form.valid?
     end
 
     test "to_inventory_params returns params for BulkCreator" do

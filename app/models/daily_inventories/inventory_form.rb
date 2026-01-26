@@ -10,6 +10,8 @@ module DailyInventories
 
     attr_reader :items, :location
 
+    validate :at_least_one_item_selected
+
     def initialize(location:, catalogs:, submitted: {})
       @location = location
       @catalogs = catalogs
@@ -38,10 +40,6 @@ module DailyInventories
       selected_items.count
     end
 
-    def can_submit?
-      selected_count.positive?
-    end
-
     def to_inventory_params
       {
         inventories: selected_items.map(&:to_inventory_param)
@@ -49,6 +47,10 @@ module DailyInventories
     end
 
     private
+
+    def at_least_one_item_selected
+      errors.add(:base, :no_items_selected) unless selected_count.positive?
+    end
 
     def build_items(submitted)
       @catalogs.map do |catalog|
