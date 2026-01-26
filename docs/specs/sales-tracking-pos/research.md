@@ -179,7 +179,6 @@
 |-----|---------|------|
 | Req 9: 認証 | Rodauth-Rails | マルチアカウントタイプ対応、セキュリティ標準準拠 |
 | Req 8: 可視化 | Chartkick + Chart.js | Rails フレンドリー、Vite 統合容易 |
-| Req 11: オフライン | Service Worker + LocalStorage | Turbo の新機能、IndexedDB でデータ永続化 |
 | Req 4: リアルタイム | Turbo Streams + Solid Cable | Rails 8 標準、インフラシンプル |
 | Req 6: 販売予測 | SMA アルゴリズム | 実装容易、段階的改善可能 |
 

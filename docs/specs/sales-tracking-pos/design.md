@@ -21,7 +21,6 @@
 - 返品・返金処理を「取消→再販売」フローで実現し、在庫復元と差額返金を正確に記録
 - 過去の販売データから追加発注推奨数を算出し、定量的な判断を支援
 - オーナーが日次・期間別の販売実績をグラフで可視化し、販売傾向を把握
-- オフライン環境でも販売記録を継続でき、ネットワーク復旧後に自動同期
 - 販売員とオーナーの両方がスマホ・PCで快適に操作できるレスポンシブUI
 
 ### Non-Goals
@@ -82,8 +81,6 @@ graph TB
     subgraph Frontend[Frontend Layer]
         PosController[pos_controller.js]
         InventoryController[inventory_controller.js]
-        OfflineSyncController[offline_sync_controller.js]
-        ServiceWorker[Service Worker]
     end
 
     subgraph Controller[Controller Layer]
@@ -124,9 +121,9 @@ graph TB
             SaleItem
             SaleDiscount
             SalesRecorder[Sales::Recorder PORO]
+            SalesRefunder[Sales::Refunder PORO]
             SalesPriceCalc[Sales::PriceCalculator PORO]
             SalesAnalysisCalc[Sales::AnalysisCalculator PORO]
-            SalesOfflineSync[Sales::OfflineSynchronizer PORO]
         end
 
         subgraph Refunds[Refund Domain]
@@ -157,7 +154,7 @@ graph TB
 **境界間の統合ポイント**:
 - POS画面 → SalesController → Sales::Recorder → Sale + SaleItem + DailyInventory（在庫減算）
 - 在庫確認 → Turbo Streams → DailyInventory
-- 返品処理 → SalesController#void → Sale void + DailyInventory 復元 + 再販売 + Refund 記録
+- 返品処理 → SalesController#void → Sales::Refunder → Sale void + DailyInventory 復元 + 再販売 + Refund 記録
 - 販売予測 → AdditionalOrdersController → Sales::AnalysisCalculator → Sale
 - レポート → DashboardController → Reports::Generator → Sale + DailyInventory
 
@@ -174,7 +171,6 @@ graph TB
 | **Authentication** | Rodauth-Rails (latest) | 認証・セッション管理 | マルチアカウント対応、セキュア |
 | **Database** | SQLite3 | データ永続化 | マルチDB構成対応 (primary, cache, queue, cable) |
 | **Charting** | Chartkick + Chart.js (latest) | データ可視化 | Railsフレンドリー、JSONエンドポイント対応 |
-| **Offline** | Service Worker + LocalStorage | オフライン対応 | Turbo公式サポート、IndexedDB永続化 |
 | **Real-time** | Turbo Streams + Solid Cable | 在庫リアルタイム更新 | WebSocket、インフラシンプル |
 | **Background Jobs** | Solid Queue | 非同期処理 | データベースバック、Redis不要 |
 | **Concurrency Control** | Optimistic Locking (lock_version) | 在庫更新競合制御 | Rails標準機能、StaleObjectError |
@@ -182,7 +178,6 @@ graph TB
 **選定理由の詳細**:
 - **Rodauth**: R1調査で確認。マルチアカウントタイプ対応が容易。
 - **Chartkick + Chart.js**: R2調査で確認。Rails統合が容易で、Viteとの相性が良い。
-- **Service Worker**: R3調査で確認。Turbo 2025年の新機能でオフライン対応が標準化。
 - **Turbo Streams + Solid Cable**: R4調査で確認。Rails 8標準でインフラ複雑性を削減。
 - **Delegated Type**: R6調査で確認。37signalsの実績あるパターン。
 - **Optimistic Locking**: R7調査で確認。読み取り:書き込み比率が高い在庫管理に最適。
@@ -260,6 +255,7 @@ sequenceDiagram
     participant U as オーナー
     participant UI as 返品画面
     participant SC as SalesController
+    participant RF as Sales::Refunder
     participant S as Sale
     participant SI as SaleItem
     participant DI as DailyInventory
@@ -270,28 +266,30 @@ sequenceDiagram
     UI->>U: 残す商品を選択
     U->>UI: 返品確定ボタン押下
     UI->>SC: POST /sales/:id/void (remaining_items)
-    SC->>SC: Transaction開始
+    SC->>RF: refund(sale, refund_params)
+    RF->>RF: Transaction開始
 
-    Note over SC,S: Step 1: 元 Sale を void
-    SC->>S: update!(status: 'voided', voided_at, voided_by_employee_id, void_reason)
+    Note over RF,S: Step 1: 元 Sale を void
+    RF->>S: update!(status: 'voided', voided_at, voided_by_employee_id, void_reason)
 
-    Note over SC,DI: Step 2: 在庫を復元
+    Note over RF,DI: Step 2: 在庫を復元
     loop 元 Sale の各 SaleItem
-        SC->>DI: stock += quantity
+        RF->>DI: stock += quantity
         DI->>DI: save! (with optimistic locking)
     end
 
-    Note over SC,S: Step 3: 残す商品で新 Sale 作成
-    SC->>S: create! (corrected_from_sale_id: 元Sale.id)
+    Note over RF,S: Step 3: 残す商品で新 Sale 作成
+    RF->>S: create! (corrected_from_sale_id: 元Sale.id)
     loop 残す商品
         S->>SI: create SaleItem (unit_price, line_total 再計算)
         SI->>DI: decrement_stock!(quantity)
     end
 
-    Note over SC,R: Step 4: 差額を Refund に記録
-    SC->>R: create! (original_sale_id, corrected_sale_id, amount: 差額)
+    Note over RF,R: Step 4: 差額を Refund に記録
+    RF->>R: create! (original_sale_id, corrected_sale_id, amount: 差額)
 
-    SC->>SC: Transaction commit
+    RF->>RF: Transaction commit
+    RF-->>SC: Refund result
     SC->>TS: broadcast_inventory_update
     TS-->>UI: Turbo Stream更新
     SC-->>UI: 成功レスポンス + Refund 金額
@@ -305,53 +303,6 @@ sequenceDiagram
 - **差額返金**: 元 Sale.final_amount - 新 Sale.final_amount を Refund に記録
 - **トランザクション**: void + 在庫復元 + 再販売 + Refund 記録を原子的に実行
 - **Turbo Streams**: 在庫更新をリアルタイムに配信
-
-### オフライン同期フロー
-
-```mermaid
-sequenceDiagram
-    participant U as 販売員
-    participant UI as POS画面
-    participant SW as Service Worker
-    participant LS as LocalStorage
-    participant SC as SalesController
-    participant OS as Sales::OfflineSynchronizer
-
-    U->>UI: 販売記録
-    UI->>SW: ネットワークチェック
-    SW-->>UI: オフライン検出
-    UI->>LS: save
-    UI->>U: オフライン状態通知
-
-    Note over SW: ネットワーク復旧
-
-    SW->>UI: online イベント
-    UI->>LS: getPendingSales
-    LS-->>UI: pending_sales
-    UI->>SC: POST /api/sales/sync
-    SC->>OS: sync_offline_sales
-    loop 各販売レコード
-        OS->>OS: detect_conflict?
-        alt 競合なし
-            OS->>SC: create_sale
-        else 競合あり
-            OS->>SC: return error
-        end
-    end
-    SC-->>UI: 同期結果
-    alt すべて成功
-        UI->>LS: clear
-        UI->>U: 同期完了メッセージ
-    else 一部失敗
-        UI->>U: エラー表示
-    end
-```
-
-**フロー決定事項**:
-- Service Worker で online/offline イベントを検出
-- オフライン時は LocalStorage に一時保存
-- 復旧後に `/api/sales/sync` エンドポイントへバッチ送信
-- 競合検出時は最新在庫数を表示し、ユーザーに再試行を促す
 
 ## Requirements Traceability
 
@@ -367,15 +318,14 @@ sequenceDiagram
 | 8.1, 8.2, 8.3, 8.4, 8.5 | 販売データ可視化 | Chartkick, Chart.js, DashboardController | JSON endpoints | - |
 | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15 | 認証とユーザー管理 | Admin, Employee, Rodauth, EmployeesController | Rodauth login/logout, Employee CRUD（Admin のみアクセス可能、Employee は 403 エラー） | - |
 | 10.1, 10.2, 10.3, 10.4, 10.5 | レスポンシブデザイン | Tailwind CSS, Vite | Tailwind responsive classes | - |
-| 11.1, 11.2, 11.3, 11.4, 11.5 | オフライン対応 | Service Worker, LocalStorage, offline_sync_controller.js, Sales::OfflineSynchronizer | /api/sales/sync | オフライン同期フロー |
-| 12.1, 12.2, 12.3, 12.4, 12.5 | データ整合性とパフォーマンス | DailyInventory (lock_version), Solid Cache, Indexes | Optimistic Locking, Transaction, Cache | 販売フロー |
-| 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8, 13.9 | 割引（クーポン）管理と適用 | Discount, Coupon, SaleDiscount, Sales::PriceCalculator, SalesController | Discount#applicable?, Coupon#max_applicable_quantity, SaleDiscount (中間テーブル) | 販売フロー |
-| 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8 | サイドメニュー（サラダ）の条件付き価格設定 | CatalogPricingRule, CatalogPrice, Sales::PriceCalculator, Catalog (category enum) | CatalogPricingRule#applicable?, apply_pricing_rules, CatalogPrice.by_kind | 販売フロー |
-| 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7, 15.8, 15.9, 15.10, 15.11, 15.12 | 返品・返金処理（取消・再販売・差額返金） | Sale, Refund, SalesController#void, Sales::PriceCalculator, DailyInventory | Sale#void!, Refund, corrected_from_sale_id | 返品・返金フロー |
-| 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7 | 販売先（ロケーション）管理 | Location, LocationsController, DailyInventory, Sale, AdditionalOrder | LocationsController CRUD, Location#soft_delete | - |
-| 17.1, 17.2, 17.3, 17.4, 17.5, 17.6, 17.7 | 価格ルール適用時の価格存在検証（会計時） | Sales::Recorder, Sales::PriceCalculator, Catalogs::PriceValidator | Sales::PriceCalculator.validate_prices!, Catalogs::PriceValidator.validate! | 販売フロー |
-| 18.1, 18.2, 18.3, 18.4, 18.5, 18.6 | 管理画面での価格設定不備の警告表示 | Catalog, CatalogPricingRule, CatalogsController, catalogs/index view | Catalog#missing_prices_for_rules, Catalog.with_missing_prices | - |
-| 19.1, 19.2, 19.3, 19.4, 19.5, 19.6, 19.7 | 価格ルール作成・有効化時の価格存在バリデーション | Catalog::PricingRuleCreator, CatalogPricingRule | Catalog::PricingRuleCreator#create, #update | - |
+| 11.1, 11.2, 11.3, 11.4, 11.5 | データ整合性とパフォーマンス | DailyInventory (lock_version), Solid Cache, Indexes | Optimistic Locking, Transaction, Cache | 販売フロー |
+| 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.9 | 割引（クーポン）管理と適用 | Discount, Coupon, SaleDiscount, Sales::PriceCalculator, SalesController | Discount#applicable?, Coupon#max_applicable_quantity, SaleDiscount (中間テーブル) | 販売フロー |
+| 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8 | サイドメニュー（サラダ）の条件付き価格設定 | CatalogPricingRule, CatalogPrice, Sales::PriceCalculator, Catalog (category enum) | CatalogPricingRule#applicable?, apply_pricing_rules, CatalogPrice.by_kind | 販売フロー |
+| 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8, 14.9, 14.10, 14.11, 14.12 | 返品・返金処理（取消・再販売・差額返金） | Sale, Refund, Sales::Refunder, SalesController#void, Sales::PriceCalculator, DailyInventory | Sales::Refunder#refund, Refund, corrected_from_sale_id | 返品・返金フロー |
+| 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7 | 販売先（ロケーション）管理 | Location, LocationsController, DailyInventory, Sale, AdditionalOrder | LocationsController CRUD, Location#deactivate | - |
+| 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7 | 価格ルール適用時の価格存在検証（会計時） | Sales::Recorder, Sales::PriceCalculator, Catalogs::PriceValidator | Sales::PriceCalculator.validate_prices!, Catalogs::PriceValidator.validate! | 販売フロー |
+| 17.1, 17.2, 17.3, 17.4, 17.5, 17.6 | 管理画面での価格設定不備の警告表示 | Catalog, CatalogPricingRule, CatalogsController, catalogs/index view | Catalog#missing_prices_for_rules, Catalog.with_missing_prices | - |
+| 18.1, 18.2, 18.3, 18.4, 18.5, 18.6, 18.7 | 価格ルール作成・有効化時の価格存在バリデーション | Catalog::PricingRuleCreator, CatalogPricingRule | Catalog::PricingRuleCreator#create, #update | - |
 
 ## Components & Interface Contracts
 
@@ -385,24 +335,25 @@ sequenceDiagram
 |-----------|--------------|--------|--------------|------------------|-----------|
 | Admin | Authentication | システム開発者アカウント（Rails console のみ、Employee 管理画面へのアクセス権限） | 9.1-9.15 | Rodauth (P0) | Service |
 | Employee | Authentication | 業務ユーザーアカウント（オーナー + 販売員、Employee 管理画面はアクセス不可） | 9.1-9.15 | Rodauth (P0), Admin (P0) | Service, API |
-| Location | Location Domain | 販売先マスタ（配達状態管理: active/inactive） | 16.1-16.7 | - | Service |
-| Catalog | Catalog Domain | 商品カタログモデル（category enum） | 1.1-1.5, 14.1-14.8 | CatalogPrice, CatalogPricingRule (P0) | Service |
-| CatalogPrice | Catalog Domain | 価格管理（種別別: regular/bundle） | 1.1-1.5, 14.1-14.8 | Catalog (P0) | Service |
-| CatalogPricingRule | Catalog Domain | 価格ルール管理（セット価格適用条件） | 1.1-1.5, 14.1-14.8 | Catalog (P0) | Service |
-| Discount | Discount Domain | 割引抽象モデル（delegated_type） | 3.1-3.7, 13.1-13.9 | Coupon (P0) | Service |
-| Coupon | Discount Domain | クーポンマスタ（50円引き、弁当1個につき1枚） | 3.1-3.7, 13.1-13.9 | Discount (P0) | Service |
-| SaleDiscount | Sales Domain | 販売・割引中間テーブル（監査トレイル、複数割引対応） | 3.1-3.7, 13.1-13.9 | Sale (P0), Discount (P0) | - |
-| DailyInventory | Inventory Domain | 販売先ごとの日次在庫管理（返品時に在庫復元） | 2.1-2.6, 3.1-3.8, 4.1-4.5, 15.1-15.12, 16.1-16.7 | Location (P0), Catalog (P0), Sale (P1) | Service, State |
-| Sale | Sales Domain | 販売記録（販売先ごと、void 対応、取消→再販売） | 3.1-3.8, 15.1-15.12, 16.1-16.7 | Location (P0), DailyInventory (P0), Discount (P1), SaleItem (P0) | API |
-| SaleItem | Sales Domain | 販売明細（単価確定、価格履歴管理、純粋データモデル） | 3.1-3.8, 14.1-14.8 | Sale (P0), Catalog (P0), CatalogPrice (P0) | Service |
-| Refund | Refund Domain | 差額返金記録（元Sale - 新Sale） | 15.1-15.12 | Sale (P0) | API |
-| Sales::Recorder | Sales PORO | 販売記録と在庫減算の一括処理（PriceCalculator経由で価格検証）※決定18 | 3.1-3.8, 12.1-12.2, 17.1-17.7 | Sale (P0), SaleItem (P0), DailyInventory (P0), Sales::PriceCalculator (P0) | Service |
-| Sales::PriceCalculator | Sales PORO | 販売価格計算（kind 決定 + 価格存在検証 + 価格ルール + 割引）※決定18 | 3.1-3.8, 13.1-13.9, 14.1-14.8, 17.1-17.7 | CatalogPricingRule (P0), Discount (P0), Catalogs::PriceValidator (P0) | Service |
-| Catalogs::PriceValidator | Catalog PORO | (catalog, kind, at) の価格存在検証（薄い部品）※決定18 | 17.1-17.7, 18.1-18.6 | CatalogPrice (P0) | Service |
-| Catalog::PricingRuleCreator | Catalog PORO | 価格ルールの作成・更新と価格存在検証 | 19.1-19.7 | CatalogPricingRule (P0), CatalogPrice (P0) | Service |
+| Location | Location Domain | 販売先マスタ（配達状態管理: active/inactive） | 15.1-15.7 | - | Service |
+| Catalog | Catalog Domain | 商品カタログモデル（category enum） | 1.1-1.5, 13.1-13.8 | CatalogPrice, CatalogPricingRule (P0) | Service |
+| CatalogPrice | Catalog Domain | 価格管理（種別別: regular/bundle） | 1.1-1.5, 13.1-13.8 | Catalog (P0) | Service |
+| CatalogPricingRule | Catalog Domain | 価格ルール管理（セット価格適用条件） | 1.1-1.5, 13.1-13.8 | Catalog (P0) | Service |
+| Discount | Discount Domain | 割引抽象モデル（delegated_type） | 3.1-3.7, 12.1-12.9 | Coupon (P0) | Service |
+| Coupon | Discount Domain | クーポンマスタ（50円引き、弁当1個につき1枚） | 3.1-3.7, 12.1-12.9 | Discount (P0) | Service |
+| SaleDiscount | Sales Domain | 販売・割引中間テーブル（監査トレイル、複数割引対応） | 3.1-3.7, 12.1-12.9 | Sale (P0), Discount (P0) | - |
+| DailyInventory | Inventory Domain | 販売先ごとの日次在庫管理（返品時に在庫復元） | 2.1-2.6, 3.1-3.8, 4.1-4.5, 14.1-14.12, 15.1-15.7 | Location (P0), Catalog (P0), Sale (P1) | Service, State |
+| Sale | Sales Domain | 販売記録（販売先ごと、void 対応、取消→再販売） | 3.1-3.8, 14.1-14.12, 15.1-15.7 | Location (P0), DailyInventory (P0), Discount (P1), SaleItem (P0) | API |
+| SaleItem | Sales Domain | 販売明細（単価確定、価格履歴管理、純粋データモデル） | 3.1-3.8, 13.1-13.8 | Sale (P0), Catalog (P0), CatalogPrice (P0) | Service |
+| Refund | Refund Domain | 差額返金記録（元Sale - 新Sale） | 14.1-14.12 | Sale (P0) | API |
+| Sales::Recorder | Sales PORO | 販売記録と在庫減算の一括処理（PriceCalculator経由で価格検証）※決定18 | 3.1-3.8, 11.1-11.2, 16.1-16.7 | Sale (P0), SaleItem (P0), DailyInventory (P0), Sales::PriceCalculator (P0) | Service |
+| Sales::Refunder | Sales PORO | 返品・返金処理（取消→在庫復元→再販売→差額返金記録） | 14.1-14.12 | Sale (P0), SaleItem (P0), DailyInventory (P0), Refund (P0), Sales::PriceCalculator (P0) | Service |
+| Sales::PriceCalculator | Sales PORO | 販売価格計算（kind 決定 + 価格存在検証 + 価格ルール + 割引）※決定18 | 3.1-3.8, 12.1-12.9, 13.1-13.8, 16.1-16.7 | CatalogPricingRule (P0), Discount (P0), Catalogs::PriceValidator (P0) | Service |
+| Catalogs::PriceValidator | Catalog PORO | (catalog, kind, at) の価格存在検証（薄い部品）※決定18 | 16.1-16.7, 17.1-17.6 | CatalogPrice (P0) | Service |
+| Catalog::PricingRuleCreator | Catalog PORO | 価格ルールの作成・更新と価格存在検証 | 18.1-18.7 | CatalogPricingRule (P0), CatalogPrice (P0) | Service |
 | Sales::AnalysisCalculator | Sales PORO | 販売予測・統計 | 6.1-6.5 | Sale (P0) | Service |
 | Reports::Generator | Reports PORO | レポート生成 | 7.1-7.5 | Sale (P0), DailyInventory (P0) | Service |
-| pos_controller.js | Frontend Stimulus | POS UI制御（クーポン枚数入力、価格内訳表示） | 3.1-3.8, 13.1-13.9, 14.1-14.8 | SalesController (P0) | State |
+| pos_controller.js | Frontend Stimulus | POS UI制御（クーポン枚数入力、価格内訳表示） | 3.1-3.8, 12.1-12.9, 13.1-13.8 | SalesController (P0) | State |
 
 ### Location Domain
 
@@ -411,7 +362,7 @@ sequenceDiagram
 | Field | Detail |
 |-------|--------|
 | Intent | 販売先マスタ（市役所、県庁など） |
-| Requirements | 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7 |
+| Requirements | 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7 |
 
 **Responsibilities & Constraints**
 - 販売先の名称管理
@@ -651,7 +602,7 @@ end
   - max_per_trigger: 1（弁当1個につきサラダ1個まで）
 - `applicable?` で適用可否を判定
 - `max_applicable_quantity` で最大適用数を計算
-- **Requirement 19 対応**: 価格存在検証は `Catalog::PricingRuleCreator` PORO で実行（モデルバリデーションでは他モデルに依存しない）
+- **Requirement 18 対応**: 価格存在検証は `Catalog::PricingRuleCreator` PORO で実行（モデルバリデーションでは他モデルに依存しない）
 
 ### Discount Domain
 
@@ -763,7 +714,7 @@ end
 | Method | Input | Output | Raises | 契約 |
 |--------|-------|--------|--------|------|
 | total_discount_amount | - | Integer | - | 適用された割引額の合計 |
-| void! | reason:, voided_by:, remaining_items: [] | Hash | RecordInvalid, StaleObjectError | 取消処理（在庫復元→再販売→返金記録）を実行 |
+| mark_as_voided! | reason:, voided_by: | Sale | RecordInvalid | status を voided に変更（Sales::Refunder から呼び出される） |
 | self.create_with_items_and_discounts! | sale_params, items_params, discount_ids: [] | Sale | RecordInvalid | 価格計算→Sale作成→SaleItem作成→割引適用 |
 
 **Associations**: sale_items, sale_discounts, discounts, employee, corrected_from_sale, correction_sale
@@ -772,8 +723,8 @@ end
 
 **Implementation Notes**:
 - status: completed / voided（String Enum、R8 調査）
-- void!: 取消→在庫復元→再販売→返金記録を原子的に実行
-- トランザクション内で整合性を保証
+- mark_as_voided!: Sale の状態変更のみ担当（voided_at, void_reason, voided_by_employee_id を更新）
+- 返品フロー全体（在庫復元→再販売→返金記録）は Sales::Refunder PORO が担当
 - StaleObjectError を rescue して再試行を促す
 
 #### SaleDiscount (中間テーブル)
@@ -836,12 +787,12 @@ end
 | Field | Detail |
 |-------|--------|
 | Intent | 指定された (catalog, kind, at) の価格が存在するかを検証する薄い PORO |
-| Requirements | 17.1-17.7, 18.1-18.6 |
+| Requirements | 16.1-16.7, 17.1-17.6 |
 
 **Responsibilities**:
 - 指定された (catalog, kind, at) に対応する CatalogPrice の存在を検証（単一責務）
 - 価格の取得（存在しない場合は nil または MissingPriceError）
-- 商品一覧画面での価格設定不備の検出（Requirement 18）
+- 商品一覧画面での価格設定不備の検出（Requirement 17）
 - **注意**: 「何の kind が必要か」の判定は Sales::PriceCalculator が担当（決定18参照）
 
 **Dependencies**:
@@ -866,7 +817,7 @@ end
 - **インスタンスベース**: `at` パラメータをインスタンス変数として保持し、基準日を統一
 - `price_exists?`: Catalog#price_exists? に委譲（Boolean を返す軽量な存在チェック）
 - `find_price` / `find_price!`: Catalog#price_by_kind に委譲（nil または MissingPriceError）
-- `catalogs_with_missing_prices`: 管理画面警告表示用（Requirement 18）、`preload(:active_pricing_rules)` で N+1 を回避
+- `catalogs_with_missing_prices`: 管理画面警告表示用（Requirement 17）、`preload(:active_pricing_rules)` で N+1 を回避
 
 ---
 
@@ -875,14 +826,14 @@ end
 | Field | Detail |
 |-------|--------|
 | Intent | 価格ルールの作成・更新と価格存在検証を行う PORO |
-| Requirements | 19.1-19.7 |
+| Requirements | 18.1-18.7 |
 
 **Responsibilities**:
-- 価格ルール作成時に対応する CatalogPrice の存在を検証（19.1）
-- 価格ルール有効化時に対応する CatalogPrice の存在を検証（19.2）
-- 検証失敗時にエラーメッセージを返す（19.3, 19.4）
-- 今日時点で有効な CatalogPrice が存在すれば許可（19.5）
-- 無効化時は価格存在の検証をスキップ（19.7）
+- 価格ルール作成時に対応する CatalogPrice の存在を検証（18.1）
+- 価格ルール有効化時に対応する CatalogPrice の存在を検証（18.2）
+- 検証失敗時にエラーメッセージを返す（18.3, 18.4）
+- 今日時点で有効な CatalogPrice が存在すれば許可（18.5）
+- 無効化時は価格存在の検証をスキップ（18.7）
 
 **Dependencies**:
 - CatalogPricingRule (P0)
@@ -900,10 +851,10 @@ end
 **Private Methods**: `should_validate?` (有効化判定), `validate_price_existence!` (価格存在検証)
 
 **Implementation Notes**:
-- `create`: 新規ルール作成時に価格存在検証を実行（19.1）
-- `update`: ルール更新時に価格存在検証を実行（19.2）
-- `should_validate?`: 有効化時のみ検証、無効化時はスキップ（19.7）
-- 今日時点で有効な CatalogPrice が存在すれば許可（19.5）
+- `create`: 新規ルール作成時に価格存在検証を実行（18.1）
+- `update`: ルール更新時に価格存在検証を実行（18.2）
+- `should_validate?`: 有効化時のみ検証、無効化時はスキップ（18.7）
+- 今日時点で有効な CatalogPrice が存在すれば許可（18.5）
 - モデルバリデーションで他モデルに依存せず、PORO でユーザーイベント起点の検証を担保
 
 ---
@@ -915,7 +866,7 @@ end
 | Field | Detail |
 |-------|--------|
 | Intent | 販売記録と在庫減算を一括で処理する PORO |
-| Requirements | 3.1-3.8, 12.1-12.2, 17.1-17.7 |
+| Requirements | 3.1-3.8, 11.1-11.2, 16.1-16.7 |
 
 **Responsibilities**:
 - Sale と SaleItem の作成を一括で実行
@@ -945,9 +896,75 @@ end
 - プロジェクト方針（PORO パターン）に準拠
 - 2ホップ先のモデル操作をコールバックから分離し、結合度を低減
 - テスト容易性向上（SaleItem を単独でテスト可能）
-- **Requirement 17 対応**: PriceCalculator.calculate が内部で価格存在検証を実行
-  - 価格不足時は MissingPriceError を発生、トランザクションは開始されない（17.6）
-  - エラーログを記録（17.7）
+- **Requirement 16 対応**: PriceCalculator.calculate が内部で価格存在検証を実行
+  - 価格不足時は MissingPriceError を発生、トランザクションは開始されない（16.6）
+  - エラーログを記録（16.7）
+
+---
+
+#### Sales::Refunder
+
+| Field | Detail |
+|-------|--------|
+| Intent | 返品・返金処理（取消→在庫復元→再販売→差額返金記録）を一括で処理する PORO |
+| Requirements | 14.1-14.12 |
+
+**Responsibilities**:
+- 元 Sale の取消（voided 状態への変更）
+- 取消された Sale の在庫復元（DailyInventory の stock 加算）
+- 残す商品での新規 Sale 作成（価格ルール・クーポンの再評価を含む）
+- 差額返金の Refund レコード作成
+- トランザクション内で原子性を保証
+- 全商品返品時は全額返金（新規 Sale を作成しない）
+
+**Dependencies**:
+- Sale (P0)
+- SaleItem (P0)
+- DailyInventory (P0)
+- Refund (P0)
+- Sales::PriceCalculator (P0)
+
+**Service Interface**:
+
+| Method | Input | Output | Raises | 契約 |
+|--------|-------|--------|--------|------|
+| refund | sale, refund_params | Hash | AlreadyVoidedError, RecordInvalid, StaleObjectError | 取消→在庫復元→再販売→返金記録を原子的に実行 |
+
+**Return Value (refund)**:
+```ruby
+{
+  original_sale: Sale,           # 取消された元 Sale
+  corrected_sale: Sale/nil,      # 残す商品の新規 Sale（全額返金時は nil）
+  refund: Refund,                # 返金レコード
+  refund_amount: Integer         # 返金額
+}
+```
+
+**refund_params**:
+```ruby
+{
+  void_reason: String,
+  voided_by: Employee,
+  remaining_items: [
+    { catalog_id: Integer, quantity: Integer }
+  ]
+}
+```
+
+**Inner Classes**: `AlreadyVoidedError` (元 Sale が既に voided の場合)
+
+**Private Methods**: `void_original_sale!`, `restore_inventory!`, `create_corrected_sale!`, `create_refund_record!`
+
+**Implementation Notes**:
+- Sales::Recorder と対称的な設計（販売記録 ↔ 返品記録）
+- `void_original_sale!`: Sale#mark_as_voided! を呼び出し
+- `restore_inventory!`: 元 Sale の全 SaleItem 数量を DailyInventory.stock に加算（楽観的ロック）
+- `create_corrected_sale!`: 残す商品で Sales::PriceCalculator を使い価格ルール・クーポンを再評価して新規 Sale を作成
+- `create_refund_record!`: 元 Sale.final_amount - 新 Sale.final_amount の差額を Refund に記録
+- 全商品返品時: corrected_sale を作成せず、元 Sale.final_amount を全額返金
+- プロジェクト方針（PORO パターン、Fat Models/Skinny Controllers）に準拠
+- **Requirement 14.7 対応**: 元 Sale, 新 Sale, Refund の3つのトランザクションを記録
+- **Requirement 14.9 対応**: 在庫復元と再販売の在庫減算をトランザクション内で保証
 
 ---
 
@@ -956,7 +973,7 @@ end
 | Field | Detail |
 |-------|--------|
 | Intent | 価格ルール適用、価格存在検証、価格計算を一括で行う PORO |
-| Requirements | 3.1-3.8, 13.1-13.9, 14.1-14.8, 17.1-17.7 |
+| Requirements | 3.1-3.8, 12.1-12.9, 13.1-13.8, 16.1-16.7 |
 
 **Responsibilities**:
 - 価格ルール適用判定（どの kind が必要かを決定）
@@ -997,9 +1014,9 @@ end
 **Implementation Notes**:
 - **決定18 対応**: 価格ルール適用と価格存在検証を統合し、「何の kind が必要か」をこのクラスが決定
 - `determine_required_price_kinds`: カート内容に基づいて必要な価格種別を決定（:regular + ルール適用時の :bundle など）
-- `validate_required_prices!`: Catalogs::PriceValidator を使って価格存在を検証（Requirement 17）
+- `validate_required_prices!`: Catalogs::PriceValidator を使って価格存在を検証（Requirement 16）
 - `apply_pricing_rules` / `split_item_by_pricing_rule`: 価格ルールを適用して価格情報を付与
-- MissingPriceError: 不足している価格がある場合に発生、Requirement 17.3 のエラーメッセージを生成
+- MissingPriceError: 不足している価格がある場合に発生、Requirement 16.3 のエラーメッセージを生成
 - 複数割引に対応し、各割引の適用可否と割引額を個別に計算
 
 ## Data Models
@@ -1246,7 +1263,7 @@ erDiagram
 - `additional_orders`: 追加発注（location_id, catalog_id, order_at, quantity）
 
 **テーブル設計の特徴**:
-- **Location**: 論理削除パターン（deleted_at カラム）、販売先マスタ
+- **Location**: 状態管理パターン（status: active/inactive）、販売先マスタ（Requirement 15.3 の「論理削除」は status を inactive に変更することで実現）
 - **Discount**: delegated_type パターンで抽象化（常に固定額、discount_type/discount_value は不要）
 - **Coupon**: クーポンマスタ（amount_per_unit: 50円、max_per_bento_quantity: 1）
 - **CatalogPrice**: kind フィールドで価格種別を管理（regular / bundle）
@@ -1291,7 +1308,7 @@ erDiagram
 - 割引適用不可: 「この割引には以下の条件が必要です: 弁当、サイドメニュー」→ カートに戻る
 - 価格ルール適用不可: 「セット価格を適用するには弁当が必要です」→ カートに戻る
 - Void 失敗: 「この販売は既に取り消されています」→ 一覧に戻る
-- **価格未設定（Requirement 17）**: 「商品「サラダ」に価格種別「bundle」の価格が設定されていません」→ 商品一覧で価格設定を促す
+- **価格未設定（Requirement 16）**: 「商品「サラダ」に価格種別「bundle」の価格が設定されていません」→ 商品一覧で価格設定を促す
 
 ### Error Categories and Responses
 
@@ -1299,17 +1316,17 @@ erDiagram
 
 | Error Class | 原因 | Response | HTTP Status |
 |-------------|------|----------|-------------|
-| MissingPriceError | 価格未設定（Req 17） | flash[:error], render :new | 422 |
+| MissingPriceError | 価格未設定（Req 16） | flash[:error], render :new | 422 |
 | RecordInvalid | バリデーションエラー | flash[:error], render :new | 422 |
 | RecordNotUnique | 割引重複適用 | flash[:error], render :new | 422 |
 | StaleObjectError | 競合（在庫更新） | flash[:error], redirect new_sale_path | 302 |
 | StandardError | システムエラー | log + flash[:error], redirect | 500 |
 
-**SalesController#void エラーハンドリング**:
+**SalesController#void エラーハンドリング**（Sales::Refunder 経由）:
 
 | Error Class | 原因 | Response | HTTP Status |
 |-------------|------|----------|-------------|
-| voided? == true | 既に取消済み | flash[:error], redirect sales_path | 302 |
+| AlreadyVoidedError | 既に取消済み（Sales::Refunder） | flash[:error], redirect sales_path | 302 |
 | RecordInvalid | バリデーションエラー | flash[:error], redirect sale_path | 302 |
 | StaleObjectError | 競合（在庫更新） | flash[:error], redirect sale_path | 302 |
 | StandardError | システムエラー | log + flash[:error], redirect | 302 |
@@ -1317,7 +1334,7 @@ erDiagram
 ### Monitoring
 
 - **Error Tracking**: Rails.logger でエラーログを記録
-- **Logging**: 販売記録、在庫更新、オフライン同期、void 処理のログを記録
+- **Logging**: 販売記録、在庫更新、void 処理のログを記録
 - **Health Monitoring**: Solid Queue のジョブ失敗率を監視
 
 ## Testing Strategy
@@ -1327,22 +1344,22 @@ erDiagram
 - Catalog.current_price, Catalog.discontinued?
 - CatalogPrice.current_price_by_kind
 - CatalogPricingRule.applicable?, max_applicable_quantity
-- **Catalog::PricingRuleCreator.create, #update（Requirement 19: 価格存在バリデーション）**
+- **Catalog::PricingRuleCreator.create, #update（Requirement 18: 価格存在バリデーション）**
 - Discount.applicable?, Discount.calculate_discount (Coupon)
 - DailyInventory.bulk_create_for_date, DailyInventory.available_count_for
 - SaleItem.calculate_line_total（純粋なデータモデルとしてテスト）
-- Sale.void!, Sale.create_with_items_and_discounts!
+- Sale.mark_as_voided!, Sale.create_with_items_and_discounts!
 - Sales::Recorder.record（在庫減算、エラーケース、トランザクション、**価格検証**）
+- Sales::Refunder.refund（取消、在庫復元、再販売、差額返金、全額返金、既に取消済みエラー）
 - Sales::PriceCalculator.calculate, apply_pricing_rules (価格ルール適用の各パターン)
 - Sales::AnalysisCalculator.calculate_sma (データ不足時の挙動含む)
-- **Catalogs::PriceValidator.validate!, find_missing_prices, catalogs_with_missing_prices（Requirement 17-18）**
+- **Catalogs::PriceValidator.validate!, find_missing_prices, catalogs_with_missing_prices（Requirement 16-17）**
 
 ### Integration Tests
 
 - 販売フロー: POS画面 → SalesController → Sales::Recorder → **価格検証** → Sale + SaleItem + DailyInventory 更新 + 価格ルール適用 + 割引適用 → Turbo Streams
-- **価格未設定エラーフロー（Requirement 17）**: 会計 → 価格検証失敗 → エラーメッセージ表示 → 在庫減算なし
-- Void フロー: 取消 → 在庫復元 → 再販売 → Refund 記録 → Turbo Streams
-- オフライン同期フロー: LocalStorage保存 → /api/sales/sync → 競合検出 → エラー通知
+- **価格未設定エラーフロー（Requirement 16）**: 会計 → 価格検証失敗 → エラーメッセージ表示 → 在庫減算なし
+- Void フロー: SalesController#void → Sales::Refunder → 取消 → 在庫復元 → 再販売 → Refund 記録 → Turbo Streams
 - 追加発注フロー: AdditionalOrdersController → DailyInventory 加算 → Turbo Streams
 - レポート生成フロー: DashboardController → Reports::Generator → Chartkick JSON
 - Rodauth 認証フロー: ログイン → セッション確立 → ログアウト
@@ -1350,11 +1367,10 @@ erDiagram
 ### E2E/UI Tests
 
 - POS画面での販売記録 (価格ルール + 割引適用含む)
-- **価格未設定時の会計エラー表示（Requirement 17）**
-- **商品一覧での価格設定不備警告表示（Requirement 18）**
+- **価格未設定時の会計エラー表示（Requirement 16）**
+- **商品一覧での価格設定不備警告表示（Requirement 17）**
 - 返品・返金処理 (取消 → 再販売 → 返金額表示)
 - リアルタイム在庫確認 (Turbo Streams)
-- オフライン状態での販売記録とネットワーク復旧後の同期
 - ダッシュボードでのグラフ表示 (Chartkick)
 - レスポンシブデザイン (スマホ・PC両方)
 
@@ -1398,8 +1414,7 @@ erDiagram
 **Phase 4: 返品・返金処理** → Void 処理, Refund 記録
 **Phase 5: データ分析** → Sales::AnalysisCalculator, Reports::Generator
 **Phase 6: データ可視化** → Chartkick, ダッシュボード
-**Phase 7: オフライン対応** → Service Worker, オフライン同期
-**Phase 8: 最適化・テスト・デプロイ** → パフォーマンステスト, セキュリティ監査, Kamalデプロイ
+**Phase 7: 最適化・テスト・デプロイ** → パフォーマンステスト, セキュリティ監査, Kamalデプロイ
 
 各フェーズの詳細なタスクは `/kiro:spec-tasks sales-tracking-pos` で生成。
 
