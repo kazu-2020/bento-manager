@@ -8,7 +8,7 @@ module DailyInventories
 
     ITEM_TYPE = InventoryItemType.new
 
-    attr_reader :items, :location
+    attr_reader :items, :location, :created_count
 
     validate :at_least_one_item_selected
 
@@ -16,6 +16,20 @@ module DailyInventories
       @location = location
       @catalogs = catalogs
       @items = build_items(submitted)
+      @created_count = 0
+    end
+
+    def save
+      return false unless valid?
+
+      @created_count = DailyInventory.bulk_create(location: location, items: selected_items)
+
+      if @created_count > 0
+        true
+      else
+        errors.add(:base, :save_failed)
+        false
+      end
     end
 
     def form_with_options

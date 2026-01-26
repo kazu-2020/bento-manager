@@ -257,6 +257,64 @@ class DailyInventoryTest < ActiveSupport::TestCase
     end
   end
 
+  # =============================================================================
+  # bulk_create クラスメソッドテスト
+  # =============================================================================
+
+  test "bulk_create は複数アイテムの DailyInventory を一括作成し作成件数を返す" do
+    location = Location.create!(name: "一括作成テスト販売先", status: :active)
+    items = [
+      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 10),
+      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_b).id, stock: 5)
+    ]
+
+    assert_difference "DailyInventory.count", 2 do
+      result = DailyInventory.bulk_create(location: location, items: items)
+      assert_equal 2, result
+    end
+  end
+
+  test "bulk_create は inventory_date を当日に設定する" do
+    location = Location.create!(name: "日付テスト販売先", status: :active)
+    items = [ DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 10) ]
+
+    DailyInventory.bulk_create(location: location, items: items)
+
+    inventory = DailyInventory.last
+    assert_equal Date.current, inventory.inventory_date
+  end
+
+  test "bulk_create は reserved_stock を 0 に設定する" do
+    location = Location.create!(name: "予約在庫テスト販売先", status: :active)
+    items = [ DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 10) ]
+
+    DailyInventory.bulk_create(location: location, items: items)
+
+    inventory = DailyInventory.last
+    assert_equal 0, inventory.reserved_stock
+  end
+
+  test "bulk_create は DB バリデーションエラー時にすべてロールバックし 0 を返す" do
+    location = Location.create!(name: "ロールバックテスト販売先", status: :active)
+    DailyInventory.create!(
+      location: location,
+      catalog: catalogs(:daily_bento_a),
+      inventory_date: Date.current,
+      stock: 5,
+      reserved_stock: 0
+    )
+
+    items = [
+      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_b).id, stock: 10),
+      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 15)  # 重複でエラー
+    ]
+
+    assert_no_difference "DailyInventory.count" do
+      result = DailyInventory.bulk_create(location: location, items: items)
+      assert_equal 0, result
+    end
+  end
+
   # --- 楽観的ロックテスト ---
 
   test "decrement_stock! は楽観的ロックを使用する" do

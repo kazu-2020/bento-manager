@@ -78,5 +78,55 @@ module DailyInventories
       expected = { url: "/pos/locations/#{@location.id}/daily_inventories/form_state", method: :post }
       assert_equal expected, form.form_state_options
     end
+
+    # =====================================================================
+    # save メソッドテスト
+    # =====================================================================
+
+    test "save は成功時 true を返し created_count を設定する" do
+      location = Location.create!(name: "save テスト販売先", status: :active)
+      submitted = {
+        @bento_a.id.to_s => { selected: true, stock: 10 },
+        @bento_b.id.to_s => { selected: true, stock: 5 }
+      }
+      form = InventoryForm.new(location: location, catalogs: @catalogs, submitted: submitted)
+
+      assert_difference "DailyInventory.count", 2 do
+        assert form.save
+      end
+
+      assert_equal 2, form.created_count
+    end
+
+    test "save はバリデーション失敗時 false を返す" do
+      location = Location.create!(name: "バリデーションテスト販売先", status: :active)
+      form = InventoryForm.new(location: location, catalogs: @catalogs)
+
+      assert_no_difference "DailyInventory.count" do
+        assert_not form.save
+      end
+
+      assert_equal 0, form.created_count
+    end
+
+    test "save は DB エラー時 false を返し errors にエラーを追加する" do
+      location = Location.create!(name: "DB エラーテスト販売先", status: :active)
+      DailyInventory.create!(
+        location: location,
+        catalog: @bento_a,
+        inventory_date: Date.current,
+        stock: 5,
+        reserved_stock: 0
+      )
+
+      submitted = { @bento_a.id.to_s => { selected: true, stock: 15 } }
+      form = InventoryForm.new(location: location, catalogs: @catalogs, submitted: submitted)
+
+      assert_no_difference "DailyInventory.count" do
+        assert_not form.save
+      end
+
+      assert_includes form.errors[:base], "保存に失敗しました。もう一度お試しください。"
+    end
   end
 end

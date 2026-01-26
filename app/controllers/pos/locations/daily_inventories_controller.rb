@@ -13,16 +13,11 @@ module Pos
       def create
         @form = build_form(submitted_params(:inventory))
 
-        creator = ::DailyInventories::BulkCreator.new(
-          location: @location,
-          items: @form.selected_items
-        )
-
-        if creator.call
+        if @form.save
           redirect_to new_pos_location_sale_path(@location),
-                      notice: t(".success", count: creator.created_count)
+                      notice: t(".success", count: @form.created_count)
         else
-          flash.now[:alert] = creator.error_message
+          flash.now[:alert] = @form.errors.full_messages.first
           render :new, status: :unprocessable_entity
         end
       end
