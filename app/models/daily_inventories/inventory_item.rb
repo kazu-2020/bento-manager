@@ -6,8 +6,6 @@ module DailyInventories
     include ActiveModel::Attributes
 
     DEFAULT_STOCK = 10
-    MIN_STOCK = 1
-    MAX_STOCK = 999
 
     attribute :catalog_id, :integer
     attribute :catalog_name, :string

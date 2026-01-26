@@ -23,7 +23,7 @@
           <%= component "inputs/quantity_stepper", unit: t(".unit") do |c| %>
             <% c.with_input do %>
               <%= f.number_field :stock,
-                    min: 1, max: 999, autocomplete: "off",
+                    min: 1, autocomplete: "off",
                     class: "input input-bordered w-20 text-center text-2xl font-bold",
                     data: { quantity_stepper_target: "input" } %>
             <% end %>
