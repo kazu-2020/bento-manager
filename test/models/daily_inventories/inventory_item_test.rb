@@ -49,13 +49,6 @@ module DailyInventories
       assert_equal 15, @item.stock
     end
 
-    test "to_state_entry returns state hash" do
-      @item.toggle
-      @item.update_stock(20)
-
-      assert_equal({ selected: true, stock: 20 }, @item.to_state_entry)
-    end
-
     test "to_inventory_param returns param hash" do
       @item.update_stock(15)
 

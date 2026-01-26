@@ -23,74 +23,32 @@ module DailyInventories
       end
     end
 
-    test "initializes with saved state" do
-      state = {
+    test "initializes with submitted values" do
+      submitted = {
         @bento_a.id.to_s => { selected: true, stock: 15 }
       }
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
 
       item_a = form.items.find { |i| i.catalog_id == @bento_a.id }
       assert item_a.selected?
       assert_equal 15, item_a.stock
     end
 
-    test "toggle selects unselected item" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
-      form.toggle(@bento_a.id)
-
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert item.selected?
-    end
-
-    test "toggle deselects selected item" do
-      state = { @bento_a.id.to_s => { selected: true, stock: 10 } }
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
-
-      form.toggle(@bento_a.id)
-
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert_not item.selected?
-    end
-
-    test "update_stock sets stock value" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
-      form.update_stock(@bento_a.id, 25)
-
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert_equal 25, item.stock
-    end
-
-    test "update_stock clamps value between 1 and 999" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
-      form.update_stock(@bento_a.id, 0)
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert_equal 1, item.stock
-
-      form.update_stock(@bento_a.id, 1000)
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert_equal 999, item.stock
-    end
-
     test "selected_items returns only selected items" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-      form.toggle(@bento_a.id)
+      submitted = { @bento_a.id.to_s => { selected: true } }
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
 
       assert_equal 1, form.selected_items.count
       assert_equal @bento_a.id, form.selected_items.first.catalog_id
     end
 
     test "selected_count returns number of selected items" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
+      submitted = {
+        @bento_a.id.to_s => { selected: true },
+        @bento_b.id.to_s => { selected: true }
+      }
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
 
-      assert_equal 0, form.selected_count
-
-      form.toggle(@bento_a.id)
-      assert_equal 1, form.selected_count
-
-      form.toggle(@bento_b.id)
       assert_equal 2, form.selected_count
     end
 
@@ -101,29 +59,18 @@ module DailyInventories
     end
 
     test "can_submit? returns true when at least one item selected" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-      form.toggle(@bento_a.id)
+      submitted = { @bento_a.id.to_s => { selected: true } }
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
 
       assert form.can_submit?
     end
 
-    test "to_state returns serializable hash" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-      form.toggle(@bento_a.id)
-      form.update_stock(@bento_a.id, 11)
-
-      state = form.to_state
-
-      assert_equal true, state[@bento_a.id.to_s][:selected]
-      assert_equal 11, state[@bento_a.id.to_s][:stock]
-    end
-
     test "to_inventory_params returns params for BulkCreator" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-      form.toggle(@bento_a.id)
-      form.toggle(@bento_b.id)
-      form.update_stock(@bento_a.id, 15)
-      form.update_stock(@bento_b.id, 20)
+      submitted = {
+        @bento_a.id.to_s => { selected: true, stock: 15 },
+        @bento_b.id.to_s => { selected: true, stock: 20 }
+      }
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
 
       params = form.to_inventory_params
 

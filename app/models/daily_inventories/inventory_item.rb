@@ -26,10 +26,6 @@ module DailyInventories
       self.stock = [ [ value.to_i, MIN_STOCK ].max, MAX_STOCK ].min
     end
 
-    def to_state_entry
-      { selected: selected, stock: stock }
-    end
-
     def to_inventory_param
       { catalog_id: catalog_id, stock: stock }
     end

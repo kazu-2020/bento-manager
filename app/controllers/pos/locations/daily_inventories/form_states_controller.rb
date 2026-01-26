@@ -8,7 +8,7 @@ module Pos
         before_action :set_catalogs
 
         def create
-          @form = build_form(parse_inventory_params(:ghost_inventory))
+          @form = build_form(submitted_params(:ghost_inventory))
 
           respond_to do |format|
             format.turbo_stream { render "pos/locations/daily_inventories/form_state" }
@@ -26,16 +26,14 @@ module Pos
           @catalogs = Catalog.available.bento.includes(:prices).order(:name)
         end
 
-        def build_form(state = {})
-          ::DailyInventories::InventoryForm.new(location: @location, catalogs: @catalogs, state: state)
+        def build_form(submitted = {})
+          ::DailyInventories::InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
         end
 
-        def parse_inventory_params(key)
+        def submitted_params(key)
           return {} unless params[key]
 
-          params[key].to_unsafe_h.transform_values do |item|
-            { selected: item[:selected] == "1", stock: item[:stock].to_i }
-          end
+          params[key].to_unsafe_h
         end
       end
     end
