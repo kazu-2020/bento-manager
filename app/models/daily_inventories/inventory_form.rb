@@ -17,11 +17,17 @@ module DailyInventories
     end
 
     def form_with_options
-      { url: pos_location_daily_inventories_path(location), method: :post }
+      {
+        url: pos_location_daily_inventories_path(location),
+        method: :post
+      }
     end
 
     def form_state_options
-      { url: pos_location_daily_inventories_form_state_path(location), method: :post }
+      {
+        url: pos_location_daily_inventories_form_state_path(location),
+        method: :post
+      }
     end
 
     def selected_items
