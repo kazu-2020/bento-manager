@@ -31,7 +31,21 @@ module Pos
         end
 
         def render_bento_card(item)
-          render BentoCard::Component.new(item: item)
+          render Pos::DailyInventories::NewFormBentoCard::Component.new(item: item)
+        end
+
+        def render_submit_button
+          render Pos::DailyInventories::NewFormSubmitButton::Component.new(
+            disabled: !valid?,
+            selected_count: selected_count
+          )
+        end
+
+        def render_ghost_form
+          render Pos::DailyInventories::NewFormGhostForm::Component.new(
+            form_state_options: form_state_options,
+            items: items
+          )
         end
       end
     end

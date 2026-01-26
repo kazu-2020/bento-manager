@@ -37,26 +37,11 @@
 
       <%# 固定フッター %>
       <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
-        <div id="submit-button">
-          <%= f.button class: "btn btn-accent btn-lg w-full gap-2",
-                      disabled: !valid? do %>
-            <span class="text-xl">🍱</span>
-            <span><%= t(".submit_label") %></span>
-            <span class="badge badge-neutral"><%= selected_count %></span>
-            <span><%= t(".submit_unit") %></span>
-          <% end %>
-        </div>
+        <%= render_submit_button %>
       </footer>
     <% end %>
 
     <%# Ghost Form (画面更新用の幽霊フォーム) %>
-    <%= form_with **form_state_options,
-                  id: "ghost-form",
-                  data: { turbo_stream: true, ghost_form_target: "ghostForm" } do |f| %>
-      <% items.each do |item| %>
-        <%= hidden_field_tag "ghost_inventory[#{item.catalog_id}][selected]", item.selected? ? "1" : "0" %>
-        <%= hidden_field_tag "ghost_inventory[#{item.catalog_id}][stock]", item.stock %>
-      <% end %>
-    <% end %>
+    <%= render_ghost_form %>
   </div>
 </div>
