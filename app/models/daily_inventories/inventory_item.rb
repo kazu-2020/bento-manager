@@ -18,14 +18,6 @@ module DailyInventories
       !!selected
     end
 
-    def toggle
-      self.selected = !selected
-    end
-
-    def update_stock(value)
-      self.stock = [ [ value.to_i, MIN_STOCK ].max, MAX_STOCK ].min
-    end
-
     def to_inventory_param
       { catalog_id: catalog_id, stock: stock }
     end

@@ -22,35 +22,8 @@ module DailyInventories
       assert_equal 20, item.stock
     end
 
-    test "toggle switches selected state" do
-      assert_not @item.selected?
-
-      @item.toggle
-      assert @item.selected?
-
-      @item.toggle
-      assert_not @item.selected?
-    end
-
-    test "update_stock sets value within bounds" do
-      @item.update_stock(25)
-      assert_equal 25, @item.stock
-
-      @item.update_stock(0)
-      assert_equal InventoryItem::MIN_STOCK, @item.stock
-
-      @item.update_stock(1000)
-      assert_equal InventoryItem::MAX_STOCK, @item.stock
-    end
-
-    test "update_stock converts string to integer" do
-      @item.update_stock("15")
-
-      assert_equal 15, @item.stock
-    end
-
     test "to_inventory_param returns param hash" do
-      @item.update_stock(15)
+      @item.stock = 15
 
       assert_equal({ catalog_id: 1, stock: 15 }, @item.to_inventory_param)
     end
