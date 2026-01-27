@@ -39,6 +39,16 @@ module Pos
         def has_discounts?
           discounts.any?
         end
+
+        def tab_items
+          @tab_items ||= begin
+            items = []
+            items << { key: :bento, label: t(".bento_section_title") } if has_bento_items?
+            items << { key: :side_menu, label: t(".side_menu_section_title") } if has_side_menu_items?
+            items << { key: :coupon, label: t(".coupon_tab_label") } if has_discounts?
+            items
+          end
+        end
       end
     end
   end

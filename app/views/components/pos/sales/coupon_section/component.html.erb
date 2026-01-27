@@ -1,9 +1,4 @@
-<div id="coupon-section" class="mb-6">
-  <h2 class="flex items-center gap-2 text-lg font-bold mb-3">
-    <span>🎟️</span>
-    <span><%= t(".title") %></span>
-  </h2>
-
+<div id="coupon-section">
   <% if has_discounts? %>
     <div class="space-y-3">
       <% discounts.each do |discount| %>

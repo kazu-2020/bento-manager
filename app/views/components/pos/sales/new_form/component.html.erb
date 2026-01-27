@@ -21,40 +21,41 @@
                   data: { ghost_form_target: "originalForm" } do |f| %>
       <main class="flex-1 p-4 pb-56">
         <% if has_items? %>
-          <%# 弁当セクション %>
-          <% if has_bento_items? %>
-            <div class="mb-6">
-              <h2 class="flex items-center gap-2 text-lg font-bold mb-3">
-                <span>🍱</span>
-                <span><%= t(".bento_section_title") %></span>
-              </h2>
-              <div class="space-y-3">
-                <% bento_items.each do |item| %>
-                  <%= component "pos/sales/product_card", item: item %>
+          <div data-controller="tabs">
+            <%# タブバー %>
+            <div role="tablist" class="tabs tabs-lift mb-6">
+              <% tab_items.each_with_index do |tab, i| %>
+                <button type="button" role="tab"
+                        class="tab min-h-12 flex-1 text-base font-medium <%= "tab-active" if i == 0 %>"
+                        data-tabs-target="tab"
+                        data-action="tabs#select">
+                  <%= tab[:label] %>
+                </button>
+              <% end %>
+            </div>
+
+            <%# タブパネル %>
+            <% tab_items.each_with_index do |tab, i| %>
+              <div data-tabs-target="panel" <%= "hidden" unless i == 0 %>>
+                <% case tab[:key] %>
+                <% when :bento %>
+                  <div class="space-y-3">
+                    <% bento_items.each do |item| %>
+                      <%= component "pos/sales/product_card", item: item %>
+                    <% end %>
+                  </div>
+                <% when :side_menu %>
+                  <div class="space-y-3">
+                    <% side_menu_items.each do |item| %>
+                      <%= component "pos/sales/product_card", item: item %>
+                    <% end %>
+                  </div>
+                <% when :coupon %>
+                  <%= component "pos/sales/coupon_section", form: form %>
                 <% end %>
               </div>
-            </div>
-          <% end %>
-
-          <%# サイドメニューセクション %>
-          <% if has_side_menu_items? %>
-            <div class="mb-6">
-              <h2 class="flex items-center gap-2 text-lg font-bold mb-3">
-                <span>🍲</span>
-                <span><%= t(".side_menu_section_title") %></span>
-              </h2>
-              <div class="space-y-3">
-                <% side_menu_items.each do |item| %>
-                  <%= component "pos/sales/product_card", item: item %>
-                <% end %>
-              </div>
-            </div>
-          <% end %>
-
-          <%# クーポンセクション %>
-          <% if has_discounts? %>
-            <%= component "pos/sales/coupon_section", form: form %>
-          <% end %>
+            <% end %>
+          </div>
         <% else %>
           <div class="text-center py-12 text-base-content/60">
             <div class="text-6xl mb-4">🍱</div>
