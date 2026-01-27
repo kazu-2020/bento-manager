@@ -52,7 +52,7 @@ module Pos
           disabled? ? 0 : max_quantity
         end
 
-        def field_name
+        def coupon_field_name
           "cart[coupon][#{discount.id}]"
         end
 

@@ -49,7 +49,7 @@ module Sales
     test "initializes with submitted coupon quantities" do
       discount = discounts(:fifty_yen_discount)
       submitted = {
-        "coupon" => { discount.id.to_s => "1" }
+        "coupon" => { discount.id.to_s => { "quantity" => "1" } }
       }
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
 
@@ -170,7 +170,7 @@ module Sales
     test "selected_discount_ids returns IDs of coupons with quantity > 0" do
       discount = discounts(:fifty_yen_discount)
       submitted = {
-        "coupon" => { discount.id.to_s => "1" }
+        "coupon" => { discount.id.to_s => { "quantity" => "1" } }
       }
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
 
@@ -180,7 +180,7 @@ module Sales
     test "selected_discount_ids excludes coupons with quantity 0" do
       discount = discounts(:fifty_yen_discount)
       submitted = {
-        "coupon" => { discount.id.to_s => "0" }
+        "coupon" => { discount.id.to_s => { "quantity" => "0" } }
       }
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
 
@@ -190,7 +190,7 @@ module Sales
     test "discount_quantities_for_calculator returns selected coupon quantities" do
       discount = discounts(:fifty_yen_discount)
       submitted = {
-        "coupon" => { discount.id.to_s => "2" }
+        "coupon" => { discount.id.to_s => { "quantity" => "2" } }
       }
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
 
@@ -201,7 +201,7 @@ module Sales
     test "discount_quantities_for_calculator excludes coupons with quantity 0" do
       discount = discounts(:fifty_yen_discount)
       submitted = {
-        "coupon" => { discount.id.to_s => "0" }
+        "coupon" => { discount.id.to_s => { "quantity" => "0" } }
       }
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
 
@@ -213,7 +213,7 @@ module Sales
       discount = discounts(:fifty_yen_discount)
       submitted = {
         @bento_a.id.to_s => { "quantity" => "2" },
-        "coupon" => { discount.id.to_s => "1" }
+        "coupon" => { discount.id.to_s => { "quantity" => "1" } }
       }
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
 
@@ -227,7 +227,7 @@ module Sales
       discount = discounts(:fifty_yen_discount)
       submitted = {
         @bento_a.id.to_s => { "quantity" => "1" },
-        "coupon" => { discount.id.to_s => "1" }
+        "coupon" => { discount.id.to_s => { "quantity" => "1" } }
       }
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
 

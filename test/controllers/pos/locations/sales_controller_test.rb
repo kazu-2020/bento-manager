@@ -131,7 +131,7 @@ module Pos
                cart: {
                  @bento_a.id.to_s => { quantity: "1" },
                  customer_type: "staff",
-                 coupon: { discount.id.to_s => "1" }
+                 coupon: { discount.id.to_s => { quantity: "1" } }
                }
              }
 

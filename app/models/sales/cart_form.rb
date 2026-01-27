@@ -87,7 +87,7 @@ module Sales
 
     def build_coupon_quantities(submitted)
       coupon_data = submitted["coupon"] || {}
-      coupon_data.to_h.transform_keys(&:to_i).transform_values(&:to_i)
+      coupon_data.to_h.transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
     end
 
     def calculate_prices

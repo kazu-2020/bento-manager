@@ -1,13 +1,19 @@
 <%= form_with **form_state_options,
             id: "ghost-form",
-            data: { turbo_stream: true, ghost_form_target: "ghostForm" } do |f| %>
+            data: { turbo_stream: true, ghost_form_target: "ghostForm" } do %>
   <% items.each do |item| %>
-    <%= hidden_field_tag "ghost_cart[#{item.catalog_id}][quantity]", item.quantity %>
+    <%= fields_for "ghost_cart[#{item.catalog_id}]", item do |f| %>
+      <%= f.hidden_field :quantity %>
+    <% end %>
   <% end %>
 
   <% discounts.each do |discount| %>
-    <%= hidden_field_tag "ghost_cart[coupon][#{discount.id}]", coupon_quantity(discount) %>
+    <%= fields_for "ghost_cart[coupon][#{discount.id}]" do |f| %>
+      <%= f.hidden_field :quantity, value: coupon_quantity(discount) %>
+    <% end %>
   <% end %>
 
-  <%= hidden_field_tag "ghost_cart[customer_type]", customer_type %>
+  <%= fields_for "ghost_cart", form do |f| %>
+    <%= f.hidden_field :customer_type %>
+  <% end %>
 <% end %>

@@ -10,7 +10,7 @@ module Pos
 
         attr_reader :form
 
-        delegate :form_state_options, :items, :discounts, :customer_type, to: :form
+        delegate :form_state_options, :items, :discounts, to: :form
 
         def coupon_quantity(discount)
           form.coupon_quantity(discount)
