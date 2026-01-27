@@ -221,8 +221,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
           valid_from: Date.current,
           discountable: {
             description: "テスト",
-            amount_per_unit: 50,
-            max_per_bento_quantity: 1
+            amount_per_unit: 50
           }
         }
       }, as: :turbo_stream
