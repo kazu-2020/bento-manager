@@ -231,7 +231,7 @@ module Sales
     # ===== クーポン複数枚利用 =====
 
     test "弁当3個(550円)に50円クーポン3枚を使うと150円引きの1500円になる" do
-      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 3 }]
+      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 3 } ]
       discount_quantities = { discounts(:fifty_yen_discount).id => 3 }
 
       result = Sales::PriceCalculator.new(
@@ -244,7 +244,7 @@ module Sales
     end
 
     test "弁当2個に50円クーポン2枚と100円クーポン3枚を使うと合計400円引きになる" do
-      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 2 }]
+      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 2 } ]
       discount_quantities = {
         discounts(:fifty_yen_discount).id => 2,
         discounts(:hundred_yen_discount).id => 3
