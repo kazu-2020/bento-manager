@@ -12,7 +12,7 @@ module Pos
         attr_reader :location, :form
 
         delegate :items, :bento_items, :side_menu_items, :cart_items,
-                 :has_items_in_cart?, :submittable?, :discounts,
+                 :has_items_in_cart?, :discounts,
                  :form_with_options, :form_state_options, :price_result,
                  to: :form
 

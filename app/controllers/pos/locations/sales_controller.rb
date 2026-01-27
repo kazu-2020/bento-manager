@@ -14,7 +14,7 @@ module Pos
       def create
         @form = build_form(submitted_params(:cart))
 
-        unless @form.submittable?
+        unless @form.valid?
           flash.now[:alert] = t(".missing_requirements")
           return render :new, status: :unprocessable_entity
         end

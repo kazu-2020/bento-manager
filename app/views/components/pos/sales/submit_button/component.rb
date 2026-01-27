@@ -13,7 +13,7 @@ module Pos
         delegate :has_items_in_cart?, :price_result, to: :form
 
         def disabled?
-          !form.submittable?
+          !form.valid?
         end
 
         def submit_text

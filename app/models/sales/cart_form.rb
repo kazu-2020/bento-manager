@@ -60,10 +60,6 @@ module Sales
       bento_items.select(&:in_cart?).sum(&:quantity)
     end
 
-    def submittable?
-      valid?
-    end
-
     def form_with_options
       { url: pos_location_sales_path(location), method: :post }
     end

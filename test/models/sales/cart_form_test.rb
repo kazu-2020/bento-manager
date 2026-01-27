@@ -242,31 +242,6 @@ module Sales
     # バリデーション・送信可否テスト
     # =====================================================================
 
-    test "submittable? returns true with items and customer_type" do
-      submitted = {
-        @bento_a.id.to_s => { "quantity" => "1" },
-        "customer_type" => "staff"
-      }
-      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
-
-      assert form.submittable?
-    end
-
-    test "submittable? returns false without items" do
-      submitted = { "customer_type" => "staff" }
-      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
-
-      assert_not form.submittable?
-    end
-
-    test "submittable? returns true with default customer_type" do
-      submitted = { @bento_a.id.to_s => { "quantity" => "1" } }
-      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
-
-      assert form.submittable?
-      assert_equal "citizen", form.customer_type
-    end
-
     test "valid? returns true with items and customer_type" do
       submitted = {
         @bento_a.id.to_s => { "quantity" => "1" },
