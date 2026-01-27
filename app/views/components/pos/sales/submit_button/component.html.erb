@@ -1,28 +1,28 @@
 <div id="sale-submit-button">
   <%# 顧客区分選択 %>
-  <div class="flex gap-3 mb-3">
-    <label class="flex-1 cursor-pointer">
-      <%= radio_button_tag "cart[customer_type]", "staff", staff_selected?,
-            class: "hidden peer" %>
-      <div class="card border-2 peer-checked:border-primary peer-checked:bg-primary/10 border-base-300 transition-all">
-        <div class="card-body p-3 text-center">
-          <span class="text-2xl">👔</span>
-          <span class="font-medium"><%= t("enums.sale.customer_type.staff") %></span>
+  <%= fields_for "cart", form do |f| %>
+    <div class="flex gap-3 mb-3">
+      <label class="flex-1 cursor-pointer">
+        <%= f.radio_button :customer_type, "staff", class: "hidden peer" %>
+        <div class="card border-2 peer-checked:border-primary peer-checked:bg-primary/10 border-base-300 transition-all">
+          <div class="card-body p-3 text-center">
+            <span class="text-2xl">👔</span>
+            <span class="font-medium"><%= t("enums.sale.customer_type.staff") %></span>
+          </div>
         </div>
-      </div>
-    </label>
+      </label>
 
-    <label class="flex-1 cursor-pointer">
-      <%= radio_button_tag "cart[customer_type]", "citizen", citizen_selected?,
-            class: "hidden peer" %>
-      <div class="card border-2 peer-checked:border-primary peer-checked:bg-primary/10 border-base-300 transition-all">
-        <div class="card-body p-3 text-center">
-          <span class="text-2xl">🏠</span>
-          <span class="font-medium"><%= t("enums.sale.customer_type.citizen") %></span>
+      <label class="flex-1 cursor-pointer">
+        <%= f.radio_button :customer_type, "citizen", class: "hidden peer" %>
+        <div class="card border-2 peer-checked:border-primary peer-checked:bg-primary/10 border-base-300 transition-all">
+          <div class="card-body p-3 text-center">
+            <span class="text-2xl">🏠</span>
+            <span class="font-medium"><%= t("enums.sale.customer_type.citizen") %></span>
+          </div>
         </div>
-      </div>
-    </label>
-  </div>
+      </label>
+    </div>
+  <% end %>
 
   <%# 販売確定ボタン %>
   <%= button_tag submit_text, type: :submit,

@@ -10,7 +10,7 @@ module Pos
 
         attr_reader :form
 
-        delegate :has_items_in_cart?, :customer_type, :price_result, to: :form
+        delegate :has_items_in_cart?, :price_result, to: :form
 
         def disabled?
           !form.submittable?
@@ -30,14 +30,6 @@ module Pos
 
         def final_total_display
           helpers.number_to_currency(final_total)
-        end
-
-        def staff_selected?
-          customer_type == "staff"
-        end
-
-        def citizen_selected?
-          customer_type == "citizen"
         end
       end
     end
