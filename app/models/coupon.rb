@@ -16,7 +16,8 @@ class Coupon < ApplicationRecord
   end
 
   # 割引額を計算
-  # @param sale_items [Array<Hash>] 販売明細
+  # @param sale_items [Array<Hash>] 販売明細（Discount#calculate_discount からの委譲インターフェースに準拠。
+  #   固定額クーポンでは未使用だが、将来の割引タイプでは参照される想定）
   # @return [Integer] クーポン1枚あたりの固定割引額
   def calculate_discount(sale_items)
     amount_per_unit
