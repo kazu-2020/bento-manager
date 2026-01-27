@@ -6,8 +6,10 @@ module Sales
 
     def cast_value(value)
       case value
-      when CartItem then value
-      when Hash     then CartItem.new(**value.symbolize_keys)
+      when CartItem
+        value
+      when Hash
+        CartItem.new(**value.symbolize_keys)
       end
     end
   end
