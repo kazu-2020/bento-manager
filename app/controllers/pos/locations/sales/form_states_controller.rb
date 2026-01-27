@@ -23,7 +23,10 @@ module Pos
         end
 
         def set_inventories
-          @inventories = @location.today_inventories.includes(:catalog).order("catalogs.name")
+          @inventories = @location
+                            .today_inventories
+                            .eager_load(:catalog)
+                            .merge(Catalog.category_order)
         end
 
         def set_discounts
