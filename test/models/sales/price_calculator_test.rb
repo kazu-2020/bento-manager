@@ -348,6 +348,5 @@ module Sales
       assert_not_nil result[:items_with_prices]
       assert_equal 700, result[:subtotal]
     end
-
   end
 end
