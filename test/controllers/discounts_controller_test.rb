@@ -45,8 +45,8 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
             valid_until: 1.month.from_now.to_date,
             discountable: {
               description: "テストクーポン",
-              amount_per_unit: 50,
-              max_per_bento_quantity: 1
+              amount_per_unit: 50
+
             }
           }
         }, as: :turbo_stream
@@ -137,8 +137,8 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
             valid_from: Date.current,
             discountable: {
               description: "従業員が作成",
-              amount_per_unit: 30,
-              max_per_bento_quantity: 1
+              amount_per_unit: 30
+
             }
           }
         }, as: :turbo_stream
@@ -221,8 +221,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
           valid_from: Date.current,
           discountable: {
             description: "テスト",
-            amount_per_unit: 50,
-            max_per_bento_quantity: 1
+            amount_per_unit: 50
           }
         }
       }, as: :turbo_stream

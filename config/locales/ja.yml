@@ -101,6 +101,8 @@ ja:
         order_at: "発注日時"
         quantity: "数量"
         employee: "担当者"
+      sale_discount:
+        quantity: "使用枚数"
       discount:
         name: "名前"
         valid_from: "有効開始日"
@@ -108,7 +110,6 @@ ja:
       coupon:
         description: "説明"
         amount_per_unit: "1枚あたりの割引額"
-        max_per_bento_quantity: "弁当1個あたりの最大適用枚数"
 
   enums:
     admin:

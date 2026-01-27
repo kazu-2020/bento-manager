@@ -20,13 +20,13 @@ class DiscountTest < ActiveSupport::TestCase
   end
 
   test "valid_until は nullable" do
-    coupon = Coupon.create!(description: "nullable テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "nullable テスト", amount_per_unit: 50)
     discount = Discount.new(discountable: coupon, name: "テスト割引", valid_from: Date.current, valid_until: nil)
     assert discount.valid?, "valid_until が nil でも有効: #{discount.errors.full_messages.join(', ')}"
   end
 
   test "有効な属性で作成できる" do
-    coupon = Coupon.create!(description: "作成テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "作成テスト", amount_per_unit: 50)
     discount = Discount.new(
       discountable: coupon,
       name: "50円割引クーポン",
@@ -39,7 +39,7 @@ class DiscountTest < ActiveSupport::TestCase
   # ===== 日付範囲バリデーションテスト（Task 5.3） =====
 
   test "valid_until が valid_from より前の場合はエラー" do
-    coupon = Coupon.create!(description: "日付範囲テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "日付範囲テスト", amount_per_unit: 50)
     discount = Discount.new(
       discountable: coupon,
       name: "テスト割引",
@@ -51,7 +51,7 @@ class DiscountTest < ActiveSupport::TestCase
   end
 
   test "valid_until が valid_from と同じ場合はエラー" do
-    coupon = Coupon.create!(description: "同日テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "同日テスト", amount_per_unit: 50)
     today = Date.current
     discount = Discount.new(
       discountable: coupon,
@@ -64,7 +64,7 @@ class DiscountTest < ActiveSupport::TestCase
   end
 
   test "valid_until が valid_from より後の場合は有効" do
-    coupon = Coupon.create!(description: "有効日付テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "有効日付テスト", amount_per_unit: 50)
     discount = Discount.new(
       discountable: coupon,
       name: "テスト割引",
@@ -77,7 +77,7 @@ class DiscountTest < ActiveSupport::TestCase
   # ===== Delegated Type テスト =====
 
   test "delegated_type が Coupon を受け入れる" do
-    coupon = Coupon.create!(description: "delegated_type テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "delegated_type テスト", amount_per_unit: 50)
     discount = Discount.create!(
       discountable: coupon,
       name: "クーポン割引",
@@ -90,7 +90,7 @@ class DiscountTest < ActiveSupport::TestCase
   end
 
   test "coupon? メソッドが使用可能" do
-    coupon = Coupon.create!(description: "coupon? テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "coupon? テスト", amount_per_unit: 50)
     discount = Discount.create!(
       discountable: coupon,
       name: "クーポン割引",
@@ -103,9 +103,9 @@ class DiscountTest < ActiveSupport::TestCase
   # ===== スコープテスト =====
 
   test "active スコープは現在有効な割引のみ取得" do
-    coupon1 = Coupon.create!(description: "有効クーポン", amount_per_unit: 50, max_per_bento_quantity: 1)
-    coupon2 = Coupon.create!(description: "期限切れクーポン", amount_per_unit: 50, max_per_bento_quantity: 1)
-    coupon3 = Coupon.create!(description: "未来のクーポン", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon1 = Coupon.create!(description: "有効クーポン", amount_per_unit: 50)
+    coupon2 = Coupon.create!(description: "期限切れクーポン", amount_per_unit: 50)
+    coupon3 = Coupon.create!(description: "未来のクーポン", amount_per_unit: 50)
 
     # 現在有効（valid_until なし）
     active_discount = Discount.create!(
@@ -139,7 +139,7 @@ class DiscountTest < ActiveSupport::TestCase
   end
 
   test "active スコープは valid_until が今日以降の割引を含む" do
-    coupon = Coupon.create!(description: "期間内クーポン", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "期間内クーポン", amount_per_unit: 50)
     discount = Discount.create!(
       discountable: coupon,
       name: "期間内割引",
@@ -153,7 +153,7 @@ class DiscountTest < ActiveSupport::TestCase
   # ===== 委譲メソッドテスト =====
 
   test "applicable? は discountable に委譲される" do
-    coupon = Coupon.create!(description: "委譲テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "委譲テスト", amount_per_unit: 50)
     discount = Discount.create!(
       discountable: coupon,
       name: "委譲テスト割引",
@@ -167,7 +167,7 @@ class DiscountTest < ActiveSupport::TestCase
   end
 
   test "calculate_discount は discountable に委譲される" do
-    coupon = Coupon.create!(description: "計算委譲テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "計算委譲テスト", amount_per_unit: 50)
     discount = Discount.create!(
       discountable: coupon,
       name: "計算委譲テスト割引",
@@ -177,13 +177,12 @@ class DiscountTest < ActiveSupport::TestCase
 
     sale_items = [ { catalog: bento, quantity: 2 } ]
 
-    # Requirement 13.2, 13.8: 弁当の個数ベースでカウント
-    # 弁当2個 × max_per_bento_quantity(1) = 2枚 × 50円 = 100円
-    assert_equal 100, discount.calculate_discount(sale_items)
+    # クーポン1枚あたり固定50円
+    assert_equal 50, discount.calculate_discount(sale_items)
   end
 
   test "calculate_discount は applicable? が false の場合 0 を返す" do
-    coupon = Coupon.create!(description: "非適用テスト", amount_per_unit: 50, max_per_bento_quantity: 1)
+    coupon = Coupon.create!(description: "非適用テスト", amount_per_unit: 50)
     discount = Discount.create!(
       discountable: coupon,
       name: "非適用テスト割引",

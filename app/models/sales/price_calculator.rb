@@ -2,17 +2,17 @@
 # カート内アイテムの価格ルール適用と割引計算を行う
 module Sales
   class PriceCalculator
-    attr_reader :cart_items, :discount_ids, :calculation_time
+    attr_reader :cart_items, :discount_quantities, :calculation_time
 
     # @param cart_items [Array<Hash>] カート内アイテム [{ catalog: Catalog, quantity: Integer }, ...]
-    # @param discount_ids [Array<Integer>] 適用する割引の ID リスト
+    # @param discount_quantities [Hash{Integer => Integer}] 適用する割引の ID と枚数 { discount_id => 枚数 }
     # @param calculation_time [Time] 計算基準時刻（デフォルト: 現在）
     #
     # @note cart_items について
     #   - 各 category の quontitiy は 1 つにまとめられている前提
-    def initialize(cart_items, discount_ids: [], calculation_time: Time.current)
+    def initialize(cart_items, discount_quantities: {}, calculation_time: Time.current)
       @cart_items = cart_items
-      @discount_ids = discount_ids
+      @discount_quantities = discount_quantities
       @calculation_time = calculation_time
       @applicable_rules_cache = {}
     end
@@ -77,16 +77,20 @@ module Sales
     #   - :discount_details [Array<Hash>] 各割引の詳細
     #   - :total_discount_amount [Integer] 割引合計
     def apply_discounts
-      return { discount_details: [], total_discount_amount: 0 } if discount_ids.empty?
+      return { discount_details: [], total_discount_amount: 0 } if discount_quantities.empty?
 
-      discount_details = Discount.active_at(calculation_time.to_date).where(id: discount_ids).map do |discount|
-        discount_amount = discount.calculate_discount(cart_items)
+      discount_details = Discount.active_at(calculation_time.to_date)
+        .where(id: discount_quantities.keys).map do |discount|
+        quantity = discount_quantities[discount.id]
+        unit_amount = discount.calculate_discount(cart_items)
+        total_amount = unit_amount * quantity
 
         {
           discount_id: discount.id,
           discount_name: discount.name,
-          discount_amount: discount_amount,
-          applicable: discount_amount > 0
+          discount_amount: total_amount,
+          quantity: quantity,
+          applicable: unit_amount > 0
         }
       end
 
