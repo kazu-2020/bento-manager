@@ -9,15 +9,12 @@
       <% if has_items? %>
         <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
           <%# タブバー %>
-          <div class="flex-shrink-0 bg-base-200 px-4 pt-2">
+          <div class="shrink-0 bg-base-200 px-4 pt-2">
             <div role="tablist" class="tabs tabs-lift">
               <% tab_items.each_with_index do |tab, i| %>
-                <button type="button" role="tab"
-                        class="tab min-h-12 flex-1 text-base font-medium <%= "tab-active" if i == 0 %>"
-                        data-tabs-target="tab"
-                        data-action="tabs#select">
-                  <%= tab[:label] %>
-                </button>
+                <%= button_tag tab[:label], type: :button, role: :tab,
+                      class: "tab min-h-12 flex-1 text-base font-medium #{"tab-active" if i == 0}",
+                      data: { tabs_target: "tab", action: "tabs#select" } %>
               <% end %>
             </div>
           </div>
@@ -29,18 +26,16 @@
                 <% case tab[:key] %>
                 <% when :bento %>
                   <div class="space-y-3">
-                    <% bento_items.each do |item| %>
-                      <%= component "pos/sales/product_card", item: item %>
-                    <% end %>
+                    <%= component "pos/sales/product_card", collection: bento_items %>
                   </div>
                 <% when :side_menu %>
                   <div class="space-y-3">
-                    <% side_menu_items.each do |item| %>
-                      <%= component "pos/sales/product_card", item: item %>
-                    <% end %>
+                    <%= component "pos/sales/product_card", collection: side_menu_items %>
                   </div>
                 <% when :coupon %>
-                  <%= component "pos/sales/coupon_section", form: form %>
+                  <div class="space-y-3">
+                    <%= component "pos/sales/coupon_card", collection: discounts, form: form %>
+                  </div>
                 <% end %>
               </div>
             <% end %>
@@ -56,7 +51,7 @@
       <% end %>
 
       <%# フッター %>
-      <footer class="flex-shrink-0 bg-base-100 border-t border-base-300">
+      <footer class="shrink-0 bg-base-100 border-t border-base-300">
         <div class="p-4 safe-area-pb">
           <%# 価格内訳 %>
           <%= component "pos/sales/price_breakdown", form: form %>

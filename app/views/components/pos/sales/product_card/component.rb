@@ -4,6 +4,8 @@ module Pos
   module Sales
     module ProductCard
       class Component < Application::Component
+        with_collection_parameter :item
+
         def initialize(item:)
           @item = item
         end

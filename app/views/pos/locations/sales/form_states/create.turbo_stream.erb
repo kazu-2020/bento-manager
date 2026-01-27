@@ -10,9 +10,11 @@
   <%= component "pos/sales/price_breakdown", form: @form %>
 <% end %>
 
-<%# クーポンセクション更新 %>
-<%= turbo_stream.replace "coupon-section" do %>
-  <%= component "pos/sales/coupon_section", form: @form %>
+<%# クーポンカード更新 %>
+<% @form.discounts.each do |discount| %>
+  <%= turbo_stream.replace "coupon-card-#{discount.id}" do %>
+    <%= component "pos/sales/coupon_card", discount: discount, form: @form %>
+  <% end %>
 <% end %>
 
 <%# 送信ボタン更新 %>

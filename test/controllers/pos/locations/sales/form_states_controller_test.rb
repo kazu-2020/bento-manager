@@ -89,7 +89,7 @@ module Pos
           assert_match "ghost-form", response.body
         end
 
-        test "returns updated coupon section" do
+        test "returns updated coupon cards" do
           login_as(@admin)
 
           post pos_location_sales_form_state_path(@location),
@@ -101,7 +101,7 @@ module Pos
                headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
           assert_response :success
-          assert_match "coupon-section", response.body
+          assert_match "coupon-card-", response.body
         end
 
         test "returns updated submit button" do
