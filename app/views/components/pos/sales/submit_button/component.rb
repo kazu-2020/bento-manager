@@ -1,0 +1,37 @@
+# frozen_string_literal: true
+
+module Pos
+  module Sales
+    module SubmitButton
+      class Component < Application::Component
+        def initialize(form:)
+          @form = form
+        end
+
+        attr_reader :form
+
+        delegate :has_items_in_cart?, :customer_type, :price_result, to: :form
+
+        def disabled?
+          !form.submittable?
+        end
+
+        def final_total
+          price_result[:final_total]
+        end
+
+        def final_total_display
+          helpers.number_to_currency(final_total)
+        end
+
+        def staff_selected?
+          customer_type == "staff"
+        end
+
+        def citizen_selected?
+          customer_type == "citizen"
+        end
+      end
+    end
+  end
+end

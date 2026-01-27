@@ -272,6 +272,10 @@ ja:
         new_form:
           submit_label: "販売開始"
           submit_unit: "種類"
+      sales:
+        create:
+          success: "販売を記録しました"
+          missing_requirements: "商品を選択し、顧客区分を指定してください"
 
   discounts:
     index:

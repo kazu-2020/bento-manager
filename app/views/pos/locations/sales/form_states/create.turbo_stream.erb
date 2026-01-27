@@ -1,0 +1,26 @@
+<%# 商品カード更新 %>
+<% @form.items.each do |item| %>
+  <%= turbo_stream.replace "cart-item-#{item.catalog_id}" do %>
+    <%= component "pos/sales/product_card", item: item %>
+  <% end %>
+<% end %>
+
+<%# 価格内訳更新 %>
+<%= turbo_stream.replace "price-breakdown" do %>
+  <%= component "pos/sales/price_breakdown", form: @form %>
+<% end %>
+
+<%# クーポンセクション更新 %>
+<%= turbo_stream.replace "coupon-section" do %>
+  <%= component "pos/sales/coupon_section", form: @form %>
+<% end %>
+
+<%# 送信ボタン更新 %>
+<%= turbo_stream.replace "sale-submit-button" do %>
+  <%= component "pos/sales/submit_button", form: @form %>
+<% end %>
+
+<%# Ghost Form 更新 %>
+<%= turbo_stream.replace "ghost-form" do %>
+  <%= component "pos/sales/ghost_form", form: @form %>
+<% end %>

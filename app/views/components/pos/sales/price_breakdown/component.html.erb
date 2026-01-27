@@ -1,0 +1,43 @@
+<div id="price-breakdown">
+  <% if has_items_in_cart? %>
+    <%# 明細行 %>
+    <div class="space-y-1 text-sm">
+      <% items_with_prices.each do |item| %>
+        <div class="flex justify-between">
+          <span>
+            <%= item[:catalog].name %>
+            <% if bundle_price?(item) %>
+              <span class="badge badge-xs badge-accent"><%= t(".bundle") %></span>
+            <% end %>
+            × <%= item[:quantity] %>
+          </span>
+          <span><%= format_price(item[:unit_price] * item[:quantity]) %></span>
+        </div>
+      <% end %>
+    </div>
+
+    <%# 小計 %>
+    <div class="flex justify-between mt-2 pt-1 border-t border-base-300 text-sm">
+      <span><%= t(".subtotal") %></span>
+      <span><%= format_price(subtotal) %></span>
+    </div>
+
+    <%# 割引行 %>
+    <% if has_discounts? %>
+      <% discount_details.select { |d| d[:applicable] }.each do |detail| %>
+        <div class="flex justify-between text-sm text-accent">
+          <span><%= detail[:discount_name] %></span>
+          <span>-<%= format_price(detail[:discount_amount]) %></span>
+        </div>
+      <% end %>
+    <% end %>
+
+    <%# 合計金額 %>
+    <div class="flex justify-between mt-1 pt-1 border-t border-base-300">
+      <span class="text-lg font-bold"><%= t(".total") %></span>
+      <span class="text-xl font-bold text-primary"><%= format_price(final_total) %></span>
+    </div>
+  <% else %>
+    <p class="text-center text-base-content/50 text-sm py-2"><%= t(".empty_cart") %></p>
+  <% end %>
+</div>

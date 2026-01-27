@@ -23,6 +23,13 @@ class Coupon < ApplicationRecord
     amount_per_unit
   end
 
+  # クーポンの最大適用枚数を返す
+  # @param sale_items [Array<Hash>] 販売明細 [{ catalog: Catalog, quantity: Integer }, ...]
+  # @return [Integer] 弁当の合計個数（= クーポン適用上限）
+  def max_applicable_quantity(sale_items)
+    bento_quantity(sale_items)
+  end
+
   private
 
   # 弁当の合計個数をカウント

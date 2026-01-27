@@ -1,0 +1,4 @@
+---
+ja:
+  stock_count: "残 %{count}個"
+  sold_out: 売り切れ

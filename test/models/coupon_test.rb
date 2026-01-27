@@ -78,6 +78,37 @@ class CouponTest < ActiveSupport::TestCase
     assert_not coupon.applicable?([])
   end
 
+  # ===== ビジネスロジック: max_applicable_quantity テスト =====
+
+  test "max_applicable_quantity は弁当の合計個数を返す" do
+    coupon = coupons(:fifty_yen_coupon)
+    bento_a = catalogs(:daily_bento_a)
+    bento_b = catalogs(:daily_bento_b)
+
+    sale_items = [
+      { catalog: bento_a, quantity: 3 },
+      { catalog: bento_b, quantity: 2 }
+    ]
+
+    assert_equal 5, coupon.max_applicable_quantity(sale_items)
+  end
+
+  test "max_applicable_quantity は弁当がない場合0を返す" do
+    coupon = coupons(:fifty_yen_coupon)
+    salad = catalogs(:salad)
+
+    sale_items = [
+      { catalog: salad, quantity: 2 }
+    ]
+
+    assert_equal 0, coupon.max_applicable_quantity(sale_items)
+  end
+
+  test "max_applicable_quantity は空の sale_items で0を返す" do
+    coupon = coupons(:fifty_yen_coupon)
+    assert_equal 0, coupon.max_applicable_quantity([])
+  end
+
   # ===== ビジネスロジック: calculate_discount テスト =====
 
   test "calculate_discount はクーポン1枚あたり固定額 amount_per_unit を返す" do
