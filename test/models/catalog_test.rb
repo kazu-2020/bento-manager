@@ -257,9 +257,9 @@ class CatalogTest < ActiveSupport::TestCase
     side_b = Catalog.create!(name: "Bサイド", category: :side_menu)
     side_a = Catalog.create!(name: "Aサイド", category: :side_menu)
 
-    result = Catalog.where(id: [bento_a, bento_b, side_a, side_b]).category_order.to_a
+    result = Catalog.where(id: [ bento_a, bento_b, side_a, side_b ]).category_order.to_a
 
-    assert_equal [bento_a, bento_b, side_a, side_b], result
+    assert_equal [ bento_a, bento_b, side_a, side_b ], result
   end
 
   # ===== 削除禁止テスト =====
