@@ -218,8 +218,8 @@ sequenceDiagram
     PC-->>UI: unit_price, line_total, discount_details
     UI->>U: 小計・割引額・合計を表示
     U->>UI: 会計ボタン押下
-    UI->>SC: POST /sales (catalog_id, quantity, discount_ids)
-    SC->>SR: record(sale_params, items_params)
+    UI->>SC: POST /sales (catalog_id, quantity, discount_quantities)
+    SC->>SR: record(sale_params, items_params, discount_quantities)
     SR->>SR: Transaction開始
     SR->>S: create!
     loop 各販売明細
@@ -229,7 +229,7 @@ sequenceDiagram
         DI->>DI: save! (with optimistic locking)
     end
     loop 各割引
-        SR->>D: create SaleDiscount (discount_id, discount_amount)
+        SR->>D: create SaleDiscount (discount_id, discount_amount, quantity)
     end
     SR->>SR: Transaction commit
     SR-->>SC: Sale
@@ -319,7 +319,7 @@ sequenceDiagram
 | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15 | 認証とユーザー管理 | Admin, Employee, Rodauth, EmployeesController | Rodauth login/logout, Employee CRUD（Admin のみアクセス可能、Employee は 403 エラー） | - |
 | 10.1, 10.2, 10.3, 10.4, 10.5 | レスポンシブデザイン | Tailwind CSS, Vite | Tailwind responsive classes | - |
 | 11.1, 11.2, 11.3, 11.4, 11.5 | データ整合性とパフォーマンス | DailyInventory (lock_version), Solid Cache, Indexes | Optimistic Locking, Transaction, Cache | 販売フロー |
-| 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.9 | 割引（クーポン）管理と適用 | Discount, Coupon, SaleDiscount, Sales::PriceCalculator, SalesController | Discount#applicable?, Coupon#max_applicable_quantity, SaleDiscount (中間テーブル) | 販売フロー |
+| 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.9 | 割引（クーポン）管理と適用 | Discount, Coupon, SaleDiscount, Sales::PriceCalculator, SalesController | Discount#applicable?, Coupon#calculate_discount, SaleDiscount (中間テーブル, quantity で枚数管理) | 販売フロー |
 | 13.1, 13.2, 13.3, 13.4, 13.5, 13.6, 13.7, 13.8 | サイドメニュー（サラダ）の条件付き価格設定 | CatalogPricingRule, CatalogPrice, Sales::PriceCalculator, Catalog (category enum) | CatalogPricingRule#applicable?, apply_pricing_rules, CatalogPrice.by_kind | 販売フロー |
 | 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8, 14.9, 14.10, 14.11, 14.12 | 返品・返金処理（取消・再販売・差額返金） | Sale, Refund, Sales::Refunder, SalesController#void, Sales::PriceCalculator, DailyInventory | Sales::Refunder#refund, Refund, corrected_from_sale_id | 返品・返金フロー |
 | 15.1, 15.2, 15.3, 15.4, 15.5, 15.6, 15.7 | 販売先（ロケーション）管理 | Location, LocationsController, DailyInventory, Sale, AdditionalOrder | LocationsController CRUD, Location#deactivate | - |
@@ -630,15 +630,13 @@ end
 | Method | Input | Output | 契約 |
 |--------|-------|--------|------|
 | applicable? | sale_items | Boolean | カート内に弁当があるか判定（quantity > 0） |
-| max_applicable_quantity | sale_items | Integer | 最大適用可能枚数（弁当quantity合計 × max_per_bento_quantity） |
-| calculate_discount | sale_items | Integer | 割引額を計算（max_applicable_quantity × amount_per_unit） |
+| calculate_discount | sale_items | Integer | 割引額を計算（弁当があれば amount_per_unit を返す） |
 
 **Implementation Notes**:
 - 例: 50円割引クーポン
   - amount_per_unit: 50
-  - max_per_bento_quantity: 1（弁当1個につき1枚まで）
-- クーポン適用上限は弁当の種類ではなく、購入した弁当の合計個数（quantity の合計）でカウント
-  - 例: 日替わりA 3個 + 日替わりB 2個 = 弁当5個 → クーポン最大5枚適用可能
+- `calculate_discount` は1枚あたりの割引額（`amount_per_unit`）を返す。複数枚利用時の乗算は `Sales::PriceCalculator` 側で行う
+- 使用枚数は `discount_quantities: { discount_id => 枚数 }` で PriceCalculator に渡される
 
 ### Sales Domain
 
@@ -681,7 +679,7 @@ end
 {
   sale: {
     customer_type: 'staff' | 'citizen',
-    discount_ids: [Integer],
+    discount_quantities: { Integer => Integer },  # { discount_id => 枚数 }
     sale_items_attributes: [
       { catalog_id: Integer, catalog_price_id: Integer, quantity: Integer, unit_price: Integer }
     ]
@@ -715,7 +713,7 @@ end
 |--------|-------|--------|--------|------|
 | total_discount_amount | - | Integer | - | 適用された割引額の合計 |
 | mark_as_voided! | reason:, voided_by: | Sale | RecordInvalid | status を voided に変更（Sales::Refunder から呼び出される） |
-| self.create_with_items_and_discounts! | sale_params, items_params, discount_ids: [] | Sale | RecordInvalid | 価格計算→Sale作成→SaleItem作成→割引適用 |
+| self.create_with_items_and_discounts! | sale_params, items_params, discount_quantities: {} | Sale | RecordInvalid | 価格計算→Sale作成→SaleItem作成→割引適用 |
 
 **Associations**: sale_items, sale_discounts, discounts, employee, corrected_from_sale, correction_sale
 
@@ -885,7 +883,7 @@ end
 
 | Method | Input | Output | Raises | 契約 |
 |--------|-------|--------|--------|------|
-| record | sale_params, items_params, discount_ids: [] | Sale | MissingPriceError, InsufficientStockError, RecordNotFound | 価格計算→Sale作成→SaleItem作成→在庫減算→割引適用を原子的に実行 |
+| record | sale_params, items_params, discount_quantities: {} | Sale | MissingPriceError, InsufficientStockError, RecordNotFound | 価格計算→Sale作成→SaleItem作成→在庫減算→割引適用を原子的に実行 |
 
 **Private Methods**: `decrement_inventory(sale, sale_item)` (在庫減算)
 
@@ -991,10 +989,10 @@ end
 
 | Method | Input | Output | Raises | 契約 |
 |--------|-------|--------|--------|------|
-| initialize | cart_items, discount_ids: [] | - | - | カートアイテムと割引IDを設定 |
+| initialize | cart_items, discount_quantities: {} | - | - | カートアイテムと割引枚数Hashを設定 |
 | calculate | - | Hash | MissingPriceError | 価格計算を実行（検証→価格ルール適用→小計→割引→最終金額） |
 | apply_pricing_rules | - | Array<Hash> | - | 価格ルールを適用してアイテムに価格情報を付加 |
-| apply_discounts | - | Hash | - | 割引を適用（discount_details, total_discount_amount） |
+| apply_discounts | - | Hash | - | 割引を適用（discount_quantities の枚数を乗算、discount_details, total_discount_amount） |
 
 **Return Value (calculate)**:
 ```ruby
@@ -1036,13 +1034,13 @@ end
 - CatalogPrice: kind は 'regular' または 'bundle'、price > 0
 - CatalogPricingRule: max_per_trigger >= 0、trigger_category 必須
 - Discount: delegated_type で Coupon と関連、name と valid_from/valid_until が必須
-- Coupon: amount_per_unit > 0、max_per_bento_quantity >= 0
+- Coupon: amount_per_unit > 0
 - DailyInventory: stock >= 0, reserved_stock >= 0, available_stock = stock - reserved_stock >= 0
 - DailyInventory: location_id + catalog_id + inventory_date の組み合わせはユニーク（1販売先・1日・1商品につき1レコード）
 - Sale: location_id 必須、final_amount = total_amount - total_discount_amount
 - Sale: status が voided の場合、voided_at, voided_by_employee_id, void_reason 必須
 - SaleItem: quantity > 0, unit_price >= 0, line_total = unit_price × quantity
-- SaleDiscount: discount_id は sale_id ごとにユニーク（同じ割引の重複適用を防止）
+- SaleDiscount: discount_id は sale_id ごとにユニーク（同じ割引の重複適用を防止）、quantity > 0（使用枚数）
 - Refund: amount >= 0、original_sale 必須
 - AdditionalOrder: location_id 必須
 
@@ -1141,7 +1139,6 @@ erDiagram
         int id PK
         string description            "coupon description"
         int amount_per_unit           "discount per coupon (e.g. 50 yen)"
-        int max_per_bento_quantity    "max coupons per bento (e.g. 1)"
     }
 
     SaleDiscount ||--|| Sale : belongs_to
@@ -1152,6 +1149,7 @@ erDiagram
         int sale_id FK
         int discount_id FK
         int discount_amount           "applied discount amount for audit trail"
+        int quantity                  "coupon usage quantity (default: 1)"
         datetime created_at
         datetime updated_at
     }
@@ -1252,26 +1250,26 @@ erDiagram
 - `locations`: 販売先マスタ（name, status: active/inactive）
 - `catalogs`: category enum（bento | side_menu）で商品種別を管理
 - `discounts`: delegated_type 抽象モデル（discountable_type, discountable_id, name, valid_from, valid_until）
-- `coupons`: クーポンマスタ（description, amount_per_unit, max_per_bento_quantity）
+- `coupons`: クーポンマスタ（description, amount_per_unit）
 - `catalog_prices`: 価格履歴（kind: regular/bundle, effective_from, effective_until）
 - `catalog_pricing_rules`: 価格ルール（target_catalog_id, price_kind, trigger_category, max_per_trigger）
 - `daily_inventories`: 販売先ごとの数量ベース在庫 (location_id, catalog_id, inventory_date, stock, reserved_stock, lock_version)
 - `sales`: 販売記録（location_id, total_amount, final_amount, status, voided_at, void_reason, corrected_from_sale_id）
 - `sale_items`: 販売明細 (sale_id, catalog_id, catalog_price_id, quantity, unit_price, line_total, sold_at)
-- `sale_discounts`: 販売・割引中間テーブル (sale_id, discount_id, discount_amount)
+- `sale_discounts`: 販売・割引中間テーブル (sale_id, discount_id, discount_amount, quantity)
 - `refunds`: 返金記録 (original_sale_id, corrected_sale_id, amount, reason)
 - `additional_orders`: 追加発注（location_id, catalog_id, order_at, quantity）
 
 **テーブル設計の特徴**:
 - **Location**: 状態管理パターン（status: active/inactive）、販売先マスタ（Requirement 15.3 の「論理削除」は status を inactive に変更することで実現）
 - **Discount**: delegated_type パターンで抽象化（常に固定額、discount_type/discount_value は不要）
-- **Coupon**: クーポンマスタ（amount_per_unit: 50円、max_per_bento_quantity: 1）
+- **Coupon**: クーポンマスタ（amount_per_unit: 50円）
 - **CatalogPrice**: kind フィールドで価格種別を管理（regular / bundle）
 - **CatalogPricingRule**: 価格ルール管理（セット価格適用条件など）
 - **DailyInventory**: 販売先ごとの数量ベース方式で在庫管理（location_id, stock, reserved_stock）
 - **Sale**: 販売先ごとの販売記録（location_id 必須）、void フィールド（status, voided_at, void_reason, corrected_from_sale_id）で取消処理対応
 - **SaleItem**: 取引追跡（catalog_id, quantity, unit_price, line_total で「どの商品が何個、いくらで売れたか」を記録）
-- **SaleDiscount**: 複数割引対応の中間テーブル（同じ割引の重複適用を防止、discount_amount で適用額を記録）
+- **SaleDiscount**: 複数割引対応の中間テーブル（同じ割引の重複適用を防止、discount_amount で適用額を記録、quantity でクーポン使用枚数を管理）
 - **Refund**: 差額返金記録（original_sale_id, corrected_sale_id, amount）
 - **AdditionalOrder**: 販売先ごとの追加発注記録（location_id 必須）
 - **責務分離**: Location は販売先管理、DailyInventory は販売先ごとの在庫数管理、Sale は販売先ごとの販売記録、SaleItem は販売明細、SaleDiscount は割引適用、Refund は返金記録を担当
