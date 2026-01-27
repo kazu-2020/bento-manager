@@ -49,7 +49,7 @@ module Pos
       end
 
       def set_discounts
-        @discounts = Discount.active
+        @discounts = Discount.preload(:discountable).active
       end
 
       def build_form(submitted = {})
