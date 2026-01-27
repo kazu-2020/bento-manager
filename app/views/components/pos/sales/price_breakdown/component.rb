@@ -36,6 +36,10 @@ module Pos
           discount_details.any? { |d| d[:applicable] }
         end
 
+        def item_count
+          items_with_prices.sum { |i| i[:quantity] }
+        end
+
         def format_price(amount)
           helpers.number_to_currency(amount)
         end
