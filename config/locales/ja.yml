@@ -18,6 +18,12 @@ ja:
           attributes:
             base:
               save_failed: "保存に失敗しました。もう一度お試しください。"
+        sales/cart_form:
+          attributes:
+            base:
+              no_items_in_cart: "カートに商品を追加してください"
+            customer_type:
+              blank: "を選択してください"
 
   activerecord:
     models:

@@ -1,12 +1,18 @@
 # frozen_string_literal: true
 
-# カート状態管理 PORO
+# カート状態管理フォームオブジェクト
 # DailyInventories::InventoryForm と同パターンで販売画面のフォーム状態を管理する
 module Sales
   class CartForm
+    include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
+    ITEM_TYPE = CartItemType.new
+
     attr_reader :location, :items, :discounts, :customer_type
+
+    validate :at_least_one_item_in_cart
+    validate :customer_type_present
 
     # @param location [Location] 販売先
     # @param inventories [Array<DailyInventory>] 本日の在庫一覧
@@ -71,7 +77,7 @@ module Sales
     end
 
     def submittable?
-      has_items_in_cart? && customer_type.present?
+      valid?
     end
 
     def form_with_options
@@ -87,8 +93,16 @@ module Sales
     def build_items(inventories, submitted)
       inventories.map do |inventory|
         qty = submitted.dig(inventory.catalog_id.to_s, "quantity") || 0
-        Sales::CartItem.new(inventory: inventory, quantity: qty)
+        ITEM_TYPE.cast(inventory: inventory, quantity: qty)
       end
+    end
+
+    def at_least_one_item_in_cart
+      errors.add(:base, :no_items_in_cart) unless has_items_in_cart?
+    end
+
+    def customer_type_present
+      errors.add(:customer_type, :blank) unless customer_type.present?
     end
 
     def build_coupon_quantities(submitted)

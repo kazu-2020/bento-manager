@@ -4,13 +4,18 @@
 # DailyInventory と数量をラップし、販売画面で使用する
 module Sales
   class CartItem
-    attr_reader :inventory, :quantity
+    include ActiveModel::Model
+    include ActiveModel::Attributes
+
+    attr_reader :inventory
+
+    attribute :quantity, :integer, default: 0
 
     # @param inventory [DailyInventory] 日次在庫
-    # @param quantity [Integer, String] カート内の数量
-    def initialize(inventory:, quantity: 0)
+    # @param attributes [Hash] ActiveModel::Attributes に渡す属性
+    def initialize(inventory:, **attributes)
       @inventory = inventory
-      @quantity = quantity.to_i
+      super(**attributes)
     end
 
     delegate :catalog, to: :inventory

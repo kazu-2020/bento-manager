@@ -266,6 +266,33 @@ module Sales
       assert_not form.submittable?
     end
 
+    test "valid? returns true with items and customer_type" do
+      submitted = {
+        @bento_a.id.to_s => { "quantity" => "1" },
+        "customer_type" => "staff"
+      }
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
+
+      assert form.valid?
+      assert_empty form.errors
+    end
+
+    test "valid? returns false without items and adds base error" do
+      submitted = { "customer_type" => "staff" }
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
+
+      assert_not form.valid?
+      assert form.errors[:base].any?
+    end
+
+    test "valid? returns false without customer_type and adds customer_type error" do
+      submitted = { @bento_a.id.to_s => { "quantity" => "1" } }
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
+
+      assert_not form.valid?
+      assert form.errors[:customer_type].any?
+    end
+
     # =====================================================================
     # ルートヘルパーテスト
     # =====================================================================
