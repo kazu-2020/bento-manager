@@ -91,25 +91,13 @@ module Sales
     end
 
     def calculate_prices
-      return empty_result unless has_items_in_cart?
-
       calculator = Sales::PriceCalculator.new(
         cart_items_for_calculator,
         discount_quantities: discount_quantities_for_calculator
       )
       calculator.calculate
     rescue Errors::MissingPriceError
-      empty_result
-    end
-
-    def empty_result
-      {
-        items_with_prices: [],
-        subtotal: 0,
-        discount_details: [],
-        total_discount_amount: 0,
-        final_total: 0
-      }
+      PriceCalculator.new([]).calculate
     end
   end
 end
