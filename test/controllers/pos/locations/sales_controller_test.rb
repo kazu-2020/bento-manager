@@ -31,13 +31,6 @@ module Pos
         assert_response :success
       end
 
-      test "new page displays location name" do
-        login_as(@admin)
-        get new_pos_location_sale_path(@location)
-        assert_response :success
-        assert_select "h1", text: @location.name
-      end
-
       test "unauthenticated user is redirected to login on new" do
         get new_pos_location_sale_path(@location)
         assert_redirected_to "/employee/login"

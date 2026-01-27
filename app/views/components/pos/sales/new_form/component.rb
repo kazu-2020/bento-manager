@@ -16,14 +16,6 @@ module Pos
                  :form_with_options, :form_state_options, :price_result,
                  to: :form
 
-        def location_name
-          location.name
-        end
-
-        def back_url
-          helpers.pos_location_path(location)
-        end
-
         def has_items?
           items.any?
         end
