@@ -259,11 +259,12 @@ module Sales
       assert_not form.submittable?
     end
 
-    test "submittable? returns false without customer_type" do
+    test "submittable? returns true with default customer_type" do
       submitted = { @bento_a.id.to_s => { "quantity" => "1" } }
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
 
-      assert_not form.submittable?
+      assert form.submittable?
+      assert_equal "citizen", form.customer_type
     end
 
     test "valid? returns true with items and customer_type" do
@@ -285,12 +286,12 @@ module Sales
       assert form.errors[:base].any?
     end
 
-    test "valid? returns false without customer_type and adds customer_type error" do
+    test "valid? returns true with default customer_type when items exist" do
       submitted = { @bento_a.id.to_s => { "quantity" => "1" } }
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
 
-      assert_not form.valid?
-      assert form.errors[:customer_type].any?
+      assert form.valid?
+      assert_equal "citizen", form.customer_type
     end
 
     # =====================================================================

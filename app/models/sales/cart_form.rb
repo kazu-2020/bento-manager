@@ -16,7 +16,7 @@ module Sales
       @location = location
       @discounts = discounts
       @items = build_items(inventories, submitted)
-      @customer_type = submitted["customer_type"]
+      @customer_type = submitted["customer_type"] || "citizen"
       @coupon_quantities = build_coupon_quantities(submitted)
     end
 

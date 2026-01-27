@@ -16,6 +16,14 @@ module Pos
           !form.submittable?
         end
 
+        def submit_text
+          if has_items_in_cart?
+            t(".submit_with_total", total: final_total_display)
+          else
+            t(".submit_label")
+          end
+        end
+
         def final_total
           price_result[:final_total]
         end

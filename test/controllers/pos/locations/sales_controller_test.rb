@@ -141,10 +141,10 @@ module Pos
         assert_equal 1, sale.sale_discounts.count
       end
 
-      test "create fails without customer_type" do
+      test "create defaults to citizen when customer_type is omitted" do
         login_as(@admin)
 
-        assert_no_difference "Sale.count" do
+        assert_difference "Sale.count", 1 do
           post pos_location_sales_path(@location),
                params: {
                  cart: {
@@ -153,7 +153,8 @@ module Pos
                }
         end
 
-        assert_response :unprocessable_entity
+        assert_redirected_to new_pos_location_sale_path(@location)
+        assert_equal "citizen", Sale.last.customer_type
       end
 
       test "create fails without items in cart" do
