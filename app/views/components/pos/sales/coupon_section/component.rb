@@ -32,6 +32,18 @@ module Pos
           total_bento_quantity <= 0
         end
 
+        def coupon_card_classes(discount)
+          disabled = coupon_disabled?(discount)
+          in_cart = coupon_quantity(discount) > 0
+
+          helpers.class_names(
+            "card bg-base-100 border-2 transition-all duration-200",
+            "border-accent bg-accent/10": !disabled && in_cart,
+            "border-base-300": disabled || !in_cart,
+            "opacity-50": disabled || max_coupon_quantity(discount) <= 0
+          )
+        end
+
         def discount_amount_display(discount)
           coupon = discount.discountable
           return nil unless coupon.respond_to?(:amount_per_unit)
