@@ -22,11 +22,35 @@
         <p class="text-center text-base-content/70 mb-6"><%= t(".instruction") %></p>
 
         <% if has_items? %>
-          <div id="bento-cards" class="space-y-3">
-            <% items.each do |item| %>
-              <%= render_bento_card(item) %>
-            <% end %>
-          </div>
+          <%# 弁当セクション %>
+          <% if has_bento_items? %>
+            <div class="mb-6">
+              <h2 class="flex items-center gap-2 text-lg font-bold mb-3">
+                <span>🍱</span>
+                <span><%= t(".bento_section_title") %></span>
+              </h2>
+              <div class="space-y-3">
+                <% bento_items.each do |item| %>
+                  <%= render_item_card(item) %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+
+          <%# サイドメニューセクション %>
+          <% if has_side_menu_items? %>
+            <div class="mb-6">
+              <h2 class="flex items-center gap-2 text-lg font-bold mb-3">
+                <span>🍲</span>
+                <span><%= t(".side_menu_section_title") %></span>
+              </h2>
+              <div class="space-y-3">
+                <% side_menu_items.each do |item| %>
+                  <%= render_item_card(item) %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
         <% else %>
           <div class="text-center py-12 text-base-content/60">
             <%= component "icons/bento", extra_class: "h-12 w-12 mx-auto mb-4 opacity-50" %>

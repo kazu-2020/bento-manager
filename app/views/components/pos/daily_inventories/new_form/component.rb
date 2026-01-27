@@ -11,7 +11,7 @@ module Pos
 
         attr_reader :location, :form
 
-        delegate :items, :valid?, :selected_count,
+        delegate :items, :bento_items, :side_menu_items, :valid?, :selected_count,
                  :form_with_options, :form_state_options, to: :form
 
         def location_name
@@ -30,8 +30,16 @@ module Pos
           items.any?
         end
 
-        def render_bento_card(item)
-          render Pos::DailyInventories::NewFormBentoCard::Component.new(item: item)
+        def has_bento_items?
+          bento_items.any?
+        end
+
+        def has_side_menu_items?
+          side_menu_items.any?
+        end
+
+        def render_item_card(item)
+          render Pos::DailyInventories::NewFormItemCard::Component.new(item: item)
         end
 
         def render_submit_button

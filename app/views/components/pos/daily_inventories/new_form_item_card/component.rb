@@ -2,7 +2,7 @@
 
 module Pos
   module DailyInventories
-    module NewFormBentoCard
+    module NewFormItemCard
       class Component < Application::Component
         def initialize(item:)
           @item = item
@@ -13,7 +13,7 @@ module Pos
         delegate :catalog_id, :catalog_name, :selected?, :stock, to: :item
 
         def dom_id
-          "bento-card-#{catalog_id}"
+          "item-card-#{catalog_id}"
         end
 
         def item_field_name

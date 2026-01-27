@@ -267,7 +267,7 @@ ja:
         title: "販売先を選択"
       daily_inventories:
         create:
-          success: "%{count}種類の弁当を登録しました"
+          success: "%{count}種類の商品を登録しました"
         new_form:
           submit_label: "販売開始"
           submit_unit: "種類"

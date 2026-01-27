@@ -27,6 +27,9 @@ class Catalog < ApplicationRecord
       .order(created_at: :desc)
   }
 
+  # カテゴリ順: 弁当 → サイドメニューの順、同カテゴリ内は名前順
+  scope :category_order, -> { in_order_of(:category, %w[bento side_menu]).order(:name) }
+
   # ===== Enum =====
   enum :category, { bento: 0, side_menu: 1 }, validate: true
 
