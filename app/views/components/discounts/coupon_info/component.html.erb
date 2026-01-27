@@ -33,15 +33,6 @@
           </dd>
         </div>
 
-        <%# 弁当1個あたりの最大適用枚数 %>
-        <div>
-          <dt class="text-sm font-medium text-base-content/60">
-            <%= Coupon.human_attribute_name(:max_per_bento_quantity) %>
-          </dt>
-          <dd class="mt-1 text-base-content font-medium">
-            <%= t(".per_bento", count: coupon&.max_per_bento_quantity) %>
-          </dd>
-        </div>
       </dl>
     </div>
   </section>

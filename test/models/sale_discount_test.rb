@@ -51,6 +51,31 @@ class SaleDiscountTest < ActiveSupport::TestCase
     assert_includes sale_discount.errors[:discount_amount], "を入力してください"
   end
 
+  test "quantity must be present" do
+    sale_discount = build_valid_sale_discount
+    sale_discount.quantity = nil
+    assert_not sale_discount.valid?
+    assert_includes sale_discount.errors[:quantity], "を入力してください"
+  end
+
+  test "quantity must be greater than 0" do
+    sale_discount = build_valid_sale_discount
+
+    # 1 以上は有効
+    sale_discount.quantity = 1
+    assert sale_discount.valid?
+
+    # 0 は無効
+    sale_discount.quantity = 0
+    assert_not sale_discount.valid?
+    assert_includes sale_discount.errors[:quantity], "は0より大きい値にしてください"
+
+    # 負の値は無効
+    sale_discount.quantity = -1
+    assert_not sale_discount.valid?
+    assert_includes sale_discount.errors[:quantity], "は0より大きい値にしてください"
+  end
+
   test "discount_amount must be greater than 0" do
     sale_discount = build_valid_sale_discount
 

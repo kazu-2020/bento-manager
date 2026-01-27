@@ -7,6 +7,7 @@ class SaleDiscount < ApplicationRecord
 
   # ===== バリデーション (Task 9.2) =====
   validates :discount_amount, presence: true, numericality: { greater_than: 0 }
+  validates :quantity, presence: true, numericality: { greater_than: 0 }
 
   # 同じ販売に同じ割引を複数回適用することを防止
   validates :discount_id, uniqueness: {

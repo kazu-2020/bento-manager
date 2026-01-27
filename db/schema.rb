@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_10_200001) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_27_111311) do
   create_table "additional_orders", force: :cascade do |t|
     t.integer "catalog_id", null: false
     t.datetime "created_at", null: false
@@ -84,7 +84,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_10_200001) do
     t.integer "amount_per_unit", null: false
     t.datetime "created_at", null: false
     t.string "description", null: false
-    t.integer "max_per_bento_quantity", null: false
     t.datetime "updated_at", null: false
   end
 
@@ -161,6 +160,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_10_200001) do
     t.datetime "created_at", null: false
     t.integer "discount_amount", null: false
     t.integer "discount_id", null: false
+    t.integer "quantity", default: 1, null: false
     t.integer "sale_id", null: false
     t.datetime "updated_at", null: false
     t.index ["discount_id"], name: "index_sale_discounts_on_discount_id"

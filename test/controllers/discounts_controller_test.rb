@@ -46,7 +46,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
             discountable: {
               description: "テストクーポン",
               amount_per_unit: 50,
-              max_per_bento_quantity: 1
+
             }
           }
         }, as: :turbo_stream
@@ -138,7 +138,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
             discountable: {
               description: "従業員が作成",
               amount_per_unit: 30,
-              max_per_bento_quantity: 1
+
             }
           }
         }, as: :turbo_stream

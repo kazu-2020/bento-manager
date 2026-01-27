@@ -82,16 +82,16 @@ module Sales
           corrected_from_sale_id: original_sale.id
         },
         remaining_items,
-        discount_ids: extract_discount_ids(original_sale)
+        discount_quantities: extract_discount_quantities(original_sale)
       )
     end
 
-    # 元の Sale から適用されていた割引 ID を抽出
+    # 元の Sale から適用されていた割引 ID と枚数を抽出
     #
     # @param sale [Sale] 元の販売レコード
-    # @return [Array<Integer>] 割引 ID リスト
-    def extract_discount_ids(sale)
-      sale.sale_discounts.pluck(:discount_id)
+    # @return [Hash{Integer => Integer}] 割引 ID と枚数の Hash
+    def extract_discount_quantities(sale)
+      sale.sale_discounts.pluck(:discount_id, :quantity).to_h
     end
 
     # 返金額を計算

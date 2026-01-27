@@ -6,7 +6,5 @@ ja:
     name: "例: 50円割引クーポン"
     description: "例: 毎週木曜日に利用可能"
     amount_per_unit: "50"
-    max_per_bento_quantity: "1"
   hint:
     valid_until: "空欄の場合は無期限"
-    max_per_bento_quantity: "弁当1個につき何枚まで適用できるか"

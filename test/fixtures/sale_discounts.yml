@@ -5,8 +5,10 @@ completed_sale_fifty_yen:
   sale: completed_sale
   discount: fifty_yen_discount
   discount_amount: 50
+  quantity: 1
 
 prefectural_sale_hundred_yen:
   sale: prefectural_office_sale
   discount: hundred_yen_discount
   discount_amount: 100
+  quantity: 1

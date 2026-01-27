@@ -133,13 +133,26 @@ module Sales
       assert_equal 0, result[:total_discount_amount]
     end
 
+    test "弁当2個(550円)に50円クーポン1枚を使うと50円引きの1050円になる" do
+      cart_items = [
+        { catalog: catalogs(:daily_bento_a), quantity: 2 }
+      ]
+      discount_quantities = { discounts(:fifty_yen_discount).id => 1 }
+
+      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
+
+      assert_equal 1100, result[:subtotal]
+      assert_equal 50, result[:total_discount_amount]
+      assert_equal 1050, result[:final_total]
+    end
+
     test "50円クーポンで弁当1個(550円)を買うと50円引きの500円になる" do
       cart_items = [
         { catalog: catalogs(:daily_bento_a), quantity: 1 }
       ]
-      discount_ids = [ discounts(:fifty_yen_discount).id ]
+      discount_quantities = { discounts(:fifty_yen_discount).id => 1 }
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
+      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
       assert_equal 1, result[:discount_details].length
       detail = result[:discount_details].first
@@ -151,36 +164,36 @@ module Sales
       assert_equal 500, result[:final_total]
     end
 
-    test "弁当3個に50円クーポンを使うと3個分の150円引きになる" do
+    test "弁当3個(550円)に50円クーポン1枚を使うと50円引きになる" do
       cart_items = [
         { catalog: catalogs(:daily_bento_a), quantity: 3 }
       ]
-      discount_ids = [ discounts(:fifty_yen_discount).id ]
+      discount_quantities = { discounts(:fifty_yen_discount).id => 1 }
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
+      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
-      assert_equal 150, result[:total_discount_amount]
+      assert_equal 50, result[:total_discount_amount]
     end
 
-    test "弁当A3個+弁当B2個に50円クーポンを使うと合計5個分の250円引きになる" do
+    test "弁当A3個+弁当B2個に50円クーポン1枚を使うと50円引きになる" do
       cart_items = [
         { catalog: catalogs(:daily_bento_a), quantity: 3 },
         { catalog: catalogs(:daily_bento_b), quantity: 2 }
       ]
-      discount_ids = [ discounts(:fifty_yen_discount).id ]
+      discount_quantities = { discounts(:fifty_yen_discount).id => 1 }
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
+      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
-      assert_equal 250, result[:total_discount_amount]
+      assert_equal 50, result[:total_discount_amount]
     end
 
     test "サラダのみの購入では50円クーポンは適用されず割引0円になる" do
       cart_items = [
         { catalog: catalogs(:salad), quantity: 2 }
       ]
-      discount_ids = [ discounts(:fifty_yen_discount).id ]
+      discount_quantities = { discounts(:fifty_yen_discount).id => 1 }
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
+      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
       detail = result[:discount_details].first
       assert_not detail[:applicable]
@@ -188,31 +201,62 @@ module Sales
       assert_equal 0, result[:total_discount_amount]
     end
 
-    test "弁当2個に50円と100円のクーポンを同時に使うと合計300円引きになる" do
+    test "弁当2個に50円と100円のクーポンを同時に使うと合計150円引きになる" do
       cart_items = [
         { catalog: catalogs(:daily_bento_a), quantity: 2 }
       ]
-      discount_ids = [
-        discounts(:fifty_yen_discount).id,
-        discounts(:hundred_yen_discount).id
-      ]
+      discount_quantities = {
+        discounts(:fifty_yen_discount).id => 1,
+        discounts(:hundred_yen_discount).id => 1
+      }
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
+      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
       assert_equal 2, result[:discount_details].length
-      assert_equal 300, result[:total_discount_amount]
+      assert_equal 150, result[:total_discount_amount]
     end
 
     test "期限切れクーポンは自動的にスキップされ割引0円になる" do
       cart_items = [
         { catalog: catalogs(:daily_bento_a), quantity: 1 }
       ]
-      discount_ids = [ discounts(:expired_discount).id ]
+      discount_quantities = { discounts(:expired_discount).id => 1 }
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
+      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
       assert_equal 0, result[:discount_details].length
       assert_equal 0, result[:total_discount_amount]
+    end
+
+    # ===== クーポン複数枚利用 =====
+
+    test "弁当3個(550円)に50円クーポン3枚を使うと150円引きの1500円になる" do
+      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 3 }]
+      discount_quantities = { discounts(:fifty_yen_discount).id => 3 }
+
+      result = Sales::PriceCalculator.new(
+        cart_items, discount_quantities: discount_quantities
+      ).calculate
+
+      assert_equal 1650, result[:subtotal]
+      assert_equal 150, result[:total_discount_amount]
+      assert_equal 1500, result[:final_total]
+    end
+
+    test "弁当2個に50円クーポン2枚と100円クーポン3枚を使うと合計400円引きになる" do
+      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 2 }]
+      discount_quantities = {
+        discounts(:fifty_yen_discount).id => 2,
+        discounts(:hundred_yen_discount).id => 3
+      }
+
+      result = Sales::PriceCalculator.new(
+        cart_items, discount_quantities: discount_quantities
+      ).calculate
+
+      assert_equal 1100, result[:subtotal]
+      assert_equal 400, result[:total_discount_amount]
+      assert_equal 700, result[:final_total]
     end
 
     # ===== セット割引とクーポンの組み合わせ =====
@@ -222,9 +266,9 @@ module Sales
         { catalog: catalogs(:daily_bento_a), quantity: 1 },
         { catalog: catalogs(:salad), quantity: 1 }
       ]
-      discount_ids = [ discounts(:fifty_yen_discount).id ]
+      discount_quantities = { discounts(:fifty_yen_discount).id => 1 }
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
+      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
       assert_equal 700, result[:subtotal]
       assert_equal 50, result[:total_discount_amount]
@@ -235,9 +279,9 @@ module Sales
       cart_items = [
         { catalog: catalogs(:daily_bento_a), quantity: 1 }
       ]
-      discount_ids = [ discounts(:hundred_yen_discount).id ]
+      discount_quantities = { discounts(:hundred_yen_discount).id => 1 }
 
-      result = Sales::PriceCalculator.new(cart_items, discount_ids: discount_ids).calculate
+      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
       assert_equal 550, result[:subtotal]
       assert_equal 100, result[:total_discount_amount]

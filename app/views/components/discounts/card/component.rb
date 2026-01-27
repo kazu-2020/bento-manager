@@ -35,10 +35,6 @@ module Discounts
         coupon&.amount_per_unit
       end
 
-      def max_per_bento_quantity
-        coupon&.max_per_bento_quantity
-      end
-
       def formatted_amount
         helpers.number_to_currency(amount_per_unit) if amount_per_unit
       end

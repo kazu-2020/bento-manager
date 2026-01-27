@@ -16,16 +16,16 @@ module Sales
     # @param items_params [Array<Hash>] 各アイテムの属性配列
     #   - :catalog [Catalog] 商品
     #   - :quantity [Integer] 数量
-    # @param discount_ids [Array<Integer>] 適用する割引の ID リスト
+    # @param discount_quantities [Hash{Integer => Integer}] 適用する割引の ID と枚数 { discount_id => 枚数 }
     # @return [Sale] 作成された Sale（関連する SaleItem レコードを含む）
     # @raise [Errors::MissingPriceError] 価格未設定時
     # @raise [DailyInventory::InsufficientStockError] 在庫不足時
     # @raise [ActiveRecord::RecordNotFound] 対応する DailyInventory レコードが見つからない場合
-    def record(sale_params, items_params, discount_ids: [])
+    def record(sale_params, items_params, discount_quantities: {})
       now = Time.current
 
       # Step 1: 価格計算（価格存在検証含む）- トランザクション開始前に実行
-      price_result = calculate_prices(items_params, discount_ids, now)
+      price_result = calculate_prices(items_params, discount_quantities, now)
 
       # Step 2: トランザクション内で Sale/SaleItem/SaleDiscount 作成と在庫減算
       Sale.transaction do
@@ -42,12 +42,12 @@ module Sales
     # 価格計算を実行（PriceCalculator 経由）
     #
     # @param items_params [Array<Hash>] 販売明細のパラメータ（catalog, quantity を含む）
-    # @param discount_ids [Array<Integer>] 割引 ID リスト
+    # @param discount_quantities [Hash{Integer => Integer}] 割引 ID と枚数
     # @param calculation_time [Time] 計算基準時刻
     # @return [Hash] PriceCalculator.calculate の結果
     # @raise [Errors::MissingPriceError] 価格未設定時
-    def calculate_prices(items_params, discount_ids, calculation_time)
-      calculator = Sales::PriceCalculator.new(items_params, discount_ids: discount_ids, calculation_time: calculation_time)
+    def calculate_prices(items_params, discount_quantities, calculation_time)
+      calculator = Sales::PriceCalculator.new(items_params, discount_quantities: discount_quantities, calculation_time: calculation_time)
       calculator.calculate
     rescue Errors::MissingPriceError => e
       Rails.logger.error("[Sales::Recorder] 価格未設定エラー: #{e.message}")
@@ -98,7 +98,8 @@ module Sales
         .each do |detail|
           sale.sale_discounts.create!(
             discount_id: detail[:discount_id],
-            discount_amount: detail[:discount_amount]
+            discount_amount: detail[:discount_amount],
+            quantity: detail[:quantity]
           )
         end
     end
