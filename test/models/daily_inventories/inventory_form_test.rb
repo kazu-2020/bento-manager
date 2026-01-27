@@ -8,9 +8,10 @@ module DailyInventories
 
     setup do
       @location = locations(:city_hall)
-      @catalogs = Catalog.available.bento.order(:name)
+      @catalogs = Catalog.available.category_order
       @bento_a = catalogs(:daily_bento_a)
       @bento_b = catalogs(:daily_bento_b)
+      @salad = catalogs(:salad)
     end
 
     test "initializes with all catalogs unselected" do
@@ -77,6 +78,38 @@ module DailyInventories
 
       expected = { url: "/pos/locations/#{@location.id}/daily_inventories/form_state", method: :post }
       assert_equal expected, form.form_state_options
+    end
+
+    # =====================================================================
+    # カテゴリグルーピングテスト
+    # =====================================================================
+
+    test "items have category attribute from catalog" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
+
+      bento_item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      side_item = form.items.find { |i| i.catalog_id == @salad.id }
+
+      assert_equal "bento", bento_item.category
+      assert_equal "side_menu", side_item.category
+    end
+
+    test "bento_items returns only bento category items" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
+
+      form.bento_items.each do |item|
+        assert_equal "bento", item.category
+      end
+      assert form.bento_items.any?
+    end
+
+    test "side_menu_items returns only side_menu category items" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
+
+      form.side_menu_items.each do |item|
+        assert_equal "side_menu", item.category
+      end
+      assert form.side_menu_items.any?
     end
 
     # =====================================================================

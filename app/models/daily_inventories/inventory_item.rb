@@ -9,6 +9,7 @@ module DailyInventories
 
     attribute :catalog_id, :integer
     attribute :catalog_name, :string
+    attribute :category, :string
     attribute :selected, :boolean, default: false
     attribute :stock, :integer, default: DEFAULT_STOCK
 

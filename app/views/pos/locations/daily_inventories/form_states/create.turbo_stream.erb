@@ -1,7 +1,7 @@
-<%# 各弁当カードを更新 %>
+<%# 各商品カードを更新 %>
 <% @form.items.each do |item| %>
-  <%= turbo_stream.replace "bento-card-#{item.catalog_id}" do %>
-    <%= component "pos/daily_inventories/new_form_bento_card",
+  <%= turbo_stream.replace "item-card-#{item.catalog_id}" do %>
+    <%= component "pos/daily_inventories/new_form_item_card",
                   item: item %>
   <% end %>
 <% end %>

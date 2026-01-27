@@ -22,7 +22,7 @@ module Pos
         end
 
         def set_catalogs
-          @catalogs = Catalog.available.bento.includes(:prices).order(:name)
+          @catalogs = Catalog.available.includes(:prices).category_order
         end
 
         def build_form(submitted = {})

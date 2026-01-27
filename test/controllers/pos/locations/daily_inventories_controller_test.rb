@@ -13,6 +13,7 @@ module Pos
         @location = Location.create!(name: "テスト販売先", status: :active)
         @bento_a = catalogs(:daily_bento_a)
         @bento_b = catalogs(:daily_bento_b)
+        @salad = catalogs(:salad)
       end
 
       # ============================================================
@@ -36,6 +37,13 @@ module Pos
         get new_pos_location_daily_inventory_path(@location)
         assert_response :success
         assert_select "span", text: @bento_a.name
+      end
+
+      test "new page displays available side menu catalogs" do
+        login_as(@admin)
+        get new_pos_location_daily_inventory_path(@location)
+        assert_response :success
+        assert_select "span", text: @salad.name
       end
 
       test "new page does not display discontinued catalogs" do
@@ -217,6 +225,57 @@ module Pos
 
         inventory = DailyInventory.last
         assert_equal 25, inventory.stock
+      end
+
+      test "create with side_menu items only" do
+        login_as(@admin)
+
+        assert_difference "DailyInventory.count", 1 do
+          post pos_location_daily_inventories_path(@location),
+               params: {
+                 inventory: {
+                   @salad.id.to_s => { selected: "1", stock: "10" }
+                 }
+               }
+        end
+
+        assert_redirected_to new_pos_location_sale_path(@location)
+        follow_redirect!
+        assert_select ".alert-success", /1種類/
+      end
+
+      test "create with mixed bento and side_menu items" do
+        login_as(@admin)
+
+        assert_difference "DailyInventory.count", 3 do
+          post pos_location_daily_inventories_path(@location),
+               params: {
+                 inventory: {
+                   @bento_a.id.to_s => { selected: "1", stock: "10" },
+                   @bento_b.id.to_s => { selected: "1", stock: "5" },
+                   @salad.id.to_s => { selected: "1", stock: "8" }
+                 }
+               }
+        end
+
+        assert_redirected_to new_pos_location_sale_path(@location)
+        follow_redirect!
+        assert_select ".alert-success", /3種類/
+      end
+
+      test "success message uses generic product term" do
+        login_as(@admin)
+
+        post pos_location_daily_inventories_path(@location),
+             params: {
+               inventory: {
+                 @bento_a.id.to_s => { selected: "1", stock: "10" }
+               }
+             }
+
+        assert_redirected_to new_pos_location_sale_path(@location)
+        follow_redirect!
+        assert_select ".alert-success", text: /商品を登録しました/
       end
 
       test "unauthenticated user is redirected to login on create" do

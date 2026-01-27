@@ -54,6 +54,14 @@ module DailyInventories
       selected_items.count
     end
 
+    def bento_items
+      @items.select { |item| item.category == "bento" }
+    end
+
+    def side_menu_items
+      @items.select { |item| item.category == "side_menu" }
+    end
+
     private
 
     def at_least_one_item_selected
@@ -64,7 +72,7 @@ module DailyInventories
       @catalogs.map do |catalog|
         saved = submitted[catalog.id.to_s] || {}
         ITEM_TYPE.cast(
-          saved.symbolize_keys.merge(catalog_id: catalog.id, catalog_name: catalog.name)
+          saved.symbolize_keys.merge(catalog_id: catalog.id, catalog_name: catalog.name, category: catalog.category)
         )
       end
     end

@@ -16,10 +16,15 @@ module DailyInventories
     end
 
     test "initializes with custom values" do
-      item = InventoryItem.new(catalog_id: 2, catalog_name: "特製弁当", selected: true, stock: 20)
+      item = InventoryItem.new(catalog_id: 2, catalog_name: "特製弁当", category: "bento", selected: true, stock: 20)
 
       assert item.selected?
       assert_equal 20, item.stock
+      assert_equal "bento", item.category
+    end
+
+    test "category defaults to nil" do
+      assert_nil @item.category
     end
   end
 end

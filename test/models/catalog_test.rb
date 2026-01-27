@@ -249,6 +249,19 @@ class CatalogTest < ActiveSupport::TestCase
     assert_not_includes result, discontinued_bento
   end
 
+  # ===== category_order スコープテスト =====
+
+  test "category_order は弁当を先、サイドメニューを後に名前順で返す" do
+    bento_b = Catalog.create!(name: "B弁当", category: :bento)
+    bento_a = Catalog.create!(name: "A弁当", category: :bento)
+    side_b = Catalog.create!(name: "Bサイド", category: :side_menu)
+    side_a = Catalog.create!(name: "Aサイド", category: :side_menu)
+
+    result = Catalog.where(id: [bento_a, bento_b, side_a, side_b]).category_order.to_a
+
+    assert_equal [bento_a, bento_b, side_a, side_b], result
+  end
+
   # ===== 削除禁止テスト =====
 
   test "物理削除は禁止されている" do
