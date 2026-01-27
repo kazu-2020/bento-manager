@@ -1,13 +1,15 @@
 <div data-controller="ghost-form pos-cart"
      data-action="pos-cart:cartChanged->ghost-form#submit">
-  <div class="min-h-screen bg-base-200 flex flex-col">
+  <%# top-16 (4rem): navbar の高さ分オフセット %>
+  <div class="fixed inset-x-0 top-16 bottom-0 z-20 bg-base-200 flex flex-col">
     <%# Original Form (販売処理を行うフォーム) %>
     <%= form_with **form_with_options,
+                  class: "flex flex-col flex-1 min-h-0",
                   data: { ghost_form_target: "originalForm" } do |f| %>
       <% if has_items? %>
-        <div data-controller="tabs">
-          <%# タブバー（上部に固定） %>
-          <div class="sticky top-0 z-10 bg-base-200 px-4 pt-2">
+        <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
+          <%# タブバー %>
+          <div class="flex-shrink-0 bg-base-200 px-4 pt-2">
             <div role="tablist" class="tabs tabs-lift">
               <% tab_items.each_with_index do |tab, i| %>
                 <button type="button" role="tab"
@@ -20,8 +22,8 @@
             </div>
           </div>
 
-          <%# タブパネル %>
-          <main class="flex-1 p-4 pb-56">
+          <%# タブパネル（スクロール領域） %>
+          <main class="flex-1 overflow-y-auto p-4">
             <% tab_items.each_with_index do |tab, i| %>
               <div data-tabs-target="panel" <%= "hidden" unless i == 0 %>>
                 <% case tab[:key] %>
@@ -45,7 +47,7 @@
           </main>
         </div>
       <% else %>
-        <main class="flex-1 p-4 pb-56">
+        <main class="flex-1 overflow-y-auto p-4">
           <div class="text-center py-12 text-base-content/60">
             <div class="text-6xl mb-4">🍱</div>
             <p><%= t(".no_inventories") %></p>
@@ -53,8 +55,8 @@
         </main>
       <% end %>
 
-      <%# 固定フッター %>
-      <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 z-10">
+      <%# フッター %>
+      <footer class="flex-shrink-0 bg-base-100 border-t border-base-300">
         <div class="p-4 safe-area-pb">
           <%# 価格内訳 %>
           <%= component "pos/sales/price_breakdown", form: form %>
@@ -66,8 +68,8 @@
         </div>
       </footer>
     <% end %>
-
-    <%# Ghost Form (画面更新用の幽霊フォーム) %>
-    <%= component "pos/sales/ghost_form", form: form %>
   </div>
+
+  <%# Ghost Form (画面更新用の幽霊フォーム) %>
+  <%= component "pos/sales/ghost_form", form: form %>
 </div>
