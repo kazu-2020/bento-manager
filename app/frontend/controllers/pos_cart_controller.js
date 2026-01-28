@@ -2,6 +2,11 @@ import { Controller } from "@hotwired/stimulus"
 
 // Connects to data-controller="pos-cart"
 export default class extends Controller {
+  disconnect() {
+    clearTimeout(this._debounceTimer)
+    this._debounceTimer = null
+  }
+
   quantityChanged() {
     this.#debouncedSubmitGhostForm()
   }
