@@ -312,28 +312,28 @@
 
 ### Phase 8: Sales::Refunder & Refund Domain
 
-- [ ] 13. Sales::Refunder（返品・返金処理 PORO）実装
-- [ ] 13.1 Sales::Refunder クラス作成
+- [x] 13. Sales::Refunder（返品・返金処理 PORO）実装
+- [x] 13.1 Sales::Refunder クラス作成
   - 返品・返金処理を一括で行う PORO の基本構造
   - AlreadyVoidedError カスタム例外クラス（既に取消済みの Sale を再取消しようとした場合）
   - Sales::Recorder と対称的な設計（販売記録 ↔ 返品記録）
   - _Requirements: 14.1, 14.8_
 
-- [ ] 13.2 refund メソッド — 元 Sale の取消と在庫復元
+- [x] 13.2 refund メソッド — 元 Sale の取消と在庫復元
   - 元 Sale が既に voided でないことを検証（AlreadyVoidedError）
   - トランザクション開始
   - Sale#mark_as_voided! を呼び出して元 Sale を取消状態に変更
   - 元 Sale の全 SaleItem 数量を DailyInventory.stock に加算して在庫復元（楽観的ロック）
   - _Requirements: 14.1, 14.2, 14.8, 14.9_
 
-- [ ] 13.3 refund メソッド — 残す商品での再販売作成
+- [x] 13.3 refund メソッド — 残す商品での再販売作成
   - 残す商品がある場合、Sales::PriceCalculator で価格ルール・クーポンを再評価
   - 新規 Sale を作成（corrected_from_sale_id を設定）
   - 再評価された価格で SaleItem を作成し、在庫減算
   - 全商品返品時は新規 Sale を作成しない
   - _Requirements: 14.3, 14.4, 14.5, 14.6, 14.11_
 
-- [ ] 13.4 refund メソッド — 差額返金記録とエラーハンドリング
+- [x] 13.4 refund メソッド — 差額返金記録とエラーハンドリング
   - 差額（元 Sale.final_amount - 新 Sale.final_amount）を計算し Refund レコード作成
   - 全額返金時は corrected_sale_id を nil に設定
   - 返金理由の記録
