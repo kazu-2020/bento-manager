@@ -446,7 +446,7 @@
   - _Requirements: 9.5, 9.6, 9.7, 9.8, 9.14, 9.15_
 
 - [ ] 19. POS 用コントローラー実装
-- [ ] 19.1 SalesController 実装（DailyInventory, Sale, SaleItem, SaleDiscount, Sales::PriceCalculator, Sales::Refunder 依存）
+- [x] 19.1 SalesController 実装（DailyInventory, Sale, SaleItem, SaleDiscount, Sales::PriceCalculator, Sales::Refunder 依存）
   - new アクション（販売先選択、在庫確認）
   - create アクション（Sales::Recorder 呼び出し: 販売記録作成、在庫減算、割引適用）
   - void アクション（Sales::Refunder 呼び出し: 販売取消、在庫復元、再販売、返金記録）
@@ -552,14 +552,14 @@
   - Turbo Frame で在庫情報を動的読み込み
   - _Requirements: 3.8, 4.1_
 
-- [ ] 28.2 商品選択・カート画面
+- [x] 28.2 商品選択・カート画面
   - 在庫がある商品のみ選択可能
   - 商品選択時に単価・数量入力
   - カート内の商品一覧表示（unit_price, quantity, line_total）
   - クーポン枚数入力フォーム
   - _Requirements: 3.1, 3.2, 3.5, 3.6, 12.7_
 
-- [ ] 28.3 価格内訳表示
+- [x] 28.3 価格内訳表示
   - 小計（total_amount）表示
   - 適用された価格ルール表示（セット価格）
   - 適用された割引表示（クーポン）

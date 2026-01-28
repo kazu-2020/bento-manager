@@ -1,0 +1,4 @@
+---
+ja:
+  submit_label: 販売確定
+  submit_with_total: "%{total} を販売確定"

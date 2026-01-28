@@ -1,0 +1,36 @@
+<%= fields_for item_field_name, item do |f| %>
+  <div id="<%= dom_id %>" class="<%= card_classes %>">
+    <div class="card-body p-4">
+      <div class="flex items-center justify-between">
+        <div class="flex-1">
+          <span class="font-medium text-lg"><%= catalog_name %></span>
+          <% if unit_price_display %>
+            <span class="text-base-content/60 text-sm ml-2"><%= unit_price_display %></span>
+          <% end %>
+        </div>
+        <span class="badge badge-sm badge-ghost"><%= stock_badge_text %></span>
+      </div>
+
+      <% if sold_out? %>
+        <div class="mt-3 text-center">
+          <span class="badge badge-soft badge-error"><%= t(".sold_out") %></span>
+        </div>
+      <% else %>
+        <div class="mt-3">
+          <%= component "inputs/quantity_stepper" do |c| %>
+            <% c.with_input do %>
+              <%= f.number_field :quantity,
+                    value: quantity,
+                    min: 0, max: stock, autocomplete: "off",
+                    class: "input input-bordered w-20 text-center text-2xl font-bold",
+                    data: {
+                      quantity_stepper_target: "input",
+                      action: "change->pos-cart#quantityChanged"
+                    } %>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
