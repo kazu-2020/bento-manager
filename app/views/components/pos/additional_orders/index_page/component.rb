@@ -16,10 +16,6 @@ module Pos
           helpers.new_pos_location_additional_order_path(location)
         end
 
-        def has_inventories?
-          inventories.any?
-        end
-
         def render_inventory_summary
           render Pos::AdditionalOrders::InventorySummary::Component.new(inventories: inventories)
         end

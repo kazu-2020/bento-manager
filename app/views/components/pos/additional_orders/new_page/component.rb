@@ -11,10 +11,6 @@ module Pos
 
         attr_reader :location, :form
 
-        def has_items?
-          form.items.any?
-        end
-
         def render_order_form
           render Pos::AdditionalOrders::OrderForm::Component.new(form: form)
         end

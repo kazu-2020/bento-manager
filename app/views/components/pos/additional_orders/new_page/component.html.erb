@@ -1,19 +1,10 @@
 <div class="min-h-screen bg-base-200 flex flex-col">
   <main class="flex-1 p-4 pb-24">
-    <% if has_items? %>
-      <%= render_order_form %>
-    <% else %>
-      <div class="text-center py-12 text-base-content/60">
-        <%= component "icons/bento", extra_class: "h-12 w-12 mx-auto mb-4 opacity-50" %>
-        <p><%= t(".no_inventories") %></p>
-      </div>
-    <% end %>
+    <%= render_order_form %>
   </main>
 
-  <% if has_items? %>
-    <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
-      <%= button_tag t(".submit_label"), type: :submit, form: "additional-order-form",
-            class: "btn btn-neutral btn-lg w-full" %>
-    </footer>
-  <% end %>
+  <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
+    <%= button_tag t(".submit_label"), type: :submit, form: "additional-order-form",
+          class: "btn btn-neutral btn-lg w-full" %>
+  </footer>
 </div>

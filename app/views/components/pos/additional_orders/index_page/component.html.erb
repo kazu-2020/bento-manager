@@ -15,24 +15,16 @@
     </div>
 
     <%# 在庫総数 %>
-    <% if has_inventories? %>
-      <%= render_inventory_summary %>
-    <% else %>
-      <div class="text-center py-8 text-base-content/60">
-        <p><%= t(".no_inventories") %></p>
-      </div>
-    <% end %>
+    <%= render_inventory_summary %>
 
     <%# 発注履歴 %>
     <%= render_history_list %>
   </main>
 
   <%# 固定フッター %>
-  <% if has_inventories? %>
-    <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
-      <%= link_to new_order_url, class: "btn btn-neutral btn-lg w-full" do %>
-        <%= t(".new_order_button") %>
-      <% end %>
-    </footer>
-  <% end %>
+  <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
+    <%= link_to new_order_url, class: "btn btn-neutral btn-lg w-full" do %>
+      <%= t(".new_order_button") %>
+    <% end %>
+  </footer>
 </div>
