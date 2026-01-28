@@ -20,7 +20,6 @@ module AdditionalOrders
       return false unless valid?
 
       ordered_items = items_with_quantity
-      @created_count = 0
 
       ActiveRecord::Base.transaction do
         ordered_items.each do |item|
@@ -31,10 +30,10 @@ module AdditionalOrders
             quantity: item.quantity,
             order_at: Time.current
           )
-          @created_count += 1
         end
       end
 
+      @created_count = ordered_items.size
       true
     rescue ActiveRecord::RecordInvalid => e
       errors.add(:base, e.record.errors.full_messages.first)
@@ -46,7 +45,7 @@ module AdditionalOrders
     end
 
     def items_with_quantity
-      items.select { |item| item.quantity.to_i > 0 }
+      items.select(&:has_quantity?)
     end
 
     def total_available_stock

@@ -10,16 +10,8 @@ module Pos
 
         attr_reader :inventories
 
-        def has_items?
-          inventories.any?
-        end
-
         def total_available_stock
           inventories.sum(&:available_stock)
-        end
-
-        def items
-          inventories
         end
       end
     end

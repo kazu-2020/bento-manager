@@ -11,7 +11,7 @@ module AdditionalOrders
     attribute :quantity, :integer, default: 0
 
     def has_quantity?
-      quantity.to_i > 0
+      quantity > 0
     end
   end
 end
