@@ -14,7 +14,7 @@ module Pos
         delegate :items, :voided?, :sale_discounts, to: :sale
 
         def sale_time
-          sale.sale_datetime.strftime("%H:%M")
+          I18n.l(sale.sale_datetime, format: :short)
         end
 
         def formatted_amount

@@ -1,4 +1,9 @@
 ja:
+  time:
+    formats:
+      short: "%H:%M"
+      datetime: "%Y/%m/%d %H:%M"
+
   number:
     currency:
       format:

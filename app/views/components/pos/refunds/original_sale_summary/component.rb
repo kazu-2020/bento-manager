@@ -13,7 +13,7 @@ module Pos
         delegate :items, to: :sale
 
         def sale_datetime
-          sale.sale_datetime.strftime("%Y/%m/%d %H:%M")
+          I18n.l(sale.sale_datetime, format: :datetime)
         end
 
         def customer_type_label
