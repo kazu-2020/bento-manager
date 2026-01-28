@@ -18,6 +18,10 @@ ja:
           attributes:
             base:
               save_failed: "保存に失敗しました。もう一度お試しください。"
+        additional_orders/order_form:
+          attributes:
+            base:
+              no_items_ordered: "発注する商品の数量を入力してください"
         sales/cart_form:
           attributes:
             base:
@@ -282,6 +286,9 @@ ja:
         create:
           success: "販売を記録しました"
           missing_requirements: "商品を選択し、顧客区分を指定してください"
+      additional_orders:
+        create:
+          success: "%{count}件の追加発注を記録しました"
 
   discounts:
     index:

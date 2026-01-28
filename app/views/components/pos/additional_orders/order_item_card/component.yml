@@ -1,0 +1,4 @@
+---
+ja:
+  stock_count: "残 %{count}個"
+  unit: 個

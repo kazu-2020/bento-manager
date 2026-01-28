@@ -38,6 +38,7 @@ Rails.application.routes.draw do
       namespace :sales, module: "locations/sales" do
         resource :form_state, only: [ :create ]
       end
+      resources :additional_orders, only: [ :index, :new, :create ], module: :locations
     end
   end
 

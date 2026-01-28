@@ -1,0 +1,7 @@
+---
+ja:
+  title_suffix: の追加発注
+  help_line_message: 追加発注内容は LINE でのやりとりにて決定した内容を登録してください。
+  help_no_edit_message: 追加発注情報は取り消し、および編集が現在できないので注意してください。
+  no_inventories: 本日の在庫登録がありません
+  new_order_button: 追加発注を登録する
