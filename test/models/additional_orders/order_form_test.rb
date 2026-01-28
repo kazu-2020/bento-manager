@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "minitest/mock"
 
 module AdditionalOrders
   class OrderFormTest < ActiveSupport::TestCase
@@ -93,10 +94,23 @@ module AdditionalOrders
     end
 
     test "save returns false and adds error on RecordInvalid" do
-      form = OrderForm.new(location: @location, inventories: @inventories)
+      bento_a = catalogs(:daily_bento_a)
+      form = OrderForm.new(
+        location: @location,
+        inventories: @inventories,
+        submitted: { bento_a.id.to_s => { quantity: "3" } }
+      )
 
-      assert_not form.save(employee: @employee)
-      assert form.errors[:base].any?
+      # AdditionalOrder.create_with_inventory! をスタブして RecordInvalid を発生させる
+      invalid_record = AdditionalOrder.new
+      invalid_record.errors.add(:base, "テストエラー")
+      error = ActiveRecord::RecordInvalid.new(invalid_record)
+
+      AdditionalOrder.stub(:create_with_inventory!, ->(*) { raise error }) do
+        assert_not form.save(employee: @employee)
+        assert form.errors[:base].any?
+        assert_includes form.errors[:base], "テストエラー"
+      end
     end
 
     test "form_with_options returns correct url and method" do
