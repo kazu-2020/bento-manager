@@ -1,0 +1,43 @@
+<div class="card bg-base-100 border border-base-300">
+  <div class="card-body p-4">
+    <h3 class="card-title text-base">
+      <svg class="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+      <%= t(".title") %>
+    </h3>
+
+    <%# 販売情報 %>
+    <div class="flex items-center gap-2 text-sm text-base-content/70 mt-2">
+      <span><%= sale_datetime %></span>
+      <span class="badge <%= customer_type_badge_class %> badge-sm"><%= customer_type_label %></span>
+    </div>
+
+    <%# 商品明細 %>
+    <div class="mt-4 space-y-2">
+      <% items.each do |item| %>
+        <div class="flex justify-between text-sm">
+          <span>
+            <%= item.catalog.name %>
+            <span class="text-base-content/60">x<%= item.quantity %></span>
+          </span>
+          <span><%= helpers.number_to_currency(item.line_total) %></span>
+        </div>
+      <% end %>
+    </div>
+
+    <%# 割引・合計 %>
+    <div class="border-t border-base-200 mt-3 pt-3">
+      <% if has_discounts? %>
+        <div class="flex justify-between text-sm text-error mb-2">
+          <span><%= t(".discount") %></span>
+          <span><%= formatted_discount_amount %></span>
+        </div>
+      <% end %>
+      <div class="flex justify-between font-bold">
+        <span><%= t(".total") %></span>
+        <span class="text-lg"><%= formatted_final_amount %></span>
+      </div>
+    </div>
+  </div>
+</div>

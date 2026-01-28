@@ -1,0 +1,7 @@
+---
+ja:
+  select_items: 返品する商品を選択
+  reason_label: 返品理由
+  reason_placeholder: 返品理由を入力してください（必須）
+  back: 戻る
+  submit: 返金を確定

@@ -1,0 +1,14 @@
+<%= form_with url: form_state_url,
+              method: :post,
+              id: "ghost-form",
+              data: { turbo_stream: true, ghost_form_target: "ghostForm" } do %>
+  <% items.each do |item| %>
+    <%= fields_for "ghost_refund[items][#{item.id}]" do |f| %>
+      <%= f.hidden_field :refund, value: item.selected? ? "1" : "0" %>
+    <% end %>
+  <% end %>
+
+  <%= fields_for "ghost_refund" do |f| %>
+    <%= f.hidden_field :reason, value: reason %>
+  <% end %>
+<% end %>

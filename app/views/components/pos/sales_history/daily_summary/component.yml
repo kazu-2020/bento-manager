@@ -1,0 +1,7 @@
+---
+ja:
+  title: 本日の売上
+  total_sales: 販売件数
+  total_amount: 売上合計
+  voided_count: 取消件数
+  sales_unit: 件

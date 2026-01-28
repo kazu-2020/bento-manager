@@ -1,0 +1,17 @@
+<%# 返金プレビュー更新 %>
+<%= turbo_stream.replace "refund-preview" do %>
+  <div id="refund-preview">
+    <%= component "pos/refunds/corrected_sale_preview", form: @form %>
+    <%= component "pos/refunds/refund_amount_display", form: @form %>
+  </div>
+<% end %>
+
+<%# 送信ボタン更新 %>
+<%= turbo_stream.replace "refund-submit-button" do %>
+  <%= component "pos/refunds/submit_button", form: @form %>
+<% end %>
+
+<%# Ghost Form 更新 %>
+<%= turbo_stream.replace "ghost-form" do %>
+  <%= component "pos/refunds/ghost_form", form: @form, sale: @sale, location: @location %>
+<% end %>
