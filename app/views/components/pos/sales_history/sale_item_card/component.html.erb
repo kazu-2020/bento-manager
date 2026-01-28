@@ -11,7 +11,7 @@
           <span class="badge <%= customer_type_badge_class %> badge-sm"><%= customer_type_label %></span>
 
           <% if voided? %>
-            <span class="badge badge-error badge-sm"><%= t(".voided") %></span>
+            <span class="badge badge-error badge-sm"><%= t("enums.sale.status.voided") %></span>
           <% end %>
         </div>
 
@@ -43,7 +43,7 @@
 
           <% if has_discounts? %>
             <div class="flex justify-between text-sm text-error border-t border-base-200 pt-2">
-              <span><%= t(".discount") %></span>
+              <span><%= t("activerecord.models.discount") %></span>
               <span><%= formatted_discounts_summary %></span>
             </div>
           <% end %>
@@ -51,7 +51,7 @@
 
         <%# 担当者 %>
         <div class="mt-3 text-xs text-base-content/60">
-          <%= t(".employee") %>: <%= employee_name %>
+          <%= t("activerecord.attributes.sale.employee") %>: <%= employee_name %>
         </div>
 
         <%# 返品ボタン %>
@@ -61,7 +61,7 @@
               <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
               </svg>
-              <%= t(".refund") %>
+              <%= t("activerecord.models.refund") %>
             <% end %>
           </div>
         <% end %>

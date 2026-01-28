@@ -55,6 +55,7 @@ ja:
       additional_order: "追加発注"
       discount: "割引"
       coupon: "クーポン"
+      refund: "返金処理"
     attributes:
       admin:
         email: "メールアドレス"
@@ -98,7 +99,7 @@ ja:
         reserved_stock: "予約済み在庫数"
       sale:
         location: "販売先"
-        employee: "担当従業員"
+        employee: "担当"
         voided_by_employee: "取消担当者"
         corrected_from_sale: "訂正元販売"
         sale_datetime: "販売日時"
@@ -316,9 +317,6 @@ ja:
             total_sales: "販売件数"
             total_amount: "売上合計"
             voided_count: "取消件数"
-          sale_item:
-            refund: "返品"
-            voided: "取消済"
       refunds:
         new:
           title: "返品処理"
