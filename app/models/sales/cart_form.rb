@@ -93,7 +93,7 @@ module Sales
       )
       calculator.calculate
     rescue Errors::MissingPriceError
-      PriceCalculator.new([]).calculate
+      Sales::PriceCalculator.new([]).calculate
     end
   end
 end
