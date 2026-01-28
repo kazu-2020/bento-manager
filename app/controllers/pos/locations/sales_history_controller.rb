@@ -19,10 +19,13 @@ module Pos
       def fetch_today_sales
         @location.sales
                  .where(sale_datetime: Date.current.all_day)
-                 .eager_load(:employee, items: :catalog)
+                 .eager_load(:employee)
+                 .preload(items: :catalog)
                  .order(sale_datetime: :desc)
       end
 
+      # アプリケーションの想定では、1 日の売上集計は大量にならないため、メモリ上で集計する。
+      # これによって、 3回のDBアクセスを1回に削減できる。
       def calculate_daily_summary
         completed_sales = @sales.select(&:completed?)
         voided_sales = @sales.select(&:voided?)
