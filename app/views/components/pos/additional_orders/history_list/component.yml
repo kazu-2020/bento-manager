@@ -1,0 +1,5 @@
+---
+ja:
+  title: 本日の追加発注履歴
+  total_quantity: "合計 %{count}個"
+  empty: まだ追加発注はありません

@@ -1,0 +1,5 @@
+---
+ja:
+  title: 現在の在庫総数
+  unit: 個
+  stock_count: "%{count}個"

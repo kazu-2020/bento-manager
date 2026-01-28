@@ -1,0 +1,20 @@
+<div class="mt-6">
+  <h2 class="flex items-center justify-between text-lg font-bold mb-3">
+    <span><%= t(".title") %></span>
+    <% if has_orders? %>
+      <span class="badge badge-accent"><%= t(".total_quantity", count: total_quantity) %></span>
+    <% end %>
+  </h2>
+
+  <% if has_orders? %>
+    <div class="space-y-2">
+      <% additional_orders.each do |order| %>
+        <%= render_history_item(order) %>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="text-center py-8 text-base-content/50">
+      <p><%= t(".empty") %></p>
+    </div>
+  <% end %>
+</div>

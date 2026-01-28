@@ -1,0 +1,10 @@
+<div class="min-h-screen bg-base-200 flex flex-col">
+  <main class="flex-1 p-4 pb-24">
+    <%= render_order_form %>
+  </main>
+
+  <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
+    <%= button_tag t(".submit_label"), type: :submit, form: "additional-order-form",
+          class: "btn btn-neutral btn-lg w-full" %>
+  </footer>
+</div>
