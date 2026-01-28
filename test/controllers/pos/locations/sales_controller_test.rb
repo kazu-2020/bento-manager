@@ -36,6 +36,13 @@ module Pos
         assert_redirected_to "/employee/login"
       end
 
+      test "new redirects to daily inventory page when no inventories" do
+        login_as(@admin)
+        location = Location.create!(name: "在庫なし店舗", status: :active)
+        get new_pos_location_sale_path(location)
+        assert_redirected_to new_pos_location_daily_inventory_path(location)
+      end
+
       test "new returns 404 for inactive location" do
         login_as(@admin)
         inactive_location = locations(:prefectural_office)

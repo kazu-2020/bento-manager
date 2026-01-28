@@ -16,10 +16,6 @@ module Pos
                  :form_with_options, :form_state_options, :price_result,
                  to: :form
 
-        def has_items?
-          items.any?
-        end
-
         def has_bento_items?
           bento_items.any?
         end

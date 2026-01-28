@@ -6,49 +6,40 @@
     <%= form_with **form_with_options,
                   class: "flex flex-col flex-1 min-h-0",
                   data: { ghost_form_target: "originalForm" } do |f| %>
-      <% if has_items? %>
-        <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
-          <%# タブバー %>
-          <div class="shrink-0 bg-base-200 px-4 pt-2">
-            <div role="tablist" class="tabs tabs-lift">
-              <% tab_items.each_with_index do |tab, i| %>
-                <%= button_tag tab[:label], type: :button, role: :tab,
-                      class: "tab min-h-12 flex-1 text-base font-medium #{"tab-active" if i == 0}",
-                      data: { tabs_target: "tab", action: "tabs#select" } %>
+      <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
+        <%# タブバー %>
+        <div class="shrink-0 bg-base-200 px-4 pt-2">
+          <div role="tablist" class="tabs tabs-lift">
+            <% tab_items.each_with_index do |tab, i| %>
+              <%= button_tag tab[:label], type: :button, role: :tab,
+                    class: "tab min-h-12 flex-1 text-base font-medium #{"tab-active" if i == 0}",
+                    data: { tabs_target: "tab", action: "tabs#select" } %>
+            <% end %>
+          </div>
+        </div>
+
+        <%# タブパネル（スクロール領域） %>
+        <main class="flex-1 overflow-y-auto p-4">
+          <% tab_items.each_with_index do |tab, i| %>
+            <div data-tabs-target="panel" <%= "hidden" unless i == 0 %>>
+              <% case tab[:key] %>
+              <% when :bento %>
+                <div class="space-y-3">
+                  <%= component "pos/sales/product_card", collection: bento_items %>
+                </div>
+              <% when :side_menu %>
+                <div class="space-y-3">
+                  <%= component "pos/sales/product_card", collection: side_menu_items %>
+                </div>
+              <% when :coupon %>
+                <div class="space-y-3">
+                  <%= component "pos/sales/coupon_card", collection: discounts, form: form %>
+                </div>
               <% end %>
             </div>
-          </div>
-
-          <%# タブパネル（スクロール領域） %>
-          <main class="flex-1 overflow-y-auto p-4">
-            <% tab_items.each_with_index do |tab, i| %>
-              <div data-tabs-target="panel" <%= "hidden" unless i == 0 %>>
-                <% case tab[:key] %>
-                <% when :bento %>
-                  <div class="space-y-3">
-                    <%= component "pos/sales/product_card", collection: bento_items %>
-                  </div>
-                <% when :side_menu %>
-                  <div class="space-y-3">
-                    <%= component "pos/sales/product_card", collection: side_menu_items %>
-                  </div>
-                <% when :coupon %>
-                  <div class="space-y-3">
-                    <%= component "pos/sales/coupon_card", collection: discounts, form: form %>
-                  </div>
-                <% end %>
-              </div>
-            <% end %>
-          </main>
-        </div>
-      <% else %>
-        <main class="flex-1 overflow-y-auto p-4">
-          <div class="text-center py-12 text-base-content/60">
-            <div class="text-6xl mb-4">🍱</div>
-            <p><%= t(".no_inventories") %></p>
-          </div>
+          <% end %>
         </main>
-      <% end %>
+      </div>
 
       <%# フッター %>
       <footer class="shrink-0 bg-base-100 border-t border-base-300">

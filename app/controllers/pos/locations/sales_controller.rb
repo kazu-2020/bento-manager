@@ -5,6 +5,7 @@ module Pos
     class SalesController < ApplicationController
       before_action :set_location
       before_action :set_inventories
+      before_action :redirect_unless_inventories, only: :new
       before_action :set_discounts
 
       def new
@@ -36,6 +37,12 @@ module Pos
       end
 
       private
+
+      def redirect_unless_inventories
+        return if @inventories.present?
+
+        redirect_to new_pos_location_daily_inventory_path(@location)
+      end
 
       def set_location
         @location = Location.active.find(params[:location_id])
