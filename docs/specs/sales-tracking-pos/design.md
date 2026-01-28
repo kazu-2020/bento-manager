@@ -86,7 +86,7 @@ graph TB
     subgraph Controller[Controller Layer]
         CatalogsCtrl[CatalogsController]
         DiscountsCtrl[DiscountsController]
-        DailyInventoriesCtrl[DailyInventoriesController]
+        DailyInventoriesCtrl[Pos::DailyInventoriesController]
         SalesCtrl[SalesController]
         RefundsCtrl[RefundsController]
         AdditionalOrdersCtrl[AdditionalOrdersController]
@@ -309,7 +309,7 @@ sequenceDiagram
 | Requirement | Summary | Components | Interfaces | Flows |
 |-------------|---------|------------|------------|-------|
 | 1.1, 1.2, 1.3, 1.4, 1.5 | 弁当商品マスタ管理 | Catalog (category enum), CatalogPrice, CatalogPricingRule, CatalogsController | CatalogsController CRUD, CatalogPricesController | - |
-| 2.1, 2.2, 2.3, 2.4, 2.5 | 販売日の在庫登録 | DailyInventory, DailyInventoriesController | DailyInventoriesController CRUD, bulk_create_for_date | - |
+| 2.1, 2.2, 2.3, 2.4 | 販売日の在庫登録 | DailyInventory, Pos::Locations::DailyInventoriesController | POS フロー内での在庫登録（販売先選択時に未登録なら登録画面へ） | - |
 | 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7 | 販売記録 (POS機能) | Sale, SaleItem, DailyInventory, SalesController, pos_controller.js, Sales::PriceCalculator, CatalogPricingRule, Discount | SalesController#create, pos_controller.js | 販売フロー |
 | 4.1, 4.2, 4.3, 4.4 | リアルタイム在庫確認 | DailyInventory, Turbo Streams, Solid Cable, inventory_controller.js | broadcast_inventory_update, turbo_stream_from | 販売フロー |
 | 5.1, 5.2, 5.3, 5.4, 5.5 | 追加発注記録 | AdditionalOrder, AdditionalOrdersController | AdditionalOrdersController#create | - |
@@ -342,7 +342,7 @@ sequenceDiagram
 | Discount | Discount Domain | 割引抽象モデル（delegated_type） | 3.1-3.7, 12.1-12.9 | Coupon (P0) | Service |
 | Coupon | Discount Domain | クーポンマスタ（50円引き、弁当1個につき1枚） | 3.1-3.7, 12.1-12.9 | Discount (P0) | Service |
 | SaleDiscount | Sales Domain | 販売・割引中間テーブル（監査トレイル、複数割引対応） | 3.1-3.7, 12.1-12.9 | Sale (P0), Discount (P0) | - |
-| DailyInventory | Inventory Domain | 販売先ごとの日次在庫管理（返品時に在庫復元） | 2.1-2.6, 3.1-3.8, 4.1-4.5, 14.1-14.12, 15.1-15.7 | Location (P0), Catalog (P0), Sale (P1) | Service, State |
+| DailyInventory | Inventory Domain | 販売先ごとの日次在庫管理（返品時に在庫復元） | 2.1-2.4, 3.1-3.8, 4.1-4.5, 14.1-14.12, 15.1-15.7 | Location (P0), Catalog (P0), Sale (P1) | Service, State |
 | Sale | Sales Domain | 販売記録（販売先ごと、void 対応、取消→再販売） | 3.1-3.8, 14.1-14.12, 15.1-15.7 | Location (P0), DailyInventory (P0), Discount (P1), SaleItem (P0) | API |
 | SaleItem | Sales Domain | 販売明細（単価確定、価格履歴管理、純粋データモデル） | 3.1-3.8, 13.1-13.8 | Sale (P0), Catalog (P0), CatalogPrice (P0) | Service |
 | Refund | Refund Domain | 差額返金記録（元Sale - 新Sale） | 14.1-14.12 | Sale (P0) | API |
