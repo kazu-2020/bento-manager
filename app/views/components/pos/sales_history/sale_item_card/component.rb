@@ -11,6 +11,8 @@ module Pos
 
         attr_reader :sale, :location
 
+        delegate :items, :voided?, :sale_discounts, to: :sale
+
         def sale_time
           sale.sale_datetime.strftime("%H:%M")
         end
@@ -32,28 +34,17 @@ module Pos
           I18n.t("enums.sale.customer_type.#{sale.customer_type}")
         end
 
-        def voided?
-          sale.voided?
-        end
-
         def refund_url
           helpers.new_pos_location_refund_path(location, sale_id: sale.id)
         end
 
-        def items
-          sale.items
-        end
-
         def has_discounts?
-          sale.sale_discounts.present?
-        end
-
-        def discounts_summary
-          sale.sale_discounts.sum { |sd| sd.quantity * sd.discount.coupon.amount_per_unit }
+          sale_discounts.present?
         end
 
         def formatted_discounts_summary
-          helpers.number_to_currency(-discounts_summary)
+          total = sale_discounts.sum { |sd| sd.quantity * sd.discount.coupon.amount_per_unit }
+          helpers.number_to_currency(-total)
         end
 
         def employee_name

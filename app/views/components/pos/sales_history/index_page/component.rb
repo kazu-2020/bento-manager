@@ -16,10 +16,6 @@ module Pos
           sales.present?
         end
 
-        def completed_sales
-          sales.select(&:completed?)
-        end
-
         def back_url
           helpers.pos_location_path(location)
         end

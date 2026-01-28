@@ -58,7 +58,7 @@ module Refunds
     def preview_refund_amount
       return 0 unless has_selected_items?
 
-      corrected_amount = preview_price_result&.dig(:final_total) || 0
+      corrected_amount = preview_price_result[:final_total]
       sale.final_amount - corrected_amount
     end
 

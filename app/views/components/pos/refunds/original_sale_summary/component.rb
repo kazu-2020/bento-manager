@@ -10,6 +10,8 @@ module Pos
 
         attr_reader :sale
 
+        delegate :items, to: :sale
+
         def sale_datetime
           sale.sale_datetime.strftime("%Y/%m/%d %H:%M")
         end
@@ -27,10 +29,6 @@ module Pos
           end
         end
 
-        def formatted_total_amount
-          helpers.number_to_currency(sale.total_amount)
-        end
-
         def formatted_final_amount
           helpers.number_to_currency(sale.final_amount)
         end
@@ -39,16 +37,8 @@ module Pos
           sale.total_amount != sale.final_amount
         end
 
-        def discount_amount
-          sale.total_amount - sale.final_amount
-        end
-
         def formatted_discount_amount
-          helpers.number_to_currency(-discount_amount)
-        end
-
-        def items
-          sale.items
+          helpers.number_to_currency(sale.final_amount - sale.total_amount)
         end
       end
     end

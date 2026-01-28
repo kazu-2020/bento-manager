@@ -10,16 +10,18 @@ module Pos
 
         attr_reader :summary
 
+        delegate :[], to: :summary
+
         def total_count
-          summary[:total_count]
+          self[:total_count]
         end
 
         def total_amount
-          summary[:total_amount]
+          self[:total_amount]
         end
 
         def voided_count
-          summary[:voided_count]
+          self[:voided_count]
         end
 
         def formatted_total_amount
@@ -27,7 +29,7 @@ module Pos
         end
 
         def has_voided?
-          voided_count > 0
+          voided_count.positive?
         end
       end
     end

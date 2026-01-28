@@ -11,28 +11,15 @@ module Pos
 
         attr_reader :item, :form
 
+        delegate :catalog_name, :quantity, :unit_price, :line_total, :category, :selected?,
+                 to: :item
+
         def checkbox_id
           "item_#{item.id}_refund"
         end
 
         def field_name
           "refund[items][#{item.id}][refund]"
-        end
-
-        def catalog_name
-          item.catalog_name
-        end
-
-        def quantity
-          item.quantity
-        end
-
-        def unit_price
-          item.unit_price
-        end
-
-        def line_total
-          item.line_total
         end
 
         def formatted_unit_price
@@ -43,12 +30,8 @@ module Pos
           helpers.number_to_currency(line_total)
         end
 
-        def selected?
-          item.selected?
-        end
-
         def category_badge_class
-          case item.category
+          case category
           when "bento"
             "badge-primary"
           else
@@ -57,7 +40,7 @@ module Pos
         end
 
         def category_label
-          I18n.t("enums.catalog.category.#{item.category}")
+          I18n.t("enums.catalog.category.#{category}")
         end
       end
     end
