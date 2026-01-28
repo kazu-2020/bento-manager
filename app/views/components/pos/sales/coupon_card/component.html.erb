@@ -17,6 +17,7 @@
               <%= f.number_field :quantity,
                     value: current_quantity,
                     min: 0, max: effective_max, autocomplete: "off",
+                    disabled: disabled? || max_quantity <= 0,
                     class: "input input-bordered w-20 text-center text-2xl font-bold",
                     data: {
                       quantity_stepper_target: "input",
