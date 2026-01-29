@@ -21,10 +21,13 @@
     <%= render_history_list %>
   </main>
 
-  <%# 固定フッター %>
-  <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
+  <%# 固定フッター（モバイルでは Dock の上に配置） %>
+  <footer class="fixed bottom-16 lg:bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
     <%= link_to new_order_url, class: "btn btn-neutral btn-lg w-full" do %>
       <%= t(".new_order_button") %>
     <% end %>
   </footer>
+
+  <%# モバイル用フッターナビゲーション %>
+  <%= component "pos/dock", location: location, current_path: helpers.request.path %>
 </div>
