@@ -73,12 +73,7 @@
               <span class="text-sm"><%= t(".warning_message") %></span>
             </div>
           </div>
-          <div class="flex gap-3">
-            <%= link_to back_url, class: "btn btn-neutral btn-lg flex-1" do %>
-              <%= t(".back") %>
-            <% end %>
-            <%= component "pos/refunds/submit_button", form: form %>
-          </div>
+          <%= component "pos/refunds/submit_button", form: form %>
         </div>
       </footer>
     <% end %>
