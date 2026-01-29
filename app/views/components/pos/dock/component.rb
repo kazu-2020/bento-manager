@@ -29,12 +29,6 @@ module Pos
             label: t(".orders"),
             path: helpers.pos_location_additional_orders_path(location),
             active_pattern: %r{/additional_orders}
-          },
-          {
-            icon: "icons/home",
-            label: t(".locations"),
-            path: helpers.pos_locations_path,
-            active_pattern: %r{\A/pos/locations\z}
           }
         ]
       end
