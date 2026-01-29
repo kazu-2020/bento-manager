@@ -40,6 +40,10 @@ module Pos
         def formatted_discount_amount
           helpers.number_to_currency(sale.final_amount - sale.total_amount)
         end
+
+        def bundle_price?(item)
+          item.catalog_price.bundle?
+        end
       end
     end
   end

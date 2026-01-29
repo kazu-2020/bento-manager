@@ -19,6 +19,9 @@
         <div class="flex justify-between text-sm">
           <span>
             <%= item.catalog.name %>
+            <% if bundle_price?(item) %>
+              <span class="badge badge-xs badge-accent"><%= t(".bundle") %></span>
+            <% end %>
             <span class="text-base-content/60">x<%= item.quantity %></span>
           </span>
           <span><%= helpers.number_to_currency(item.line_total) %></span>
