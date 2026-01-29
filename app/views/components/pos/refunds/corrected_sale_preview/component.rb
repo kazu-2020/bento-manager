@@ -38,7 +38,7 @@ module Pos
             .map do |d|
               {
                 name: d[:discount_name],
-                quantity: d[:requested_quantity] - d[:quantity]
+                quantity: d[:requested_quantity].to_i - d[:quantity].to_i
               }
             end
         end
