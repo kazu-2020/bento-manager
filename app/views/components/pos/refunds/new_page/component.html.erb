@@ -22,8 +22,8 @@
             <%= t(".select_items") %>
           </h3>
           <div class="space-y-3">
-            <% items.each do |item| %>
-              <%= component "pos/refunds/item_selector", item: item, form: f %>
+            <% grouped_items.each do |group| %>
+              <%= component "pos/refunds/item_group_selector", group: group, form: f %>
             <% end %>
           </div>
         </div>

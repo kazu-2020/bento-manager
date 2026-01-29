@@ -5,7 +5,7 @@ module Refunds
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
-    attr_reader :sale, :location, :reason, :refund_quantities
+    attr_reader :sale, :location, :reason, :catalog_refund_quantities
 
     validate :at_least_one_item_to_refund
     validates :reason, presence: true, if: :submitting?
@@ -14,39 +14,46 @@ module Refunds
       @sale = sale
       @location = location
       @reason = submitted["reason"] || ""
-      @refund_quantities = parse_refund_quantities(submitted)
+      @catalog_refund_quantities = parse_refund_quantities(submitted)
       @submitting = submitted["_submitting"] == "true"
     end
 
     def items
       @items ||= sale.items.map do |sale_item|
-        RefundItem.new(
-          sale_item: sale_item,
-          refund_quantity: refund_quantities[sale_item.id] || 0
+        RefundItem.new(sale_item: sale_item)
+      end
+    end
+
+    def grouped_items
+      @grouped_items ||= items.group_by(&:catalog_id).map do |catalog_id, group_items|
+        RefundItemGroup.new(
+          items: group_items,
+          refund_quantity: catalog_refund_quantities[catalog_id] || 0
         )
       end
     end
 
     def selected_items
-      items.select(&:selected?)
+      grouped_items.select(&:selected?)
     end
 
     def remaining_items
-      items.reject { |item| item.remaining_quantity <= 0 }
+      grouped_items.reject { |group| group.remaining_quantity <= 0 }
     end
 
     def has_selected_items?
-      items.any?(&:selected?)
+      grouped_items.any?(&:selected?)
     end
 
     def all_items_selected?
-      items.none? { |item| item.remaining_quantity > 0 }
+      grouped_items.none? { |group| group.remaining_quantity > 0 }
     end
 
     def remaining_items_for_refunder
-      items.filter_map do |item|
-        next if item.remaining_quantity <= 0
-        { catalog: item.catalog, quantity: item.remaining_quantity }
+      grouped_items.filter_map do |group|
+        remaining = group.remaining_quantity
+        next if remaining <= 0
+        { catalog: group.catalog, quantity: remaining }
       end
     end
 
@@ -78,8 +85,8 @@ module Refunds
     end
 
     def parse_refund_quantities(submitted)
-      items_data = submitted["items"] || {}
-      items_data.transform_keys(&:to_i).transform_values { |v| v["refund_quantity"].to_i }
+      catalogs_data = submitted["catalogs"] || {}
+      catalogs_data.transform_keys(&:to_i).transform_values { |v| v["refund_quantity"].to_i }
     end
 
     def at_least_one_item_to_refund
@@ -105,21 +112,12 @@ module Refunds
 
     # 返品商品を表すラッパークラス
     class RefundItem
-      attr_reader :sale_item, :refund_quantity
+      attr_reader :sale_item
 
-      delegate :id, :catalog, :quantity, :unit_price, :line_total, to: :sale_item
+      delegate :id, :catalog, :catalog_id, :catalog_price, :quantity, :unit_price, :line_total, to: :sale_item
 
-      def initialize(sale_item:, refund_quantity:)
+      def initialize(sale_item:)
         @sale_item = sale_item
-        @refund_quantity = refund_quantity
-      end
-
-      def selected?
-        @refund_quantity > 0
-      end
-
-      def remaining_quantity
-        quantity - @refund_quantity
       end
 
       def catalog_name
@@ -128,6 +126,56 @@ module Refunds
 
       def category
         catalog.category
+      end
+
+      def bundle_price?
+        catalog_price.bundle?
+      end
+    end
+
+    # 同じカタログの商品をグループ化するクラス
+    class RefundItemGroup
+      attr_reader :items, :refund_quantity
+
+      def initialize(items:, refund_quantity: 0)
+        @items = items
+        @refund_quantity = refund_quantity
+      end
+
+      def catalog
+        items.first.catalog
+      end
+
+      def catalog_id
+        catalog.id
+      end
+
+      def catalog_name
+        catalog.name
+      end
+
+      def category
+        catalog.category
+      end
+
+      def total_quantity
+        items.sum(&:quantity)
+      end
+
+      def total_line_total
+        items.sum(&:line_total)
+      end
+
+      def remaining_quantity
+        total_quantity - refund_quantity
+      end
+
+      def selected?
+        refund_quantity > 0
+      end
+
+      def single_price_type?
+        items.size == 1
       end
     end
   end

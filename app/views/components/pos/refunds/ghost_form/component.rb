@@ -12,7 +12,7 @@ module Pos
 
         attr_reader :form, :sale, :location
 
-        delegate :items, :reason, to: :form
+        delegate :grouped_items, :reason, to: :form
 
         def form_state_url
           helpers.pos_location_refunds_form_state_path(location, sale_id: sale.id)

@@ -12,7 +12,7 @@ module Pos
 
         attr_reader :location, :sale, :form
 
-        delegate :items, :has_selected_items?, :form_with_options, to: :form
+        delegate :grouped_items, :has_selected_items?, :form_with_options, to: :form
 
         def back_url
           helpers.pos_location_sales_history_index_path(location)

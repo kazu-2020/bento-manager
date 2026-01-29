@@ -1,0 +1,9 @@
+---
+ja:
+  total_quantity: "合計 %{count}個"
+  bundle: セット
+  regular: 通常
+  refund: 返品
+  unit: 個
+  decrement: 減らす
+  increment: 増やす
