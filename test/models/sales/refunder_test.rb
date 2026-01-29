@@ -188,7 +188,7 @@ module Sales
       assert_equal 950, result[:refund_amount]
     end
 
-    test "弁当2個+50円クーポン2枚から弁当1個を返品すると、クーポン1枚のみ適用され550円返金される" do
+    test "弁当2個+50円クーポン2枚から弁当1個を返品すると、クーポン1枚のみ適用され500円返金される" do
       recorder = Sales::Recorder.new
       sale = recorder.record(
         { location: @location, customer_type: :staff, employee: @employee },
