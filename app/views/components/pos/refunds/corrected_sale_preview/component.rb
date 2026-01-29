@@ -33,8 +33,6 @@ module Pos
         end
 
         def returned_coupons
-          return [] if discount_details.blank?
-
           discount_details
             .select { |d| d[:requested_quantity].to_i > d[:quantity].to_i }
             .map do |d|
