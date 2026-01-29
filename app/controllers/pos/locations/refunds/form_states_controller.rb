@@ -23,7 +23,7 @@ module Pos
 
         def set_sale
           @sale = @location.sales
-                           .eager_load(items: :catalog)
+                           .preload(items: :catalog)
                            .find(params[:sale_id])
         end
 
