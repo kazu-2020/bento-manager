@@ -12,14 +12,14 @@ module Pos
         attr_reader :item, :form
 
         delegate :catalog_name, :quantity, :unit_price, :line_total, :category, :selected?,
-                 to: :item
+                 :refund_quantity, to: :item
 
-        def checkbox_id
-          "item_#{item.id}_refund"
+        def quantity_field_id
+          "item_#{item.id}_refund_quantity"
         end
 
-        def field_name
-          "refund[items][#{item.id}][refund]"
+        def quantity_field_name
+          "refund[items][#{item.id}][refund_quantity]"
         end
 
         def formatted_unit_price

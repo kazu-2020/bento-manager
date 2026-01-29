@@ -5,7 +5,7 @@ module Refunds
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
-    attr_reader :sale, :location, :reason, :selected_item_ids
+    attr_reader :sale, :location, :reason, :refund_quantities
 
     validate :at_least_one_item_to_refund
     validates :reason, presence: true, if: :submitting?
@@ -14,7 +14,7 @@ module Refunds
       @sale = sale
       @location = location
       @reason = submitted["reason"] || ""
-      @selected_item_ids = parse_selected_item_ids(submitted)
+      @refund_quantities = parse_refund_quantities(submitted)
       @submitting = submitted["_submitting"] == "true"
     end
 
@@ -22,7 +22,7 @@ module Refunds
       @items ||= sale.items.map do |sale_item|
         RefundItem.new(
           sale_item: sale_item,
-          selected: selected_item_ids.include?(sale_item.id)
+          refund_quantity: refund_quantities[sale_item.id] || 0
         )
       end
     end
@@ -32,7 +32,7 @@ module Refunds
     end
 
     def remaining_items
-      items.reject(&:selected?)
+      items.reject { |item| item.remaining_quantity <= 0 }
     end
 
     def has_selected_items?
@@ -40,12 +40,13 @@ module Refunds
     end
 
     def all_items_selected?
-      items.all?(&:selected?)
+      items.none? { |item| item.remaining_quantity > 0 }
     end
 
     def remaining_items_for_refunder
-      remaining_items.map do |item|
-        { catalog: item.catalog, quantity: item.quantity }
+      items.filter_map do |item|
+        next if item.remaining_quantity <= 0
+        { catalog: item.catalog, quantity: item.remaining_quantity }
       end
     end
 
@@ -76,9 +77,9 @@ module Refunds
       @submitting
     end
 
-    def parse_selected_item_ids(submitted)
+    def parse_refund_quantities(submitted)
       items_data = submitted["items"] || {}
-      items_data.select { |_, v| v["refund"] == "1" }.keys.map(&:to_i)
+      items_data.transform_keys(&:to_i).transform_values { |v| v["refund_quantity"].to_i }
     end
 
     def at_least_one_item_to_refund
@@ -104,17 +105,21 @@ module Refunds
 
     # 返品商品を表すラッパークラス
     class RefundItem
-      attr_reader :sale_item
+      attr_reader :sale_item, :refund_quantity
 
       delegate :id, :catalog, :quantity, :unit_price, :line_total, to: :sale_item
 
-      def initialize(sale_item:, selected:)
+      def initialize(sale_item:, refund_quantity:)
         @sale_item = sale_item
-        @selected = selected
+        @refund_quantity = refund_quantity
       end
 
       def selected?
-        @selected
+        @refund_quantity > 0
+      end
+
+      def remaining_quantity
+        quantity - @refund_quantity
       end
 
       def catalog_name

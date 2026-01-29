@@ -1,3 +1,6 @@
 ---
 ja:
-  refund: 返品
+  unit: 個
+  refund_quantity_label: 返品数
+  decrement: 減らす
+  increment: 増やす

@@ -1,6 +1,6 @@
 <%# 返金プレビュー更新 %>
 <%= turbo_stream.replace "refund-preview" do %>
-  <div id="refund-preview">
+  <div id="refund-preview" class="mt-6">
     <%= component "pos/refunds/corrected_sale_preview", form: @form %>
     <%= component "pos/refunds/refund_amount_display", form: @form %>
   </div>
