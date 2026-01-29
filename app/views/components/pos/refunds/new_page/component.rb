@@ -4,13 +4,13 @@ module Pos
   module Refunds
     module NewPage
       class Component < Application::Component
-        def initialize(location:, sale:, form:)
-          @location = location
-          @sale = sale
+        def initialize(form:, sale:, location:)
           @form = form
+          @sale = sale
+          @location = location
         end
 
-        attr_reader :location, :sale, :form
+        attr_reader :form, :sale, :location
 
         delegate :grouped_items, :has_selected_items?, :form_with_options, to: :form
 
