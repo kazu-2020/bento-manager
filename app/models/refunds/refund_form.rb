@@ -26,9 +26,13 @@ module Refunds
 
     def grouped_items
       @grouped_items ||= items.group_by(&:catalog_id).map do |catalog_id, group_items|
+        total = group_items.sum(&:quantity)
+        raw_quantity = catalog_refund_quantities[catalog_id] || 0
+        safe_quantity = raw_quantity.clamp(0, total)
+
         RefundItemGroup.new(
           items: group_items,
-          refund_quantity: catalog_refund_quantities[catalog_id] || 0
+          refund_quantity: safe_quantity
         )
       end
     end
