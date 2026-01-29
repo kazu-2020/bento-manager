@@ -27,6 +27,27 @@ module Pos
           amount = preview_price_result&.dig(:final_total) || 0
           helpers.number_to_currency(amount)
         end
+
+        def discount_details
+          @discount_details ||= preview_price_result&.dig(:discount_details) || []
+        end
+
+        def returned_coupons
+          return [] if discount_details.blank?
+
+          discount_details
+            .select { |d| d[:requested_quantity].to_i > d[:quantity].to_i }
+            .map do |d|
+              {
+                name: d[:discount_name],
+                quantity: d[:requested_quantity] - d[:quantity]
+              }
+            end
+        end
+
+        def any_returned_coupons?
+          returned_coupons.any?
+        end
       end
     end
   end
