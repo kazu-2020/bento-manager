@@ -1,0 +1,14 @@
+<%= form_with url: form_state_url,
+              method: :post,
+              id: "ghost-form",
+              data: { turbo_stream: true, ghost_form_target: "ghostForm" } do %>
+  <% grouped_items.each do |group| %>
+    <%= fields_for "ghost_refund[catalogs][#{group.catalog_id}]" do |f| %>
+      <%= f.hidden_field :refund_quantity, value: group.refund_quantity %>
+    <% end %>
+  <% end %>
+
+  <%= fields_for "ghost_refund" do |f| %>
+    <%= f.hidden_field :reason, value: reason %>
+  <% end %>
+<% end %>

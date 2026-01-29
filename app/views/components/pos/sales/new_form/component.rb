@@ -37,6 +37,10 @@ module Pos
             items
           end
         end
+
+        def sales_history_url
+          helpers.pos_location_sales_history_index_path(location)
+        end
       end
     end
   end

@@ -89,7 +89,7 @@ module Sales
       assert_equal 3, sd.quantity
     end
 
-    test "弁当2個に50円クーポン2枚と100円クーポン1枚を適用すると2件のSaleDiscountが作成される" do
+    test "弁当2個に50円クーポン2枚と100円クーポン1枚を指定しても弁当数上限で合計2枚のみ適用される" do
       sale = record_sale(
         [ { catalog: catalogs(:daily_bento_a), quantity: 2 } ],
         discount_quantities: {
@@ -99,12 +99,14 @@ module Sales
       )
 
       assert_equal 1100, sale.total_amount
-      assert_equal 900, sale.final_amount
+      # 弁当2個に対してクーポンは最大2枚まで
+      # 100円クーポン1枚(100円) + 50円クーポン1枚(50円) = 150円引き
+      assert_equal 950, sale.final_amount
       assert_equal 2, sale.sale_discounts.count
 
       fifty = sale.sale_discounts.find_by(discount: discounts(:fifty_yen_discount))
-      assert_equal 100, fifty.discount_amount
-      assert_equal 2, fifty.quantity
+      assert_equal 50, fifty.discount_amount
+      assert_equal 1, fifty.quantity
 
       hundred = sale.sale_discounts.find_by(discount: discounts(:hundred_yen_discount))
       assert_equal 100, hundred.discount_amount

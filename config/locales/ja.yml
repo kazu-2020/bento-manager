@@ -1,4 +1,9 @@
 ja:
+  time:
+    formats:
+      short: "%H:%M"
+      datetime: "%Y/%m/%d %H:%M"
+
   number:
     currency:
       format:
@@ -22,6 +27,12 @@ ja:
           attributes:
             base:
               no_items_ordered: "発注する商品の数量を入力してください"
+        refunds/refund_form:
+          attributes:
+            base:
+              no_items_selected: "返品する商品を選択してください"
+            reason:
+              blank: "を入力してください"
         sales/cart_form:
           attributes:
             base:
@@ -44,6 +55,7 @@ ja:
       additional_order: "追加発注"
       discount: "割引"
       coupon: "クーポン"
+      refund: "返金処理"
     attributes:
       admin:
         email: "メールアドレス"
@@ -87,7 +99,7 @@ ja:
         reserved_stock: "予約済み在庫数"
       sale:
         location: "販売先"
-        employee: "担当従業員"
+        employee: "担当"
         voided_by_employee: "取消担当者"
         corrected_from_sale: "訂正元販売"
         sale_datetime: "販売日時"
@@ -117,6 +129,13 @@ ja:
         name: "名前"
         valid_from: "有効開始日"
         valid_until: "有効終了日"
+      refund:
+        original_sale: "元の販売"
+        corrected_sale: "修正後の販売"
+        employee: "返金処理担当者"
+        refund_datetime: "返金日時"
+        amount: "返金額"
+        reason: "返金理由"
       coupon:
         description: "説明"
         amount_per_unit: "1枚あたりの割引額"
@@ -289,6 +308,33 @@ ja:
       additional_orders:
         create:
           success: "%{count}件の追加発注を記録しました"
+      sales_history:
+        index:
+          title: "販売履歴"
+          empty: "本日の販売履歴はありません"
+          daily_summary:
+            title: "本日の売上"
+            total_sales: "販売件数"
+            total_amount: "売上合計"
+            voided_count: "取消件数"
+      refunds:
+        new:
+          title: "返品処理"
+          original_sale: "元の販売内容"
+          select_items: "返品する商品を選択"
+          reason_label: "返品理由"
+          reason_placeholder: "返品理由を入力してください"
+          preview: "返金プレビュー"
+          corrected_sale: "修正後の販売内容"
+          refund_amount: "返金額"
+          full_refund: "全額返金"
+          submit: "返金を確定"
+          back: "戻る"
+          no_remaining_items: "全商品を返品"
+        create:
+          success: "返金処理が完了しました（返金額: %{amount}）"
+          missing_requirements: "返品する商品を選択し、返品理由を入力してください"
+          already_voided: "この販売は既に取消済みです"
 
   discounts:
     index:

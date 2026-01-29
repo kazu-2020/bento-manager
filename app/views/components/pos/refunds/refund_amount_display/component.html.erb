@@ -1,0 +1,15 @@
+<% if has_selected_items? %>
+  <div class="card bg-error text-white mt-4">
+    <div class="card-body p-4">
+      <div class="flex justify-between items-center">
+        <h3 class="card-title text-base">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+          </svg>
+          <%= t(".title") %>
+        </h3>
+        <span class="text-3xl font-bold"><%= formatted_refund_amount %></span>
+      </div>
+    </div>
+  </div>
+<% end %>

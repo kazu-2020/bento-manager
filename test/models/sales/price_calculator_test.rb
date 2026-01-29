@@ -243,7 +243,7 @@ module Sales
       assert_equal 1500, result[:final_total]
     end
 
-    test "弁当2個に50円クーポン2枚と100円クーポン3枚を使うと合計400円引きになる" do
+    test "弁当2個に50円クーポン2枚と100円クーポン3枚を指定しても弁当数上限で200円引きになる" do
       cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 2 } ]
       discount_quantities = {
         discounts(:fifty_yen_discount).id => 2,
@@ -255,8 +255,11 @@ module Sales
       ).calculate
 
       assert_equal 1100, result[:subtotal]
-      assert_equal 400, result[:total_discount_amount]
-      assert_equal 700, result[:final_total]
+      # 弁当2個に対してクーポンは最大2枚まで
+      # 割引額が大きい100円クーポンが優先適用され、2枚で200円引き
+      # 50円クーポンは適用上限に達しているため適用されない
+      assert_equal 200, result[:total_discount_amount]
+      assert_equal 900, result[:final_total]
     end
 
     # ===== セット割引とクーポンの組み合わせ =====
