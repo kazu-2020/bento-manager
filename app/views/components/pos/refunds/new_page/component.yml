@@ -3,5 +3,7 @@ ja:
   select_items: 返品する商品を選択
   reason_label: 返品理由
   reason_placeholder: 返品理由を入力してください（必須）
+  info_message: お客様への返金完了後に「返金を確定」を押してください。
+  warning_message: この操作は取り消しできません。
   back: 戻る
   submit: 返金を確定
