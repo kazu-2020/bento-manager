@@ -79,18 +79,26 @@ module Sales
     def apply_discounts
       return { discount_details: [], total_discount_amount: 0 } if discount_quantities.empty?
 
+      # 弁当の合計個数をクーポン適用上限として計算
+      remaining_applicable_quantity = calculate_max_applicable_quantity
+
       discount_details = Discount.active_at(calculation_time.to_date)
         .where(id: discount_quantities.keys).map do |discount|
-        quantity = discount_quantities[discount.id]
+        requested_quantity = discount_quantities[discount.id]
+        # 適用可能な枚数は、リクエスト数と残りの適用可能数の小さい方
+        applicable_quantity = [ requested_quantity, remaining_applicable_quantity ].min
+        remaining_applicable_quantity -= applicable_quantity
+
         unit_amount = discount.calculate_discount(cart_items)
-        total_amount = unit_amount * quantity
+        total_amount = unit_amount * applicable_quantity
 
         {
           discount_id: discount.id,
           discount_name: discount.name,
           discount_amount: total_amount,
-          quantity: quantity,
-          applicable: unit_amount > 0
+          quantity: applicable_quantity,
+          requested_quantity: requested_quantity,
+          applicable: unit_amount > 0 && applicable_quantity > 0
         }
       end
 
@@ -98,6 +106,15 @@ module Sales
         discount_details: discount_details,
         total_discount_amount: discount_details.sum { |d| d[:discount_amount] }
       }
+    end
+
+    # クーポン適用上限を計算（弁当の合計個数）
+    #
+    # @return [Integer] 弁当の合計個数
+    def calculate_max_applicable_quantity
+      cart_items
+        .select { |item| item[:catalog].category == "bento" }
+        .sum { |item| item[:quantity] }
     end
 
     def empty_result

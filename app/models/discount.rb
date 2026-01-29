@@ -5,7 +5,7 @@ class Discount < ApplicationRecord
   delegated_type :discountable, types: %w[Coupon], autosave: true
 
   # ===== 委譲 =====
-  delegate :applicable?, to: :discountable
+  delegate :applicable?, :max_applicable_quantity, to: :discountable
 
   # ===== スコープ =====
   # 指定日時点で有効な割引を取得
