@@ -27,8 +27,7 @@ module Pos
       # アプリケーションの想定では、1 日の売上集計は大量にならないため、メモリ上で集計する。
       # これによって、 3回のDBアクセスを1回に削減できる。
       def calculate_daily_summary
-        completed_sales = @sales.select(&:completed?)
-        voided_sales = @sales.select(&:voided?)
+        completed_sales, voided_sales = @sales.partition(&:completed?)
 
         {
           total_count: completed_sales.size,
