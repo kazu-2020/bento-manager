@@ -1,5 +1,5 @@
-<div class="min-h-screen bg-base-200 flex flex-col">
-  <main class="flex-1 p-4 pb-24">
+<div class="min-h-screen bg-base-200 flex flex-col pb-16 lg:pb-0">
+  <main class="flex-1 p-4">
     <%# 当日売上サマリー %>
     <%= render_daily_summary %>
 
@@ -17,13 +17,6 @@
     <% end %>
   </main>
 
-  <%# 固定フッター %>
-  <footer class="fixed bottom-0 left-0 right-0 bg-base-100 border-t border-base-300 p-4 safe-area-pb">
-    <%= link_to back_url, class: "btn btn-neutral btn-lg w-full" do %>
-      <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-      </svg>
-      <%= t(".back") %>
-    <% end %>
-  </footer>
+  <%# モバイル用フッターナビゲーション %>
+  <%= component "pos/dock", location: location, current_path: helpers.request.path %>
 </div>
