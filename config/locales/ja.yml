@@ -1,4 +1,7 @@
 ja:
+  rodauth:
+    session_expired: "セッションの有効期限が切れました。再度ログインしてください。"
+
   time:
     formats:
       short: "%H:%M"

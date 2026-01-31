@@ -7,7 +7,7 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # Email-based features (:verify_account, :reset_password, :change_login) are excluded
     # as employees are created directly with verified status by Admin.
     # :lockout is enabled for brute-force protection.
-    enable :login, :logout, :change_password, :close_account, :lockout
+    enable :login, :logout, :change_password, :close_account, :lockout, :session_expiration, :remember
 
     # See the Rodauth documentation for the list of available config options:
     # http://rodauth.jeremyevans.net/documentation.html
@@ -119,6 +119,30 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # Use custom table names for employee accounts
     account_login_failures_table :employee_login_failures
     account_lockouts_table :employee_lockouts
+
+    # ==> Session Expiration
+    # セッション有効期限: 24時間
+    max_session_lifetime 86_400
+
+    # ==> Remember Login
+    # Remember Login: 30日間
+    remember_period days: 30
+    remember_cookie_key "_bento_manager_employee_remember"
+    extend_remember_deadline? true
+    remember_cookie_options httponly: true, same_site: :lax
+
+    # Remember テーブル名を employee 用に変更
+    remember_table :employee_remember_keys
+
+    # ログイン成功後に常に remember cookie を設定
+    after_login do
+      remember_login
+    end
+
+    # ログアウト時に remember cookie を削除
+    after_logout do
+      forget_login
+    end
 
     # ==> Redirects
     # Redirect to home page after logout.

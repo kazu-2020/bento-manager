@@ -6,7 +6,7 @@ class RodauthAdmin < Rodauth::Rails::Auth
     # Admin accounts are created and managed via Rails console, not through web UI.
     # Email-based features (:verify_account, :reset_password, :change_login) are excluded
     # as admins are created directly with verified status.
-    enable :login, :logout, :change_password, :close_account
+    enable :login, :logout, :change_password, :close_account, :session_expiration
 
     # See the Rodauth documentation for the list of available config options:
     # http://rodauth.jeremyevans.net/documentation.html
@@ -110,6 +110,10 @@ class RodauthAdmin < Rodauth::Rails::Auth
     # after_close_account do
     #   Profile.find_by!(account_id: account_id).destroy
     # end
+
+    # ==> Session Expiration
+    # セッション有効期限: 8時間
+    max_session_lifetime 28_800
 
     # ==> Redirects
     # Redirect to home page after logout.
