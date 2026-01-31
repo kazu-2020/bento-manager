@@ -70,6 +70,7 @@ class RodauthAdmin < Rodauth::Rails::Auth
     login_error_flash { I18n.t("rodauth.login.error") }
     require_login_error_flash { I18n.t("custom_errors.controllers.require_authentication") }
     change_password_notice_flash { I18n.t("rodauth.change_password.success") }
+    logout_notice_flash { I18n.t("rodauth.logout.success") }
 
     # ==> Validation
     # Override default validation error messages.

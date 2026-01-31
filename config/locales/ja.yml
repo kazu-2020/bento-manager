@@ -2,6 +2,9 @@ ja:
   rodauth:
     session_expired: "セッションの有効期限が切れました。再度ログインしてください。"
     password: "パスワード"
+    logout:
+      button: "ログアウト"
+      success: "ログアウトしました"
     login:
       admin_title: "管理者ログイン"
       employee_title: "従業員ログイン"
