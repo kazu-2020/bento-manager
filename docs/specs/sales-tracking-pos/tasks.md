@@ -6,7 +6,7 @@
 **Language**: ja
 **Phase**: tasks-generated
 **Generated**: 2026-01-04
-**Updated**: 2026-01-28
+**Updated**: 2026-01-31
 
 ---
 
@@ -29,7 +29,7 @@
 
 - [x] 2. Rodauth 認証システム構築
 - [x] 2.1 (P) Admin 認証セットアップ
-  - Admin アカウント設定（メール、パスワードハッシュ）
+  - Admin アカウント設定（username、パスワードハッシュ）
   - ログイン/ログアウト機能の実装
   - セッション管理の設定
   - _Requirements: 9.1, 9.2, 9.3, 9.4_
@@ -892,6 +892,11 @@
 - 旧 Task 28（リアルタイム在庫確認画面）を削除
 - Requirement 4 の全 AC は POS 画面に統合済み（商品カードに在庫バッジ表示、ghost form による最新在庫取得、売り切れ視覚識別、販売先選択による切り替え）
 - タスク番号を旧 29→28, 旧 30→29, ...旧 41→40 に繰り上げ
+
+**変更履歴 (2026-01-31)**:
+- Requirement 9 更新に伴い Task 2.1 を更新（認証方式を email → username に変更）
+- created_by_admin_id 関連を削除（Admin と Employee の関連削除）
+- Rodauth 設定: `login_column :username`, `require_email_address_logins? false`
 
 ---
 

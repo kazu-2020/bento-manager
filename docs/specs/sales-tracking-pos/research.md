@@ -1097,3 +1097,66 @@ end
 - 会計時の動的な kind 決定（カート内容に依存）とは異なるため、別メソッドとして維持
 
 ---
+
+## Discovery Phase 8 - 2026-01-31（Requirement 9: 認証方式変更）
+
+### R13: Rodauth アカウント名認証（メールアドレス不要）
+
+**調査目的**: 認証方式をメールアドレス＋パスワードからアカウント名＋パスワードに変更する方法を調査
+
+**調査結果**:
+- Rodauth は `login_column` 設定でログインカラムをカスタマイズ可能（例: `login_column :username`）
+- `require_email_address_logins? false` でメールアドレス形式のバリデーションを無効化
+- パスワードリセットなどメール送信機能を使う場合は `email_to` で別途メールアドレスを指定可能（今回は不要）
+
+**設定例**:
+```ruby
+# app/misc/rodauth_admin.rb / rodauth_employee.rb
+plugin :rodauth do
+  enable :login, :logout
+  login_column :username
+  require_email_address_logins? false
+end
+```
+
+**設計への影響**:
+- Admin, Employee テーブルの `email` カラムを `username` カラムに変更
+- `name` カラムを削除（アカウント名とパスワードのみで管理）
+- Rodauth 設定で `login_column :username` と `require_email_address_logins? false` を追加
+- ログインフォームのラベルを「メールアドレス」から「アカウント名」に変更
+
+**情報源**:
+- [Rodauth - Alternative Login Guide](https://github.com/jeremyevans/rodauth/blob/master/doc/guides/alternative_login.rdoc)
+- [Rodauth - Change Table and Column Names](https://github.com/jeremyevans/rodauth/blob/master/doc/guides/change_table_and_column_names.rdoc)
+
+---
+
+### 決定19: 認証方式をアカウント名＋パスワードに変更
+
+**コンテキスト**: Requirement 9 が更新され、認証方式をメールアドレス＋パスワードからアカウント名＋パスワードに変更することになった。氏名フィールドも不要。
+
+**変更内容**:
+1. **認証カラム変更**: `email` → `username`（アカウント名）
+2. **氏名フィールド削除**: `name` カラムを削除
+3. **Rodauth 設定変更**: `login_column :username`, `require_email_address_logins? false`
+4. **UI ラベル変更**: ログインフォームのラベルを「アカウント名」に変更
+
+**選択したアプローチ**: Rodauth の公式機能（`login_column :username`, `require_email_address_logins? false`）を使用
+
+**理由**:
+- Rodauth の標準機能で簡単に実装可能
+- メール送信機能（パスワードリセットなど）は不要なため、email カラムは完全に不要
+- アカウント名のみで識別できるため、シンプルなユーザー管理が可能
+- 氏名が不要なため、テーブル構造がさらにシンプルに
+
+**トレードオフ**:
+- メリット: シンプルな実装、メール設定不要、テーブル構造の簡素化
+- デメリット: 将来的にメール通知機能が必要になった場合は email カラムの追加が必要
+
+**設計詳細**:
+- Admin: id, username (UK), password_hash
+- Employee: id, username (UK), password_hash
+- AC 16 対応: username は Admin 内で一意、Employee 内で一意（別テーブルのため）
+- AC 17 対応: username は必須項目（NOT NULL, presence: true）
+
+---

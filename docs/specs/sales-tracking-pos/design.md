@@ -316,7 +316,7 @@ sequenceDiagram
 | 6.1, 6.2, 6.3, 6.4, 6.5 | 販売データ分析 | Sales::AnalysisCalculator, AdditionalOrdersController | predict_additional_order, calculate_sma | - |
 | 7.1, 7.2, 7.3, 7.4, 7.5 | 販売実績レポート | Reports::Generator, DashboardController | generate_daily_report, generate_period_report | - |
 | 8.1, 8.2, 8.3, 8.4, 8.5 | 販売データ可視化 | Chartkick, Chart.js, DashboardController | JSON endpoints | - |
-| 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15 | 認証とユーザー管理 | Admin, Employee, Rodauth, EmployeesController | Rodauth login/logout, Employee CRUD（Admin のみアクセス可能、Employee は 403 エラー） | - |
+| 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15, 9.16, 9.17 | 認証とユーザー管理 | Admin, Employee, Rodauth, EmployeesController | Rodauth login/logout（アカウント名 + パスワード認証）, Employee CRUD（Admin のみアクセス可能、Employee は 403 エラー） | - |
 | 10.1, 10.2, 10.3, 10.4, 10.5 | レスポンシブデザイン | Tailwind CSS, Vite | Tailwind responsive classes | - |
 | 11.1, 11.2, 11.3, 11.4, 11.5 | データ整合性とパフォーマンス | DailyInventory (lock_version), Solid Cache, Indexes | Optimistic Locking, Transaction, Cache | 販売フロー |
 | 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.9 | 割引（クーポン）管理と適用 | Discount, Coupon, SaleDiscount, Sales::PriceCalculator, SalesController | Discount#applicable?, Coupon#calculate_discount, SaleDiscount (中間テーブル, quantity で枚数管理) | 販売フロー |
@@ -333,8 +333,8 @@ sequenceDiagram
 
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
 |-----------|--------------|--------|--------------|------------------|-----------|
-| Admin | Authentication | システム開発者アカウント（Rails console のみ、Employee 管理画面へのアクセス権限） | 9.1-9.15 | Rodauth (P0) | Service |
-| Employee | Authentication | 業務ユーザーアカウント（オーナー + 販売員、Employee 管理画面はアクセス不可） | 9.1-9.15 | Rodauth (P0), Admin (P0) | Service, API |
+| Admin | Authentication | システム開発者アカウント（Rails console のみ、Employee 管理画面へのアクセス権限） | 9.1-9.17 | Rodauth (P0) | Service |
+| Employee | Authentication | 業務ユーザーアカウント（オーナー + 販売員、Employee 管理画面はアクセス不可） | 9.1-9.17 | Rodauth (P0), Admin (P0) | Service, API |
 | Location | Location Domain | 販売先マスタ（配達状態管理: active/inactive） | 15.1-15.7 | - | Service |
 | Catalog | Catalog Domain | 商品カタログモデル（category enum） | 1.1-1.5, 13.1-13.8 | CatalogPrice, CatalogPricingRule (P0) | Service |
 | CatalogPrice | Catalog Domain | 価格管理（種別別: regular/bundle） | 1.1-1.5, 13.1-13.8 | Catalog (P0) | Service |
@@ -400,7 +400,7 @@ sequenceDiagram
 | Field | Detail |
 |-------|--------|
 | Intent | システム開発者アカウント（デバッグ・運用サポート） |
-| Requirements | 9.1, 9.2, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15 |
+| Requirements | 9.1, 9.2, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15, 9.16, 9.17 |
 
 **Responsibilities & Constraints**
 - システム開発者のみのアカウント
@@ -419,20 +419,18 @@ sequenceDiagram
 class Admin < ApplicationRecord
   include Rodauth::Rails.model # Rodauth 統合
 
-  has_many :employees, foreign_key: 'created_by_admin_id', dependent: :nullify
-
-  validates :email, presence: true, uniqueness: true
-  validates :name, presence: true
+  validates :username, presence: true, uniqueness: true
 
   # Rodauth によるパスワード管理（bcrypt ハッシュ化）
 end
 ```
 
 **Implementation Notes**:
-- **Rails console のみ**: `Admin.create!(email: '...', password: '...', name: '...')` で作成
+- **Rails console のみ**: `Admin.create!(username: 'admin_account', password: '...')` で作成
 - **UI 不要**: Admin 用の CRUD コントローラーは実装しない
 - **認可不要**: Admin は全機能にアクセス可能（認可チェック不要）
 - **Rodauth 統合**: 共通ログイン画面で Admin と Employee を認証
+- **アカウント名認証**: username カラムでアカウント名を管理（メールアドレス不要）、`login_column :username` で設定
 - **将来的な拡張**: Admin 管理 UI が必要になった場合は `Admin::EmployeesController` を追加可能
 
 ---
@@ -442,7 +440,7 @@ end
 | Field | Detail |
 |-------|--------|
 | Intent | 業務ユーザーアカウント（オーナー + 販売員） |
-| Requirements | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15 |
+| Requirements | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15, 9.16, 9.17 |
 
 **Responsibilities & Constraints**
 - オーナーと販売員を一律で扱う業務ユーザー
@@ -466,10 +464,8 @@ class Employee < ApplicationRecord
   has_many :additional_orders, dependent: :nullify
   has_many :voided_sales, class_name: 'Sale', foreign_key: 'voided_by_employee_id', dependent: :nullify
   has_many :refunds, dependent: :nullify
-  belongs_to :created_by_admin, class_name: 'Admin', optional: true
 
-  validates :email, presence: true, uniqueness: true
-  validates :name, presence: true
+  validates :username, presence: true, uniqueness: true
 
   # Rodauth によるパスワード管理（bcrypt ハッシュ化）
 end
@@ -489,9 +485,8 @@ end
 ```ruby
 {
   employee: {
-    email: String,
-    password: String,
-    name: String
+    username: String,
+    password: String
   }
 }
 ```
@@ -500,9 +495,8 @@ end
 ```ruby
 {
   employee: {
-    email: String (optional),
-    password: String (optional),
-    name: String (optional)
+    username: String (optional),
+    password: String (optional)
   }
 }
 ```
@@ -514,6 +508,7 @@ end
   - `rodauth(:admin).require_account` で Admin 認証を強制 → 未認証時はログインページにリダイレクト
 - **業務機能は認可不要**: Employee はすべての業務機能（POS、在庫、レポートなど）にアクセス可能（権限チェック不要）
 - **Rodauth 統合**: 共通ログイン画面で Admin と Employee を認証（複数アカウント設定: `:admin`, `:employee`）
+- **アカウント名認証**: username カラムでアカウント名を管理（メールアドレス不要）、`login_column :username` と `require_email_address_logins? false` で設定
 - **エラーハンドリング**: Employee が Employee管理画面にアクセスすると 403 Forbidden を返す
 - **将来的な拡張**: オーナーと販売員を区別する role フィールド追加が容易
 
@@ -1053,15 +1048,13 @@ erDiagram
     Admin ||--o{ Employee : manages
     Admin {
         int id PK
-        string email UK
+        string username UK            "account name for authentication"
         string password_hash
-        string name
     }
     Employee {
         int id PK
-        string email UK
+        string username UK            "account name for authentication"
         string password_hash
-        string name
     }
 
     %% --- Location (sales location master) ---
@@ -1246,7 +1239,7 @@ erDiagram
 **For Relational Databases (SQLite3)**:
 
 主要なテーブル:
-- `admins`, `employees`: Rodauth認証
+- `admins`, `employees`: Rodauth認証（username カラムでアカウント名認証、メールアドレス不要）
 - `locations`: 販売先マスタ（name, status: active/inactive）
 - `catalogs`: category enum（bento | side_menu）で商品種別を管理
 - `discounts`: delegated_type 抽象モデル（discountable_type, discountable_id, name, valid_from, valid_until）
@@ -1418,6 +1411,6 @@ erDiagram
 
 ---
 
-**設計完了日**: 2026-01-04
+**設計完了日**: 2026-01-31
 **次のステップ**: タスク分解 (`/kiro:spec-tasks sales-tracking-pos`)
 **調査ログ**: `research.md` に詳細な技術調査とアーキテクチャ決定を記録
