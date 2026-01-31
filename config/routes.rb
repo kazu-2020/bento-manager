@@ -6,11 +6,11 @@ Rails.application.routes.draw do
 
   # テスト環境専用ルート（RecordNotFoundハンドリングのテスト用）
   if Rails.env.test?
-    scope :admin do
-      get "test-record-not-found", to: "test_error#admin_record_not_found"
+    scope :admin, module: :admin do
+      get "test-record-not-found", to: "test_error#record_not_found"
     end
-    scope :employee do
-      get "test-record-not-found", to: "test_error#employee_record_not_found"
+    scope :employee, module: :employee do
+      get "test-record-not-found", to: "test_error#record_not_found"
     end
   end
 

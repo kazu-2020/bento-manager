@@ -31,7 +31,7 @@ class RodauthAdmin < Rodauth::Rails::Auth
     session_key :admin_account_id
 
     # Specify the controller used for view rendering, CSRF, and callbacks.
-    rails_controller { RodauthController }
+    rails_controller { Admin::RodauthController }
 
     # Make built-in page titles accessible in your views via an instance variable.
     title_instance_variable :@page_title
@@ -59,7 +59,7 @@ class RodauthAdmin < Rodauth::Rails::Auth
     # delete_account_on_close? true
 
     # Redirect to the app from login and registration pages if already logged in.
-    # already_logged_in { redirect login_redirect }
+    already_logged_in { redirect login_redirect }
 
     # ==> Flash
     # Match flash keys with ones already used in the Rails app.
@@ -67,9 +67,9 @@ class RodauthAdmin < Rodauth::Rails::Auth
     # flash_error_key :error # default is :alert
 
     # Override default flash messages.
-    # create_account_notice_flash "Your account has been created. Please verify your account by visiting the confirmation link sent to your email address."
-    # require_login_error_flash "Login is required for accessing this page"
-    # login_notice_flash nil
+    login_error_flash { I18n.t("rodauth.login.error") }
+    require_login_error_flash { I18n.t("custom_errors.controllers.require_authentication") }
+    change_password_notice_flash { I18n.t("rodauth.change_password.success") }
 
     # ==> Validation
     # Override default validation error messages.

@@ -1,6 +1,26 @@
 ja:
   rodauth:
     session_expired: "セッションの有効期限が切れました。再度ログインしてください。"
+    password: "パスワード"
+    login:
+      admin_title: "管理者ログイン"
+      employee_title: "従業員ログイン"
+      button: "ログイン"
+      error: "アカウント名またはパスワードが正しくありません"
+    change_password:
+      title: "パスワード変更"
+      current_password: "現在のパスワード"
+      new_password: "新しいパスワード"
+      confirm_password: "新しいパスワード（確認）"
+      button: "パスワードを変更"
+      success: "パスワードを変更しました"
+      invalid_password: "現在のパスワードが正しくありません"
+      password_mismatch: "パスワードが一致しません"
+    lockout:
+      title: "アカウントがロックされています"
+      message: "ログイン試行回数が上限に達したため、アカウントがロックされました。"
+      contact_admin: "アカウントのロック解除については、管理者にお問い合わせください。"
+      back_to_login: "ログイン画面に戻る"
 
   time:
     formats:
