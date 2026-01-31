@@ -13,7 +13,9 @@ class RodauthApp < Rodauth::Rails::App
     rodauth(:admin).check_session_expiration if rodauth(:admin).logged_in?
 
     # Employee: Remember cookie からセッション復元 + 有効期限チェック
-    rodauth(:employee).load_memory  # remember cookie があれば自動ログイン
+    # 管理者がログイン中の場合は load_memory をスキップ
+    # （load_memory が clear_session を呼び、admin セッションを上書きするのを防ぐ）
+    rodauth(:employee).load_memory unless rodauth(:admin).logged_in?
     rodauth(:employee).check_session_expiration if rodauth(:employee).logged_in?
 
     # ==> Authenticating requests
