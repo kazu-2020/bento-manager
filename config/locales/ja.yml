@@ -58,12 +58,10 @@ ja:
       refund: "返金処理"
     attributes:
       admin:
-        email: "メールアドレス"
-        name: "名前"
+        username: "アカウント名"
         status: "ステータス"
       employee:
-        email: "メールアドレス"
-        name: "名前"
+        username: "アカウント名"
         status: "ステータス"
       location:
         name: "販売先名"

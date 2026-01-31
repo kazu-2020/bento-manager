@@ -26,12 +26,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_27_111311) do
 
   create_table "admins", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "email", null: false
-    t.string "name", null: false
     t.string "password_hash"
     t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false
-    t.index ["email"], name: "index_admins_on_email", unique: true, where: "status IN (1, 2)"
+    t.string "username", null: false
+    t.index ["username"], name: "index_admins_on_username", unique: true, where: "status IN (1, 2)"
   end
 
   create_table "catalog_discontinuations", force: :cascade do |t|
@@ -115,7 +114,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_27_111311) do
 
   create_table "employee_lockouts", force: :cascade do |t|
     t.datetime "deadline", null: false
-    t.datetime "email_last_sent"
     t.string "key", null: false
   end
 
@@ -125,12 +123,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_27_111311) do
 
   create_table "employees", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "email", null: false
-    t.string "name", null: false
     t.string "password_hash"
     t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false
-    t.index ["email"], name: "index_employees_on_email", unique: true, where: "status IN (1, 2)"
+    t.string "username", null: false
+    t.index ["username"], name: "index_employees_on_username", unique: true, where: "status IN (1, 2)"
   end
 
   create_table "locations", force: :cascade do |t|

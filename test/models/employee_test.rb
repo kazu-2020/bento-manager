@@ -3,36 +3,42 @@ require "test_helper"
 class EmployeeTest < ActiveSupport::TestCase
   fixtures :employees
 
-  test "should create employee with email and name and password" do
-    employee = Employee.new(email: "new-employee@example.com", name: "テスト従業員", password: "password")
-    assert employee.valid?, "Employee should be valid with email, name, and password"
+  test "should create employee with username and password" do
+    employee = Employee.new(username: "new_employee", password: "password")
+    assert employee.valid?, "Employee should be valid with username and password"
   end
 
-  test "should require email" do
-    employee = Employee.new(name: "テスト従業員")
-    assert_not employee.valid?, "Employee should not be valid without email"
-    assert_includes employee.errors[:email], "を入力してください"
+  test "should require username" do
+    employee = Employee.new(password: "password")
+    assert_not employee.valid?, "Employee should not be valid without username"
+    assert_includes employee.errors[:username], "を入力してください"
   end
 
-  test "should require unique email" do
-    # フィクスチャの verified_employee と同じメールアドレスで作成を試みる
-    employee = Employee.new(email: "employee@example.com", name: "重複従業員")
-    assert_not employee.valid?, "Employee should not be valid with duplicate email"
-    assert_includes employee.errors[:email], "はすでに存在します"
+  test "should require unique username" do
+    # フィクスチャの verified_employee と同じアカウント名で作成を試みる
+    employee = Employee.new(username: "employee", password: "password")
+    assert_not employee.valid?, "Employee should not be valid with duplicate username"
+    assert_includes employee.errors[:username], "はすでに存在します"
   end
 
-  test "should require name" do
-    employee = Employee.new(email: "new-employee@example.com")
-    assert_not employee.valid?, "Employee should not be valid without name"
-    assert_includes employee.errors[:name], "を入力してください"
+  test "should require valid username format" do
+    # 無効な文字を含むusername
+    employee = Employee.new(username: "invalid@user", password: "password")
+    assert_not employee.valid?, "Employee should not be valid with invalid username format"
+    assert_includes employee.errors[:username], "は不正な値です"
+  end
+
+  test "should accept valid username format" do
+    employee = Employee.new(username: "Valid_User123", password: "password")
+    assert employee.valid?, "Employee should be valid with alphanumeric and underscore username"
   end
 
   # ステータス遷移テスト
   test "can create employee with verified or closed status" do
-    verified_employee = Employee.new(email: "new-verified@example.com", name: "検証済み従業員", password: "password", status: :verified)
+    verified_employee = Employee.new(username: "new_verified", password: "password", status: :verified)
     assert verified_employee.valid?, "Employee should be valid with verified status"
 
-    closed_employee = Employee.new(email: "new-closed@example.com", name: "閉鎖済み従業員", password: "password", status: :closed)
+    closed_employee = Employee.new(username: "new_closed", password: "password", status: :closed)
     assert closed_employee.valid?, "Employee should be valid with closed status"
   end
 
@@ -50,58 +56,53 @@ class EmployeeTest < ActiveSupport::TestCase
     assert_equal 3, Employee.statuses[:closed], "closed status should be 3"
   end
 
-  # メールアドレスユニーク制約テスト
-  test "email uniqueness is enforced for verified accounts" do
-    # フィクスチャのverified_employeeと同じメールアドレスで作成を試みる
+  # アカウント名ユニーク制約テスト
+  test "username uniqueness is enforced for verified accounts" do
+    # フィクスチャのverified_employeeと同じアカウント名で作成を試みる
     duplicate_employee = Employee.new(
-      email: "employee@example.com",
-      name: "重複従業員",
+      username: "employee",
       status: :verified
     )
-    assert_not duplicate_employee.valid?, "Should not allow duplicate email for verified accounts"
-    assert_includes duplicate_employee.errors[:email], "はすでに存在します"
+    assert_not duplicate_employee.valid?, "Should not allow duplicate username for verified accounts"
+    assert_includes duplicate_employee.errors[:username], "はすでに存在します"
   end
 
-  test "closed accounts allow email address reuse" do
-    # closed_employeeのメールアドレスを使って新しいverifiedアカウントを作成
-    reused_email_employee = Employee.new(
-      email: "closed-employee@example.com",
-      name: "再利用従業員",
+  test "closed accounts allow username reuse" do
+    # closed_employeeのアカウント名を使って新しいverifiedアカウントを作成
+    reused_username_employee = Employee.new(
+      username: "closed_employee",
       password: "password",
       status: :verified
     )
-    # closedアカウントのメールアドレスは再利用可能（部分ユニークインデックスのため）
-    assert reused_email_employee.valid?, "Should allow email reuse from closed accounts"
+    # closedアカウントのアカウント名は再利用可能（部分ユニークインデックスのため）
+    assert reused_username_employee.valid?, "Should allow username reuse from closed accounts"
   end
 
-  test "database partial unique index allows duplicate closed emails" do
-    # 同じメールアドレスで複数のclosedアカウントを作成
+  test "database partial unique index allows duplicate closed usernames" do
+    # 同じアカウント名で複数のclosedアカウントを作成
     Employee.create!(
-      email: "duplicate-closed@example.com",
-      name: "最初の閉鎖従業員",
+      username: "duplicate_closed",
       password: "password",
       status: :closed
     )
 
     second_closed = Employee.new(
-      email: "duplicate-closed@example.com",
-      name: "2番目の閉鎖従業員",
+      username: "duplicate_closed",
       password: "password",
       status: :closed
     )
     # closedステータス同士は重複可能
-    assert second_closed.valid?, "Should allow duplicate emails for closed accounts"
+    assert second_closed.valid?, "Should allow duplicate usernames for closed accounts"
     assert second_closed.save, "Should successfully save duplicate closed account"
   end
 
   test "unique constraint is case insensitive" do
-    # 大文字小文字が異なるメールアドレスで作成を試みる
+    # 大文字小文字が異なるアカウント名で作成を試みる
     case_variant_employee = Employee.new(
-      email: "EMPLOYEE@EXAMPLE.COM",
-      name: "大文字従業員",
+      username: "EMPLOYEE",
       status: :verified
     )
     # Railsのuniqueness validationでcase_sensitive: falseを指定
-    assert_not case_variant_employee.valid?, "Email uniqueness should be case insensitive"
+    assert_not case_variant_employee.valid?, "Username uniqueness should be case insensitive"
   end
 end

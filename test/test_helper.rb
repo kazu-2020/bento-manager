@@ -26,12 +26,12 @@ class ActionDispatch::IntegrationTest
   #   login_as(admins(:verified_admin))
   #   login_as(admin, password: "custom_password")
   def login_as(admin, password: "password")
-    admin_email = admin.is_a?(Symbol) ? admins(admin).email : admin.email
+    admin_username = admin.is_a?(Symbol) ? admins(admin).username : admin.username
     post "/admin/login", params: {
-      email: admin_email,
+      username: admin_username,
       password: password
     }
-    assert_response :redirect, "Failed to login as #{admin_email}"
+    assert_response :redirect, "Failed to login as #{admin_username}"
     follow_redirect!
   end
 
@@ -55,12 +55,12 @@ class ActionDispatch::IntegrationTest
   #   login_as_employee(employees(:verified_employee))
   #   login_as_employee(employee, password: "custom_password")
   def login_as_employee(employee, password: "password")
-    employee_email = employee.is_a?(Symbol) ? employees(employee).email : employee.email
+    employee_username = employee.is_a?(Symbol) ? employees(employee).username : employee.username
     post "/employee/login", params: {
-      email: employee_email,
+      username: employee_username,
       password: password
     }
-    assert_response :redirect, "Failed to login as #{employee_email}"
+    assert_response :redirect, "Failed to login as #{employee_username}"
     follow_redirect!
   end
 

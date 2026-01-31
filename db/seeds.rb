@@ -1,13 +1,20 @@
 # frozen_string_literal: true
 
-# Employee アカウント（ログイン用）
+# Admin アカウント（管理者ログイン用）
+puts "Creating Admin..."
+admin = Admin.find_or_create_by!(username: "admin") do |a|
+  a.password = "password123"
+  a.status = :verified
+end
+puts "  Admin: #{admin.username} (password: password123)"
+
+# Employee アカウント（従業員ログイン用）
 puts "Creating Employee..."
-employee = Employee.find_or_create_by!(email: "demo@example.com") do |e|
+employee = Employee.find_or_create_by!(username: "demo") do |e|
   e.password = "password123"
-  e.name = "デモユーザー"
   e.status = :verified
 end
-puts "  Employee: #{employee.email} (password: password123)"
+puts "  Employee: #{employee.username} (password: password123)"
 
 # Location サンプルデータ
 puts "Creating Locations..."

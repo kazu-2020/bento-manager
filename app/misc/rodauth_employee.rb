@@ -44,8 +44,9 @@ class RodauthEmployee < Rodauth::Rails::Auth
     account_password_hash_column :password_hash
 
     # Change some default param keys.
-    login_param "email"
-    login_confirm_param "email-confirm"
+    login_param "username"
+    login_column :username
+    require_email_address_logins? false
     # password_confirm_param "confirm_password"
 
     # Redirect back to originally requested location after authentication.

@@ -4,19 +4,16 @@
 # Adminが作成・管理するため、基本的にverified状態で作成
 
 verified_employee:
-  email: employee@example.com
+  username: employee
   password_hash: <%= RodauthApp.rodauth(:employee).allocate.password_hash("password") %>
   status: verified
-  name: 従業員
 
 closed_employee:
-  email: closed-employee@example.com
+  username: closed_employee
   password_hash: <%= RodauthApp.rodauth(:employee).allocate.password_hash("password") %>
   status: closed
-  name: 閉鎖済み従業員
 
 owner_employee:
-  email: owner@example.com
+  username: owner
   password_hash: <%= RodauthApp.rodauth(:employee).allocate.password_hash("password") %>
   status: verified
-  name: オーナー

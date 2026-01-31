@@ -37,8 +37,7 @@ class Admin::EmployeesControllerTest < ActionDispatch::IntegrationTest
     assert_difference("Employee.count") do
       post admin_employees_path, params: {
         employee: {
-          email: "new-employee@example.com",
-          name: "新規従業員",
+          username: "new_employee",
           password: "password"
         }
       }
@@ -55,11 +54,11 @@ class Admin::EmployeesControllerTest < ActionDispatch::IntegrationTest
   test "admin can update employee" do
     login_as(@admin)
     patch admin_employee_path(@employee), params: {
-      employee: { name: "更新された名前" }
+      employee: { username: "updated_username" }
     }
     assert_redirected_to admin_employees_path
     @employee.reload
-    assert_equal "更新された名前", @employee.name
+    assert_equal "updated_username", @employee.username
   end
 
   test "admin can destroy employee" do
@@ -94,8 +93,7 @@ class Admin::EmployeesControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference("Employee.count") do
       post admin_employees_path, params: {
         employee: {
-          email: "hacker@example.com",
-          name: "ハッカー",
+          username: "hacker",
           password: "password"
         }
       }
@@ -110,7 +108,7 @@ class Admin::EmployeesControllerTest < ActionDispatch::IntegrationTest
 
   test "unauthenticated user is redirected to login on update" do
     patch admin_employee_path(@employee), params: {
-      employee: { name: "ハッキング試み" }
+      employee: { username: "hacking_attempt" }
     }
     assert_redirected_to "/admin/login"
   end
@@ -150,8 +148,7 @@ class Admin::EmployeesControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference("Employee.count") do
       post admin_employees_path, params: {
         employee: {
-          email: "another@example.com",
-          name: "別の従業員",
+          username: "another_employee",
           password: "password"
         }
       }
@@ -167,13 +164,13 @@ class Admin::EmployeesControllerTest < ActionDispatch::IntegrationTest
 
   test "employee updating is redirected to admin login" do
     login_as_employee(@employee)
-    original_name = @employee.name
+    original_username = @employee.username
     patch admin_employee_path(@employee), params: {
-      employee: { name: "ハッキング試み" }
+      employee: { username: "hacking_attempt" }
     }
     assert_redirected_to "/admin/login"
     @employee.reload
-    assert_equal original_name, @employee.name
+    assert_equal original_username, @employee.username
   end
 
   test "employee deleting is redirected to admin login" do

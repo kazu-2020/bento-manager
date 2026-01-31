@@ -14,7 +14,6 @@ class CreateEmployeeLockout < ActiveRecord::Migration[8.1]
       t.foreign_key :employees, column: :id
       t.string :key, null: false
       t.datetime :deadline, null: false
-      t.datetime :email_last_sent
     end
   end
 end
