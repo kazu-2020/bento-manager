@@ -16,7 +16,6 @@ rodauth-rails を使用した認証機能の実装パターン。
 | ファイル | 役割 |
 |---------|------|
 | `app/misc/rodauth_app.rb` | メインルーター（全設定の統合） |
-| `app/misc/rodauth_admin.rb` | Admin 用設定 |
 | `app/misc/rodauth_employee.rb` | Employee 用設定 |
 
 ---
@@ -46,9 +45,6 @@ rails generate rodauth:migration active_sessions
 デフォルト(`accounts`)以外のテーブルを使用する場合:
 
 ```bash
-# Admin テーブル用
-rails generate rodauth:migration [features] --prefix admin
-
 # Employee テーブル用
 rails generate rodauth:migration [features] --prefix employee
 ```
@@ -82,17 +78,15 @@ rails generate rodauth:migration [features] --prefix employee
 
 ## 現在の構成
 
-- **Admin**: コンソール経由で管理、メール認証なし
-- **Employee**: (実装中)
+- **Employee**: 従業員ログイン、Remember Me 機能
 
 ---
 
 ## 注意事項
 
 - 手動でマイグレーションを書かず、ジェネレータを優先する
-- 複数アカウントタイプがある場合はプレフィックスを忘れずに指定
 - セキュリティ関連の設定変更は慎重に行う
 
 ---
 
-_updated_at: 2026-01-05_
+_updated_at: 2026-02-01_

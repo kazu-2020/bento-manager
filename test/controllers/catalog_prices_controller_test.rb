@@ -3,10 +3,9 @@
 require "test_helper"
 
 class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
-  fixtures :admins, :employees, :catalogs, :catalog_prices
+  fixtures :employees, :catalogs, :catalog_prices
 
   setup do
-    @admin = admins(:verified_admin)
     @employee = employees(:verified_employee)
     @catalog = catalogs(:daily_bento_a)
     @catalog_price = catalog_prices(:daily_bento_a_regular)
@@ -18,19 +17,19 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "admin can access edit for existing price" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get edit_catalog_catalog_price_path(@catalog, :regular), as: :turbo_stream
     assert_response :success
   end
 
   test "admin can access edit for non-existing price" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get edit_catalog_catalog_price_path(@catalog_without_bundle, :bundle), as: :turbo_stream
     assert_response :success
   end
 
   test "admin can create new price via update" do
-    login_as(@admin)
+    login_as_employee(@employee)
     assert_difference("CatalogPrice.count") do
       patch catalog_catalog_price_path(@catalog_without_bundle, :bundle), params: {
         catalog_price: { price: 100 }
@@ -40,7 +39,7 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "admin can update existing price (creates new record and closes old)" do
-    login_as(@admin)
+    login_as_employee(@employee)
     original_count = CatalogPrice.count
 
     patch catalog_catalog_price_path(@catalog, :regular), params: {
@@ -114,13 +113,13 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "returns not found for invalid kind on edit" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get edit_catalog_catalog_price_path(@catalog, :invalid), as: :turbo_stream
     assert_response :not_found
   end
 
   test "returns not found for invalid kind on update" do
-    login_as(@admin)
+    login_as_employee(@employee)
     patch catalog_catalog_price_path(@catalog, :invalid), params: {
       catalog_price: { price: 500 }
     }, as: :turbo_stream
@@ -132,7 +131,7 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "update with invalid price for new record renders form with unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     assert_no_difference("CatalogPrice.count") do
       patch catalog_catalog_price_path(@catalog_without_bundle, :bundle), params: {
         catalog_price: { price: 0 }
@@ -142,7 +141,7 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update with invalid price for existing record renders form with unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     original_count = CatalogPrice.count
 
     patch catalog_catalog_price_path(@catalog, :regular), params: {

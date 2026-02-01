@@ -6,9 +6,6 @@ Rails.application.routes.draw do
 
   # テスト環境専用ルート（RecordNotFoundハンドリングのテスト用）
   if Rails.env.test?
-    scope :admin, module: :admin do
-      get "test-record-not-found", to: "test_error#record_not_found"
-    end
     scope :employee, module: :employee do
       get "test-record-not-found", to: "test_error#record_not_found"
     end
@@ -21,11 +18,6 @@ Rails.application.routes.draw do
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
-
-  # Admin管理画面
-  namespace :admin do
-    resources :employees
-  end
 
   # POS（販売員用）
   namespace :pos do

@@ -3,10 +3,9 @@
 require "test_helper"
 
 class CatalogsControllerTest < ActionDispatch::IntegrationTest
-  fixtures :admins, :employees, :catalogs
+  fixtures :employees, :catalogs
 
   setup do
-    @admin = admins(:verified_admin)
     @employee = employees(:verified_employee)
     @catalog = catalogs(:daily_bento_a)
     @discontinued_catalog = catalogs(:discontinued_bento)
@@ -21,25 +20,25 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "admin can access index" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get catalogs_path
     assert_response :success
   end
 
   test "admin can access show" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get catalog_path(@catalog)
     assert_response :success
   end
 
   test "admin can access new" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get new_catalog_path, as: :turbo_stream
     assert_response :success
   end
 
   test "admin can create catalog" do
-    login_as(@admin)
+    login_as_employee(@employee)
     assert_difference("Catalog.count") do
       assert_difference("CatalogPrice.count") do
         post catalogs_path, params: {
@@ -56,13 +55,13 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "admin can access edit" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get edit_catalog_path(@catalog)
     assert_response :success
   end
 
   test "admin can update catalog" do
-    login_as(@admin)
+    login_as_employee(@employee)
     patch catalog_path(@catalog), params: {
       catalog: { name: "更新された弁当名" }
     }, as: :turbo_stream
@@ -175,7 +174,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "create with blank name renders new with unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     assert_no_difference("Catalog.count") do
       post catalogs_path, params: { catalog: { name: "", category: "bento", regular_price: 450 } }, as: :turbo_stream
     end
@@ -183,7 +182,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update with invalid params renders edit with unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     original_name = @catalog.name
     patch catalog_path(@catalog), params: { catalog: { name: "" } }, as: :turbo_stream
     assert_response :unprocessable_entity
@@ -196,14 +195,14 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "new with invalid category returns unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get new_catalog_path, params: { category: "invalid_category" }
     assert_response :unprocessable_entity
     assert_equal({ "error" => I18n.t("catalogs.errors.invalid_category") }, response.parsed_body)
   end
 
   test "create with invalid category returns unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     assert_no_difference("Catalog.count") do
       post catalogs_path, params: {
         catalog: {

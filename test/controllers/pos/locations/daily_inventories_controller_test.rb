@@ -5,10 +5,9 @@ require "test_helper"
 module Pos
   module Locations
     class DailyInventoriesControllerTest < ActionDispatch::IntegrationTest
-      fixtures :admins, :employees, :locations, :catalogs, :catalog_discontinuations
+      fixtures :employees, :locations, :catalogs, :catalog_discontinuations
 
       setup do
-        @admin = admins(:verified_admin)
         @employee = employees(:verified_employee)
         @location = Location.create!(name: "テスト販売先", status: :active)
         @bento_a = catalogs(:daily_bento_a)
@@ -21,7 +20,7 @@ module Pos
       # ============================================================
 
       test "admin can access new page" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get new_pos_location_daily_inventory_path(@location)
         assert_response :success
       end
@@ -33,21 +32,21 @@ module Pos
       end
 
       test "new page displays available bento catalogs" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get new_pos_location_daily_inventory_path(@location)
         assert_response :success
         assert_select "span", text: @bento_a.name
       end
 
       test "new page displays available side menu catalogs" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get new_pos_location_daily_inventory_path(@location)
         assert_response :success
         assert_select "span", text: @salad.name
       end
 
       test "new page does not display discontinued catalogs" do
-        login_as(@admin)
+        login_as_employee(@employee)
         discontinued_bento = catalogs(:discontinued_bento)
         CatalogDiscontinuation.create!(
           catalog: discontinued_bento,
@@ -61,7 +60,7 @@ module Pos
       end
 
       test "new page shows submit button disabled by default" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get new_pos_location_daily_inventory_path(@location)
         assert_response :success
         assert_select "button[type='submit'][disabled]"
@@ -73,7 +72,7 @@ module Pos
       end
 
       test "new returns 404 for inactive location" do
-        login_as(@admin)
+        login_as_employee(@employee)
         inactive_location = locations(:prefectural_office)
         get new_pos_location_daily_inventory_path(inactive_location)
         assert_response :not_found
@@ -84,7 +83,7 @@ module Pos
       # ============================================================
 
       test "refetch with selected item re-renders form with selection" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         post pos_location_daily_inventories_form_state_path(@location),
              params: {
@@ -101,7 +100,7 @@ module Pos
       end
 
       test "refetch with stock change re-renders form with new stock" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         post pos_location_daily_inventories_form_state_path(@location),
              params: {
@@ -117,7 +116,7 @@ module Pos
       end
 
       test "refetch enables submit button when item selected" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         post pos_location_daily_inventories_form_state_path(@location),
              params: {
@@ -138,7 +137,7 @@ module Pos
       # ============================================================
 
       test "admin can create daily inventories via form" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_difference "DailyInventory.count", 2 do
           post pos_location_daily_inventories_path(@location),
@@ -171,7 +170,7 @@ module Pos
       end
 
       test "create fails when no items selected" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_no_difference "DailyInventory.count" do
           post pos_location_daily_inventories_path(@location),
@@ -186,7 +185,7 @@ module Pos
       end
 
       test "create sets correct inventory_date to today" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         post pos_location_daily_inventories_path(@location),
              params: {
@@ -200,7 +199,7 @@ module Pos
       end
 
       test "create sets reserved_stock to zero" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         post pos_location_daily_inventories_path(@location),
              params: {
@@ -214,7 +213,7 @@ module Pos
       end
 
       test "create uses stock value from form" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         post pos_location_daily_inventories_path(@location),
              params: {
@@ -228,7 +227,7 @@ module Pos
       end
 
       test "create with side_menu items only" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_difference "DailyInventory.count", 1 do
           post pos_location_daily_inventories_path(@location),
@@ -245,7 +244,7 @@ module Pos
       end
 
       test "create with mixed bento and side_menu items" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_difference "DailyInventory.count", 3 do
           post pos_location_daily_inventories_path(@location),
@@ -264,7 +263,7 @@ module Pos
       end
 
       test "success message uses generic product term" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         post pos_location_daily_inventories_path(@location),
              params: {

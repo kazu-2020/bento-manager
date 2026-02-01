@@ -5,10 +5,9 @@ require "test_helper"
 module Pos
   module Locations
     class AdditionalOrdersControllerTest < ActionDispatch::IntegrationTest
-      fixtures :admins, :employees, :locations, :catalogs, :daily_inventories
+      fixtures :employees, :locations, :catalogs, :daily_inventories
 
       setup do
-        @admin = admins(:verified_admin)
         @employee = employees(:verified_employee)
         @location = locations(:city_hall)
         @bento_a = catalogs(:daily_bento_a)
@@ -20,7 +19,7 @@ module Pos
       # ============================================================
 
       test "admin can access index page" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get pos_location_additional_orders_path(@location)
         assert_response :success
       end
@@ -37,21 +36,21 @@ module Pos
       end
 
       test "index returns 404 for inactive location" do
-        login_as(@admin)
+        login_as_employee(@employee)
         inactive_location = locations(:prefectural_office)
         get pos_location_additional_orders_path(inactive_location)
         assert_response :not_found
       end
 
       test "index page displays inventory summary" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get pos_location_additional_orders_path(@location)
         assert_response :success
         assert_select "span", text: @bento_a.name
       end
 
       test "index page displays help messages" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get pos_location_additional_orders_path(@location)
         assert_response :success
         assert_select ".alert-info", /LINE/
@@ -59,7 +58,7 @@ module Pos
       end
 
       test "index page displays link to new order page" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get pos_location_additional_orders_path(@location)
         assert_response :success
         assert_select "a[href='#{new_pos_location_additional_order_path(@location)}']"
@@ -70,7 +69,7 @@ module Pos
       # ============================================================
 
       test "admin can access new page" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get new_pos_location_additional_order_path(@location)
         assert_response :success
       end
@@ -87,21 +86,21 @@ module Pos
       end
 
       test "new returns 404 for inactive location" do
-        login_as(@admin)
+        login_as_employee(@employee)
         inactive_location = locations(:prefectural_office)
         get new_pos_location_additional_order_path(inactive_location)
         assert_response :not_found
       end
 
       test "new page displays bento inventory items" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get new_pos_location_additional_order_path(@location)
         assert_response :success
         assert_select "#order-item-#{@bento_a.id}"
       end
 
       test "new page does not display side menu items in order form" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get new_pos_location_additional_order_path(@location)
         assert_response :success
         salad = catalogs(:salad)
@@ -113,7 +112,7 @@ module Pos
       # ============================================================
 
       test "admin can create additional orders for multiple items" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_difference "AdditionalOrder.count", 2 do
           post pos_location_additional_orders_path(@location),
@@ -146,7 +145,7 @@ module Pos
       end
 
       test "create with single item and others at zero" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_difference "AdditionalOrder.count", 1 do
           post pos_location_additional_orders_path(@location),
@@ -162,7 +161,7 @@ module Pos
       end
 
       test "create increments inventory stock" do
-        login_as(@admin)
+        login_as_employee(@employee)
         inventory = daily_inventories(:city_hall_bento_a_today)
         original_stock = inventory.stock
 
@@ -177,7 +176,7 @@ module Pos
       end
 
       test "create records current time automatically" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         freeze_time do
           post pos_location_additional_orders_path(@location),
@@ -207,7 +206,7 @@ module Pos
       end
 
       test "create fails when all quantities are zero" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_no_difference "AdditionalOrder.count" do
           post pos_location_additional_orders_path(@location),

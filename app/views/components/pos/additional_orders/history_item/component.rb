@@ -23,7 +23,7 @@ module Pos
         end
 
         def employee_name
-          order.employee&.name || t(".unknown_employee")
+          order.employee&.username || t(".unknown_employee")
         end
       end
     end
