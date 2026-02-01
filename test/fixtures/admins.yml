@@ -4,13 +4,11 @@
 # Rails console運用のため、基本的にverified状態で作成
 
 verified_admin:
-  email: admin@example.com
+  username: admin
   password_hash: <%= RodauthApp.rodauth(:admin).allocate.password_hash("password") %>
   status: verified
-  name: 管理者
 
 closed_admin:
-  email: closed@example.com
+  username: closed_admin
   password_hash: <%= RodauthApp.rodauth(:admin).allocate.password_hash("password") %>
   status: closed
-  name: 閉鎖済み管理者

@@ -1,0 +1,30 @@
+<% content_for(:title) { t("rodauth.login.employee_title") } %>
+<% @auth_title = t("rodauth.login.employee_title") %>
+
+<%= form_with url: rodauth(:employee).login_path, method: :post, class: "space-y-4" do |f| %>
+  <div class="form-control">
+    <%= f.label :username, t("activerecord.attributes.employee.username"), class: "label" %>
+    <%= f.text_field :username,
+      name: rodauth(:employee).login_param,
+      value: request.params[rodauth(:employee).login_param],
+      class: "input input-bordered w-full",
+      placeholder: t("activerecord.attributes.employee.username"),
+      autocomplete: "username",
+      autofocus: true,
+      required: true %>
+  </div>
+
+  <div class="form-control">
+    <%= f.label :password, t("rodauth.password"), class: "label" %>
+    <%= f.password_field :password,
+      name: rodauth(:employee).password_param,
+      class: "input input-bordered w-full",
+      placeholder: t("rodauth.password"),
+      autocomplete: "current-password",
+      required: true %>
+  </div>
+
+  <div class="form-control mt-6">
+    <%= f.submit t("rodauth.login.button"), class: "btn btn-neutral w-full" %>
+  </div>
+<% end %>

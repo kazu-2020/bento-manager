@@ -48,16 +48,16 @@ class Admin::EmployeesController < Admin::ApplicationController
   end
 
   def employee_params
-    params.require(:employee).permit(:email, :name, :password)
+    params.require(:employee).permit(:username, :password)
   end
 
   def employee_update_params
     # パスワードが空の場合は更新しない
     emp = params.require(:employee)
     if emp[:password].blank?
-      emp.permit(:email, :name)
+      emp.permit(:username)
     else
-      emp.permit(:email, :name, :password)
+      emp.permit(:username, :password)
     end
   end
 end

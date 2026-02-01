@@ -10,7 +10,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
 
     # Submit login with valid credentials
     post "/admin/login", params: {
-      email: "admin@example.com",
+      username: "admin",
       password: "password"
     }
 
@@ -26,7 +26,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
 
     # Submit login with invalid credentials
     post "/admin/login", params: {
-      email: "invalid@example.com",
+      username: "invalid",
       password: "wrong_password"
     }
 
@@ -37,7 +37,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
   test "admin can logout" do
     # Login first
     post "/admin/login", params: {
-      email: "admin@example.com",
+      username: "admin",
       password: "password"
     }
     assert_response :redirect
@@ -55,7 +55,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
   test "closed admin cannot login" do
     # Try to login with closed admin credentials
     post "/admin/login", params: {
-      email: "closed@example.com",
+      username: "closed_admin",
       password: "password"
     }
 
@@ -108,7 +108,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
     # Logout and try to login with new password
     post "/admin/logout"
     post "/admin/login", params: {
-      email: admin.email,
+      username: admin.username,
       password: "newpassword123"
     }
     assert_response :redirect, "Should be able to login with new password"
@@ -152,7 +152,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
 
     # Login
     post "/admin/login", params: {
-      email: "admin@example.com",
+      username: "admin",
       password: "password"
     }
 
@@ -183,7 +183,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
     # Try to login again to verify old session is invalid
     # and we can establish a new session
     post "/admin/login", params: {
-      email: "admin@example.com",
+      username: "admin",
       password: "password"
     }
     assert_response :redirect, "Should be able to login again after logout"
@@ -193,7 +193,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
     # Simulate first device login
     first_device_session = open_session
     first_device_session.post "/admin/login", params: {
-      email: "admin@example.com",
+      username: "admin",
       password: "password"
     }
     assert first_device_session.response.redirect?, "First device should login successfully"
@@ -201,7 +201,7 @@ class AdminAuthenticationTest < ActionDispatch::IntegrationTest
     # Simulate second device login (using a different session)
     second_device_session = open_session
     second_device_session.post "/admin/login", params: {
-      email: "admin@example.com",
+      username: "admin",
       password: "password"
     }
     assert second_device_session.response.redirect?, "Second device should login successfully"

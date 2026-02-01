@@ -7,7 +7,7 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # Email-based features (:verify_account, :reset_password, :change_login) are excluded
     # as employees are created directly with verified status by Admin.
     # :lockout is enabled for brute-force protection.
-    enable :login, :logout, :change_password, :close_account, :lockout
+    enable :login, :logout, :change_password, :close_account, :lockout, :session_expiration, :remember
 
     # See the Rodauth documentation for the list of available config options:
     # http://rodauth.jeremyevans.net/documentation.html
@@ -32,7 +32,7 @@ class RodauthEmployee < Rodauth::Rails::Auth
     session_key :employee_account_id
 
     # Specify the controller used for view rendering, CSRF, and callbacks.
-    rails_controller { RodauthController }
+    rails_controller { Employee::RodauthController }
 
     # Make built-in page titles accessible in your views via an instance variable.
     title_instance_variable :@page_title
@@ -44,8 +44,9 @@ class RodauthEmployee < Rodauth::Rails::Auth
     account_password_hash_column :password_hash
 
     # Change some default param keys.
-    login_param "email"
-    login_confirm_param "email-confirm"
+    login_param "username"
+    login_column :username
+    require_email_address_logins? false
     # password_confirm_param "confirm_password"
 
     # Redirect back to originally requested location after authentication.
@@ -59,7 +60,7 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # delete_account_on_close? true
 
     # Redirect to the app from login and registration pages if already logged in.
-    # already_logged_in { redirect login_redirect }
+    already_logged_in { redirect login_redirect }
 
     # ==> Flash
     # Match flash keys with ones already used in the Rails app.
@@ -67,9 +68,10 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # flash_error_key :error # default is :alert
 
     # Override default flash messages.
-    # create_account_notice_flash "Your account has been created. Please verify your account by visiting the confirmation link sent to your email address."
-    # require_login_error_flash "Login is required for accessing this page"
-    # login_notice_flash nil
+    login_error_flash { I18n.t("rodauth.login.error") }
+    require_login_error_flash { I18n.t("custom_errors.controllers.require_authentication") }
+    change_password_notice_flash { I18n.t("rodauth.change_password.success") }
+    logout_notice_flash { I18n.t("rodauth.logout.success") }
 
     # ==> Validation
     # Override default validation error messages.
@@ -118,6 +120,30 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # Use custom table names for employee accounts
     account_login_failures_table :employee_login_failures
     account_lockouts_table :employee_lockouts
+
+    # ==> Session Expiration
+    # セッション有効期限: 24時間
+    max_session_lifetime 86_400
+
+    # ==> Remember Login
+    # Remember Login: 30日間
+    remember_period days: 30
+    remember_cookie_key "_bento_manager_employee_remember"
+    extend_remember_deadline? true
+    remember_cookie_options httponly: true, same_site: :lax
+
+    # Remember テーブル名を employee 用に変更
+    remember_table :employee_remember_keys
+
+    # ログイン成功後に常に remember cookie を設定
+    after_login do
+      remember_login
+    end
+
+    # ログアウト時に remember cookie を削除
+    after_logout do
+      forget_login
+    end
 
     # ==> Redirects
     # Redirect to home page after logout.

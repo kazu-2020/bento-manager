@@ -3,36 +3,42 @@ require "test_helper"
 class AdminTest < ActiveSupport::TestCase
   fixtures :admins
 
-  test "should create admin with email and password" do
-    admin = Admin.new(email: "new-admin@example.com", name: "テスト管理者")
-    assert admin.valid?, "Admin should be valid with email and name"
+  test "should create admin with username" do
+    admin = Admin.new(username: "new_admin")
+    assert admin.valid?, "Admin should be valid with username"
   end
 
-  test "should require email" do
-    admin = Admin.new(name: "テスト管理者")
-    assert_not admin.valid?, "Admin should not be valid without email"
-    assert_includes admin.errors[:email], "を入力してください"
+  test "should require username" do
+    admin = Admin.new
+    assert_not admin.valid?, "Admin should not be valid without username"
+    assert_includes admin.errors[:username], "を入力してください"
   end
 
-  test "should require unique email" do
-    # フィクスチャの verified_admin と同じメールアドレスで作成を試みる
-    admin = Admin.new(email: "admin@example.com", name: "重複管理者")
-    assert_not admin.valid?, "Admin should not be valid with duplicate email"
-    assert_includes admin.errors[:email], "はすでに存在します"
+  test "should require unique username" do
+    # フィクスチャの verified_admin と同じアカウント名で作成を試みる
+    admin = Admin.new(username: "admin")
+    assert_not admin.valid?, "Admin should not be valid with duplicate username"
+    assert_includes admin.errors[:username], "はすでに存在します"
   end
 
-  test "should require name" do
-    admin = Admin.new(email: "new-admin@example.com")
-    assert_not admin.valid?, "Admin should not be valid without name"
-    assert_includes admin.errors[:name], "を入力してください"
+  test "should require valid username format" do
+    # 無効な文字を含むusername
+    admin = Admin.new(username: "invalid@user")
+    assert_not admin.valid?, "Admin should not be valid with invalid username format"
+    assert_includes admin.errors[:username], "は不正な値です"
+  end
+
+  test "should accept valid username format" do
+    admin = Admin.new(username: "Valid_User123")
+    assert admin.valid?, "Admin should be valid with alphanumeric and underscore username"
   end
 
   # ステータス遷移テスト
   test "can create admin with verified or closed status" do
-    verified_admin = Admin.new(email: "new-verified@example.com", name: "検証済み管理者", status: :verified)
+    verified_admin = Admin.new(username: "new_verified", status: :verified)
     assert verified_admin.valid?, "Admin should be valid with verified status"
 
-    closed_admin = Admin.new(email: "new-closed@example.com", name: "閉鎖済み管理者", status: :closed)
+    closed_admin = Admin.new(username: "new_closed", status: :closed)
     assert closed_admin.valid?, "Admin should be valid with closed status"
   end
 
@@ -50,56 +56,50 @@ class AdminTest < ActiveSupport::TestCase
     assert_equal 3, Admin.statuses[:closed], "closed status should be 3"
   end
 
-  # メールアドレスユニーク制約テスト
-  test "email uniqueness is enforced for verified accounts" do
-    # フィクスチャのverified_adminと同じメールアドレスで作成を試みる
+  # アカウント名ユニーク制約テスト
+  test "username uniqueness is enforced for verified accounts" do
+    # フィクスチャのverified_adminと同じアカウント名で作成を試みる
     duplicate_admin = Admin.new(
-      email: "admin@example.com",
-      name: "重複管理者",
+      username: "admin",
       status: :verified
     )
-    assert_not duplicate_admin.valid?, "Should not allow duplicate email for verified accounts"
-    assert_includes duplicate_admin.errors[:email], "はすでに存在します"
+    assert_not duplicate_admin.valid?, "Should not allow duplicate username for verified accounts"
+    assert_includes duplicate_admin.errors[:username], "はすでに存在します"
   end
 
-  test "closed accounts allow email address reuse" do
-    # closed_adminのメールアドレスを使って新しいverifiedアカウントを作成
-    reused_email_admin = Admin.new(
-      email: "closed@example.com",
-      name: "再利用管理者",
+  test "closed accounts allow username reuse" do
+    # closed_adminのアカウント名を使って新しいverifiedアカウントを作成
+    reused_username_admin = Admin.new(
+      username: "closed_admin",
       status: :verified
     )
-    # closedアカウントのメールアドレスは再利用可能（部分ユニークインデックスのため）
-    assert reused_email_admin.valid?, "Should allow email reuse from closed accounts"
+    # closedアカウントのアカウント名は再利用可能（部分ユニークインデックスのため）
+    assert reused_username_admin.valid?, "Should allow username reuse from closed accounts"
   end
 
-  test "database partial unique index allows duplicate closed emails" do
-    # 同じメールアドレスで複数のclosedアカウントを作成
+  test "database partial unique index allows duplicate closed usernames" do
+    # 同じアカウント名で複数のclosedアカウントを作成
     Admin.create!(
-      email: "duplicate-closed@example.com",
-      name: "最初の閉鎖管理者",
+      username: "duplicate_closed",
       status: :closed
     )
 
     second_closed = Admin.new(
-      email: "duplicate-closed@example.com",
-      name: "2番目の閉鎖管理者",
+      username: "duplicate_closed",
       status: :closed
     )
     # closedステータス同士は重複可能
-    assert second_closed.valid?, "Should allow duplicate emails for closed accounts"
+    assert second_closed.valid?, "Should allow duplicate usernames for closed accounts"
     assert second_closed.save, "Should successfully save duplicate closed account"
   end
 
   test "unique constraint is case insensitive" do
-    # 大文字小文字が異なるメールアドレスで作成を試みる
+    # 大文字小文字が異なるアカウント名で作成を試みる
     case_variant_admin = Admin.new(
-      email: "ADMIN@EXAMPLE.COM",
-      name: "大文字管理者",
+      username: "ADMIN",
       status: :verified
     )
-    # Railsのuniqueness validationはデフォルトでcase_sensitive: trueだが、
-    # データベースレベルでの制約チェック
-    assert_not case_variant_admin.valid?, "Email uniqueness should be case insensitive"
+    # Railsのuniqueness validationでcase_sensitive: falseを指定
+    assert_not case_variant_admin.valid?, "Username uniqueness should be case insensitive"
   end
 end
