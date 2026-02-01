@@ -6,12 +6,9 @@
   </div>
 
   <div class="flex-1">
-    <%= link_to root_path, class: "btn btn-ghost text-xl font-bold tracking-tight hover:bg-transparent" do %>
-      <span class="text-2xl">🍱</span>
-      <span class="bg-linear-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
-        弁当販売管理
-      </span>
-    <% end %>
+    <span class="text-xl font-bold tracking-tight text-base-content">
+      <%= display_title %>
+    </span>
   </div>
 
   <% if logout_path.present? %>
