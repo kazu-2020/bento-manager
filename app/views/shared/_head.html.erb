@@ -8,7 +8,6 @@
 
 <%= yield :head %>
 
-<%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
 <%= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
 <link rel="icon" href="/icon-96x96.png" type="image/png" sizes="96x96">
@@ -22,7 +21,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&family=Noto+Sans+Mono:wght@100..900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+Mono:wght@700&display=swap" rel="stylesheet">
 
 <%= vite_stylesheet_tag 'stylesheets/application.tailwind.css' %>
 
