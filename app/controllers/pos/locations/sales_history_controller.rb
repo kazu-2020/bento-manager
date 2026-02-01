@@ -19,8 +19,7 @@ module Pos
       def fetch_today_sales
         @location.sales
                  .where(sale_datetime: Date.current.all_day)
-                 .eager_load(:employee)
-                 .preload(items: :catalog)
+                 .preload(:sale_discounts, items: :catalog,)
                  .order(sale_datetime: :desc)
       end
 
