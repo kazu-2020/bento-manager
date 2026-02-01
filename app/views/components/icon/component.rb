@@ -21,7 +21,7 @@ module Icon
     attr_reader :name, :size, :extra_class
 
     def css_classes
-      ["icon", size_class, extra_class].compact.join(" ")
+      [ "icon", size_class, extra_class ].compact.join(" ")
     end
 
     def size_class
