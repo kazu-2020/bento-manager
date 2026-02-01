@@ -140,7 +140,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_31_140604) do
     t.datetime "created_at", null: false
     t.integer "employee_id"
     t.integer "original_sale_id", null: false
-    t.string "reason", null: false
     t.datetime "refund_datetime", null: false
     t.datetime "updated_at", null: false
     t.index ["corrected_sale_id"], name: "index_refunds_on_corrected_sale_id"
@@ -187,7 +186,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_31_140604) do
     t.integer "status", default: 0, null: false
     t.integer "total_amount", null: false
     t.datetime "updated_at", null: false
-    t.string "void_reason"
     t.datetime "voided_at"
     t.integer "voided_by_employee_id"
     t.index ["corrected_from_sale_id"], name: "index_sales_on_corrected_from_sale_id"

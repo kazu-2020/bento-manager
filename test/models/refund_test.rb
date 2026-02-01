@@ -10,8 +10,7 @@ class RefundTest < ActiveSupport::TestCase
     refund = Refund.new(
       original_sale: original_sale,
       refund_datetime: Time.current,
-      amount: 500,
-      reason: "商品の返品"
+      amount: 500
     )
 
     assert refund.valid?, refund.errors.full_messages.join(", ")
@@ -21,8 +20,7 @@ class RefundTest < ActiveSupport::TestCase
     refund = Refund.new(
       original_sale: sales(:completed_sale),
       refund_datetime: Time.current,
-      amount: 500,
-      reason: "商品の返品"
+      amount: 500
     )
 
     assert_respond_to refund, :original_sale
@@ -43,8 +41,7 @@ class RefundTest < ActiveSupport::TestCase
       original_sale: sales(:completed_sale),
       corrected_sale: corrected_sale,
       refund_datetime: Time.current,
-      amount: 300,
-      reason: "部分返品"
+      amount: 300
     )
 
     assert refund.valid?
@@ -57,8 +54,7 @@ class RefundTest < ActiveSupport::TestCase
       original_sale: sales(:completed_sale),
       corrected_sale: nil,
       refund_datetime: Time.current,
-      amount: 500,
-      reason: "全額返金"
+      amount: 500
     )
 
     assert refund.valid?, "corrected_sale が nil でも valid であるべき"
@@ -69,8 +65,7 @@ class RefundTest < ActiveSupport::TestCase
       original_sale: sales(:completed_sale),
       employee: employees(:verified_employee),
       refund_datetime: Time.current,
-      amount: 500,
-      reason: "商品の返品"
+      amount: 500
     )
 
     assert refund.valid?
@@ -82,8 +77,7 @@ class RefundTest < ActiveSupport::TestCase
       original_sale: sales(:completed_sale),
       employee: nil,
       refund_datetime: Time.current,
-      amount: 500,
-      reason: "商品の返品"
+      amount: 500
     )
 
     assert refund.valid?, "employee が nil でも valid であるべき"
@@ -95,8 +89,7 @@ class RefundTest < ActiveSupport::TestCase
     refund = Refund.new(
       original_sale: sales(:completed_sale),
       refund_datetime: nil,
-      amount: 500,
-      reason: "商品の返品"
+      amount: 500
     )
 
     assert_not refund.valid?
@@ -107,8 +100,7 @@ class RefundTest < ActiveSupport::TestCase
     refund = Refund.new(
       original_sale: sales(:completed_sale),
       refund_datetime: Time.current,
-      amount: nil,
-      reason: "商品の返品"
+      amount: nil
     )
 
     assert_not refund.valid?
@@ -119,8 +111,7 @@ class RefundTest < ActiveSupport::TestCase
     refund = Refund.new(
       original_sale: sales(:completed_sale),
       refund_datetime: Time.current,
-      amount: -1,
-      reason: "商品の返品"
+      amount: -1
     )
 
     assert_not refund.valid?
@@ -131,35 +122,10 @@ class RefundTest < ActiveSupport::TestCase
     refund = Refund.new(
       original_sale: sales(:completed_sale),
       refund_datetime: Time.current,
-      amount: 0,
-      reason: "金額変更なし"
+      amount: 0
     )
 
     assert refund.valid?, "amount が 0 でも valid であるべき"
-  end
-
-  test "reason is required" do
-    refund = Refund.new(
-      original_sale: sales(:completed_sale),
-      refund_datetime: Time.current,
-      amount: 500,
-      reason: nil
-    )
-
-    assert_not refund.valid?
-    assert_includes refund.errors[:reason], "を入力してください"
-  end
-
-  test "reason cannot be blank" do
-    refund = Refund.new(
-      original_sale: sales(:completed_sale),
-      refund_datetime: Time.current,
-      amount: 500,
-      reason: ""
-    )
-
-    assert_not refund.valid?
-    assert_includes refund.errors[:reason], "を入力してください"
   end
 
   # ===== アソシエーションテスト（逆方向） =====
@@ -169,8 +135,7 @@ class RefundTest < ActiveSupport::TestCase
     refund = Refund.create!(
       original_sale: sale,
       refund_datetime: Time.current,
-      amount: 100,
-      reason: "テスト返金"
+      amount: 100
     )
 
     assert_includes sale.refunds, refund
@@ -182,8 +147,7 @@ class RefundTest < ActiveSupport::TestCase
       original_sale: sales(:completed_sale),
       employee: employee,
       refund_datetime: Time.current,
-      amount: 100,
-      reason: "テスト返金"
+      amount: 100
     )
 
     assert_includes employee.refunds, refund

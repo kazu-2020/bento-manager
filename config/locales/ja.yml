@@ -56,8 +56,6 @@ ja:
           attributes:
             base:
               no_items_selected: "返品する商品を選択してください"
-            reason:
-              blank: "を入力してください"
         sales/cart_form:
           attributes:
             base:
@@ -127,7 +125,6 @@ ja:
         total_amount: "合計金額"
         final_amount: "最終金額"
         voided_at: "取消日時"
-        void_reason: "取消理由"
       sale_item:
         sale: "販売"
         catalog: "商品"
@@ -154,7 +151,6 @@ ja:
         employee: "返金処理担当者"
         refund_datetime: "返金日時"
         amount: "返金額"
-        reason: "返金理由"
       coupon:
         amount_per_unit: "1枚あたりの割引額"
 
@@ -343,8 +339,6 @@ ja:
           title: "返品処理"
           original_sale: "元の販売内容"
           select_items: "返品する商品を選択"
-          reason_label: "返品理由"
-          reason_placeholder: "返品理由を入力してください"
           preview: "返金プレビュー"
           corrected_sale: "修正後の販売内容"
           refund_amount: "返金額"
@@ -354,7 +348,7 @@ ja:
           no_remaining_items: "全商品を返品"
         create:
           success: "返金処理が完了しました（返金額: %{amount}）"
-          missing_requirements: "返品する商品を選択し、返品理由を入力してください"
+          missing_requirements: "返品する商品を選択してください"
           already_voided: "この販売は既に取消済みです"
 
   discounts:

@@ -31,7 +31,6 @@ module Sales
       result = refunder.process(
         sale: sale,
         remaining_items: [],
-        reason: "全額返金テスト",
         employee: @employee
       )
 
@@ -40,7 +39,6 @@ module Sales
 
       sale.reload
       assert sale.voided?
-      assert_equal "全額返金テスト", sale.void_reason
 
       @inventory_bento_a.reload
       assert_equal original_stock + 1, @inventory_bento_a.stock
@@ -64,7 +62,6 @@ module Sales
       result = refunder.process(
         sale: sale,
         remaining_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
-        reason: "1個返品",
         employee: @employee
       )
 
@@ -101,7 +98,6 @@ module Sales
       result = refunder.process(
         sale: sale,
         remaining_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
-        reason: "サラダを返品",
         employee: @employee
       )
 
@@ -127,7 +123,6 @@ module Sales
       result = refunder.process(
         sale: sale,
         remaining_items: [ { catalog: @catalog_salad, quantity: 1 } ],
-        reason: "弁当を返品",
         employee: @employee
       )
 
@@ -153,7 +148,6 @@ module Sales
       result = refunder.process(
         sale: sale,
         remaining_items: [],
-        reason: "全額返金（クーポン付き）",
         employee: @employee
       )
 
@@ -175,7 +169,6 @@ module Sales
       result = refunder.process(
         sale: sale,
         remaining_items: [ { catalog: @catalog_bento_b, quantity: 1 } ],
-        reason: "弁当2個返品",
         employee: @employee
       )
 
@@ -203,7 +196,6 @@ module Sales
       result = refunder.process(
         sale: sale,
         remaining_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
-        reason: "弁当1個返品",
         employee: @employee
       )
 
@@ -227,13 +219,12 @@ module Sales
         refunder.process(
           sale: voided_sale,
           remaining_items: [],
-          reason: "テスト",
           employee: @employee
         )
       end
     end
 
-    test "返金処理が失敗した場合、在庫は変更されない" do
+    test "返金処理は正常に実行できる" do
       recorder = Sales::Recorder.new
       sale = recorder.record(
         { location: @location, customer_type: :staff, employee: @employee },
@@ -241,20 +232,15 @@ module Sales
       )
 
       refunder = Sales::Refunder.new
-
-      assert_no_changes -> { @inventory_bento_a.reload.stock } do
-        assert_raises(ActiveRecord::RecordInvalid) do
-          refunder.process(
-            sale: sale,
-            remaining_items: [],
-            reason: "",
-            employee: @employee
-          )
-        end
-      end
+      result = refunder.process(
+        sale: sale,
+        remaining_items: [],
+        employee: @employee
+      )
 
       sale.reload
-      assert sale.completed?
+      assert sale.voided?
+      assert_equal 550, result[:refund_amount]
     end
   end
 end

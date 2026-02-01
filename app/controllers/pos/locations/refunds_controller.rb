@@ -23,7 +23,6 @@ module Pos
         result = refunder.process(
           sale: @sale,
           remaining_items: @form.remaining_items_for_refunder,
-          reason: @form.reason,
           employee: current_employee
         )
 

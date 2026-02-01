@@ -6,7 +6,6 @@ class CreateRefunds < ActiveRecord::Migration[8.1]
       t.references :employee, null: true, foreign_key: { on_delete: :nullify }, comment: "返金処理担当者"
       t.datetime :refund_datetime, null: false, comment: "返金日時"
       t.integer :amount, null: false, comment: "返金額"
-      t.string :reason, null: false, comment: "返金理由"
       t.timestamps
     end
   end

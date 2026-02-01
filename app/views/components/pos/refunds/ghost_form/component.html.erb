@@ -7,8 +7,4 @@
       <%= f.hidden_field :refund_quantity, value: group.refund_quantity %>
     <% end %>
   <% end %>
-
-  <%= fields_for "ghost_refund" do |f| %>
-    <%= f.hidden_field :reason, value: reason %>
-  <% end %>
 <% end %>

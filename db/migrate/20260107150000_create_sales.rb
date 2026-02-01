@@ -16,7 +16,6 @@ class CreateSales < ActiveRecord::Migration[8.1]
       t.integer :status, null: false, default: 0, comment: "状態（0: completed, 1: voided）"
       t.datetime :voided_at, null: true, comment: "取消日時"
       t.references :voided_by_employee, null: true, foreign_key: { to_table: :employees }, comment: "取消担当者ID"
-      t.string :void_reason, null: true, comment: "取消理由"
       t.references :corrected_from_sale, null: true, foreign_key: { to_table: :sales }, comment: "元の販売ID（再販売の場合）"
       t.timestamps
     end
