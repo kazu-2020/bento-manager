@@ -2,7 +2,7 @@
      data-action="refund-cart:cartChanged->ghost-form#submit">
   <%# top-16 (4rem): navbar の高さ分オフセット %>
   <%# bottom-16: モバイルで Dock のスペースを確保 %>
-  <div class="fixed inset-x-0 top-16 bottom-16 lg:bottom-0 z-20 bg-base-200 flex flex-col">
+  <div class="fixed inset-x-0 top-16 bottom-16 lg:bottom-0 lg:left-72 z-20 bg-base-200 flex flex-col">
     <%# 返品処理フォーム %>
     <%= form_with **form_with_options,
                   class: "flex flex-col flex-1 min-h-0",
