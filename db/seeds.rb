@@ -94,4 +94,17 @@ side_menu_data.each do |data|
   puts "  Side Menu: #{data[:name]} (通常: #{data[:regular_price]}円, セット: #{data[:bundle_price]}円)"
 end
 
+# 割引クーポン
+puts "Creating Discount Coupons..."
+
+unless Discount.exists?(name: "50円割引クーポン")
+  coupon = Coupon.create!(amount_per_unit: 50)
+  Discount.create!(
+    discountable: coupon,
+    name: "50円割引クーポン",
+    valid_from: Date.current
+  )
+  puts "  Coupon: 50円割引クーポン (1枚あたり50円割引)"
+end
+
 puts "Seed completed!"

@@ -156,7 +156,6 @@ ja:
         amount: "返金額"
         reason: "返金理由"
       coupon:
-        description: "説明"
         amount_per_unit: "1枚あたりの割引額"
 
   enums:

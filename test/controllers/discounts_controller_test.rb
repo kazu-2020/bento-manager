@@ -43,9 +43,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
             valid_from: Date.current,
             valid_until: 1.month.from_now.to_date,
             discountable: {
-              description: "テストクーポン",
               amount_per_unit: 50
-
             }
           }
         }, as: :turbo_stream
@@ -87,20 +85,17 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
 
   test "admin cannot update coupon info" do
     login_as_employee(@employee)
-    original_description = @discount.discountable.description
     original_amount = @discount.discountable.amount_per_unit
     patch discount_path(@discount), params: {
       discount: {
         discountable: {
           id: @discount.discountable.id,
-          description: "更新された説明",
           amount_per_unit: 999
         }
       }
     }, as: :turbo_stream
     assert_response :success
     @discount.discountable.reload
-    assert_equal original_description, @discount.discountable.description
     assert_equal original_amount, @discount.discountable.amount_per_unit
   end
 
@@ -135,9 +130,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
             name: "従業員作成クーポン",
             valid_from: Date.current,
             discountable: {
-              description: "従業員が作成",
               amount_per_unit: 30
-
             }
           }
         }, as: :turbo_stream
@@ -219,7 +212,6 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
           name: "",
           valid_from: Date.current,
           discountable: {
-            description: "テスト",
             amount_per_unit: 50
           }
         }

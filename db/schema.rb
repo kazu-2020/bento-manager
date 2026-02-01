@@ -73,7 +73,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_31_140604) do
   create_table "coupons", force: :cascade do |t|
     t.integer "amount_per_unit", null: false
     t.datetime "created_at", null: false
-    t.string "description", null: false
     t.datetime "updated_at", null: false
   end
 

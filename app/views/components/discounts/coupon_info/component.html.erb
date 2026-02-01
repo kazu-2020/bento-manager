@@ -11,18 +11,6 @@
 
       <%# データ表示 %>
       <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-4">
-        <%# 説明 %>
-        <% if coupon&.description.present? %>
-          <div class="sm:col-span-2">
-            <dt class="text-sm font-medium text-base-content/60">
-              <%= Coupon.human_attribute_name(:description) %>
-            </dt>
-            <dd class="mt-1 text-base-content/80 whitespace-pre-wrap">
-              <%= coupon.description %>
-            </dd>
-          </div>
-        <% end %>
-
         <%# 1枚あたりの割引額 %>
         <div>
           <dt class="text-sm font-medium text-base-content/60">

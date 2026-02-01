@@ -52,7 +52,7 @@ class DiscountsController < ApplicationController
   def discount_params
     params.require(:discount).permit(
       :name, :valid_from, :valid_until,
-      discountable: [ :description, :amount_per_unit ]
+      discountable: [ :amount_per_unit ]
     )
   end
 

@@ -3,7 +3,6 @@ class Coupon < ApplicationRecord
   has_one :discount, as: :discountable, touch: true
 
   # ===== バリデーション =====
-  validates :description, presence: true
   validates :amount_per_unit, presence: true, numericality: { greater_than: 0 }
 
   # ===== ビジネスロジック =====
