@@ -6,7 +6,7 @@
 **Language**: ja
 **Phase**: tasks-generated
 **Generated**: 2026-01-04
-**Updated**: 2026-01-31
+**Updated**: 2026-02-01
 
 ---
 
@@ -25,27 +25,17 @@
   - タイムスタンプ付きマイグレーションファイル命名規則の確認
   - _Requirements: 11.1_
 
-### Phase 2: Authentication & Authorization
+### Phase 2: Authentication
 
 - [x] 2. Rodauth 認証システム構築
-- [x] 2.1 (P) Admin 認証セットアップ
-  - Admin アカウント設定（username、パスワードハッシュ）
+- [x] 2.1 Employee 認証セットアップ
+  - Employee アカウント設定（username、パスワードハッシュ）
   - ログイン/ログアウト機能の実装
   - セッション管理の設定
-  - _Requirements: 9.1, 9.2, 9.3, 9.4_
-
-- [x] 2.2 (P) Employee 認証セットアップ
-  - Employee アカウント設定
-  - 従業員用ログイン/ログアウト機能の実装
-  - 従業員管理 CRUD（Admin のみアクセス可能）
-  - _Requirements: 9.5, 9.6, 9.7, 9.8_
-
-- [x] 2.3 Employee管理画面の認可制御実装
-  - EmployeesController に before_action :require_admin_authentication を追加
-  - rodauth(:employee).logged_in? で Employee 判定 → 403 エラー
-  - rodauth(:admin).logged_in? で Admin 認証チェック → 未認証時はログインページにリダイレクト
-  - 業務機能（POS、在庫、レポート）は認可不要（Employee と Admin の両方がアクセス可能）
-  - _Requirements: 9.9, 9.10, 9.14, 9.15_
+  - Rodauth 設定: `login_column :username`
+  - username カラムに COLLATE NOCASE を設定（大文字小文字を区別しない一意制約）
+  - Employee の登録・編集・削除は Rails console で行う（管理画面は不要）
+  - _Requirements: 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9_
 
 ### Phase 3: Core Domain Models - Location & Catalog
 
@@ -413,12 +403,12 @@
 
 ### Phase 11: Backend Controllers & Routes
 
-- [ ] 18. Admin 用コントローラー実装
+- [ ] 18. コントローラー実装
 - [x] 18.1 (P) LocationsController 実装
   - CRUD アクション（index, show, new, create, edit, update, destroy）
   - destroy アクションで deactivate 呼び出し（status = inactive）
   - フラッシュメッセージ表示
-  - /locations パスで Admin と Employee 両方がアクセス可能
+  - /locations パスで認証済み Employee がアクセス可能
   - _Requirements: 15.1, 15.2, 15.3, 15.4_
 
 - [x] 18.2 (P) CatalogsController 実装
@@ -432,12 +422,6 @@
   - Coupon の nested attributes 対応
   - 有効期限の設定
   - _Requirements: 12.1, 12.2, 12.3_
-
-- [ ] 18.4 (P) EmployeesController 実装
-  - CRUD アクション（index, show, new, create, edit, update, destroy）
-  - Admin のみアクセス可能（Employee は 403 エラー）
-  - 従業員一覧表示
-  - _Requirements: 9.3, 9.4, 9.5, 9.6, 9.14, 9.15_
 
 - [ ] 19. POS 用コントローラー実装
 - [x] 19.1 SalesController 実装（DailyInventory, Sale, SaleItem, SaleDiscount, Sales::PriceCalculator, Sales::Refunder 依存）
@@ -465,7 +449,7 @@
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
 
 - [ ] 21. ルーティング設定
-  - Admin 用リソースルーティング（locations, catalogs, discounts, daily_inventories, employees）
+  - リソースルーティング（locations, catalogs, discounts, daily_inventories）
   - POS 用リソースルーティング（sales, additional_orders）
   - ダッシュボード・レポート用ルーティング（dashboard, analytics）
   - 認証用ルーティング（Rodauth）
@@ -506,54 +490,47 @@
   - Coupon の nested form（amount_per_unit, max_per_bento_quantity）
   - _Requirements: 12.1, 12.2, 12.3_
 
-- [ ] 25. Employee 管理画面実装（Admin のみアクセス可能）
-- [ ] 25.1 (P) Employee 一覧・フォーム画面
-  - 従業員一覧（Admin のみ表示）
-  - 従業員登録・編集フォーム（Admin のみ表示）
-  - Employee がアクセスすると 403 エラー画面を表示
-  - _Requirements: 9.5, 9.6, 9.7, 9.8, 9.14, 9.15_
-
-- [ ] 26. Admin 画面での価格設定警告表示実装
-- [ ] 26.1 (P) CatalogsController index アクション更新
+- [ ] 25. 管理画面での価格設定警告表示実装
+- [ ] 25.1 (P) CatalogsController index アクション更新
   - Catalogs::PriceValidator#catalogs_with_missing_prices を呼び出し
   - 警告対象の商品リストをビューに渡す
   - _Requirements: 17.1, 17.2_
 
-- [ ] 26.2 (P) 商品一覧画面に警告表示実装
+- [ ] 25.2 (P) 商品一覧画面に警告表示実装
   - 価格設定に不備がある商品を視覚的に警告表示（赤背景、アイコン）
   - 不足している価格種別（kind）を表示
   - 警告クリックで価格設定画面に遷移
   - _Requirements: 17.1, 17.3, 17.4_
 
-- [ ] 26.3 (P) 警告セクション実装
+- [ ] 25.3 (P) 警告セクション実装
   - 警告がある商品を一覧上部または別セクションにまとめて表示
   - 「すべての商品に価格が正しく設定されています」の正常状態表示
   - _Requirements: 17.5, 17.6_
 
 ### Phase 13: Frontend - POS Views
 
-- [ ] 27. 販売（POS）画面実装
-- [x] 27.1 販売先選択画面
+- [ ] 26. 販売（POS）画面実装
+- [x] 26.1 販売先選択画面
   - 販売先選択フォーム
   - active な Location のみ表示
   - Turbo Frame で在庫情報を動的読み込み
   - _Requirements: 3.8, 4.1_
 
-- [x] 27.2 商品選択・カート画面
+- [x] 26.2 商品選択・カート画面
   - 在庫がある商品のみ選択可能
   - 商品選択時に単価・数量入力
   - カート内の商品一覧表示（unit_price, quantity, line_total）
   - クーポン枚数入力フォーム
   - _Requirements: 3.1, 3.2, 3.5, 3.6, 12.7_
 
-- [x] 27.3 価格内訳表示
+- [x] 26.3 価格内訳表示
   - 小計（total_amount）表示
   - 適用された価格ルール表示（セット価格）
   - 適用された割引表示（クーポン）
   - 合計金額（final_amount）表示
   - _Requirements: 3.2, 12.8, 13.7_
 
-- [x] 27.4 販売確定・エラーハンドリング
+- [x] 26.4 販売確定・エラーハンドリング
   - 顧客区分（staff / citizen）選択
   - 販売確定ボタン
   - 在庫不足時のエラーメッセージ表示
@@ -561,20 +538,20 @@
   - 販売完了後のリダイレクト
   - _Requirements: 3.3, 3.4, 3.7, 16.2, 16.3_
 
-- [x] 28. 追加発注画面実装
-- [x] 28.1 (P) 追加発注フォーム画面
+- [x] 27. 追加発注画面実装
+- [x] 27.1 (P) 追加発注フォーム画面
   - 販売先、商品、数量、発注時刻入力フォーム
   - 追加発注履歴一覧表示
   - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
 
-- [x] 29. 返品・返金画面実装
-- [x] 29.1 返品フォーム画面
+- [x] 28. 返品・返金画面実装
+- [x] 28.1 返品フォーム画面
   - 元の Sale を選択、返品商品を選択
   - 返品理由入力フォーム
   - 返金額の計算・表示
   - _Requirements: 14.1, 14.2, 14.3, 14.6, 14.12_
 
-- [x] 29.2 返金処理確認画面
+- [x] 28.2 返金処理確認画面
   - 元の販売内容表示（商品、数量、金額）
   - 新規販売内容表示（返品分を除いた商品、再計算後の金額）
   - 返金額表示（差額）
@@ -583,14 +560,14 @@
 
 ### Phase 14: Frontend - Dashboard & Reports
 
-- [ ] 30. ダッシュボード画面実装
-- [ ] 30.1 (P) ダッシュボード画面
+- [ ] 29. ダッシュボード画面実装
+- [ ] 29.1 (P) ダッシュボード画面
   - 販売実績サマリー、在庫状況、追加発注履歴
   - 日別、期間別の販売実績表示
   - 人気商品ランキング表示
   - _Requirements: 7.1, 7.2, 7.3, 7.4, 7.5_
 
-- [ ] 30.2 (P) グラフ表示（Chartkick + Chart.js）
+- [ ] 29.2 (P) グラフ表示（Chartkick + Chart.js）
   - 売上推移グラフ（折れ線グラフ）
   - 商品別販売数グラフ（棒グラフ）
   - 販売先別売上グラフ（円グラフ）
@@ -598,29 +575,29 @@
 
 ### Phase 15: Frontend - Stimulus Controllers
 
-- [ ] 31. POS 用 Stimulus コントローラー実装
-- [ ] 31.1 pos_controller.js 実装
+- [ ] 30. POS 用 Stimulus コントローラー実装
+- [ ] 30.1 pos_controller.js 実装
   - 商品選択時のカート更新ロジック
   - クーポン枚数入力時の価格再計算
   - 価格内訳の動的表示
   - 在庫確認 API 呼び出し
   - _Requirements: 3.1, 3.2, 3.5, 3.6, 12.7, 13.7_
 
-- [ ] 31.2 inventory_controller.js 実装
+- [ ] 30.2 inventory_controller.js 実装
   - リアルタイム在庫更新（Turbo Streams）
   - 在庫ゼロの視覚的識別
   - _Requirements: 4.1, 4.2, 4.3, 4.4_
 
 ### Phase 16: Performance & Caching
 
-- [ ] 32. Solid Cache 設定
-- [ ] 32.1 (P) キャッシュ戦略実装
+- [ ] 31. Solid Cache 設定
+- [ ] 31.1 (P) キャッシュ戦略実装
   - Catalog, CatalogPrice, Discount のキャッシュ
   - DailyInventory のキャッシュ（販売先・日付ごと）
   - キャッシュ無効化ロジック（商品更新、在庫更新時）
   - _Requirements: 11.3_
 
-- [ ] 32.2 (P) インデックス最適化確認
+- [ ] 31.2 (P) インデックス最適化確認
   - 全インデックスの作成確認
   - スロークエリの特定
   - EXPLAIN ANALYZE での検証
@@ -628,87 +605,87 @@
 
 ### Phase 17: Responsive Design
 
-- [ ] 33. レスポンシブデザイン実装
-- [ ] 33.1 スマホ最適化（POS 画面）
+- [ ] 32. レスポンシブデザイン実装
+- [ ] 32.1 スマホ最適化（POS 画面）
   - Tailwind CSS responsive classes 適用
   - タッチ操作対応
   - フォントサイズ調整
   - _Requirements: 3.5, 10.1, 10.2_
 
-- [ ] 33.2 PC 最適化（Admin 画面）
+- [ ] 32.2 PC 最適化（管理画面）
   - 管理画面のレイアウト調整
   - テーブル表示の最適化
   - _Requirements: 10.3, 10.4_
 
-- [ ] 33.3 タブレット対応
+- [ ] 32.3 タブレット対応
   - 中間サイズのレイアウト調整
   - _Requirements: 10.5_
 
 ### Phase 18: Testing
 
-- [ ] 34. モデルテスト実装
-- [ ]* 34.1 Location モデルテスト
+- [ ] 33. モデルテスト実装
+- [ ]* 33.1 Location モデルテスト
   - バリデーションテスト（name 必須、ユニーク性）
   - status enum テスト
   - deactivate/activate メソッドテスト
   - _Requirements: 15.1, 15.2, 15.3_
 
-- [ ]* 34.2 Catalog モデルテスト
+- [ ]* 33.2 Catalog モデルテスト
   - バリデーションテスト（name ユニーク、category 必須）
   - CatalogPrice, CatalogPricingRule, CatalogDiscontinuation の関連テスト
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ]* 34.3 Discount モデルテスト
+- [ ]* 33.3 Discount モデルテスト
   - delegated_type パターンテスト
   - Coupon の applicable? メソッドテスト
   - calculate_discount メソッドテスト
   - _Requirements: 12.1, 12.4, 12.5_
 
-- [ ]* 34.4 DailyInventory モデルテスト
+- [ ]* 33.4 DailyInventory モデルテスト
   - バリデーションテスト（stock >= 0）
   - ユニーク制約テスト（location_id, catalog_id, inventory_date）
   - decrement_stock/increment_stock メソッドテスト
   - optimistic locking テスト
   - _Requirements: 2.1, 2.2, 2.4, 11.1, 11.2_
 
-- [ ]* 34.5 Sale モデルテスト
+- [ ]* 33.5 Sale モデルテスト
   - バリデーションテスト（location_id 必須、status enum）
   - mark_as_voided! メソッドテスト
   - corrected_from_sale_id の関連テスト
   - _Requirements: 3.3, 14.1, 14.2_
 
-- [ ]* 34.6 SaleItem モデルテスト
+- [ ]* 33.6 SaleItem モデルテスト
   - バリデーションテスト（quantity > 0, unit_price >= 0）
   - line_total 自動計算テスト（before_validation）
   - 純粋データモデルの確認（コールバックなし）
   - _Requirements: 3.1, 3.2, 3.4_
 
-- [ ]* 34.7 Refund モデルテスト
+- [ ]* 33.7 Refund モデルテスト
   - バリデーションテスト（amount >= 0）
   - original_sale, corrected_sale の関連テスト
   - _Requirements: 14.10_
 
-- [ ]* 34.8 AdditionalOrder モデルテスト
+- [ ]* 33.8 AdditionalOrder モデルテスト
   - バリデーションテスト（quantity > 0）
   - after_create コールバックテスト（在庫加算）
   - _Requirements: 5.1, 5.2_
 
-- [ ] 35. PORO テスト実装
-- [ ]* 35.1 Sales::PriceCalculator テスト
+- [ ] 34. PORO テスト実装
+- [ ]* 34.1 Sales::PriceCalculator テスト
   - 価格ルール適用テスト（セット価格）
   - 割引適用テスト（クーポン）
   - calculate メソッド統合テスト
   - 価格存在検証テスト（MissingPriceError 発生）
   - _Requirements: 3.1, 3.2, 12.8, 13.7, 16.1, 16.2, 16.3_
 
-- [ ]* 35.2 Sales::Recorder テスト
+- [ ]* 34.2 Sales::Recorder テスト
   - record メソッドテスト（販売記録作成、在庫減算）
   - 在庫不足時のエラーテスト（InsufficientStockError）
   - 価格未設定時のエラーテスト（MissingPriceError）
   - トランザクションロールバックテスト
   - _Requirements: 3.1, 3.4, 3.7, 11.1, 11.2, 16.5, 16.6_
 
-- [ ]* 35.3 Sales::Refunder テスト
+- [ ]* 34.3 Sales::Refunder テスト
   - refund メソッドテスト（取消、在庫復元、再販売、差額返金）
   - 全額返金テスト（全商品返品時、corrected_sale なし）
   - 既に取消済みの Sale に対する AlreadyVoidedError テスト
@@ -716,47 +693,47 @@
   - StaleObjectError テスト（楽観的ロック競合）
   - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.9, 14.11_
 
-- [ ]* 35.4 Sales::AnalysisCalculator テスト
+- [ ]* 34.4 Sales::AnalysisCalculator テスト
   - calculate_sma メソッドテスト
   - predict_additional_order メソッドテスト
   - _Requirements: 6.2, 6.4_
 
-- [ ]* 35.5 Reports::Generator テスト
+- [ ]* 34.5 Reports::Generator テスト
   - generate_daily_report メソッドテスト
   - generate_period_report メソッドテスト
   - _Requirements: 7.2, 7.4_
 
-- [ ]* 35.6 Catalogs::PriceValidator テスト
+- [ ]* 34.6 Catalogs::PriceValidator テスト
   - price_exists? メソッドテスト（正常系: 価格存在時は true）
   - price_exists? メソッドテスト（異常系: 価格未設定時は false）
   - find_price! メソッドテスト（価格未設定時に MissingPriceError）
   - catalogs_with_missing_prices メソッドテスト（管理画面用）
   - _Requirements: 16.1, 16.2, 17.1, 17.2_
 
-- [ ]* 35.7 Catalog::PricingRuleCreator テスト
+- [ ]* 34.7 Catalog::PricingRuleCreator テスト
   - create メソッドテスト（正常系: 価格存在時に作成成功）
   - create メソッドテスト（異常系: 価格未設定時に MissingPriceError）
   - update メソッドテスト（有効化時の価格検証）
   - update メソッドテスト（無効化時の検証スキップ）
   - _Requirements: 18.1, 18.2, 18.3, 18.5, 18.6, 18.7_
 
-- [ ] 36. コントローラーテスト実装
-- [x]* 36.1 LocationsController テスト
-  - CRUD アクションテスト（Admin/Employee 認証テスト含む）
+- [ ] 35. コントローラーテスト実装
+- [x]* 35.1 LocationsController テスト
+  - CRUD アクションテスト（認証テスト含む）
   - deactivate アクションテスト
   - バリデーションエラーテスト
   - _Requirements: 15.1, 15.2, 15.3, 15.4_
 
-- [ ]* 36.2 CatalogsController テスト
+- [ ]* 35.2 CatalogsController テスト
   - CRUD アクションテスト
   - CatalogDiscontinuation 作成テスト
   - _Requirements: 1.1, 1.2, 1.3_
 
-- [ ]* 36.3 DiscountsController テスト
+- [ ]* 35.3 DiscountsController テスト
   - CRUD アクションテスト
   - _Requirements: 12.1, 12.2_
 
-- [ ]* 36.4 SalesController テスト
+- [ ]* 35.4 SalesController テスト
   - create アクションテスト（Sales::Recorder 呼び出し: 販売記録、在庫減算、割引適用）
   - void アクションテスト（Sales::Refunder 呼び出し: 返品・返金処理）
   - トランザクションテスト
@@ -764,86 +741,85 @@
   - AlreadyVoidedError ハンドリングテスト
   - _Requirements: 3.1, 3.3, 3.4, 14.1, 14.2, 16.2, 16.3_
 
-- [ ]* 36.5 AdditionalOrdersController テスト
+- [ ]* 35.5 AdditionalOrdersController テスト
   - create アクションテスト（追加発注記録、在庫加算）
   - _Requirements: 5.1, 5.2_
 
-- [ ]* 36.6 DashboardController テスト
+- [ ]* 35.6 DashboardController テスト
   - index アクションテスト
   - JSON エンドポイントテスト
   - _Requirements: 7.1, 8.1_
 
-- [ ] 37. 統合テスト実装
-- [ ]* 37.1 販売フロー統合テスト
+- [ ] 36. 統合テスト実装
+- [ ]* 36.1 販売フロー統合テスト
   - 販売先選択 → 商品選択 → 価格計算 → 販売確定 → 在庫減算
   - クーポン適用 → 価格再計算
   - セット価格適用 → 価格再計算
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 12.8, 13.7_
 
-- [ ]* 37.2 返品・返金フロー統合テスト
+- [ ]* 36.2 返品・返金フロー統合テスト
   - Sales::Refunder 呼び出し: 販売取消 → 在庫復元 → 新規販売作成 → 返金額計算
   - 全商品返品 → 全額返金
   - 部分返品 → 価格ルール・クーポン再評価 → 差額返金
   - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.9, 14.11_
 
-- [ ]* 37.3 追加発注フロー統合テスト
+- [ ]* 36.3 追加発注フロー統合テスト
   - 追加発注記録 → 在庫加算
   - _Requirements: 5.1, 5.2_
 
-- [ ]* 37.4 価格未設定商品の会計エラーフロー統合テスト
+- [ ]* 36.4 価格未設定商品の会計エラーフロー統合テスト
   - 価格ルールに対応する CatalogPrice が存在しない商品をカートに追加
   - 会計確定 → Sales::PriceCalculator.calculate で MissingPriceError 発生
   - エラーメッセージ表示（商品名と価格種別を含む）、在庫減算なし
   - _Requirements: 16.1, 16.2, 16.3, 16.5, 16.6_
 
-- [ ]* 37.5 価格ルール作成・有効化時の価格検証統合テスト
+- [ ]* 36.5 価格ルール作成・有効化時の価格検証統合テスト
   - 価格が存在しない商品に対して価格ルールを作成 → エラー
   - 価格を追加後に価格ルールを作成 → 成功
   - 既存ルールを有効化（価格なし）→ エラー
   - _Requirements: 18.1, 18.2, 18.3, 18.6_
 
-- [ ] 38. E2E テスト実装（System tests）
-- [ ]* 38.1 POS 画面 E2E テスト
+- [ ] 37. E2E テスト実装（System tests）
+- [ ]* 37.1 POS 画面 E2E テスト
   - 販売先選択 → 商品選択 → クーポン入力 → 販売確定
   - スマホサイズでの操作確認
   - _Requirements: 3.1, 3.2, 3.3, 3.5_
 
-- [ ]* 38.2 Admin 画面 E2E テスト
+- [ ]* 37.2 管理画面 E2E テスト
   - 商品登録 → 在庫登録 → 販売実績確認
   - _Requirements: 1.1, 2.1, 7.1_
 
 ### Phase 19: Integration & Final Checks
 
-- [ ] 39. システム統合
-- [ ] 39.1 全機能統合確認
+- [ ] 38. システム統合
+- [ ] 38.1 全機能統合確認
   - Location, Catalog, Discount, DailyInventory, Sale, SaleItem, SaleDiscount, Refund, AdditionalOrder の連携確認
   - Sales::PriceCalculator の統合確認（価格存在検証を含む）
   - Sales::Recorder, Sales::Refunder の統合確認
   - _Requirements: 3.1, 3.2, 3.3, 3.4, 12.8, 13.7, 14.1, 14.2, 16.1, 16.4_
 
-- [ ] 39.2 データ整合性確認
+- [ ] 38.2 データ整合性確認
   - 在庫数の整合性（販売、返品、追加発注）
   - 販売金額の整合性（価格ルール、割引）
   - 返金額の整合性
   - _Requirements: 11.4, 11.5_
 
-- [ ] 39.3 パフォーマンス確認
+- [ ] 38.3 パフォーマンス確認
   - スロークエリの特定と最適化
   - キャッシュの有効性確認
   - N+1 クエリの検出と修正
   - _Requirements: 11.3, 11.4_
 
-- [ ] 40. セキュリティ確認
-- [ ] 40.1 (P) 認可チェック
-  - Admin のみ管理画面アクセス可能
-  - Employee は販売画面のみアクセス可能
-  - _Requirements: 9.9, 9.10_
+- [ ] 39. セキュリティ確認
+- [ ] 39.1 (P) 認証チェック
+  - 未認証ユーザーが保護されたページにアクセスするとログインページにリダイレクト
+  - _Requirements: 9.4_
 
-- [ ] 40.2 (P) CSRF 保護確認
+- [ ] 39.2 (P) CSRF 保護確認
   - form_with での CSRF トークン確認
   - _Requirements: 9.1_
 
-- [ ] 40.3 (P) SQL インジェクション対策確認
+- [ ] 39.3 (P) SQL インジェクション対策確認
   - ActiveRecord の prepared statement 確認
   - _Requirements: 11.1_
 
@@ -853,50 +829,58 @@
 
 全 18 の要件にマッピング済み:
 
-- **Requirement 1**: 弁当商品マスタ管理 → Tasks 4, 18.2, 23, 34.2, 36.2, 38.2
-- **Requirement 2**: 販売先ごとの在庫登録 → Tasks 6, 34.4（POS フロー内での在庫登録は Task 27.1 で実装済み）
-- **Requirement 3**: 販売記録（POS機能） → Tasks 7, 8, 19.1, 27, 31.1, 33.1, 34.5, 34.6, 35.2, 36.4, 37.1, 38.1
-- **Requirement 4**: リアルタイム在庫確認 → Tasks 27.1, 27.2, 31.2（POS画面に統合済み: 商品カードに在庫バッジ表示、ghost form による最新在庫取得）
-- **Requirement 5**: 追加発注記録 → Tasks 15, 19.2, 28, 34.8, 36.5, 37.3
-- **Requirement 6**: 販売データ分析 → Tasks 16, 20.2, 35.4
-- **Requirement 7**: 販売実績レポート → Tasks 17, 20.1, 30.1, 35.5, 36.6, 38.2
-- **Requirement 8**: 販売データ可視化 → Tasks 20.1, 30.2
-- **Requirement 9**: 認証と従業員管理 → Tasks 2, 18.4, 21, 25, 40
-- **Requirement 10**: レスポンシブデザイン → Tasks 33
-- **Requirement 11**: データ整合性とパフォーマンス → Tasks 1, 6, 32, 39.2, 39.3, 40
-- **Requirement 12**: 割引（クーポン）管理と適用 → Tasks 5, 9, 10.3, 18.3, 24, 27.2, 27.3, 31.1, 34.3, 36.3, 37.1
-- **Requirement 13**: サイドメニュー（サラダ）の条件付き価格設定 → Tasks 4.2, 4.3, 10.2, 23.1, 27.3, 31.1, 37.1
-- **Requirement 14**: 返品・返金処理（取消・再販売・差額返金） → Tasks 7, 13, 14, 19.1, 29, 34.5, 34.7, 35.3, 36.4, 37.2
-- **Requirement 15**: 販売先（ロケーション）管理 → Tasks 3, 6.1, 7.1, 15.1, 18.1, 22, 27.1, 34.1, 36.1
-- **Requirement 16**: 価格ルール適用時の価格存在検証 → Tasks 10.4, 11.1, 11.2, 11.4, 11.5, 27.4, 35.1, 35.2, 36.4, 37.4
-- **Requirement 17**: 管理画面での価格設定不備の警告表示 → Tasks 11.3, 26, 35.6
-- **Requirement 18**: 価格ルール作成・有効化時の価格存在バリデーション → Tasks 12, 35.7, 37.5
+- **Requirement 1**: 弁当商品マスタ管理 → Tasks 4, 18.2, 23, 33.2, 35.2, 37.2
+- **Requirement 2**: 販売先ごとの在庫登録 → Tasks 6, 33.4（POS フロー内での在庫登録は Task 26.1 で実装済み）
+- **Requirement 3**: 販売記録（POS機能） → Tasks 7, 8, 19.1, 26, 30.1, 32.1, 33.5, 33.6, 34.2, 35.4, 36.1, 37.1
+- **Requirement 4**: リアルタイム在庫確認 → Tasks 26.1, 26.2, 30.2（POS画面に統合済み: 商品カードに在庫バッジ表示、ghost form による最新在庫取得）
+- **Requirement 5**: 追加発注記録 → Tasks 15, 19.2, 27, 33.8, 35.5, 36.3
+- **Requirement 6**: 販売データ分析 → Tasks 16, 20.2, 34.4
+- **Requirement 7**: 販売実績レポート → Tasks 17, 20.1, 29.1, 34.5, 35.6, 37.2
+- **Requirement 8**: 販売データ可視化 → Tasks 20.1, 29.2
+- **Requirement 9**: 認証 → Tasks 2, 21, 39
+- **Requirement 10**: レスポンシブデザイン → Tasks 32
+- **Requirement 11**: データ整合性とパフォーマンス → Tasks 1, 6, 31, 38.2, 38.3, 39
+- **Requirement 12**: 割引（クーポン）管理と適用 → Tasks 5, 9, 10.3, 18.3, 24, 26.2, 26.3, 30.1, 33.3, 35.3, 36.1
+- **Requirement 13**: サイドメニュー（サラダ）の条件付き価格設定 → Tasks 4.2, 4.3, 10.2, 23.1, 26.3, 30.1, 36.1
+- **Requirement 14**: 返品・返金処理（取消・再販売・差額返金） → Tasks 7, 13, 14, 19.1, 28, 33.5, 33.7, 34.3, 35.4, 36.2
+- **Requirement 15**: 販売先（ロケーション）管理 → Tasks 3, 6.1, 7.1, 15.1, 18.1, 22, 26.1, 33.1, 35.1
+- **Requirement 16**: 価格ルール適用時の価格存在検証 → Tasks 10.4, 11.1, 11.2, 11.4, 11.5, 26.4, 34.1, 34.2, 35.4, 36.4
+- **Requirement 17**: 管理画面での価格設定不備の警告表示 → Tasks 11.3, 25, 34.6
+- **Requirement 18**: 価格ルール作成・有効化時の価格存在バリデーション → Tasks 12, 34.7, 36.5
 
 ---
 
 ## Task Summary
 
-- **総タスク数**: 40 major tasks, 125 sub-tasks
-- **並列実行可能タスク**: 39 tasks marked with `(P)`
-- **オプショナルテストタスク**: 29 tasks marked with `*` (deferrable post-MVP)
+- **総タスク数**: 39 major tasks, 108 sub-tasks
+- **並列実行可能タスク**: 36 tasks marked with `(P)`
+- **オプショナルテストタスク**: 27 tasks marked with `*` (deferrable post-MVP)
 - **平均タスクサイズ**: 1-3 hours per sub-task
 - **要件マッピング**: 18/18 requirements
 
-**変更履歴 (2026-01-28)**:
-- 旧 Task 18.4（独立 DailyInventoriesController）、旧 Task 25（DailyInventory 管理画面）、旧 Task 38.4（DailyInventoriesController テスト）を削除
-- Requirement 2 の AC 5（在庫一覧表示）と AC 6（販売先フィルタリング）が削除されたため
-- POS フロー内での在庫登録（Pos::Locations::DailyInventoriesController）は Task 27.1 で実装済み
-- タスク番号を 18.4 以降で繰り上げ（旧 18.5→18.4, 旧 26→25, 旧 27→26, 旧 28→27, ...旧 42→41）
-
-**変更履歴 (2026-01-28 追加)**:
-- 旧 Task 28（リアルタイム在庫確認画面）を削除
-- Requirement 4 の全 AC は POS 画面に統合済み（商品カードに在庫バッジ表示、ghost form による最新在庫取得、売り切れ視覚識別、販売先選択による切り替え）
-- タスク番号を旧 29→28, 旧 30→29, ...旧 41→40 に繰り上げ
+**変更履歴 (2026-02-01)**:
+- Requirement 9 の大幅簡素化に伴い、認証関連タスクを再構成:
+  - Task 2.1（Admin 認証セットアップ）を削除、Task 2.2（Employee 認証セットアップ）に統合
+  - Task 2.3（Employee 管理画面の認可制御）を削除
+  - 旧 Task 18.4（EmployeesController）を削除
+  - 旧 Task 25（Employee 管理画面）を削除
+  - 旧 Task 40.1（認可チェック）を簡素化（Admin/Employee の区別なし）
+- Employee の登録・編集・削除は Rails console で行う（管理画面は不要: Requirement 9.9）
+- タスク番号を 18.4 以降で繰り下げ調整
 
 **変更履歴 (2026-01-31)**:
 - Requirement 9 更新に伴い Task 2.1 を更新（認証方式を email → username に変更）
 - created_by_admin_id 関連を削除（Admin と Employee の関連削除）
 - Rodauth 設定: `login_column :username`, `require_email_address_logins? false`
+
+**変更履歴 (2026-01-28 追加)**:
+- 旧 Task 28（リアルタイム在庫確認画面）を削除
+- Requirement 4 の全 AC は POS 画面に統合済み（商品カードに在庫バッジ表示、ghost form による最新在庫取得、売り切れ視覚識別、販売先選択による切り替え）
+
+**変更履歴 (2026-01-28)**:
+- 旧 Task 18.4（独立 DailyInventoriesController）、旧 Task 25（DailyInventory 管理画面）、旧 Task 38.4（DailyInventoriesController テスト）を削除
+- Requirement 2 の AC 5（在庫一覧表示）と AC 6（販売先フィルタリング）が削除されたため
+- POS フロー内での在庫登録（Pos::Locations::DailyInventoriesController）は Task 26.1 で実装済み
 
 ---
 

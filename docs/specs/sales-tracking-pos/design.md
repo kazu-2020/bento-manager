@@ -9,7 +9,6 @@
 **ユーザー**:
 - **販売員**: 訪問販売先でスマホを使用してPOS機能、在庫確認、追加発注を実施
 - **オーナー**: PCで商品マスタ管理、在庫登録、販売実績レポート、データ可視化、返品・返金処理を実施
-- **システム管理者**: 従業員アカウント管理とシステムデバッグ
 
 **影響**: 現在の手動計算とアナログな在庫管理から、デジタル化されたPOSシステムへ移行。販売データの蓄積により、定量的な追加発注判断が可能になる。価格ルール(サラダのセット価格など)と返品・返金処理に対応。
 
@@ -32,6 +31,7 @@
 - 高度な在庫予測アルゴリズム(機械学習など)は初期フェーズでは対象外
 - 部分返金(行単位返金)は対象外(全体取消→再販売のみ)
 - Sale の部分編集は対象外(不変性を保つ)
+- Employee の管理画面(CRUD)は対象外(Rails console で管理)
 
 ## Architecture
 
@@ -55,7 +55,7 @@
   - Solid Suite (Solid Cache, Solid Queue, Solid Cable) によりインフラ依存を最小化
   - 37signals の実績あるパターン(Basecamp, HEY)
 - **ドメイン/機能境界**:
-  - **認証ドメイン**: Admin, Employee (Rodauth で管理)
+  - **認証ドメイン**: Employee (Rodauth で管理)
   - **カタログドメイン**: Catalog, CatalogPrice, CatalogPricingRule, CatalogDiscontinuation
   - **割引ドメイン**: Discount, Coupon, SaleDiscount (中間テーブル)
   - **在庫ドメイン**: DailyInventory (数量ベース方式: stock, reserved_stock)
@@ -96,7 +96,6 @@ graph TB
 
     subgraph Model[Model Layer]
         subgraph Auth[Authentication Domain]
-            Admin
             Employee
         end
 
@@ -168,7 +167,7 @@ graph TB
 | **Frontend Build** | Vite 7.3.0 | アセットビルド・HMR | 高速ビルド、モダンJS対応 |
 | **Frontend Framework** | Hotwire (Turbo 8.0.20 + Stimulus 3.2.2) | SPA的UX実現 | サーバー駆動、複雑性削減 |
 | **Styling** | Tailwind CSS 4.1.18 | レスポンシブUI | ユーティリティファースト、Vite統合 |
-| **Authentication** | Rodauth-Rails (latest) | 認証・セッション管理 | マルチアカウント対応、セキュア |
+| **Authentication** | Rodauth-Rails (latest) | 認証・セッション管理 | アカウント名認証、セキュア |
 | **Database** | SQLite3 | データ永続化 | マルチDB構成対応 (primary, cache, queue, cable) |
 | **Charting** | Chartkick + Chart.js (latest) | データ可視化 | Railsフレンドリー、JSONエンドポイント対応 |
 | **Real-time** | Turbo Streams + Solid Cable | 在庫リアルタイム更新 | WebSocket、インフラシンプル |
@@ -176,7 +175,7 @@ graph TB
 | **Concurrency Control** | Optimistic Locking (lock_version) | 在庫更新競合制御 | Rails標準機能、StaleObjectError |
 
 **選定理由の詳細**:
-- **Rodauth**: R1調査で確認。マルチアカウントタイプ対応が容易。
+- **Rodauth**: R1調査で確認。アカウント名認証対応（`login_column :username`）。
 - **Chartkick + Chart.js**: R2調査で確認。Rails統合が容易で、Viteとの相性が良い。
 - **Turbo Streams + Solid Cable**: R4調査で確認。Rails 8標準でインフラ複雑性を削減。
 - **Delegated Type**: R6調査で確認。37signalsの実績あるパターン。
@@ -185,7 +184,7 @@ graph TB
 - **Stored Fields**: R9調査で確認。販売記録は不変のため保存して読み取り速度最適化。
 - **Void/Refund Pattern**: R10調査で確認。取消→再販売パターンで監査トレイルを保持。
 
-詳細な技術調査は `research.md` の R1~R10 セクションを参照。
+詳細な技術調査は `research.md` の R1~R13 セクションを参照。
 
 ## System Flows
 
@@ -310,13 +309,13 @@ sequenceDiagram
 |-------------|---------|------------|------------|-------|
 | 1.1, 1.2, 1.3, 1.4, 1.5 | 弁当商品マスタ管理 | Catalog (category enum), CatalogPrice, CatalogPricingRule, CatalogsController | CatalogsController CRUD, CatalogPricesController | - |
 | 2.1, 2.2, 2.3, 2.4 | 販売日の在庫登録 | DailyInventory, Pos::Locations::DailyInventoriesController | POS フロー内での在庫登録（販売先選択時に未登録なら登録画面へ） | - |
-| 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7 | 販売記録 (POS機能) | Sale, SaleItem, DailyInventory, SalesController, pos_controller.js, Sales::PriceCalculator, CatalogPricingRule, Discount | SalesController#create, pos_controller.js | 販売フロー |
-| 4.1, 4.2, 4.3, 4.4 | リアルタイム在庫確認 | DailyInventory, Turbo Streams, Solid Cable, inventory_controller.js | broadcast_inventory_update, turbo_stream_from | 販売フロー |
+| 3.1, 3.2, 3.3, 3.4, 3.5, 3.6, 3.7, 3.8 | 販売記録 (POS機能) | Sale, SaleItem, DailyInventory, SalesController, pos_controller.js, Sales::PriceCalculator, CatalogPricingRule, Discount | SalesController#create, pos_controller.js | 販売フロー |
+| 4.1, 4.2, 4.3, 4.4, 4.5 | リアルタイム在庫確認 | DailyInventory, Turbo Streams, Solid Cable, inventory_controller.js | broadcast_inventory_update, turbo_stream_from | 販売フロー |
 | 5.1, 5.2, 5.3, 5.4, 5.5 | 追加発注記録 | AdditionalOrder, AdditionalOrdersController | AdditionalOrdersController#create | - |
 | 6.1, 6.2, 6.3, 6.4, 6.5 | 販売データ分析 | Sales::AnalysisCalculator, AdditionalOrdersController | predict_additional_order, calculate_sma | - |
 | 7.1, 7.2, 7.3, 7.4, 7.5 | 販売実績レポート | Reports::Generator, DashboardController | generate_daily_report, generate_period_report | - |
 | 8.1, 8.2, 8.3, 8.4, 8.5 | 販売データ可視化 | Chartkick, Chart.js, DashboardController | JSON endpoints | - |
-| 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15, 9.16, 9.17 | 認証とユーザー管理 | Admin, Employee, Rodauth, EmployeesController | Rodauth login/logout（アカウント名 + パスワード認証）, Employee CRUD（Admin のみアクセス可能、Employee は 403 エラー） | - |
+| 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9 | 認証 | Employee, Rodauth | Rodauth login/logout（アカウント名 + パスワード認証） | - |
 | 10.1, 10.2, 10.3, 10.4, 10.5 | レスポンシブデザイン | Tailwind CSS, Vite | Tailwind responsive classes | - |
 | 11.1, 11.2, 11.3, 11.4, 11.5 | データ整合性とパフォーマンス | DailyInventory (lock_version), Solid Cache, Indexes | Optimistic Locking, Transaction, Cache | 販売フロー |
 | 12.1, 12.2, 12.3, 12.4, 12.5, 12.6, 12.7, 12.8, 12.9 | 割引（クーポン）管理と適用 | Discount, Coupon, SaleDiscount, Sales::PriceCalculator, SalesController | Discount#applicable?, Coupon#calculate_discount, SaleDiscount (中間テーブル, quantity で枚数管理) | 販売フロー |
@@ -333,15 +332,14 @@ sequenceDiagram
 
 | Component | Domain/Layer | Intent | Req Coverage | Key Dependencies | Contracts |
 |-----------|--------------|--------|--------------|------------------|-----------|
-| Admin | Authentication | システム開発者アカウント（Rails console のみ、Employee 管理画面へのアクセス権限） | 9.1-9.17 | Rodauth (P0) | Service |
-| Employee | Authentication | 業務ユーザーアカウント（オーナー + 販売員、Employee 管理画面はアクセス不可） | 9.1-9.17 | Rodauth (P0), Admin (P0) | Service, API |
+| Employee | Authentication | 業務ユーザーアカウント（オーナー + 販売員、Rails console で管理） | 9.1-9.9 | Rodauth (P0) | Service |
 | Location | Location Domain | 販売先マスタ（配達状態管理: active/inactive） | 15.1-15.7 | - | Service |
 | Catalog | Catalog Domain | 商品カタログモデル（category enum） | 1.1-1.5, 13.1-13.8 | CatalogPrice, CatalogPricingRule (P0) | Service |
 | CatalogPrice | Catalog Domain | 価格管理（種別別: regular/bundle） | 1.1-1.5, 13.1-13.8 | Catalog (P0) | Service |
 | CatalogPricingRule | Catalog Domain | 価格ルール管理（セット価格適用条件） | 1.1-1.5, 13.1-13.8 | Catalog (P0) | Service |
-| Discount | Discount Domain | 割引抽象モデル（delegated_type） | 3.1-3.7, 12.1-12.9 | Coupon (P0) | Service |
-| Coupon | Discount Domain | クーポンマスタ（50円引き、弁当1個につき1枚） | 3.1-3.7, 12.1-12.9 | Discount (P0) | Service |
-| SaleDiscount | Sales Domain | 販売・割引中間テーブル（監査トレイル、複数割引対応） | 3.1-3.7, 12.1-12.9 | Sale (P0), Discount (P0) | - |
+| Discount | Discount Domain | 割引抽象モデル（delegated_type） | 3.1-3.8, 12.1-12.9 | Coupon (P0) | Service |
+| Coupon | Discount Domain | クーポンマスタ（50円引き、弁当1個につき1枚） | 3.1-3.8, 12.1-12.9 | Discount (P0) | Service |
+| SaleDiscount | Sales Domain | 販売・割引中間テーブル（監査トレイル、複数割引対応） | 3.1-3.8, 12.1-12.9 | Sale (P0), Discount (P0) | - |
 | DailyInventory | Inventory Domain | 販売先ごとの日次在庫管理（返品時に在庫復元） | 2.1-2.4, 3.1-3.8, 4.1-4.5, 14.1-14.12, 15.1-15.7 | Location (P0), Catalog (P0), Sale (P1) | Service, State |
 | Sale | Sales Domain | 販売記録（販売先ごと、void 対応、取消→再販売） | 3.1-3.8, 14.1-14.12, 15.1-15.7 | Location (P0), DailyInventory (P0), Discount (P1), SaleItem (P0) | API |
 | SaleItem | Sales Domain | 販売明細（単価確定、価格履歴管理、純粋データモデル） | 3.1-3.8, 13.1-13.8 | Sale (P0), Catalog (P0), CatalogPrice (P0) | Service |
@@ -395,65 +393,25 @@ sequenceDiagram
 
 ### Authentication Domain
 
-#### Admin
-
-| Field | Detail |
-|-------|--------|
-| Intent | システム開発者アカウント（デバッグ・運用サポート） |
-| Requirements | 9.1, 9.2, 9.8, 9.9, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15, 9.16, 9.17 |
-
-**Responsibilities & Constraints**
-- システム開発者のみのアカウント
-- Rails console でのみ作成・編集・削除（UI 不要）
-- Employee の CRUD 権限を持つ（EmployeesController へのアクセス）
-- 認可機能不要（すべての機能にアクセス可能）
-
-**Dependencies**
-- Outbound: Employee — Employee CRUD 操作 (P0)
-- External: Rodauth — 認証・セッション管理 (P0)
-
-**Contracts**: Service [x]
-
-**Service Interface**:
-```ruby
-class Admin < ApplicationRecord
-  include Rodauth::Rails.model # Rodauth 統合
-
-  validates :username, presence: true, uniqueness: true
-
-  # Rodauth によるパスワード管理（bcrypt ハッシュ化）
-end
-```
-
-**Implementation Notes**:
-- **Rails console のみ**: `Admin.create!(username: 'admin_account', password: '...')` で作成
-- **UI 不要**: Admin 用の CRUD コントローラーは実装しない
-- **認可不要**: Admin は全機能にアクセス可能（認可チェック不要）
-- **Rodauth 統合**: 共通ログイン画面で Admin と Employee を認証
-- **アカウント名認証**: username カラムでアカウント名を管理（メールアドレス不要）、`login_column :username` で設定
-- **将来的な拡張**: Admin 管理 UI が必要になった場合は `Admin::EmployeesController` を追加可能
-
----
-
 #### Employee
 
 | Field | Detail |
 |-------|--------|
 | Intent | 業務ユーザーアカウント（オーナー + 販売員） |
-| Requirements | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.10, 9.11, 9.12, 9.13, 9.14, 9.15, 9.16, 9.17 |
+| Requirements | 9.1, 9.2, 9.3, 9.4, 9.5, 9.6, 9.7, 9.8, 9.9 |
 
 **Responsibilities & Constraints**
 - オーナーと販売員を一律で扱う業務ユーザー
 - 機能的な区別なし（認可機能不要）
-- すべての業務機能にアクセス可能
+- すべての機能にアクセス可能
+- **管理画面（CRUD）は提供しない**: Rails console で管理
 
 **Dependencies**
-- Inbound: Admin — 作成・編集・削除操作 (P0)
 - External: Rodauth — 認証・セッション管理 (P0)
 - Outbound: Sale — 販売記録の作成者 (P1)
 - Outbound: AdditionalOrder — 追加発注の作成者 (P1)
 
-**Contracts**: Service [x], API [x]
+**Contracts**: Service [x]
 
 **Service Interface**:
 ```ruby
@@ -465,51 +423,19 @@ class Employee < ApplicationRecord
   has_many :voided_sales, class_name: 'Sale', foreign_key: 'voided_by_employee_id', dependent: :nullify
   has_many :refunds, dependent: :nullify
 
-  validates :username, presence: true, uniqueness: true
+  validates :username, presence: true, uniqueness: { case_sensitive: false }
 
   # Rodauth によるパスワード管理（bcrypt ハッシュ化）
 end
 ```
 
-**API Contract**:
-
-| Method | Endpoint | Request | Response | Errors |
-|--------|----------|---------|----------|--------|
-| GET | /employees | - | Employee[] | 401, 500 |
-| GET | /employees/:id | - | Employee | 404, 500 |
-| POST | /employees | CreateEmployeeRequest | Employee | 400, 422, 500 |
-| PATCH | /employees/:id | UpdateEmployeeRequest | Employee | 400, 404, 422, 500 |
-| DELETE | /employees/:id | - | - | 404, 500 |
-
-**CreateEmployeeRequest**:
-```ruby
-{
-  employee: {
-    username: String,
-    password: String
-  }
-}
-```
-
-**UpdateEmployeeRequest**:
-```ruby
-{
-  employee: {
-    username: String (optional),
-    password: String (optional)
-  }
-}
-```
-
 **Implementation Notes**:
-- **Admin のみ CRUD 可能**: EmployeesController へのアクセスは Admin のみに制限（`before_action :require_admin_authentication`）
-- **認可制御実装**: rodauth-rails の公式機能を使用
-  - `rodauth(:employee).logged_in?` で Employee ログイン判定 → 403 エラー
-  - `rodauth(:admin).require_account` で Admin 認証を強制 → 未認証時はログインページにリダイレクト
-- **業務機能は認可不要**: Employee はすべての業務機能（POS、在庫、レポートなど）にアクセス可能（権限チェック不要）
-- **Rodauth 統合**: 共通ログイン画面で Admin と Employee を認証（複数アカウント設定: `:admin`, `:employee`）
-- **アカウント名認証**: username カラムでアカウント名を管理（メールアドレス不要）、`login_column :username` と `require_email_address_logins? false` で設定
-- **エラーハンドリング**: Employee が Employee管理画面にアクセスすると 403 Forbidden を返す
+- **Rails console のみで管理**: `Employee.create!(username: 'employee_account', password: '...')` で作成
+- **管理画面は不要**: Employee 用の CRUD コントローラーは実装しない（Requirement 9.9）
+- **認可不要**: Employee は全機能にアクセス可能（権限チェック不要）
+- **Rodauth 統合**: ログイン画面で Employee を認証
+- **アカウント名認証**: username カラムでアカウント名を管理（メールアドレス不要）、`login_column :username` で設定
+- **大文字小文字を区別しない一意制約**: username カラムに `COLLATE NOCASE` を設定（SQLite）
 - **将来的な拡張**: オーナーと販売員を区別する role フィールド追加が容易
 
 ---
@@ -1045,12 +971,6 @@ end
 
 ```mermaid
 erDiagram
-    Admin ||--o{ Employee : manages
-    Admin {
-        int id PK
-        string username UK            "account name for authentication"
-        string password_hash
-    }
     Employee {
         int id PK
         string username UK            "account name for authentication"
@@ -1239,7 +1159,7 @@ erDiagram
 **For Relational Databases (SQLite3)**:
 
 主要なテーブル:
-- `admins`, `employees`: Rodauth認証（username カラムでアカウント名認証、メールアドレス不要）
+- `employees`: Rodauth認証（username カラムでアカウント名認証、メールアドレス不要、COLLATE NOCASE で大文字小文字を区別しない一意制約）
 - `locations`: 販売先マスタ（name, status: active/inactive）
 - `catalogs`: category enum（bento | side_menu）で商品種別を管理
 - `discounts`: delegated_type 抽象モデル（discountable_type, discountable_id, name, valid_from, valid_until）
@@ -1254,6 +1174,7 @@ erDiagram
 - `additional_orders`: 追加発注（location_id, catalog_id, order_at, quantity）
 
 **テーブル設計の特徴**:
+- **Employee**: アカウント名認証（username カラム、COLLATE NOCASE で大文字小文字を区別しない）、Rails console で管理
 - **Location**: 状態管理パターン（status: active/inactive）、販売先マスタ（Requirement 15.3 の「論理削除」は status を inactive に変更することで実現）
 - **Discount**: delegated_type パターンで抽象化（常に固定額、discount_type/discount_value は不要）
 - **Coupon**: クーポンマスタ（amount_per_unit: 50円）
@@ -1268,6 +1189,7 @@ erDiagram
 - **責務分離**: Location は販売先管理、DailyInventory は販売先ごとの在庫数管理、Sale は販売先ごとの販売記録、SaleItem は販売明細、SaleDiscount は割引適用、Refund は返金記録を担当
 
 **Index Definitions**:
+- `idx_employees_username` (UNIQUE: username COLLATE NOCASE)
 - `idx_locations_name` (INDEX: name)
 - `idx_daily_inventories_location_catalog_date` (UNIQUE: location_id, catalog_id, inventory_date)
 - `idx_daily_inventories_location` (INDEX: location_id)
@@ -1377,8 +1299,7 @@ erDiagram
 
 ### Security Considerations
 
-- **Authentication**: Rodauth によるパスワードハッシュ化、セッション管理
-- **Authorization**: Admin のみが Employee CRUD を実行可能
+- **Authentication**: Rodauth によるパスワードハッシュ化、セッション管理（アカウント名認証）
 - **Data Protection**: パスワードは bcrypt でハッシュ化、HTTPS 通信
 - **CSRF Protection**: Rails 標準の CSRF トークン
 - **XSS Prevention**: ERB の自動エスケープ
@@ -1397,20 +1318,19 @@ erDiagram
 
 ### Migration Strategy
 
-本機能は新規実装のため、マイグレーション戦略は不要。ただし、Phase 1~7 の段階的実装を推奨:
+本機能は新規実装のため、マイグレーション戦略は不要。ただし、Phase 1~6 の段階的実装を推奨:
 
-**Phase 1: 基盤構築** → Rodauth, モデル, 基本CRUD
+**Phase 1: 基盤構築** → Rodauth (Employee のみ), モデル, 基本CRUD
 **Phase 2: POS機能** → 販売記録, 価格ルール適用, 割引適用
 **Phase 3: リアルタイム在庫** → Turbo Streams, 追加発注
 **Phase 4: 返品・返金処理** → Void 処理, Refund 記録
 **Phase 5: データ分析** → Sales::AnalysisCalculator, Reports::Generator
-**Phase 6: データ可視化** → Chartkick, ダッシュボード
-**Phase 7: 最適化・テスト・デプロイ** → パフォーマンステスト, セキュリティ監査, Kamalデプロイ
+**Phase 6: データ可視化・最適化・デプロイ** → Chartkick, ダッシュボード, パフォーマンステスト, Kamalデプロイ
 
 各フェーズの詳細なタスクは `/kiro:spec-tasks sales-tracking-pos` で生成。
 
 ---
 
-**設計完了日**: 2026-01-31
+**設計完了日**: 2026-02-01
 **次のステップ**: タスク分解 (`/kiro:spec-tasks sales-tracking-pos`)
 **調査ログ**: `research.md` に詳細な技術調査とアーキテクチャ決定を記録
