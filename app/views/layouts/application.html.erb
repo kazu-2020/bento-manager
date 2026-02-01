@@ -2,6 +2,7 @@
 <html data-theme="bumblebee">
   <head>
     <%= render "shared/head" %>
+    <%= Sentry.get_trace_propagation_meta.html_safe %>
   </head>
 
   <body class="min-h-screen bg-base-200">
