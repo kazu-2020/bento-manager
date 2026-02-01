@@ -61,6 +61,7 @@ class EmployeeTest < ActiveSupport::TestCase
     # フィクスチャのverified_employeeと同じアカウント名で作成を試みる
     duplicate_employee = Employee.new(
       username: "employee",
+      password: "password",
       status: :verified
     )
     assert_not duplicate_employee.valid?, "Should not allow duplicate username for verified accounts"
@@ -100,9 +101,11 @@ class EmployeeTest < ActiveSupport::TestCase
     # 大文字小文字が異なるアカウント名で作成を試みる
     case_variant_employee = Employee.new(
       username: "EMPLOYEE",
+      password: "password",
       status: :verified
     )
     # Railsのuniqueness validationでcase_sensitive: falseを指定
     assert_not case_variant_employee.valid?, "Username uniqueness should be case insensitive"
+    assert_includes case_variant_employee.errors[:username], "はすでに存在します"
   end
 end
