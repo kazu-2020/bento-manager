@@ -16,13 +16,17 @@ class NavbarComponentTest < ViewComponent::TestCase
     assert result.css("svg").present?
   end
 
-  def test_renders_user_menu
+  def test_renders_app_title
     result = render_inline(Navbar::Component.new)
 
-    assert result.css(".dropdown").present?
-    assert_includes result.to_html, "プロフィール"
-    assert_includes result.to_html, "設定"
-    assert_includes result.to_html, "ログアウト"
+    assert_includes result.to_html, "弁当販売管理"
+  end
+
+  def test_hides_logout_menu_when_not_logged_in
+    result = render_inline(Navbar::Component.new)
+
+    # ログインしていない場合はログアウトメニューが表示されない
+    assert_not result.css(".dropdown").present?
   end
 
   def test_uses_custom_drawer_id

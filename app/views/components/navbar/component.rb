@@ -14,6 +14,8 @@ module Navbar
       elsif helpers.rodauth(:employee).logged_in?
         helpers.rodauth(:employee).logout_path
       end
+    rescue KeyError
+      nil
     end
   end
 end

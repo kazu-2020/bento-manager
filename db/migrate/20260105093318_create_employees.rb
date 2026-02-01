@@ -8,7 +8,7 @@ class CreateEmployees < ActiveRecord::Migration[8.1]
       # Default status is 1 (unverified). When Admin creates an employee,
       # the status should be explicitly set to 2 (verified) during creation.
       t.integer :status, null: false, default: 1
-      t.string :username, null: false, comment: "アカウント名（英数字とアンダースコアのみ）"
+      t.string :username, null: false, collation: "NOCASE", comment: "アカウント名（英数字とアンダースコアのみ、大文字小文字区別なし）"
       # Partial unique index: allows duplicate usernames for closed accounts (status=3)
       t.index :username, unique: true, where: "status IN (1, 2)"
       # bcrypt password hash

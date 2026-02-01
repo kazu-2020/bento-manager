@@ -7,7 +7,7 @@ class CreateRodauth < ActiveRecord::Migration[8.1]
     create_table :admins do |t|
       # Default status is 1 (unverified), but admins are created directly as verified via console
       t.integer :status, null: false, default: 1
-      t.string :username, null: false, comment: "アカウント名（英数字とアンダースコアのみ）"
+      t.string :username, null: false, collation: "NOCASE", comment: "アカウント名（英数字とアンダースコアのみ、大文字小文字区別なし）"
       # Partial unique index: allows duplicate usernames for closed accounts (status=3)
       t.index :username, unique: true, where: "status IN (1, 2)"
       # bcrypt password hash
