@@ -1,7 +1,7 @@
 <%# 戻るリンク（左上） %>
 <nav class="mb-4">
   <%= link_to back_path, class: "inline-flex items-center gap-1 text-sm text-base-content/70 hover:text-base-content transition-colors" do %>
-    <%= component "icons/arrow_left", size: :sm %>
+    <%= helpers.icon"arrow_left", size: :sm %>
     <%= t(".back_to_list") %>
   <% end %>
 </nav>
@@ -9,7 +9,7 @@
 <%# ヘッダーセクション: タイトル + ステータス + ケバブメニュー %>
 <header class="flex items-center justify-between mb-6">
   <div class="flex items-center gap-3">
-    <%= component "icons/#{category_icon}", size: :lg, extra_class: "text-primary" %>
+    <%= helpers.icon category_icon, size: :lg, extra_class: "text-primary" %>
     <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
     <%= component "catalog_status_badge", catalog: catalog %>
   </div>
@@ -18,12 +18,12 @@
     <%# ケバブメニュー %>
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost btn-sm btn-square">
-        <%= component "icons/kebab", size: :md %>
+        <%= helpers.icon"kebab", size: :md %>
       </div>
       <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box z-10 w-48 p-2 shadow-lg border">
         <li>
           <%= link_to new_discontinuation_path, data: { turbo_stream: true } do %>
-            <%= component "icons/stop", size: :sm, extra_class: "text-error" %>
+            <%= helpers.icon"stop", size: :sm, extra_class: "text-error" %>
             <span class="text-error"><%= t(".discontinue") %></span>
           <% end %>
         </li>

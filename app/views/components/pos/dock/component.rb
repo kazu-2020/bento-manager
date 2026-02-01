@@ -13,19 +13,19 @@ module Pos
       def items
         [
           {
-            icon: "icons/shopping_cart",
+            icon: "shopping_cart",
             label: t(".sales"),
             path: helpers.new_pos_location_sale_path(location),
             active_pattern: %r{/sales/new}
           },
           {
-            icon: "icons/clipboard_list",
+            icon: "clipboard_list",
             label: t(".history"),
             path: helpers.pos_location_sales_history_index_path(location),
             active_pattern: %r{/sales_history|/refunds}
           },
           {
-            icon: "icons/truck",
+            icon: "truck",
             label: t(".orders"),
             path: helpers.pos_location_additional_orders_path(location),
             active_pattern: %r{/additional_orders}

@@ -1,7 +1,7 @@
 <div class="navbar bg-base-200 sticky top-0 z-50 backdrop-blur-sm bg-opacity-95">
   <div class="flex-none lg:hidden">
     <label for="<%= drawer_id %>" aria-label="メニューを開く" class="btn btn-square btn-ghost">
-      <%= component "icons/menu", size: :lg, extra_class: "inline-block stroke-current" %>
+      <%= helpers.icon "menu", size: :lg %>
     </label>
   </div>
 
@@ -14,7 +14,7 @@
   <% if logout_path.present? %>
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
-        <%= component "icons/settings", size: :lg %>
+        <%= helpers.icon "settings", size: :lg %>
       </div>
       <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-40 p-2 shadow-lg border border-base-200">
         <li>

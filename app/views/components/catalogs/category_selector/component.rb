@@ -16,13 +16,13 @@ module Catalogs
           {
             key: "bento",
             name: I18n.t("enums.catalog.category.bento"),
-            icon: "icons/bento",
+            icon: "bento",
             description: I18n.t("catalogs.new.category.bento.description")
           },
           {
             key: "side_menu",
             name: I18n.t("enums.catalog.category.side_menu"),
-            icon: "icons/side_dish",
+            icon: "side_dish",
             description: I18n.t("catalogs.new.category.side_menu.description")
           }
         ]

@@ -40,7 +40,7 @@
     <% else %>
       <%# ルールなし時の空状態 %>
       <div class="text-center py-6 text-base-content/50">
-        <%= component "icons/catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50", stroke_width: 1 %>
+        <%= helpers.icon "catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50" %>
         <p class="text-sm"><%= t(".no_rules") %></p>
       </div>
     <% end %>

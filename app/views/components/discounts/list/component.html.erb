@@ -1,6 +1,6 @@
 <% if empty? %>
   <div class="text-center py-16 text-base-content/60">
-    <%= component "icons/ticket", extra_class: "h-16 w-16 mx-auto mb-4 opacity-40", stroke_width: 1 %>
+    <%= helpers.icon "ticket", extra_class: "h-16 w-16 mx-auto mb-4 opacity-40" %>
     <p class="text-lg font-medium mb-2"><%= t(".empty_message") %></p>
     <p class="text-sm text-base-content/50"><%= t(".empty_hint") %></p>
   </div>

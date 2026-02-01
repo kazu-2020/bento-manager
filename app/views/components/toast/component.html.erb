@@ -3,11 +3,11 @@
      aria-live="polite"
      data-controller="toast"
      data-toast-duration-value="5000">
-  <%= component icon_name, size: :md, extra_class: "shrink-0" %>
+  <%= helpers.icon icon_name, size: :md, extra_class: "shrink-0" %>
   <span><%= message %></span>
   <% if dismissible %>
     <button type="button" class="btn btn-ghost btn-xs btn-circle" aria-label="閉じる" data-action="toast#dismiss">
-      <%= component "icons/close", size: :sm %>
+      <%= helpers.icon"close", size: :sm %>
     </button>
   <% end %>
 </div>

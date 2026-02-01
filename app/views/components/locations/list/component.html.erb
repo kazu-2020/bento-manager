@@ -1,6 +1,6 @@
 <% if empty? %>
   <div class="text-center py-12 text-base-content/60">
-    <%= component "icons/location", extra_class: "h-12 w-12 mx-auto mb-4 opacity-50", stroke_width: 1 %>
+    <%= helpers.icon "location", extra_class: "h-12 w-12 mx-auto mb-4 opacity-50" %>
     <p><%= t(".empty_message") %></p>
   </div>
 <% else %>

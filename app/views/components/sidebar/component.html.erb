@@ -14,7 +14,7 @@
     </li>
     <li>
       <%= link_to home_item.path, class: menu_item_class(home_item) do %>
-        <%= component "icons/#{home_item.icon}" %>
+        <%= helpers.icon home_item.icon %>
         <span><%= home_item.label %></span>
       <% end %>
     </li>
@@ -25,7 +25,7 @@
     <% admin_items.each do |item| %>
       <li>
         <%= link_to item.path, class: menu_item_class(item) do %>
-          <%= component "icons/#{item.icon}" %>
+          <%= helpers.icon item.icon %>
           <span><%= item.label %></span>
         <% end %>
       </li>

@@ -16,7 +16,7 @@
               class="btn btn-circle btn-outline btn-sm"
               aria-label="<%= t('.decrement') %>"
               data-action="quantity-stepper#decrement">
-        <%= component "icons/minus", extra_class: "h-4 w-4" %>
+        <%= helpers.icon "minus", extra_class: "h-4 w-4" %>
       </button>
 
       <%= number_field_tag quantity_field_name, refund_quantity,
@@ -34,7 +34,7 @@
               class="btn btn-circle btn-outline btn-sm"
               aria-label="<%= t('.increment') %>"
               data-action="quantity-stepper#increment">
-        <%= component "icons/plus", extra_class: "h-4 w-4" %>
+        <%= helpers.icon "plus", extra_class: "h-4 w-4" %>
       </button>
 
       <span class="text-sm"><%= t(".unit") %></span>

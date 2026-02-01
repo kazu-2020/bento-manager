@@ -5,7 +5,7 @@
       <div class="px-4 py-3">
         <div class="flex items-center gap-3">
           <%= link_to back_url, class: "btn btn-ghost btn-sm btn-circle" do %>
-            <%= component "icons/arrow_left", extra_class: "h-5 w-5" %>
+            <%= helpers.icon "arrow_left", extra_class: "h-5 w-5" %>
           <% end %>
           <div class="flex-1">
             <h1 class="text-lg font-bold"><%= location_name %> <%= t(".title_suffix") %></h1>
@@ -58,7 +58,7 @@
         <main class="flex-1 p-4 pb-24">
           <p class="text-center text-base-content/70 mb-6"><%= t(".instruction") %></p>
           <div class="text-center py-12 text-base-content/60">
-            <%= component "icons/bento", extra_class: "h-12 w-12 mx-auto mb-4 opacity-50" %>
+            <%= helpers.icon "bento", extra_class: "h-12 w-12 mx-auto mb-4 opacity-50" %>
             <p><%= t(".no_catalogs") %></p>
           </div>
         </main>

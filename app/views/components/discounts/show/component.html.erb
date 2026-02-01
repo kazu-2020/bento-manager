@@ -1,7 +1,7 @@
 <%# 戻るリンク（左上） %>
 <nav class="mb-4">
   <%= link_to back_path, class: "inline-flex items-center gap-1 text-sm text-base-content/70 hover:text-base-content transition-colors" do %>
-    <%= component "icons/arrow_left", size: :sm %>
+    <%= helpers.icon "arrow_left", size: :sm %>
     <%= t(".back_to_list") %>
   <% end %>
 </nav>
@@ -10,7 +10,7 @@
 <%= helpers.turbo_frame_tag header_frame_id do %>
   <header class="flex items-center justify-between mb-6">
     <div class="flex items-center gap-3">
-      <%= component "icons/ticket", size: :lg, extra_class: "text-primary" %>
+      <%= helpers.icon "ticket", size: :lg, extra_class: "text-primary" %>
       <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
       <%= component "discounts/status_badge", status: status %>
     </div>
