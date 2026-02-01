@@ -14,37 +14,8 @@ module ActiveSupport
   end
 end
 
-# Admin authentication test helpers (for integration tests)
+# Employee authentication test helpers (for integration tests)
 class ActionDispatch::IntegrationTest
-  # Login as an admin user
-  # @param admin [Admin, Symbol] Admin object or fixture name (e.g., :verified_admin)
-  # @param password [String] Password to use for login (default: "password")
-  # @return [void]
-  #
-  # Example:
-  #   login_as(:verified_admin)
-  #   login_as(admins(:verified_admin))
-  #   login_as(admin, password: "custom_password")
-  def login_as(admin, password: "password")
-    admin_username = admin.is_a?(Symbol) ? admins(admin).username : admin.username
-    post "/admin/login", params: {
-      username: admin_username,
-      password: password
-    }
-    assert_response :redirect, "Failed to login as #{admin_username}"
-    follow_redirect!
-  end
-
-  # Check if currently logged in as an admin
-  # @return [Boolean] true if logged in, false otherwise
-  #
-  # Example:
-  #   assert logged_in?
-  #   assert_not logged_in?
-  def logged_in?
-    session[:admin_account_id].present?
-  end
-
   # Login as an employee user
   # @param employee [Employee, Symbol] Employee object or fixture name (e.g., :verified_employee)
   # @param password [String] Password to use for login (default: "password")

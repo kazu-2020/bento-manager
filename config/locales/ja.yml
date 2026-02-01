@@ -6,7 +6,6 @@ ja:
       button: "ログアウト"
       success: "ログアウトしました"
     login:
-      admin_title: "管理者ログイン"
       employee_title: "従業員ログイン"
       button: "ログイン"
       error: "アカウント名またはパスワードが正しくありません"
@@ -68,7 +67,6 @@ ja:
 
   activerecord:
     models:
-      admin: "管理者"
       employee: "従業員"
       location: "販売先"
       catalog: "商品カタログ"
@@ -83,9 +81,6 @@ ja:
       coupon: "クーポン"
       refund: "返金処理"
     attributes:
-      admin:
-        username: "アカウント名"
-        status: "ステータス"
       employee:
         username: "アカウント名"
         status: "ステータス"
@@ -165,11 +160,6 @@ ja:
         amount_per_unit: "1枚あたりの割引額"
 
   enums:
-    admin:
-      status:
-        unverified: "未認証"
-        verified: "認証済み"
-        closed: "閉鎖"
     employee:
       status:
         unverified: "未認証"

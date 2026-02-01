@@ -60,7 +60,6 @@ end
 
 | テストファイル | フィクスチャ |
 |---------------|-------------|
-| admin_test.rb | `:admins` |
 | employee_test.rb | `:employees` |
 | location_test.rb | なし |
 | catalog_test.rb | `:catalogs` |
@@ -77,15 +76,13 @@ end
 | refund_test.rb | `:locations, :employees, :catalogs, :catalog_prices, :daily_inventories, :sales, :sale_items` |
 | catalogs/price_validator_test.rb | `:catalogs, :catalog_prices, :catalog_pricing_rules` |
 | catalogs/pricing_rule_creator_test.rb | `:catalogs, :catalog_prices, :catalog_pricing_rules` |
-| admin_authentication_test.rb | `:admins` |
 | employee_authentication_test.rb | `:employees` |
-| error_handling_test.rb | `:admins, :employees` |
-| employees_controller_test.rb | `:admins, :employees` |
+| error_handling_test.rb | `:employees` |
 
 ### フィクスチャ設計ガイドライン
 
 - **最小限のレコード**: 各フィクスチャには必要最小限のレコードを定義
-- **意図を表す名前**: `verified_admin`, `city_hall_bento_a_today` など
+- **意図を表す名前**: `verified_employee`, `city_hall_bento_a_today` など
 - **外部キー参照**: `<%= ActiveRecord::FixtureSet.identify(:reference_name) %>`
 - **動的値**: ERB タグで日付やパスワードハッシュを生成
 
@@ -105,9 +102,6 @@ daily_bento_a_regular:
 
 ```ruby
 # test_helper.rb で定義済み
-login_as(:verified_admin)              # シンボルで指定
-login_as(admins(:verified_admin))      # オブジェクトで指定
-
 login_as_employee(:verified_employee)
 login_as_employee(employee, password: "custom")
 ```
@@ -287,4 +281,4 @@ end
 ---
 _フィクスチャの明示的宣言により、各テストの依存関係が明確になり、認知負荷が軽減される。_
 
-_updated_at: 2026-01-11_
+_updated_at: 2026-02-01_

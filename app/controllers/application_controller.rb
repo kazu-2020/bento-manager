@@ -36,7 +36,7 @@ class ApplicationController < ActionController::Base
   private
 
   def require_authentication
-    return if rodauth(:admin).logged_in? || rodauth(:employee).logged_in?
+    return if rodauth(:employee).logged_in?
 
     flash[:error] = I18n.t("custom_errors.controllers.require_authentication")
     redirect_to rodauth(:employee).login_path

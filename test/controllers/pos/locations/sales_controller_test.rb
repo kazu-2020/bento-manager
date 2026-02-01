@@ -5,10 +5,9 @@ require "test_helper"
 module Pos
   module Locations
     class SalesControllerTest < ActionDispatch::IntegrationTest
-      fixtures :admins, :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules, :daily_inventories, :discounts, :coupons
+      fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules, :daily_inventories, :discounts, :coupons
 
       setup do
-        @admin = admins(:verified_admin)
         @employee = employees(:verified_employee)
         @location = locations(:city_hall)
         @bento_a = catalogs(:daily_bento_a)
@@ -20,7 +19,7 @@ module Pos
       # ============================================================
 
       test "admin can access new page" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get new_pos_location_sale_path(@location)
         assert_response :success
       end
@@ -37,21 +36,21 @@ module Pos
       end
 
       test "new redirects to daily inventory page when no inventories" do
-        login_as(@admin)
+        login_as_employee(@employee)
         location = Location.create!(name: "在庫なし店舗", status: :active)
         get new_pos_location_sale_path(location)
         assert_redirected_to new_pos_location_daily_inventory_path(location)
       end
 
       test "new returns 404 for inactive location" do
-        login_as(@admin)
+        login_as_employee(@employee)
         inactive_location = locations(:prefectural_office)
         get new_pos_location_sale_path(inactive_location)
         assert_response :not_found
       end
 
       test "new returns 404 for non-existent location" do
-        login_as(@admin)
+        login_as_employee(@employee)
         get new_pos_location_sale_path(location_id: 999999)
         assert_response :not_found
       end
@@ -61,7 +60,7 @@ module Pos
       # ============================================================
 
       test "admin can create a sale with bento" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_difference "Sale.count", 1 do
           assert_difference "SaleItem.count" do
@@ -97,7 +96,7 @@ module Pos
       end
 
       test "create decrements inventory stock" do
-        login_as(@admin)
+        login_as_employee(@employee)
         inventory = daily_inventories(:city_hall_bento_a_today)
 
         assert_difference -> { inventory.reload.stock }, -2 do
@@ -112,7 +111,7 @@ module Pos
       end
 
       test "create with bento and salad applies bundle price" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         post pos_location_sales_path(@location),
              params: {
@@ -130,7 +129,7 @@ module Pos
       end
 
       test "create with discount applied" do
-        login_as(@admin)
+        login_as_employee(@employee)
         discount = discounts(:fifty_yen_discount)
 
         post pos_location_sales_path(@location),
@@ -149,7 +148,7 @@ module Pos
       end
 
       test "create defaults to citizen when customer_type is omitted" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_difference "Sale.count", 1 do
           post pos_location_sales_path(@location),
@@ -165,7 +164,7 @@ module Pos
       end
 
       test "create fails without items in cart" do
-        login_as(@admin)
+        login_as_employee(@employee)
 
         assert_no_difference "Sale.count" do
           post pos_location_sales_path(@location),
@@ -180,7 +179,7 @@ module Pos
       end
 
       test "create fails with insufficient stock" do
-        login_as(@admin)
+        login_as_employee(@employee)
         inventory = daily_inventories(:city_hall_bento_a_today)
 
         assert_no_difference "Sale.count" do

@@ -3,10 +3,9 @@
 require "test_helper"
 
 class LocationsControllerTest < ActionDispatch::IntegrationTest
-  fixtures :admins, :employees, :locations
+  fixtures :employees, :locations
 
   setup do
-    @admin = admins(:verified_admin)
     @employee = employees(:verified_employee)
     @location = locations(:city_hall)
     @inactive_location = locations(:prefectural_office)
@@ -17,25 +16,25 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "admin can access index" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get locations_path
     assert_response :success
   end
 
   test "admin can access show" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get location_path(@location)
     assert_response :success
   end
 
   test "admin can access new" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get new_location_path, as: :turbo_stream
     assert_response :success
   end
 
   test "admin can create location" do
-    login_as(@admin)
+    login_as_employee(@employee)
     assert_difference("Location.count") do
       post locations_path, params: {
         location: {
@@ -47,13 +46,13 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "admin can access edit" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get edit_location_path(@location)
     assert_response :success
   end
 
   test "admin can update location" do
-    login_as(@admin)
+    login_as_employee(@employee)
     patch location_path(@location), params: {
       location: { name: "更新された販売先名" }
     }, as: :turbo_stream
@@ -160,7 +159,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "create with invalid params renders new with unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     assert_no_difference("Location.count") do
       post locations_path, params: { location: { name: "" } }, as: :turbo_stream
     end
@@ -168,7 +167,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update with invalid params renders edit with unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     original_name = @location.name
     patch location_path(@location), params: { location: { name: "" } }, as: :turbo_stream
     assert_response :unprocessable_entity

@@ -3,10 +3,9 @@
 require "test_helper"
 
 class DiscountsControllerTest < ActionDispatch::IntegrationTest
-  fixtures :admins, :employees, :discounts, :coupons
+  fixtures :employees, :discounts, :coupons
 
   setup do
-    @admin = admins(:verified_admin)
     @employee = employees(:verified_employee)
     @discount = discounts(:fifty_yen_discount)
     @expired_discount = discounts(:expired_discount)
@@ -17,25 +16,25 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "admin can access index" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get discounts_path
     assert_response :success
   end
 
   test "admin can access show" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get discount_path(@discount)
     assert_response :success
   end
 
   test "admin can access new" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get new_discount_path, as: :turbo_stream
     assert_response :success
   end
 
   test "admin can create discount" do
-    login_as(@admin)
+    login_as_employee(@employee)
     assert_difference("Discount.count") do
       assert_difference("Coupon.count") do
         post discounts_path, params: {
@@ -56,14 +55,14 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "admin can access edit" do
-    login_as(@admin)
+    login_as_employee(@employee)
     get edit_discount_path(@discount)
     assert_response :success
   end
 
   # 有効期間のみ編集可能（名前・クーポン情報は新規作成で対応）
   test "admin can update discount validity period" do
-    login_as(@admin)
+    login_as_employee(@employee)
     new_valid_from = Date.current + 1.week
     new_valid_until = Date.current + 1.month
     patch discount_path(@discount), params: {
@@ -76,7 +75,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "admin cannot update discount name" do
-    login_as(@admin)
+    login_as_employee(@employee)
     original_name = @discount.name
     patch discount_path(@discount), params: {
       discount: { name: "更新されたクーポン名" }
@@ -87,7 +86,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "admin cannot update coupon info" do
-    login_as(@admin)
+    login_as_employee(@employee)
     original_description = @discount.discountable.description
     original_amount = @discount.discountable.amount_per_unit
     patch discount_path(@discount), params: {
@@ -213,7 +212,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
 
   test "create with blank name renders new with unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     assert_no_difference("Discount.count") do
       post discounts_path, params: {
         discount: {
@@ -230,7 +229,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "update with invalid date range renders edit with unprocessable_entity" do
-    login_as(@admin)
+    login_as_employee(@employee)
     original_valid_from = @discount.valid_from
     # valid_until を valid_from より前に設定してバリデーションエラーを発生させる
     patch discount_path(@discount), params: {

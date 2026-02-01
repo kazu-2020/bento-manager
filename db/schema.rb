@@ -24,15 +24,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_31_140604) do
     t.index ["location_id"], name: "index_additional_orders_on_location_id"
   end
 
-  create_table "admins", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "password_hash"
-    t.integer "status", default: 1, null: false
-    t.datetime "updated_at", null: false
-    t.string "username", null: false, collation: "NOCASE"
-    t.index ["username"], name: "index_admins_on_username", unique: true, where: "status IN (1, 2)"
-  end
-
   create_table "catalog_discontinuations", force: :cascade do |t|
     t.integer "catalog_id", null: false
     t.datetime "created_at", null: false

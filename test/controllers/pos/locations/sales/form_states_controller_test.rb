@@ -6,10 +6,9 @@ module Pos
   module Locations
     module Sales
       class FormStatesControllerTest < ActionDispatch::IntegrationTest
-        fixtures :admins, :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules, :daily_inventories, :discounts, :coupons
+        fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules, :daily_inventories, :discounts, :coupons
 
         setup do
-          @admin = admins(:verified_admin)
           @employee = employees(:verified_employee)
           @location = locations(:city_hall)
           @bento_a = catalogs(:daily_bento_a)
@@ -30,7 +29,7 @@ module Pos
         # ============================================================
 
         test "responds with turbo_stream format" do
-          login_as(@admin)
+          login_as_employee(@employee)
 
           post pos_location_sales_form_state_path(@location),
                params: {
@@ -45,7 +44,7 @@ module Pos
         end
 
         test "returns updated product card for item with quantity" do
-          login_as(@admin)
+          login_as_employee(@employee)
 
           post pos_location_sales_form_state_path(@location),
                params: {
@@ -60,7 +59,7 @@ module Pos
         end
 
         test "returns updated price breakdown" do
-          login_as(@admin)
+          login_as_employee(@employee)
 
           post pos_location_sales_form_state_path(@location),
                params: {
@@ -75,7 +74,7 @@ module Pos
         end
 
         test "returns updated ghost form" do
-          login_as(@admin)
+          login_as_employee(@employee)
 
           post pos_location_sales_form_state_path(@location),
                params: {
@@ -90,7 +89,7 @@ module Pos
         end
 
         test "returns updated coupon cards" do
-          login_as(@admin)
+          login_as_employee(@employee)
 
           post pos_location_sales_form_state_path(@location),
                params: {
@@ -105,7 +104,7 @@ module Pos
         end
 
         test "returns updated submit button" do
-          login_as(@admin)
+          login_as_employee(@employee)
 
           post pos_location_sales_form_state_path(@location),
                params: {
@@ -135,7 +134,7 @@ module Pos
         end
 
         test "returns 404 for inactive location" do
-          login_as(@admin)
+          login_as_employee(@employee)
           inactive_location = locations(:prefectural_office)
 
           post pos_location_sales_form_state_path(inactive_location),
