@@ -53,7 +53,7 @@ class SidebarComponentTest < ViewComponent::TestCase
   def test_renders_menu_icons
     result = render_inline(Sidebar::Component.new(current_path: "/"))
 
-    assert result.css("svg").count >= 4
+    assert result.css(".icon").count >= 4
   end
 
   def test_renders_footer_with_copyright

@@ -13,7 +13,7 @@ class NavbarComponentTest < ViewComponent::TestCase
     result = render_inline(Navbar::Component.new)
 
     assert result.css("label[for='main-drawer']").present?
-    assert result.css("svg").present?
+    assert result.css(".icon").present?
   end
 
   def test_renders_app_title
