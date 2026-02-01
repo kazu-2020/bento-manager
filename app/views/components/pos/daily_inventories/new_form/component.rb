@@ -55,6 +55,15 @@ module Pos
             items: items
           )
         end
+
+        def tab_items
+          @tab_items ||= begin
+            items = []
+            items << { key: :bento, label: t(".bento_tab_label") } if has_bento_items?
+            items << { key: :side_menu, label: t(".side_menu_tab_label") } if has_side_menu_items?
+            items
+          end
+        end
       end
     end
   end
