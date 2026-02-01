@@ -124,8 +124,7 @@ class SaleTest < ActiveSupport::TestCase
       final_amount: 950,
       status: :voided,
       voided_at: Time.current,
-      voided_by_employee: employees(:verified_employee),
-      void_reason: "テスト返品"
+      voided_by_employee: employees(:verified_employee)
     )
 
     corrected_sale = Sale.create!(
@@ -259,8 +258,7 @@ class SaleTest < ActiveSupport::TestCase
       final_amount: 950,
       status: :voided,
       voided_at: nil,
-      voided_by_employee: employees(:verified_employee),
-      void_reason: "テスト返品"
+      voided_by_employee: employees(:verified_employee)
     )
     assert_not sale.valid?
     assert_includes sale.errors[:voided_at], "を入力してください"
@@ -275,27 +273,10 @@ class SaleTest < ActiveSupport::TestCase
       final_amount: 950,
       status: :voided,
       voided_at: Time.current,
-      voided_by_employee: nil,
-      void_reason: "テスト返品"
+      voided_by_employee: nil
     )
     assert_not sale.valid?
     assert_includes sale.errors[:voided_by_employee], "を入力してください"
-  end
-
-  test "status が voided の場合、void_reason は必須" do
-    sale = Sale.new(
-      location: locations(:city_hall),
-      sale_datetime: Time.current,
-      customer_type: :staff,
-      total_amount: 1000,
-      final_amount: 950,
-      status: :voided,
-      voided_at: Time.current,
-      voided_by_employee: employees(:verified_employee),
-      void_reason: nil
-    )
-    assert_not sale.valid?
-    assert_includes sale.errors[:void_reason], "を入力してください"
   end
 
   test "status が completed の場合、voided フィールドは任意" do
@@ -307,8 +288,7 @@ class SaleTest < ActiveSupport::TestCase
       final_amount: 950,
       status: :completed,
       voided_at: nil,
-      voided_by_employee: nil,
-      void_reason: nil
+      voided_by_employee: nil
     )
     assert sale.valid?
   end
@@ -328,7 +308,6 @@ class SaleTest < ActiveSupport::TestCase
     )
 
     sale.void!(
-      reason: "商品間違い",
       voided_by: employees(:verified_employee)
     )
 
@@ -336,7 +315,6 @@ class SaleTest < ActiveSupport::TestCase
     assert sale.voided?
     assert_not_nil sale.voided_at
     assert_equal employees(:verified_employee), sale.voided_by_employee
-    assert_equal "商品間違い", sale.void_reason
   end
 
   test "void! で voided_at が記録される" do
@@ -351,7 +329,6 @@ class SaleTest < ActiveSupport::TestCase
 
     freeze_time do
       sale.void!(
-        reason: "商品間違い",
         voided_by: employees(:verified_employee)
       )
       sale.reload
@@ -379,13 +356,11 @@ class SaleTest < ActiveSupport::TestCase
       final_amount: 950,
       status: :voided,
       voided_at: Time.current,
-      voided_by_employee: employees(:verified_employee),
-      void_reason: "初回の取消"
+      voided_by_employee: employees(:verified_employee)
     )
 
     error = assert_raises(Sale::AlreadyVoidedError) do
       sale.void!(
-        reason: "再度の取消",
         voided_by: employees(:verified_employee)
       )
     end

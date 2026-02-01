@@ -1,12 +1,6 @@
 <aside class="bg-base-200 min-h-full w-72 flex flex-col">
-  <div class="lg:hidden p-4 border-b border-base-300">
-    <div class="flex items-center gap-2">
-      <span class="text-2xl">🍱</span>
-      <span class="font-bold text-lg bg-linear-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
-        弁当販売管理
-      </span>
-    </div>
-  </div>
+  <!-- モバイル時のnavbar分のスペーサー -->
+  <div class="lg:hidden h-16"></div>
 
   <ul class="menu p-4 text-base-content flex-1">
     <li class="menu-title text-xs uppercase tracking-wider text-base-content/60 mb-2">
@@ -14,7 +8,7 @@
     </li>
     <li>
       <%= link_to home_item.path, class: menu_item_class(home_item) do %>
-        <%= component "icons/#{home_item.icon}" %>
+        <%= helpers.icon home_item.icon %>
         <span><%= home_item.label %></span>
       <% end %>
     </li>
@@ -25,7 +19,7 @@
     <% admin_items.each do |item| %>
       <li>
         <%= link_to item.path, class: menu_item_class(item) do %>
-          <%= component "icons/#{item.icon}" %>
+          <%= helpers.icon item.icon %>
           <span><%= item.label %></span>
         <% end %>
       </li>

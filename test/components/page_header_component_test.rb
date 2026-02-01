@@ -36,7 +36,7 @@ class PageHeaderComponentTest < ViewComponent::TestCase
   def test_renders_plus_icon
     result = render_inline(PageHeader::Component.new(title: "テスト", new_path: "/test/new"))
 
-    assert result.css("svg").present?
+    assert result.css(".icon").present?
   end
 
   def test_renders_link_with_turbo_stream_when_enabled

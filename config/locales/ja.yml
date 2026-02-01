@@ -56,8 +56,6 @@ ja:
           attributes:
             base:
               no_items_selected: "返品する商品を選択してください"
-            reason:
-              blank: "を入力してください"
         sales/cart_form:
           attributes:
             base:
@@ -127,7 +125,6 @@ ja:
         total_amount: "合計金額"
         final_amount: "最終金額"
         voided_at: "取消日時"
-        void_reason: "取消理由"
       sale_item:
         sale: "販売"
         catalog: "商品"
@@ -154,9 +151,7 @@ ja:
         employee: "返金処理担当者"
         refund_datetime: "返金日時"
         amount: "返金額"
-        reason: "返金理由"
       coupon:
-        description: "説明"
         amount_per_unit: "1枚あたりの割引額"
 
   enums:
@@ -195,12 +190,6 @@ ja:
   custom_errors:
     controllers:
       require_authentication: "ログインが必要です。"
-      invalid_authenticity_token: "セキュリティトークンが無効です。ページを再読み込みしてもう一度お試しください。"
-      record_not_found: "指定されたデータが見つかりませんでした。"
-      record_invalid: "入力内容に誤りがあります: %{errors}"
-      standard_error:
-        development: "エラーが発生しました: %{message}"
-        production: "予期しないエラーが発生しました。しばらく時間をおいてから再度お試しください。"
 
   helpers:
     submit:
@@ -310,16 +299,24 @@ ja:
       index:
         title: "販売先を選択"
       daily_inventories:
+        new:
+          title: "在庫登録"
         create:
           success: "%{count}種類の商品を登録しました"
         new_form:
           submit_label: "販売開始"
           submit_unit: "種類"
       sales:
+        new:
+          title: "レジ"
         create:
           success: "販売を記録しました"
           missing_requirements: "商品を選択し、顧客区分を指定してください"
       additional_orders:
+        index:
+          title: "発注"
+        new:
+          title: "追加発注"
         create:
           success: "%{count}件の追加発注を記録しました"
       sales_history:
@@ -336,8 +333,6 @@ ja:
           title: "返品処理"
           original_sale: "元の販売内容"
           select_items: "返品する商品を選択"
-          reason_label: "返品理由"
-          reason_placeholder: "返品理由を入力してください"
           preview: "返金プレビュー"
           corrected_sale: "修正後の販売内容"
           refund_amount: "返金額"
@@ -347,7 +342,7 @@ ja:
           no_remaining_items: "全商品を返品"
         create:
           success: "返金処理が完了しました（返金額: %{amount}）"
-          missing_requirements: "返品する商品を選択し、返品理由を入力してください"
+          missing_requirements: "返品する商品を選択してください"
           already_voided: "この販売は既に取消済みです"
 
   discounts:

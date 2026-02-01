@@ -4,14 +4,14 @@
       <%# ヘッダー: タイトル + 編集ボタン %>
       <div class="flex items-center justify-between mb-4">
         <h2 id="discount-basic-info-heading" class="card-title text-lg flex items-center gap-2">
-          <%= component "icons/info", size: :sm, extra_class: "text-primary" %>
+          <%= helpers.icon "info", size: :sm, extra_class: "text-primary" %>
           <%= t(".title") %>
         </h2>
         <%= link_to edit_path,
             class: "btn btn-ghost btn-sm gap-1 group",
             data: { turbo_frame: frame_id } do %>
           <span class="transition-transform group-hover:rotate-12">
-            <%= component "icons/edit", size: :sm %>
+            <%= helpers.icon "edit", size: :sm %>
           </span>
           <%= t(".edit") %>
         <% end %>

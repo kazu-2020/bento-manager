@@ -21,7 +21,6 @@ voided_sale:
   status: 1
   voided_at: <%= Time.current %>
   voided_by_employee: owner_employee
-  void_reason: "お客様都合による返品"
 
 prefectural_office_sale:
   location: prefectural_office

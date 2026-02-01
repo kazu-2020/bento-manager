@@ -48,7 +48,7 @@ module Pos
         end
 
         def employee_name
-          sale.employee&.name || "-"
+          sale.employee&.username || "-"
         end
       end
     end

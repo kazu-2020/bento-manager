@@ -24,7 +24,7 @@ module Toast
     end
 
     def icon_name
-      helpers.class_names("icons/#{type}")
+      type.to_s
     end
 
     private

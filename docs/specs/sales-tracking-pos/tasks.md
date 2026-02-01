@@ -403,7 +403,7 @@
 
 ### Phase 11: Backend Controllers & Routes
 
-- [ ] 18. コントローラー実装
+- [x] 18. コントローラー実装
 - [x] 18.1 (P) LocationsController 実装
   - CRUD アクション（index, show, new, create, edit, update, destroy）
   - destroy アクションで deactivate 呼び出し（status = inactive）
@@ -423,7 +423,7 @@
   - 有効期限の設定
   - _Requirements: 12.1, 12.2, 12.3_
 
-- [ ] 19. POS 用コントローラー実装
+- [x] 19. POS 用コントローラー実装
 - [x] 19.1 SalesController 実装（DailyInventory, Sale, SaleItem, SaleDiscount, Sales::PriceCalculator, Sales::Refunder 依存）
   - new アクション（販売先選択、在庫確認）
   - create アクション（Sales::Recorder 呼び出し: 販売記録作成、在庫減算、割引適用）
@@ -575,15 +575,15 @@
 
 ### Phase 15: Frontend - Stimulus Controllers
 
-- [ ] 30. POS 用 Stimulus コントローラー実装
-- [ ] 30.1 pos_controller.js 実装
+- [x] 30. POS 用 Stimulus コントローラー実装
+- [x] 30.1 pos_controller.js 実装
   - 商品選択時のカート更新ロジック
   - クーポン枚数入力時の価格再計算
   - 価格内訳の動的表示
   - 在庫確認 API 呼び出し
   - _Requirements: 3.1, 3.2, 3.5, 3.6, 12.7, 13.7_
 
-- [ ] 30.2 inventory_controller.js 実装
+- [x] 30.2 inventory_controller.js 実装
   - リアルタイム在庫更新（Turbo Streams）
   - 在庫ゼロの視覚的識別
   - _Requirements: 4.1, 4.2, 4.3, 4.4_

@@ -41,6 +41,6 @@ class Locations::ListComponentTest < ViewComponent::TestCase
   def test_empty_state_has_icon
     result = render_inline(Locations::List::Component.new(locations: []))
 
-    assert result.css("svg").present?
+    assert result.css(".icon").present?
   end
 end

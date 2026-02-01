@@ -1,8 +1,7 @@
 <section class="<%= card_classes %>" aria-labelledby="catalog-pricing-rules-heading">
   <div class="card-body">
     <%# ヘッダー %>
-    <h2 id="catalog-pricing-rules-heading" class="card-title text-lg flex items-center gap-2 mb-4">
-      <span class="text-xl">📏</span>
+    <h2 id="catalog-pricing-rules-heading" class="card-title text-lg mb-4">
       <%= t(".title") %>
     </h2>
 
@@ -40,7 +39,7 @@
     <% else %>
       <%# ルールなし時の空状態 %>
       <div class="text-center py-6 text-base-content/50">
-        <%= component "icons/catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50", stroke_width: 1 %>
+        <%= helpers.icon "catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50" %>
         <p class="text-sm"><%= t(".no_rules") %></p>
       </div>
     <% end %>

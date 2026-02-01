@@ -21,7 +21,7 @@ module Sidebar
     end
 
     def active?(item)
-      return current_path == item.path unless item.path_prefix
+      return current_path == item.path || current_path.start_with?("/pos") unless item.path_prefix
 
       current_path.start_with?(item.path_prefix)
     end
@@ -37,8 +37,7 @@ module Sidebar
 
     def menu_items
       @menu_items ||= [
-        MenuItem.new(path: helpers.root_path, label: "ホーム", icon: :home, path_prefix: nil),
-        MenuItem.new(path: helpers.pos_locations_path, label: "POS", icon: :bento, path_prefix: "/pos"),
+        MenuItem.new(path: helpers.pos_locations_path, label: "販売", icon: :bento, path_prefix: nil),
         MenuItem.new(path: helpers.locations_path, label: "配達場所", icon: :location, path_prefix: "/locations"),
         MenuItem.new(path: helpers.catalogs_path, label: "カタログ", icon: :catalog, path_prefix: "/catalogs"),
         MenuItem.new(path: helpers.discounts_path, label: "クーポン", icon: :ticket, path_prefix: "/discounts")

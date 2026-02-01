@@ -1,14 +1,14 @@
 <%# 戻るリンク（左上） %>
 <nav class="mb-4">
   <%= link_to back_path, class: "inline-flex items-center gap-1 text-sm text-base-content/70 hover:text-base-content transition-colors" do %>
-    <%= component "icons/arrow_left", size: :sm %>
+    <%= helpers.icon "arrow_left", size: :sm %>
     <%= t(".back_to_list") %>
   <% end %>
 </nav>
 
 <%# ヘッダーセクション: タイトル + ステータス %>
 <header class="flex items-center gap-3 mb-6">
-  <%= component "icons/location", size: :lg, extra_class: "text-primary" %>
+  <%= helpers.icon "location", size: :lg, extra_class: "text-primary" %>
   <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
   <%= component "status_badge", status: status %>
 </header>
@@ -29,7 +29,7 @@
         <%# 将来: 販売履歴リストを表示 %>
       <% else %>
         <div class="text-center py-8 text-base-content/50">
-          <%= component "icons/catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50", stroke_width: 1 %>
+          <%= helpers.icon "catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50" %>
           <p class="text-sm"><%= t(".empty_states.no_sales") %></p>
         </div>
       <% end %>
@@ -47,7 +47,7 @@
         <%# 将来: 在庫状況を表示 %>
       <% else %>
         <div class="text-center py-8 text-base-content/50">
-          <%= component "icons/catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50", stroke_width: 1 %>
+          <%= helpers.icon "catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50" %>
           <p class="text-sm"><%= t(".empty_states.no_inventory") %></p>
         </div>
       <% end %>

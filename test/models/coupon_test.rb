@@ -5,39 +5,33 @@ class CouponTest < ActiveSupport::TestCase
 
   # ===== バリデーションテスト =====
 
-  test "description は必須" do
-    coupon = Coupon.new(description: nil, amount_per_unit: 50)
-    assert_not coupon.valid?
-    assert_includes coupon.errors[:description], "を入力してください"
-  end
-
   test "amount_per_unit は必須" do
-    coupon = Coupon.new(description: "テストクーポン", amount_per_unit: nil)
+    coupon = Coupon.new(amount_per_unit: nil)
     assert_not coupon.valid?
     assert_includes coupon.errors[:amount_per_unit], "を入力してください"
   end
 
   test "amount_per_unit は0より大きい必要がある" do
-    coupon = Coupon.new(description: "テストクーポン", amount_per_unit: 0)
+    coupon = Coupon.new(amount_per_unit: 0)
     assert_not coupon.valid?
     assert_includes coupon.errors[:amount_per_unit], "は0より大きい値にしてください"
   end
 
   test "amount_per_unit は負数不可" do
-    coupon = Coupon.new(description: "テストクーポン", amount_per_unit: -50)
+    coupon = Coupon.new(amount_per_unit: -50)
     assert_not coupon.valid?
     assert_includes coupon.errors[:amount_per_unit], "は0より大きい値にしてください"
   end
 
   test "有効な属性で作成できる" do
-    coupon = Coupon.new(description: "50円割引クーポン", amount_per_unit: 50)
+    coupon = Coupon.new(amount_per_unit: 50)
     assert coupon.valid?, "有効な属性で Coupon を作成できるべき: #{coupon.errors.full_messages.join(', ')}"
   end
 
   # ===== アソシエーションテスト =====
 
   test "discount との関連が正しく設定されている" do
-    coupon = Coupon.create!(description: "関連テスト", amount_per_unit: 50)
+    coupon = Coupon.create!(amount_per_unit: 50)
     discount = Discount.create!(
       discountable: coupon,
       name: "テスト割引",

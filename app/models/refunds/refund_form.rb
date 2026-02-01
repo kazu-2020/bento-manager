@@ -5,15 +5,13 @@ module Refunds
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
-    attr_reader :sale, :location, :reason, :catalog_refund_quantities
+    attr_reader :sale, :location, :catalog_refund_quantities
 
     validate :at_least_one_item_to_refund
-    validates :reason, presence: true, if: :submitting?
 
     def initialize(sale:, location:, submitted: {})
       @sale = sale
       @location = location
-      @reason = submitted["reason"] || ""
       @catalog_refund_quantities = parse_refund_quantities(submitted)
       @submitting = submitted["_submitting"] == "true"
     end

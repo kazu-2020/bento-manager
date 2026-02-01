@@ -8,7 +8,6 @@ module Sales
     # @param remaining_items [Array<Hash>] 残す商品のリスト
     #   - :catalog [Catalog] 商品
     #   - :quantity [Integer] 数量
-    # @param reason [String] 返金理由
     # @param employee [Employee] 返金処理担当者
     # @return [Hash] 処理結果
     #   - :refund [Refund] 作成された Refund レコード
@@ -16,9 +15,9 @@ module Sales
     #   - :refund_amount [Integer] 返金額
     # @raise [Sale::AlreadyVoidedError] 既に voided の場合
     # @raise [ActiveRecord::RecordInvalid] バリデーションエラー時
-    def process(sale:, remaining_items:, reason:, employee:)
+    def process(sale:, remaining_items:, employee:)
       Sale.transaction do
-        sale.void!(reason: reason, voided_by: employee)
+        sale.void!(voided_by: employee)
         restore_inventory(sale)
 
         corrected_sale = create_corrected_sale(sale, remaining_items, employee)
@@ -28,8 +27,7 @@ module Sales
           corrected_sale: corrected_sale,
           employee: employee,
           refund_datetime: Time.current,
-          amount: refund_amount,
-          reason: reason
+          amount: refund_amount
         )
 
         {

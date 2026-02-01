@@ -83,7 +83,7 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
   def test_renders_location_icon_in_header
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
-    assert result.css("header svg").present?
+    assert result.css("header .icon").present?
   end
 
   def test_renders_created_at_and_updated_at

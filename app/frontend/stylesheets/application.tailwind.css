@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./components/icon.css";
 
 @theme {
   --font-sans: "Noto Sans JP", ui-sans-serif, system-ui, sans-serif;

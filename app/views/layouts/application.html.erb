@@ -9,7 +9,7 @@
       <input id="main-drawer" type="checkbox" class="drawer-toggle">
 
       <div class="drawer-content flex flex-col">
-        <%= component "navbar" %>
+        <%= component "navbar", title: content_for(:title) %>
 
         <main class="flex-1 p-2 sm:p-6">
           <div class="max-w-6xl mx-auto">

@@ -21,10 +21,6 @@ module Pos
         def quantity
           order.quantity
         end
-
-        def employee_name
-          order.employee&.username || t(".unknown_employee")
-        end
       end
     end
   end

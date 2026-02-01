@@ -1,7 +1,7 @@
 <%= form_with model: location, url: location.persisted? ? location_path(location) : locations_path do |form| %>
   <% if location.errors.any? %>
     <div class="alert alert-error mb-4">
-      <%= component "icons/error", extra_class: "shrink-0" %>
+      <%= icon "error", extra_class: "shrink-0" %>
       <div>
         <% location.errors.full_messages.each do |message| %>
           <p><%= message %></p>

@@ -4,7 +4,6 @@ ja:
   submit: "登録する"
   placeholder:
     name: "例: 50円割引クーポン"
-    description: "例: 毎週木曜日に利用可能"
     amount_per_unit: "50"
   hint:
     valid_until: "空欄の場合は無期限"

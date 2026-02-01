@@ -2,13 +2,10 @@
 # amount_per_unit: 1枚あたりの割引額（円）
 
 fifty_yen_coupon:
-  description: "50円割引クーポン"
   amount_per_unit: 50
 
 hundred_yen_coupon:
-  description: "100円割引クーポン"
   amount_per_unit: 100
 
 double_coupon:
-  description: "ダブルクーポン"
   amount_per_unit: 30

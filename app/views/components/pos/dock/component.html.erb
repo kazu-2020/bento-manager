@@ -1,7 +1,7 @@
 <nav class="dock dock-lg lg:hidden z-30 safe-area-pb">
   <% items.each do |item| %>
     <%= link_to item[:path], class: "dock-item pb-2 #{active?(item) ? 'dock-active' : ''}".strip do %>
-      <%= component item[:icon], size: :lg %>
+      <%= helpers.icon item[:icon], size: :lg %>
       <span class="dock-label"><%= item[:label] %></span>
     <% end %>
   <% end %>
