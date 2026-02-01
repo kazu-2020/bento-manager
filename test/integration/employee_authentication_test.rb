@@ -45,10 +45,14 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
     # Logout (Rodauth uses POST for logout, not DELETE)
     post "/employee/logout"
 
-    # Assert redirect after logout
+    # Assert redirect to root after logout
     assert_response :redirect
+    assert_redirected_to "/"
+
+    # Following redirect to root will redirect to login since root requires authentication
     follow_redirect!
-    assert_response :success
+    assert_response :redirect
+    assert_redirected_to "/employee/login"
   end
 
   # ステータス遷移テスト
