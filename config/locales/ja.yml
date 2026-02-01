@@ -310,16 +310,24 @@ ja:
       index:
         title: "販売先を選択"
       daily_inventories:
+        new:
+          title: "在庫登録"
         create:
           success: "%{count}種類の商品を登録しました"
         new_form:
           submit_label: "販売開始"
           submit_unit: "種類"
       sales:
+        new:
+          title: "レジ"
         create:
           success: "販売を記録しました"
           missing_requirements: "商品を選択し、顧客区分を指定してください"
       additional_orders:
+        index:
+          title: "発注"
+        new:
+          title: "追加発注"
         create:
           success: "%{count}件の追加発注を記録しました"
       sales_history:
