@@ -50,6 +50,10 @@ gem "reactionview" # https://github.com/marcoroth/reactionview
 # ViewComponent - A framework for creating reusable, testable & encapsulated view components
 gem "view_component"
 
+# monitoring
+gem "sentry-ruby"
+gem "sentry-rails"
+
 group :development, :test do
   # Pin minitest to 5.x for Rails 8.1.1 compatibility (minitest 6.x has known issues)
   gem "minitest", "~> 5.25"
