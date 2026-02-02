@@ -8,6 +8,7 @@ ja:
     login:
       employee_title: "従業員ログイン"
       button: "ログイン"
+      success: "ログインしました"
       error: "アカウント名またはパスワードが正しくありません"
     change_password:
       title: "パスワード変更"

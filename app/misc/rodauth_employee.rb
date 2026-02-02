@@ -68,6 +68,7 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # flash_error_key :error # default is :alert
 
     # Override default flash messages.
+    login_notice_flash { I18n.t("rodauth.login.success") }
     login_error_flash { I18n.t("rodauth.login.error") }
     require_login_error_flash { I18n.t("custom_errors.controllers.require_authentication") }
     change_password_notice_flash { I18n.t("rodauth.change_password.success") }
