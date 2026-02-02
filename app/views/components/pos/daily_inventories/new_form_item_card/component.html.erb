@@ -1,5 +1,6 @@
 <%= fields_for item_field_name, item do |f| %>
-  <div id="<%= dom_id %>" class="<%= card_classes %>">
+  <div id="<%= dom_id %>" class="<%= wrapper_classes %>">
+  <div class="<%= card_classes %>">
     <div class="card-body p-4">
       <%# カード選択エリア %>
       <label class="flex items-center gap-3 cursor-pointer">
@@ -31,5 +32,6 @@
         </div>
       <% end %>
     </div>
+  </div>
   </div>
 <% end %>

@@ -2,7 +2,8 @@
 <% @form.items.each do |item| %>
   <%= turbo_stream.replace "item-card-#{item.catalog_id}" do %>
     <%= component "pos/daily_inventories/new_form_item_card",
-                  item: item %>
+                  item: item,
+                  hidden: !@form.visible?(item) %>
   <% end %>
 <% end %>
 
@@ -17,5 +18,6 @@
 <%= turbo_stream.replace "ghost-form" do %>
   <%= component "pos/daily_inventories/new_form_ghost_form",
                 form_state_options: @form.form_state_options,
-                items: @form.items %>
+                items: @form.items,
+                search_query: @form.search_query %>
 <% end %>

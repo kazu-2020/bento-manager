@@ -1,6 +1,7 @@
 <%= form_with **form_state_options,
               id: "ghost-form",
               data: { turbo_stream: true, ghost_form_target: "ghostForm" } do |f| %>
+  <%= hidden_field_tag :search_query, search_query %>
   <% items.each do |item| %>
     <%= hidden_field_tag "ghost_inventory[#{item.catalog_id}][selected]", item.selected? ? "1" : "0" %>
     <%= hidden_field_tag "ghost_inventory[#{item.catalog_id}][stock]", item.stock %>

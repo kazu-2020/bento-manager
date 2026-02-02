@@ -20,9 +20,21 @@
                   data: { ghost_form_target: "originalForm" } do |f| %>
       <% if has_items? %>
         <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
-          <%# タブバー %>
-          <div class="shrink-0 bg-base-200 px-4 pt-2">
+          <%# 検索バー %>
+          <div class="shrink-0 bg-base-200 px-4 pt-2" data-controller="search-form">
             <p class="text-center text-base-content/70 mb-4"><%= t(".instruction") %></p>
+            <label class="input input-bordered flex items-center gap-2 mb-4">
+              <%= helpers.icon "magnifying_glass", extra_class: "opacity-50" %>
+              <%= search_field_tag :search_query, search_query,
+                    placeholder: t(".search_placeholder"),
+                    class: "grow text-base",
+                    autocomplete: "off", inputmode: "search",
+                    data: { search_form_target: "input", action: "input->search-form#search" } %>
+            </label>
+          </div>
+
+          <%# タブバー %>
+          <div class="shrink-0 bg-base-200 px-4">
             <div role="tablist" class="tabs tabs-lift">
               <% tab_items.each_with_index do |tab, i| %>
                 <%= button_tag tab[:label], type: :button, role: :tab,
@@ -36,20 +48,11 @@
           <main class="flex-1 overflow-y-auto p-4 pb-56 lg:pb-24">
             <% tab_items.each_with_index do |tab, i| %>
               <div data-tabs-target="panel" <%= "hidden" unless i == 0 %>>
-                <% case tab[:key] %>
-                <% when :bento %>
-                  <div class="space-y-3">
-                    <% bento_items.each do |item| %>
-                      <%= render_item_card(item) %>
-                    <% end %>
-                  </div>
-                <% when :side_menu %>
-                  <div class="space-y-3">
-                    <% side_menu_items.each do |item| %>
-                      <%= render_item_card(item) %>
-                    <% end %>
-                  </div>
-                <% end %>
+                <div class="space-y-3">
+                  <% items_for_tab(tab[:key]).each do |item| %>
+                    <%= render_item_card(item) %>
+                  <% end %>
+                </div>
               </div>
             <% end %>
           </main>
