@@ -29,7 +29,9 @@ puts "Creating Bento Catalogs..."
 bento_data = [
   # 600円
   { name: "日替わりA", price: 600 },
+  { name: "日替わりA(半ライス)", price: 600 },
   { name: "日替わりB", price: 600 },
+  { name: "日替わりB(半ライス)", price: 600 },
   { name: "ジャンバラヤ", price: 600 },
   { name: "カツどんカレー", price: 600 },
   { name: "鶏と根菜の黒酢あん", price: 600 },
