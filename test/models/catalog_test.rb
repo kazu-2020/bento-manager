@@ -249,6 +249,23 @@ class CatalogTest < ActiveSupport::TestCase
     assert_not_includes result, discontinued_bento
   end
 
+  # ===== display_order スコープテスト =====
+
+  test "display_order は販売中を先に、同じ状態内では name 昇順" do
+    available_b = Catalog.create!(name: "B弁当販売中", category: :bento)
+    available_a = Catalog.create!(name: "A弁当販売中", category: :bento)
+    discontinued_b = Catalog.create!(name: "B弁当終了", category: :bento)
+    discontinued_a = Catalog.create!(name: "A弁当終了", category: :bento)
+
+    CatalogDiscontinuation.create!(catalog: discontinued_b, discontinued_at: Time.current, reason: "終了")
+    CatalogDiscontinuation.create!(catalog: discontinued_a, discontinued_at: Time.current, reason: "終了")
+
+    result = Catalog.where(id: [ available_a, available_b, discontinued_a, discontinued_b ]).display_order.to_a
+
+    # 販売中が先（A弁当販売中, B弁当販売中）、販売停止が後（A弁当終了, B弁当終了）の name 順
+    assert_equal [ available_a, available_b, discontinued_a, discontinued_b ], result
+  end
+
   # ===== category_order スコープテスト =====
 
   test "category_order は弁当を先、サイドメニューを後に名前順で返す" do

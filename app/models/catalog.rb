@@ -20,11 +20,11 @@ class Catalog < ApplicationRecord
   # 販売可能な商品（提供終了記録がない）を取得
   scope :available, -> { where.missing(:discontinuation) }
 
-  # 表示順序: 販売中を先、販売停止を後に表示（同じ状態内では新しいものを先に）
+  # 表示順序: 販売中を先、販売停止を後に表示（同じ状態内では名前順）
   scope :display_order, -> {
     left_outer_joins(:discontinuation)
       .order(Arel.sql("catalog_discontinuations.id IS NOT NULL"))
-      .order(created_at: :desc)
+      .order(:name)
   }
 
   # カテゴリ順: 弁当 → サイドメニューの順、同カテゴリ内は名前順
