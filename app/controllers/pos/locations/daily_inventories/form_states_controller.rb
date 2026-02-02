@@ -26,7 +26,12 @@ module Pos
         end
 
         def build_form(submitted = {})
-          ::DailyInventories::InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
+          ::DailyInventories::InventoryForm.new(
+            location: @location,
+            catalogs: @catalogs,
+            submitted: submitted,
+            search_query: params[:search_query]
+          )
         end
 
         def submitted_params(key)

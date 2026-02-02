@@ -12,7 +12,7 @@ module Pos
         attr_reader :location, :form
 
         delegate :items, :bento_items, :side_menu_items, :valid?, :selected_count,
-                 :form_with_options, :form_state_options, to: :form
+                 :form_with_options, :form_state_options, :search_query, to: :form
 
         def location_name
           location.name
@@ -52,16 +52,23 @@ module Pos
         def render_ghost_form
           render Pos::DailyInventories::NewFormGhostForm::Component.new(
             form_state_options: form_state_options,
-            items: items
+            items: items,
+            search_query: search_query
           )
         end
 
         def tab_items
-          @tab_items ||= begin
-            items = []
-            items << { key: :bento, label: t(".bento_tab_label") } if has_bento_items?
-            items << { key: :side_menu, label: t(".side_menu_tab_label") } if has_side_menu_items?
-            items
+          @tab_items ||= [
+            (has_bento_items? ? { key: :bento, label: t(".bento_tab_label") } : nil),
+            (has_side_menu_items? ? { key: :side_menu, label: t(".side_menu_tab_label") } : nil)
+          ].compact
+        end
+
+        def items_for_tab(key)
+          case key
+          when :bento then bento_items
+          when :side_menu then side_menu_items
+          else []
           end
         end
       end

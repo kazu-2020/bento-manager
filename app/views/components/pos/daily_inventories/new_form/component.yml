@@ -2,6 +2,7 @@
 ja:
   title_suffix: の在庫登録
   instruction: 今日持っていく商品を選んでください
+  search_placeholder: 商品名で検索...
   no_catalogs: 登録可能な商品がありません
   bento_section_title: 弁当
   side_menu_section_title: サイドメニュー

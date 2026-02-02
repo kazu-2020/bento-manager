@@ -113,6 +113,43 @@ module DailyInventories
     end
 
     # =====================================================================
+    # 検索機能テスト
+    # =====================================================================
+
+    test "visible? returns true when search_query is blank" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs)
+      item = form.items.first
+
+      assert form.visible?(item)
+    end
+
+    test "visible? returns true when item name matches search_query" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: @bento_a.name[0..2])
+      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+
+      assert form.visible?(item)
+    end
+
+    test "visible? returns false when item name does not match search_query" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: "存在しない商品名")
+      item = form.items.first
+
+      assert_not form.visible?(item)
+    end
+
+    test "search_query is stripped and normalized" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: "  弁当  ")
+
+      assert_equal "弁当", form.search_query
+    end
+
+    test "search_query empty string becomes nil" do
+      form = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: "   ")
+
+      assert_nil form.search_query
+    end
+
+    # =====================================================================
     # save メソッドテスト
     # =====================================================================
 
