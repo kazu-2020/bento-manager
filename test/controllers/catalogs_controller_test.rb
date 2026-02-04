@@ -44,6 +44,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
         post catalogs_path, params: {
           catalog: {
             name: "新規弁当",
+            kana: "シンキベントウ",
             category: "bento",
             description: "新商品の説明",
             regular_price: 450
@@ -99,6 +100,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
         post catalogs_path, params: {
           catalog: {
             name: "従業員作成弁当",
+            kana: "ジュウギョウインサクセイベントウ",
             category: "bento",
             description: "従業員が作成",
             regular_price: 400
@@ -176,7 +178,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "create with blank name renders new with unprocessable_entity" do
     login_as_employee(@employee)
     assert_no_difference("Catalog.count") do
-      post catalogs_path, params: { catalog: { name: "", category: "bento", regular_price: 450 } }, as: :turbo_stream
+      post catalogs_path, params: { catalog: { name: "", kana: "テスト", category: "bento", regular_price: 450 } }, as: :turbo_stream
     end
     assert_response :unprocessable_entity
   end
@@ -207,6 +209,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
       post catalogs_path, params: {
         catalog: {
           name: "テスト弁当",
+          kana: "テストベントウ",
           category: "invalid_category",
           regular_price: 450
         }

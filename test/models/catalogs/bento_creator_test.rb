@@ -8,6 +8,7 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
   test "弁当を作成できること" do
     creator = Catalogs::BentoCreator.new(
       name: "のり弁当",
+      kana: "ノリベントウ",
       regular_price: 450
     )
 
@@ -24,6 +25,7 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
   test "弁当作成時に pricing_rule は作成されないこと" do
     creator = Catalogs::BentoCreator.new(
       name: "のり弁当",
+      kana: "ノリベントウ",
       regular_price: 450
     )
 
@@ -35,6 +37,7 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
   test "description を設定できること" do
     creator = Catalogs::BentoCreator.new(
       name: "のり弁当",
+      kana: "ノリベントウ",
       regular_price: 450,
       description: "海苔と鮭フレークをのせた弁当"
     )
@@ -46,6 +49,7 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
   test "description を省略した場合は空文字になること" do
     creator = Catalogs::BentoCreator.new(
       name: "のり弁当",
+      kana: "ノリベントウ",
       regular_price: 450
     )
 
@@ -58,6 +62,7 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
   test "valid? は有効なデータで true を返すこと" do
     creator = Catalogs::BentoCreator.new(
       name: "テスト弁当",
+      kana: "テストベントウ",
       regular_price: 450
     )
 
@@ -78,6 +83,7 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
   test "valid? は regular_price が 0 以下の場合に false を返すこと" do
     creator = Catalogs::BentoCreator.new(
       name: "テスト弁当",
+      kana: "テストベントウ",
       regular_price: 0
     )
 
@@ -86,10 +92,11 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
   end
 
   test "valid? は重複する name の場合に false を返すこと" do
-    Catalog.create!(name: "既存弁当", category: :bento)
+    Catalog.create!(name: "既存弁当", kana: "キゾンベントウ", category: :bento)
 
     creator = Catalogs::BentoCreator.new(
       name: "既存弁当",
+      kana: "キゾンベントウ",
       regular_price: 450
     )
 
@@ -113,6 +120,7 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
   test "regular_price が0以下の場合はモデルのバリデーションエラーになること" do
     creator = Catalogs::BentoCreator.new(
       name: "テスト弁当",
+      kana: "テストベントウ",
       regular_price: 0
     )
 
@@ -149,6 +157,7 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
   test "create メソッドは成功時にカタログを返すこと" do
     creator = Catalogs::BentoCreator.new(
       name: "テスト弁当",
+      kana: "テストベントウ",
       regular_price: 450
     )
 

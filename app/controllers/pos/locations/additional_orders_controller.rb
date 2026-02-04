@@ -43,7 +43,7 @@ module Pos
         @inventories = @location.today_inventories
                                 .eager_load(:catalog)
                                 .merge(Catalog.where(category: :bento))
-                                .order("catalogs.name")
+                                .order("catalogs.kana")
       end
 
       def set_additional_orders

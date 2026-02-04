@@ -61,11 +61,11 @@ class CatalogsController < ApplicationController
   end
 
   def catalog_params
-    params.require(:catalog).permit(:name, :category, :description)
+    params.require(:catalog).permit(:name, :kana, :category, :description)
   end
 
   def catalog_create_params
-    params.require(:catalog).permit(:name, :category, :description, :regular_price, :bundle_price)
+    params.require(:catalog).permit(:name, :kana, :category, :description, :regular_price, :bundle_price)
   end
 
   def handle_create_error
