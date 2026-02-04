@@ -8,6 +8,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "サイドメニューを通常価格のみで作成できること" do
     creator = Catalogs::SideMenuCreator.new(
       name: "唐揚げ",
+      kana: "カラアゲ",
       regular_price: 150
     )
 
@@ -23,6 +24,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "通常価格のみの場合 pricing_rule は作成されないこと" do
     creator = Catalogs::SideMenuCreator.new(
       name: "唐揚げ",
+      kana: "カラアゲ",
       regular_price: 150
     )
 
@@ -36,6 +38,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "サイドメニューをセット価格付きで作成できること" do
     creator = Catalogs::SideMenuCreator.new(
       name: "唐揚げ",
+      kana: "カラアゲ",
       regular_price: 150,
       bundle_price: 100
     )
@@ -68,6 +71,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "description を設定できること" do
     creator = Catalogs::SideMenuCreator.new(
       name: "唐揚げ",
+      kana: "カラアゲ",
       regular_price: 150,
       description: "ジューシーな鶏の唐揚げ"
     )
@@ -79,6 +83,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "description を省略した場合は空文字になること" do
     creator = Catalogs::SideMenuCreator.new(
       name: "唐揚げ",
+      kana: "カラアゲ",
       regular_price: 150
     )
 
@@ -91,6 +96,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "valid? は有効なデータで true を返すこと" do
     creator = Catalogs::SideMenuCreator.new(
       name: "テストサイドメニュー",
+      kana: "テストサイドメニュー",
       regular_price: 150
     )
 
@@ -101,6 +107,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "valid? はセット価格付きで有効なデータでも true を返すこと" do
     creator = Catalogs::SideMenuCreator.new(
       name: "テストサイドメニュー",
+      kana: "テストサイドメニュー",
       regular_price: 150,
       bundle_price: 100
     )
@@ -122,6 +129,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "valid? は regular_price が 0 以下の場合に false を返すこと" do
     creator = Catalogs::SideMenuCreator.new(
       name: "テストサイドメニュー",
+      kana: "テストサイドメニュー",
       regular_price: 0
     )
 
@@ -132,6 +140,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "valid? は bundle_price が 0 以下の場合に false を返すこと" do
     creator = Catalogs::SideMenuCreator.new(
       name: "テストサイドメニュー",
+      kana: "テストサイドメニュー",
       regular_price: 150,
       bundle_price: 0
     )
@@ -141,10 +150,11 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   end
 
   test "valid? は重複する name の場合に false を返すこと" do
-    Catalog.create!(name: "既存サイドメニュー", category: :side_menu)
+    Catalog.create!(name: "既存サイドメニュー", kana: "キゾンサイドメニュー", category: :side_menu)
 
     creator = Catalogs::SideMenuCreator.new(
       name: "既存サイドメニュー",
+      kana: "キゾンサイドメニュー",
       regular_price: 150
     )
 
@@ -168,6 +178,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "regular_price が0以下の場合はモデルのバリデーションエラーになること" do
     creator = Catalogs::SideMenuCreator.new(
       name: "テストサイドメニュー",
+      kana: "テストサイドメニュー",
       regular_price: 0
     )
 
@@ -179,6 +190,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "bundle_price が0以下の場合はモデルのバリデーションエラーになること" do
     creator = Catalogs::SideMenuCreator.new(
       name: "テストサイドメニュー",
+      kana: "テストサイドメニュー",
       regular_price: 150,
       bundle_price: 0
     )
@@ -216,6 +228,7 @@ class Catalogs::SideMenuCreatorTest < ActiveSupport::TestCase
   test "create メソッドは成功時にカタログを返すこと" do
     creator = Catalogs::SideMenuCreator.new(
       name: "テストサイドメニュー",
+      kana: "テストサイドメニュー",
       regular_price: 150
     )
 

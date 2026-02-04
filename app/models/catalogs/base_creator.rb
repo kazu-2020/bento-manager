@@ -11,6 +11,7 @@ module Catalogs
     include ActiveModel::Attributes
 
     attribute :name, :string
+    attribute :kana, :string
     attribute :description, :string, default: ""
     attribute :regular_price, :integer
 
@@ -19,7 +20,7 @@ module Catalogs
 
     # 構築したカタログを返す（バリデーションと保存で同じインスタンスを使用）
     def built_catalog
-      @catalog ||= Catalog.new(name: name, category: category, description: description)
+      @catalog ||= Catalog.new(name: name, kana: kana, category: category, description: description)
     end
 
     # 外部から参照するためのエイリアス

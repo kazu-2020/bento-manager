@@ -3,25 +3,30 @@
 
 daily_bento_a:
   name: "日替わり弁当A"
+  kana: "ヒガワリベントウエー"
   category: 0
   description: "本日のおすすめ弁当"
 
 daily_bento_b:
   name: "日替わり弁当B"
+  kana: "ヒガワリベントウビー"
   category: 0
   description: "ヘルシー弁当"
 
 salad:
   name: "サラダ"
+  kana: "サラダ"
   category: 1
   description: "新鮮野菜のサラダ"
 
 discontinued_bento:
   name: "販売終了弁当"
+  kana: "ハンバイシュウリョウベントウ"
   category: 0
   description: "提供終了した弁当"
 
 miso_soup:
   name: "味噌汁"
+  kana: "ミソシル"
   category: 1
   description: "日替わり味噌汁"

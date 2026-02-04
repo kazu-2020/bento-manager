@@ -13,6 +13,10 @@ module Catalogs
         creator&.catalog&.errors&.where(:name)&.any? || false
       end
 
+      def kana_error?
+        creator&.catalog&.errors&.where(:kana)&.any? || false
+      end
+
       def regular_price_error?
         creator&.regular_price_record&.errors&.where(:price)&.any? || false
       end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_31_140604) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
   create_table "additional_orders", force: :cascade do |t|
     t.integer "catalog_id", null: false
     t.datetime "created_at", null: false
@@ -64,9 +64,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_31_140604) do
     t.integer "category", null: false
     t.datetime "created_at", null: false
     t.text "description", default: "", null: false
+    t.string "kana", default: "", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.index ["category"], name: "index_catalogs_on_category"
+    t.index ["kana"], name: "index_catalogs_on_kana"
     t.index ["name"], name: "idx_catalogs_name", unique: true
   end
 

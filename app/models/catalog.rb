@@ -1,4 +1,7 @@
 class Catalog < ApplicationRecord
+  # ===== 定数 =====
+  KANA_FORMAT = /\A[\p{Katakana}ー]*\z/
+
   # ===== アソシエーション =====
   # 関連レコードが存在する場合は削除を禁止（DB レベルでも ON DELETE RESTRICT）
   has_one  :discontinuation, class_name: "CatalogDiscontinuation", dependent: :restrict_with_error
@@ -20,15 +23,15 @@ class Catalog < ApplicationRecord
   # 販売可能な商品（提供終了記録がない）を取得
   scope :available, -> { where.missing(:discontinuation) }
 
-  # 表示順序: 販売中を先、販売停止を後に表示（同じ状態内では名前順）
+  # 表示順序: 販売中を先、販売停止を後に表示（同じ状態内ではふりがな順）
   scope :display_order, -> {
     left_outer_joins(:discontinuation)
       .order(Arel.sql("catalog_discontinuations.id IS NOT NULL"))
-      .order(:name)
+      .order(:kana)
   }
 
-  # カテゴリ順: 弁当 → サイドメニューの順、同カテゴリ内は名前順
-  scope :category_order, -> { in_order_of(:category, %w[bento side_menu]).order(:name) }
+  # カテゴリ順: 弁当 → サイドメニューの順、同カテゴリ内はふりがな順
+  scope :category_order, -> { in_order_of(:category, %w[bento side_menu]).order(:kana) }
 
   # ===== Enum =====
   enum :category, { bento: 0, side_menu: 1 }, validate: true
@@ -36,6 +39,9 @@ class Catalog < ApplicationRecord
   # ===== バリデーション =====
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :category, presence: true
+  validates :kana, presence: true,
+                   format: { with: KANA_FORMAT,
+                             message: "はカタカナで入力してください" }
 
   # ===== ビジネスロジック =====
 

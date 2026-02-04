@@ -20,6 +20,26 @@
     <% end %>
   </div>
 
+  <%# フリガナフィールド %>
+  <div class="form-control w-full">
+    <label class="label" for="catalog_kana">
+      <span class="label-text font-medium">
+        <%= Catalog.human_attribute_name(:kana) %>
+        <span class="text-error">*</span>
+      </span>
+    </label>
+    <input type="text"
+           id="catalog_kana"
+           name="catalog[kana]"
+           required
+           autocomplete="off"
+           class="input input-bordered w-full <%= 'input-error' if kana_error? %>"
+           placeholder="<%= t('catalogs.new.placeholder.side_menu_kana') %>">
+    <% creator&.catalog&.errors&.where(:kana)&.each do |error| %>
+      <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+    <% end %>
+  </div>
+
   <%# 通常価格フィールド %>
   <div class="form-control w-full">
     <label class="label" for="catalog_regular_price">

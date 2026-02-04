@@ -32,6 +32,20 @@
             <p class="text-sm text-error mt-1"><%= error.full_message %></p>
           <% end %>
         </div>
+
+        <%# フリガナフィールド %>
+        <div class="form-control w-full mt-4">
+          <%= f.label :kana, class: "label" do %>
+            <span class="label-text font-medium"><%= Catalog.human_attribute_name(:kana) %></span>
+          <% end %>
+          <%= f.text_field :kana,
+              required: true,
+              class: "input input-bordered w-full #{catalog.errors[:kana].any? ? 'input-error' : ''}",
+              placeholder: t(".placeholder.kana") %>
+          <% catalog.errors.where(:kana).each do |error| %>
+            <p class="text-sm text-error mt-1"><%= error.full_message %></p>
+          <% end %>
+        </div>
       <% end %>
     </div>
   </section>

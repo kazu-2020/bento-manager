@@ -90,6 +90,7 @@ ja:
         updated_at: "更新日時"
       catalog:
         name: "商品名"
+        kana: "フリガナ"
         category: "商品カテゴリ"
         description: "商品説明"
       catalog_price:
@@ -269,7 +270,9 @@ ja:
       submit: "登録する"
       placeholder:
         name: "例: のり弁当"
+        kana: "例: ノリベントウ"
         side_menu_name: "例: 唐揚げ"
+        side_menu_kana: "例: カラアゲ"
         regular_price: "450"
         bundle_price: "100"
       labels:
