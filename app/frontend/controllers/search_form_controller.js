@@ -21,6 +21,8 @@ export default class extends Controller {
     if (!queryField) return
 
     queryField.value = this.inputTarget.value
-    ghostForm.requestSubmit()
+
+    // イベントを dispatch して ghost-form コントローラーに同期・送信を依頼
+    this.dispatch("searchSubmit", { bubbles: true })
   }
 }
