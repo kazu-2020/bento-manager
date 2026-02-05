@@ -28,3 +28,10 @@ city_hall_salad_today:
   inventory_date: <%= Date.current %>
   stock: 15
   reserved_stock: 0
+
+city_hall_bento_a_yesterday:
+  location: city_hall
+  catalog: daily_bento_a
+  inventory_date: <%= Date.current - 1.day %>
+  stock: 3
+  reserved_stock: 0

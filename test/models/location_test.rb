@@ -1,72 +1,25 @@
 require "test_helper"
 
 class LocationTest < ActiveSupport::TestCase
-  # 3.2 バリデーションテスト
-  test "name は必須" do
-    location = Location.new(name: nil)
-    assert_not location.valid?
-    assert_includes location.errors[:name], "を入力してください"
+  fixtures :locations, :catalogs, :daily_inventories
+
+  test "validations" do
+    @subject = Location.new(name: "テスト拠点")
+
+    must validate_uniqueness_of(:name).case_insensitive
+    must validate_presence_of(:name)
+    must define_enum_for(:status).with_values(active: 0, inactive: 1).validating
   end
 
-  test "name は一意" do
-    Location.create!(name: "テスト市役所A")
-    duplicate = Location.new(name: "テスト市役所A")
-    assert_not duplicate.valid?
-    assert_includes duplicate.errors[:name], "はすでに存在します"
+  test "associations" do
+    @subject = Location.new
+
+    must have_many(:daily_inventories).dependent(:restrict_with_error)
+    must have_many(:sales).dependent(:restrict_with_error)
+    must have_many(:additional_orders).dependent(:restrict_with_error)
   end
 
-  # 3.1 Enum テスト
-  test "status enum は active と inactive を持つ" do
-    assert_equal 0, Location.statuses[:active]
-    assert_equal 1, Location.statuses[:inactive]
-  end
-
-  test "status に無効な値を設定するとバリデーションエラー" do
-    location = Location.new(name: "テスト市役所", status: :invalid_status)
-    assert_not location.valid?
-    assert_includes location.errors[:status], "は一覧にありません"
-  end
-
-  test "デフォルト status は active" do
-    location = Location.create!(name: "テスト県庁B")
-    assert location.active?
-  end
-
-  # 3.1 enum スコープテスト（enum デフォルト機能）
-  test "active スコープは active のみ取得" do
-    active = Location.create!(name: "テスト市役所C")
-    inactive = Location.create!(name: "テスト県庁D", status: :inactive)
-
-    assert_includes Location.active, active
-    assert_not_includes Location.active, inactive
-  end
-
-  test "all は active と inactive の両方を取得" do
-    active = Location.create!(name: "テスト市役所E")
-    inactive = Location.create!(name: "テスト県庁F", status: :inactive)
-
-    assert_includes Location.all, active
-    assert_includes Location.all, inactive
-  end
-
-  # 3.1 enum 更新メソッドテスト（enum デフォルト機能）
-  test "inactive! で status を inactive に変更" do
-    location = Location.create!(name: "テスト市役所G")
-    assert location.active?
-
-    location.inactive!
-    assert location.inactive?
-  end
-
-  test "active! で status を active に変更" do
-    location = Location.create!(name: "テスト県庁H", status: :inactive)
-    assert location.inactive?
-
-    location.active!
-    assert location.active?
-  end
-
-  test "display_order は active を先に、同じ status 内では name 昇順" do
+  test "販売先一覧は稼働中を先に表示し、同じ状態では名前の昇順で並ぶ" do
     inactive_b = Location.create!(name: "B販売先", status: :inactive)
     active_b = Location.create!(name: "B拠点", status: :active)
     inactive_a = Location.create!(name: "A販売先", status: :inactive)
@@ -77,5 +30,46 @@ class LocationTest < ActiveSupport::TestCase
 
     # active が先（A拠点, B拠点）、inactive が後（A販売先, B販売先）の name 順
     assert_equal [ active_a.id, active_b.id, inactive_a.id, inactive_b.id ], ordered_ids
+  end
+
+  # 当日在庫の絞り込み
+  test "販売先の当日在庫には今日の日付のデータだけが含まれる" do
+    city_hall = locations(:city_hall)
+    today_inventories = city_hall.today_inventories
+
+    assert_equal 3, today_inventories.size
+    assert_not_includes today_inventories, daily_inventories(:city_hall_bento_a_yesterday)
+  end
+
+  test "在庫データが未登録の販売先の当日在庫は空である" do
+    location = Location.create!(name: "新規販売先", status: :active)
+
+    assert_empty location.today_inventories
+  end
+
+  # 当日在庫の有無判定
+  test "当日の在庫がある販売先は在庫ありと判定される" do
+    city_hall = locations(:city_hall)
+
+    assert city_hall.has_today_inventory?
+  end
+
+  test "当日の在庫がない販売先は在庫なしと判定される" do
+    location = Location.create!(name: "在庫なし販売先", status: :active)
+
+    assert_not location.has_today_inventory?
+  end
+
+  test "過去の在庫しかない販売先は在庫なしと判定される" do
+    location = Location.create!(name: "昨日のみ販売先", status: :active)
+    DailyInventory.create!(
+      location: location,
+      catalog: catalogs(:daily_bento_a),
+      inventory_date: Date.current - 1.day,
+      stock: 5,
+      reserved_stock: 0
+    )
+
+    assert_not location.has_today_inventory?
   end
 end
