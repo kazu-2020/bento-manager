@@ -180,6 +180,8 @@ GEM
       logger
     mini_mime (1.1.5)
     minitest (5.27.0)
+    minitest-matchers_vaccine (1.1.0)
+      minitest (>= 5.0, < 7.0)
     msgpack (1.8.0)
     mutex_m (0.3.0)
     net-imap (0.6.2)
@@ -345,6 +347,8 @@ GEM
     sequel-activerecord_connection (2.0.1)
       activerecord (>= 5.1)
       sequel (~> 5.38)
+    shoulda-matchers (7.0.1)
+      activesupport (>= 7.1)
     solid_cable (3.0.12)
       actioncable (>= 7.2)
       activejob (>= 7.2)
@@ -442,6 +446,7 @@ DEPENDENCIES
   kamal
   lookbook
   minitest (~> 5.25)
+  minitest-matchers_vaccine
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.2)
@@ -452,6 +457,7 @@ DEPENDENCIES
   sentry-rails
   sentry-ruby
   sequel-activerecord_connection (~> 2.0)
+  shoulda-matchers
   solid_cable
   solid_cache
   solid_queue

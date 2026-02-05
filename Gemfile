@@ -81,3 +81,8 @@ group :development do
   # Lookbook - UI development environment for ViewComponent
   gem "lookbook"
 end
+
+group :test do
+  gem "shoulda-matchers"
+  gem "minitest-matchers_vaccine"
+end
