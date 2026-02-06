@@ -1,8 +1,6 @@
 class Sale < ApplicationRecord
-  # ===== カスタムエラー =====
   class AlreadyVoidedError < StandardError; end
 
-  # ===== アソシエーション =====
   belongs_to :location
   belongs_to :employee, optional: true
   belongs_to :voided_by_employee, class_name: "Employee", optional: true
@@ -13,21 +11,15 @@ class Sale < ApplicationRecord
   has_many :discounts, through: :sale_discounts
   has_many :refunds, foreign_key: "original_sale_id", dependent: :restrict_with_error
 
-  # ===== Enum =====
-  enum :status, { completed: 0, voided: 1 }, validate: true
-  enum :customer_type, { staff: 0, citizen: 1 }, validate: true
+  enum :status,        { completed: 0, voided: 1 }, validate: true
+  enum :customer_type, { staff: 0, citizen: 1 },    validate: true
 
-  # ===== バリデーション =====
   validates :sale_datetime, presence: true
   validates :customer_type, presence: true
   validates :total_amount, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :final_amount, presence: true, numericality: { greater_than_or_equal_to: 0 }
-
-  # status が voided の場合の必須バリデーション
-  validates :voided_at, presence: true, if: :voided?
+  validates :voided_at,          presence: true, if: :voided?
   validates :voided_by_employee, presence: true, if: :voided?
-
-  # ===== インスタンスメソッド =====
 
   # 販売を取り消す
   # @param voided_by [Employee] 取消担当者
