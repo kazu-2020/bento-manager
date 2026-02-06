@@ -80,6 +80,34 @@ test "販売先の当日在庫には今日の日付のデータだけが含ま�
 end
 ```
 
+### 4. テストの粒度
+
+1テスト = 1業務フロー。同じ業務概念を扱うテストは分割せず1つにまとめる。
+
+```ruby
+# 正しい例: 「提供終了」という業務フローを1テストで検証
+test "提供終了した商品は販売可能な一覧から除外される" do
+  available = Catalog.create!(name: "販売中弁当", kana: "ハンバイチュウベントウ", category: :bento)
+  discontinued = Catalog.create!(name: "終了弁当", kana: "シュウリョウベントウ", category: :bento)
+  CatalogDiscontinuation.create!(catalog: discontinued, discontinued_at: Time.current, reason: "終了")
+
+  assert discontinued.discontinued?
+  assert_not available.discontinued?
+  assert_includes Catalog.available, available
+  assert_not_includes Catalog.available, discontinued
+end
+
+# 避けるべき例: 同じ概念を3テストに分割
+test "提供終了記録がある商品は提供終了と判定される" do ...end
+test "提供終了記録がない商品は提供中と判定される" do ...end
+test "販売可能な商品には提供終了していないものだけが含まれる" do ...end
+```
+
+**テスト不要なもの（フレームワーク保証）:**
+
+- enum のスコープ（`Catalog.bento`）、変更メソッド（`catalog.bento!`）→ `define_enum_for` でカバー
+- スコープのチェーン（`Catalog.available.bento`）→ Rails の ActiveRecord が保証
+
 ## 理由
 
 1. **仕様書としての価値**: テスト名がそのままドキュメントになる

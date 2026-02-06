@@ -1,8 +1,6 @@
 class Catalog < ApplicationRecord
-  # ===== 定数 =====
   KANA_FORMAT = /\A[\p{Katakana}ー]*\z/
 
-  # ===== アソシエーション =====
   # 関連レコードが存在する場合は削除を禁止（DB レベルでも ON DELETE RESTRICT）
   has_one  :discontinuation, class_name: "CatalogDiscontinuation", dependent: :restrict_with_error
   has_many :prices, class_name: "CatalogPrice", dependent: :restrict_with_error
@@ -12,14 +10,12 @@ class Catalog < ApplicationRecord
   has_many :sale_items, dependent: :restrict_with_error
   has_many :additional_orders, dependent: :restrict_with_error
 
-  # ===== コールバック =====
   # 物理削除を禁止する
   # 背景: 商品カタログは販売履歴（SaleItem）から参照されるため、
   #       物理削除すると過去の販売データの整合性が失われる。
   #       提供終了する場合は CatalogDiscontinuation を作成して論理削除とする。
   before_destroy { throw :abort }
 
-  # ===== スコープ =====
   # 販売可能な商品（提供終了記録がない）を取得
   scope :available, -> { where.missing(:discontinuation) }
 
@@ -33,17 +29,13 @@ class Catalog < ApplicationRecord
   # カテゴリ順: 弁当 → サイドメニューの順、同カテゴリ内はふりがな順
   scope :category_order, -> { in_order_of(:category, %w[bento side_menu]).order(:kana) }
 
-  # ===== Enum =====
   enum :category, { bento: 0, side_menu: 1 }, validate: true
 
-  # ===== バリデーション =====
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :category, presence: true
   validates :kana, presence: true,
                    format: { with: KANA_FORMAT,
                              message: "はカタカナで入力してください" }
-
-  # ===== ビジネスロジック =====
 
   # 指定した種別の有効な価格を取得（存在しない場合は nil）
   # @param kind [String, Symbol] 価格種別 ('regular' | 'bundle')
