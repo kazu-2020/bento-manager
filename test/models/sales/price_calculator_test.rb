@@ -15,7 +15,7 @@ module Sales
     end
 
     test "弁当1個(550円)を会計すると合計550円で割引0円になる" do
-      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 1 }]
+      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 1 } ]
 
       result = Sales::PriceCalculator.new(cart_items).calculate
 
@@ -95,7 +95,7 @@ module Sales
     end
 
     test "サラダだけ2個買うと通常価格250円で合計500円になる" do
-      cart_items = [{ catalog: catalogs(:salad), quantity: 2 }]
+      cart_items = [ { catalog: catalogs(:salad), quantity: 2 } ]
 
       result = Sales::PriceCalculator.new(cart_items).calculate
 
@@ -109,7 +109,7 @@ module Sales
       discount_quantities = { discounts(:fifty_yen_discount).id => 1 }
 
       result_1 = Sales::PriceCalculator.new(
-        [{ catalog: catalogs(:daily_bento_a), quantity: 1 }],
+        [ { catalog: catalogs(:daily_bento_a), quantity: 1 } ],
         discount_quantities: discount_quantities
       ).calculate
 
@@ -122,7 +122,7 @@ module Sales
       assert_equal 500, result_1[:final_total]
 
       result_2 = Sales::PriceCalculator.new(
-        [{ catalog: catalogs(:daily_bento_a), quantity: 2 }],
+        [ { catalog: catalogs(:daily_bento_a), quantity: 2 } ],
         discount_quantities: discount_quantities
       ).calculate
 
@@ -131,7 +131,7 @@ module Sales
       assert_equal 1050, result_2[:final_total]
 
       result_3 = Sales::PriceCalculator.new(
-        [{ catalog: catalogs(:daily_bento_a), quantity: 3 }],
+        [ { catalog: catalogs(:daily_bento_a), quantity: 3 } ],
         discount_quantities: discount_quantities
       ).calculate
 
@@ -149,7 +149,7 @@ module Sales
     end
 
     test "サラダのみの購入では50円クーポンは適用されず割引0円になる" do
-      cart_items = [{ catalog: catalogs(:salad), quantity: 2 }]
+      cart_items = [ { catalog: catalogs(:salad), quantity: 2 } ]
       discount_quantities = { discounts(:fifty_yen_discount).id => 1 }
 
       result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
@@ -161,7 +161,7 @@ module Sales
     end
 
     test "弁当2個に50円と100円のクーポンを同時に使うと合計150円引きになる" do
-      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 2 }]
+      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 2 } ]
       discount_quantities = {
         discounts(:fifty_yen_discount).id => 1,
         discounts(:hundred_yen_discount).id => 1
@@ -174,7 +174,7 @@ module Sales
     end
 
     test "期限切れクーポンは自動的にスキップされ割引0円になる" do
-      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 1 }]
+      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 1 } ]
       discount_quantities = { discounts(:expired_discount).id => 1 }
 
       result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
@@ -184,7 +184,7 @@ module Sales
     end
 
     test "弁当3個(550円)に50円クーポン3枚を使うと150円引きの1500円になる" do
-      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 3 }]
+      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 3 } ]
       discount_quantities = { discounts(:fifty_yen_discount).id => 3 }
 
       result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
@@ -195,7 +195,7 @@ module Sales
     end
 
     test "弁当2個に50円クーポン2枚と100円クーポン3枚を指定しても弁当数上限で200円引きになる" do
-      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 2 }]
+      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 2 } ]
       discount_quantities = {
         discounts(:fifty_yen_discount).id => 2,
         discounts(:hundred_yen_discount).id => 3
@@ -226,7 +226,7 @@ module Sales
     end
 
     test "弁当1個(550円)に100円クーポンを使うと最終450円になり0円を下回らない" do
-      cart_items = [{ catalog: catalogs(:daily_bento_a), quantity: 1 }]
+      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 1 } ]
       discount_quantities = { discounts(:hundred_yen_discount).id => 1 }
 
       result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
@@ -238,7 +238,7 @@ module Sales
     end
 
     test "価格未設定の商品を会計するとエラーになり商品名と価格種別が含まれる" do
-      cart_items = [{ catalog: catalogs(:miso_soup), quantity: 1 }]
+      cart_items = [ { catalog: catalogs(:miso_soup), quantity: 1 } ]
 
       error = assert_raises(Errors::MissingPriceError) do
         Sales::PriceCalculator.new(cart_items).calculate
