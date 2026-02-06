@@ -1,25 +1,18 @@
 class DailyInventory < ApplicationRecord
-  # ===== カスタム例外 =====
   class InsufficientStockError < StandardError; end
 
-  # ===== アソシエーション =====
   belongs_to :location
   belongs_to :catalog
 
-  # ===== バリデーション =====
   validates :inventory_date, presence: true
   validates :stock, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :reserved_stock, presence: true, numericality: { greater_than_or_equal_to: 0 }
-
   validates :inventory_date, uniqueness: {
     scope: [ :location_id, :catalog_id ],
     message: "同じ販売先・商品・日付の組み合わせは既に存在します"
   }
 
-  # カスタムバリデーション
   validate :available_stock_must_be_non_negative
-
-  # ===== クラスメソッド =====
 
   def self.bulk_create(location:, items:)
     inventories = items.map do |item|
@@ -40,8 +33,6 @@ class DailyInventory < ApplicationRecord
 
     result.nil? ? 0 : inventories.size
   end
-
-  # ===== ビジネスロジック =====
 
   # 利用可能在庫数を計算
   def available_stock

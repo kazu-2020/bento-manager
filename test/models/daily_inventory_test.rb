@@ -3,265 +3,85 @@ require "test_helper"
 class DailyInventoryTest < ActiveSupport::TestCase
   fixtures :locations, :catalogs, :daily_inventories
 
-  # =============================================================================
-  # Task 6.1: モデル存在・アソシエーションテスト
-  # =============================================================================
-
-  test "有効な属性で作成できる" do
-    inventory = DailyInventory.new(
+  test "validations" do
+    @subject = DailyInventory.new(
       location: locations(:city_hall),
       catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day,
+      inventory_date: Date.current + 100.days,
       stock: 10,
       reserved_stock: 0
     )
-    assert inventory.valid?
+
+    must validate_presence_of(:inventory_date)
+    must validate_presence_of(:stock)
+    must validate_numericality_of(:stock).is_greater_than_or_equal_to(0)
+    must validate_presence_of(:reserved_stock)
+    must validate_numericality_of(:reserved_stock).is_greater_than_or_equal_to(0)
+    must validate_uniqueness_of(:inventory_date).scoped_to(:location_id, :catalog_id)
+      .with_message("同じ販売先・商品・日付の組み合わせは既に存在します")
   end
 
-  test "location との関連が正しく設定されている" do
-    inventory = daily_inventories(:city_hall_bento_a_today)
-    assert_equal locations(:city_hall), inventory.location
+  test "associations" do
+    @subject = DailyInventory.new
+
+    must belong_to(:location)
+    must belong_to(:catalog)
   end
 
-  test "catalog との関連が正しく設定されている" do
-    inventory = daily_inventories(:city_hall_bento_a_today)
-    assert_equal catalogs(:daily_bento_a), inventory.catalog
-  end
-
-  # =============================================================================
-  # Task 6.3: ユニーク制約テスト
-  # =============================================================================
-
-  test "location_id, catalog_id, inventory_date の組み合わせはユニーク" do
-    existing = daily_inventories(:city_hall_bento_a_today)
-    duplicate = DailyInventory.new(
-      location: existing.location,
-      catalog: existing.catalog,
-      inventory_date: existing.inventory_date,
-      stock: 5,
-      reserved_stock: 0
-    )
-    assert_not duplicate.valid?
-    assert_includes duplicate.errors[:inventory_date], "同じ販売先・商品・日付の組み合わせは既に存在します"
-  end
-
-  test "同じ location と catalog でも異なる日付であれば作成可能" do
-    existing = daily_inventories(:city_hall_bento_a_today)
-    new_inventory = DailyInventory.new(
-      location: existing.location,
-      catalog: existing.catalog,
-      inventory_date: existing.inventory_date + 1.day,
-      stock: 5,
-      reserved_stock: 0
-    )
-    assert new_inventory.valid?
-  end
-
-  test "同じ location と日付でも異なる catalog であれば作成可能" do
-    existing = daily_inventories(:city_hall_bento_a_today)
-    new_inventory = DailyInventory.new(
-      location: existing.location,
-      catalog: catalogs(:miso_soup),
-      inventory_date: existing.inventory_date,
-      stock: 5,
-      reserved_stock: 0
-    )
-    assert new_inventory.valid?
-  end
-
-  # =============================================================================
-  # Task 6.2: バリデーションテスト
-  # =============================================================================
-
-  test "location は必須" do
-    inventory = DailyInventory.new(
-      location: nil,
-      catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day,
-      stock: 10,
-      reserved_stock: 0
-    )
-    assert_not inventory.valid?
-    assert_includes inventory.errors[:location], "を入力してください"
-  end
-
-  test "catalog は必須" do
-    inventory = DailyInventory.new(
-      location: locations(:city_hall),
-      catalog: nil,
-      inventory_date: Date.current + 1.day,
-      stock: 10,
-      reserved_stock: 0
-    )
-    assert_not inventory.valid?
-    assert_includes inventory.errors[:catalog], "を入力してください"
-  end
-
-  test "inventory_date は必須" do
-    inventory = DailyInventory.new(
-      location: locations(:city_hall),
-      catalog: catalogs(:daily_bento_a),
-      inventory_date: nil,
-      stock: 10,
-      reserved_stock: 0
-    )
-    assert_not inventory.valid?
-    assert_includes inventory.errors[:inventory_date], "を入力してください"
-  end
-
-  test "stock は0以上である必要がある" do
-    inventory = DailyInventory.new(
-      location: locations(:city_hall),
-      catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day,
-      stock: -1,
-      reserved_stock: 0
-    )
-    assert_not inventory.valid?
-    assert_includes inventory.errors[:stock], "は0以上の値にしてください"
-  end
-
-  test "stock が0は有効" do
-    inventory = DailyInventory.new(
-      location: locations(:city_hall),
-      catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day,
-      stock: 0,
-      reserved_stock: 0
-    )
-    assert inventory.valid?
-  end
-
-  test "reserved_stock は0以上である必要がある" do
-    inventory = DailyInventory.new(
-      location: locations(:city_hall),
-      catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day,
-      stock: 10,
-      reserved_stock: -1
-    )
-    assert_not inventory.valid?
-    assert_includes inventory.errors[:reserved_stock], "は0以上の値にしてください"
-  end
-
-  test "reserved_stock が0は有効" do
-    inventory = DailyInventory.new(
-      location: locations(:city_hall),
-      catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day,
-      stock: 10,
-      reserved_stock: 0
-    )
-    assert inventory.valid?
-  end
-
-  test "available_stock (stock - reserved_stock) は0以上である必要がある" do
-    inventory = DailyInventory.new(
-      location: locations(:city_hall),
-      catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day,
-      stock: 5,
-      reserved_stock: 10
-    )
-    assert_not inventory.valid?
-    assert_includes inventory.errors[:base], "利用可能在庫数（stock - reserved_stock）は0以上である必要があります"
-  end
-
-  test "available_stock が0は有効" do
-    inventory = DailyInventory.new(
-      location: locations(:city_hall),
-      catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current + 1.day,
-      stock: 5,
-      reserved_stock: 5
-    )
-    assert inventory.valid?
-  end
-
-  test "available_stock メソッドが正しく計算する" do
+  test "利用可能在庫数は総在庫から予約在庫を引いた値であり負数は許可されない" do
     inventory = daily_inventories(:city_hall_bento_b_today)
-    # stock: 5, reserved_stock: 2
-    assert_equal 3, inventory.available_stock
+    assert_equal 3, inventory.available_stock  # stock: 5, reserved_stock: 2
+
+    over_reserved = DailyInventory.new(
+      location: locations(:city_hall), catalog: catalogs(:daily_bento_a),
+      inventory_date: Date.current + 1.day, stock: 5, reserved_stock: 10
+    )
+    assert_not over_reserved.valid?
+    assert_includes over_reserved.errors[:base], "利用可能在庫数（stock - reserved_stock）は0以上である必要があります"
+
+    exactly_zero = DailyInventory.new(
+      location: locations(:city_hall), catalog: catalogs(:daily_bento_a),
+      inventory_date: Date.current + 2.days, stock: 5, reserved_stock: 5
+    )
+    assert exactly_zero.valid?
   end
 
-  # =============================================================================
-  # Task 6.4: 在庫操作メソッドテスト
-  # =============================================================================
-
-  # --- decrement_stock! ---
-
-  test "decrement_stock! で在庫を減算できる" do
+  test "在庫から販売数を減算できる" do
     inventory = daily_inventories(:city_hall_bento_a_today)
     initial_stock = inventory.stock
-    quantity = 3
+    initial_lock_version = inventory.lock_version
 
-    inventory.decrement_stock!(quantity)
+    inventory.decrement_stock!(3)
     inventory.reload
 
-    assert_equal initial_stock - quantity, inventory.stock
-  end
+    assert_equal initial_stock - 3, inventory.stock
+    assert_equal initial_lock_version + 1, inventory.lock_version
 
-  test "decrement_stock! で在庫不足時はエラーを発生させる" do
-    inventory = daily_inventories(:city_hall_bento_a_today)
-    # stock: 10
-
-    error = assert_raises(DailyInventory::InsufficientStockError) do
-      inventory.decrement_stock!(15)
-    end
-    assert_match(/在庫が不足しています/, error.message)
-  end
-
-  test "decrement_stock! で0以下の数量はエラーを発生させる" do
-    inventory = daily_inventories(:city_hall_bento_a_today)
-
-    assert_raises(ArgumentError) do
-      inventory.decrement_stock!(0)
-    end
-
-    assert_raises(ArgumentError) do
-      inventory.decrement_stock!(-1)
-    end
-  end
-
-  test "decrement_stock! でぴったり在庫を減らせる" do
-    inventory = daily_inventories(:city_hall_bento_a_today)
-    # stock: 10
-    inventory.decrement_stock!(10)
+    inventory.decrement_stock!(inventory.stock)
     inventory.reload
-
     assert_equal 0, inventory.stock
+
+    assert_raises(DailyInventory::InsufficientStockError) { inventory.decrement_stock!(1) }
+    assert_raises(ArgumentError) { inventory.decrement_stock!(0) }
+    assert_raises(ArgumentError) { inventory.decrement_stock!(-1) }
   end
 
-  # --- increment_stock! ---
-
-  test "increment_stock! で在庫を加算できる" do
+  test "在庫に返品・追加発注分を加算できる" do
     inventory = daily_inventories(:city_hall_bento_a_today)
     initial_stock = inventory.stock
-    quantity = 5
+    initial_lock_version = inventory.lock_version
 
-    inventory.increment_stock!(quantity)
+    inventory.increment_stock!(5)
     inventory.reload
 
-    assert_equal initial_stock + quantity, inventory.stock
+    assert_equal initial_stock + 5, inventory.stock
+    assert_equal initial_lock_version + 1, inventory.lock_version
+
+    assert_raises(ArgumentError) { inventory.increment_stock!(0) }
+    assert_raises(ArgumentError) { inventory.increment_stock!(-1) }
   end
 
-  test "increment_stock! で0以下の数量はエラーを発生させる" do
-    inventory = daily_inventories(:city_hall_bento_a_today)
-
-    assert_raises(ArgumentError) do
-      inventory.increment_stock!(0)
-    end
-
-    assert_raises(ArgumentError) do
-      inventory.increment_stock!(-1)
-    end
-  end
-
-  # =============================================================================
-  # bulk_create クラスメソッドテスト
-  # =============================================================================
-
-  test "bulk_create は複数アイテムの DailyInventory を一括作成し作成件数を返す" do
+  test "一括登録で当日の在庫を作成できる" do
     location = Location.create!(name: "一括作成テスト販売先", status: :active)
     items = [
       DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 10),
@@ -272,29 +92,15 @@ class DailyInventoryTest < ActiveSupport::TestCase
       result = DailyInventory.bulk_create(location: location, items: items)
       assert_equal 2, result
     end
+
+    last_two = DailyInventory.last(2)
+    last_two.each do |inv|
+      assert_equal Date.current, inv.inventory_date
+      assert_equal 0, inv.reserved_stock
+    end
   end
 
-  test "bulk_create は inventory_date を当日に設定する" do
-    location = Location.create!(name: "日付テスト販売先", status: :active)
-    items = [ DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 10) ]
-
-    DailyInventory.bulk_create(location: location, items: items)
-
-    inventory = DailyInventory.last
-    assert_equal Date.current, inventory.inventory_date
-  end
-
-  test "bulk_create は reserved_stock を 0 に設定する" do
-    location = Location.create!(name: "予約在庫テスト販売先", status: :active)
-    items = [ DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 10) ]
-
-    DailyInventory.bulk_create(location: location, items: items)
-
-    inventory = DailyInventory.last
-    assert_equal 0, inventory.reserved_stock
-  end
-
-  test "bulk_create は DB バリデーションエラー時にすべてロールバックし 0 を返す" do
+  test "一括登録で1件でも不正なデータがあれば全件登録されない" do
     location = Location.create!(name: "ロールバックテスト販売先", status: :active)
     DailyInventory.create!(
       location: location,
@@ -306,34 +112,12 @@ class DailyInventoryTest < ActiveSupport::TestCase
 
     items = [
       DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_b).id, stock: 10),
-      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 15)  # 重複でエラー
+      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 15)
     ]
 
     assert_no_difference "DailyInventory.count" do
       result = DailyInventory.bulk_create(location: location, items: items)
       assert_equal 0, result
     end
-  end
-
-  # --- 楽観的ロックテスト ---
-
-  test "decrement_stock! は楽観的ロックを使用する" do
-    inventory = daily_inventories(:city_hall_bento_a_today)
-    initial_lock_version = inventory.lock_version
-
-    inventory.decrement_stock!(1)
-    inventory.reload
-
-    assert_equal initial_lock_version + 1, inventory.lock_version
-  end
-
-  test "increment_stock! は楽観的ロックを使用する" do
-    inventory = daily_inventories(:city_hall_bento_a_today)
-    initial_lock_version = inventory.lock_version
-
-    inventory.increment_stock!(1)
-    inventory.reload
-
-    assert_equal initial_lock_version + 1, inventory.lock_version
   end
 end
