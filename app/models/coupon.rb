@@ -1,11 +1,7 @@
 class Coupon < ApplicationRecord
-  # ===== アソシエーション =====
   has_one :discount, as: :discountable, touch: true
 
-  # ===== バリデーション =====
   validates :amount_per_unit, presence: true, numericality: { greater_than: 0 }
-
-  # ===== ビジネスロジック =====
 
   # クーポンが適用可能かどうかを判定
   # @param sale_items [Array<Hash>] 販売明細 [{ catalog: Catalog, quantity: Integer }, ...]

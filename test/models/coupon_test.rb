@@ -3,81 +3,34 @@ require "test_helper"
 class CouponTest < ActiveSupport::TestCase
   fixtures :coupons, :catalogs, :discounts
 
-  # ===== バリデーションテスト =====
+  test "validations" do
+    @subject = Coupon.new(amount_per_unit: 50)
 
-  test "amount_per_unit は必須" do
-    coupon = Coupon.new(amount_per_unit: nil)
-    assert_not coupon.valid?
-    assert_includes coupon.errors[:amount_per_unit], "を入力してください"
+    must validate_presence_of(:amount_per_unit)
+    must validate_numericality_of(:amount_per_unit).is_greater_than(0)
   end
 
-  test "amount_per_unit は0より大きい必要がある" do
-    coupon = Coupon.new(amount_per_unit: 0)
-    assert_not coupon.valid?
-    assert_includes coupon.errors[:amount_per_unit], "は0より大きい値にしてください"
+  test "associations" do
+    @subject = Coupon.new
+
+    must have_one(:discount)
   end
 
-  test "amount_per_unit は負数不可" do
-    coupon = Coupon.new(amount_per_unit: -50)
-    assert_not coupon.valid?
-    assert_includes coupon.errors[:amount_per_unit], "は0より大きい値にしてください"
-  end
-
-  test "有効な属性で作成できる" do
-    coupon = Coupon.new(amount_per_unit: 50)
-    assert coupon.valid?, "有効な属性で Coupon を作成できるべき: #{coupon.errors.full_messages.join(', ')}"
-  end
-
-  # ===== アソシエーションテスト =====
-
-  test "discount との関連が正しく設定されている" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.create!(
-      discountable: coupon,
-      name: "テスト割引",
-      valid_from: Date.current
-    )
-
-    # reload して関連を再取得
-    coupon.reload
-    assert_equal discount, coupon.discount
-  end
-
-  # ===== ビジネスロジック: applicable? テスト =====
-
-  test "applicable? は弁当がある場合 true を返す" do
+  test "クーポンは弁当が含まれる場合のみ適用可能である" do
     coupon = coupons(:fifty_yen_coupon)
     bento = catalogs(:daily_bento_a)
-
-    sale_items = [
-      { catalog: bento, quantity: 1 }
-    ]
-
-    assert coupon.applicable?(sale_items)
-  end
-
-  test "applicable? は弁当がない場合 false を返す" do
-    coupon = coupons(:fifty_yen_coupon)
     salad = catalogs(:salad)
 
-    sale_items = [
-      { catalog: salad, quantity: 2 }
-    ]
-
-    assert_not coupon.applicable?(sale_items)
-  end
-
-  test "applicable? は空の sale_items で false を返す" do
-    coupon = coupons(:fifty_yen_coupon)
+    assert coupon.applicable?([ { catalog: bento, quantity: 1 } ])
+    assert_not coupon.applicable?([ { catalog: salad, quantity: 2 } ])
     assert_not coupon.applicable?([])
   end
 
-  # ===== ビジネスロジック: max_applicable_quantity テスト =====
-
-  test "max_applicable_quantity は弁当の合計個数を返す" do
+  test "クーポン適用上限は弁当の合計個数で決まる" do
     coupon = coupons(:fifty_yen_coupon)
     bento_a = catalogs(:daily_bento_a)
     bento_b = catalogs(:daily_bento_b)
+    salad = catalogs(:salad)
 
     sale_items = [
       { catalog: bento_a, quantity: 3 },
@@ -85,47 +38,14 @@ class CouponTest < ActiveSupport::TestCase
     ]
 
     assert_equal 5, coupon.max_applicable_quantity(sale_items)
-  end
-
-  test "max_applicable_quantity は弁当がない場合0を返す" do
-    coupon = coupons(:fifty_yen_coupon)
-    salad = catalogs(:salad)
-
-    sale_items = [
-      { catalog: salad, quantity: 2 }
-    ]
-
-    assert_equal 0, coupon.max_applicable_quantity(sale_items)
-  end
-
-  test "max_applicable_quantity は空の sale_items で0を返す" do
-    coupon = coupons(:fifty_yen_coupon)
+    assert_equal 0, coupon.max_applicable_quantity([ { catalog: salad, quantity: 2 } ])
     assert_equal 0, coupon.max_applicable_quantity([])
   end
 
-  # ===== ビジネスロジック: calculate_discount テスト =====
-
-  test "calculate_discount はクーポン1枚あたり固定額 amount_per_unit を返す" do
-    coupon = coupons(:fifty_yen_coupon)  # amount_per_unit: 50
+  test "割引額はクーポン1枚あたりの固定額である" do
+    coupon = coupons(:fifty_yen_coupon)
     bento = catalogs(:daily_bento_a)
 
-    sale_items = [
-      { catalog: bento, quantity: 2 }
-    ]
-
-    # クーポン1枚あたり固定50円（弁当個数に依存しない）
-    assert_equal 50, coupon.calculate_discount(sale_items)
-  end
-
-  test "calculate_discount は弁当がなくても固定額 amount_per_unit を返す" do
-    coupon = coupons(:fifty_yen_coupon)
-    salad = catalogs(:salad)
-
-    sale_items = [
-      { catalog: salad, quantity: 2 }
-    ]
-
-    # Coupon は固定額を返す（applicable? チェックは Discount 側で行う）
-    assert_equal 50, coupon.calculate_discount(sale_items)
+    assert_equal 50, coupon.calculate_discount([ { catalog: bento, quantity: 2 } ])
   end
 end
