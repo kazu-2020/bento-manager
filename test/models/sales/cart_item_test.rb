@@ -11,129 +11,61 @@ module Sales
       @inventory_salad = daily_inventories(:city_hall_salad_today)
     end
 
-    test "initializes with inventory and default quantity of 0" do
+    test "initializes with inventory, delegates attributes, and casts quantity to integer" do
       item = CartItem.new(inventory: @inventory_bento)
-
       assert_equal @inventory_bento, item.inventory
       assert_equal 0, item.quantity
-    end
-
-    test "initializes with specified quantity" do
-      item = CartItem.new(inventory: @inventory_bento, quantity: 3)
-
-      assert_equal 3, item.quantity
-    end
-
-    test "quantity is cast to integer from string" do
-      item = CartItem.new(inventory: @inventory_bento, quantity: "5")
-
-      assert_equal 5, item.quantity
-    end
-
-    test "delegates catalog from inventory" do
-      item = CartItem.new(inventory: @inventory_bento)
-
       assert_equal catalogs(:daily_bento_a), item.catalog
-    end
-
-    test "catalog_id returns catalog's id" do
-      item = CartItem.new(inventory: @inventory_bento)
-
       assert_equal catalogs(:daily_bento_a).id, item.catalog_id
-    end
-
-    test "catalog_name returns catalog's name" do
-      item = CartItem.new(inventory: @inventory_bento)
-
       assert_equal "日替わり弁当A", item.catalog_name
-    end
-
-    test "category returns catalog's category" do
-      bento_item = CartItem.new(inventory: @inventory_bento)
-      salad_item = CartItem.new(inventory: @inventory_salad)
-
-      assert_equal "bento", bento_item.category
-      assert_equal "side_menu", salad_item.category
-    end
-
-    test "stock returns inventory's stock" do
-      item = CartItem.new(inventory: @inventory_bento)
-
+      assert_equal "bento", item.category
       assert_equal @inventory_bento.stock, item.stock
+
+      custom = CartItem.new(inventory: @inventory_bento, quantity: 3)
+      assert_equal 3, custom.quantity
+
+      string_qty = CartItem.new(inventory: @inventory_bento, quantity: "5")
+      assert_equal 5, string_qty.quantity
     end
 
-    test "in_cart? returns true when quantity > 0" do
-      item = CartItem.new(inventory: @inventory_bento, quantity: 1)
+    test "predicates reflect cart state and catalog category" do
+      empty = CartItem.new(inventory: @inventory_bento, quantity: 0)
+      assert_not empty.in_cart?
 
-      assert item.in_cart?
+      in_cart = CartItem.new(inventory: @inventory_bento, quantity: 1)
+      assert in_cart.in_cart?
+      assert in_cart.bento?
+      assert_not in_cart.side_menu?
+
+      salad = CartItem.new(inventory: @inventory_salad)
+      assert salad.side_menu?
+      assert_not salad.bento?
     end
 
-    test "in_cart? returns false when quantity is 0" do
-      item = CartItem.new(inventory: @inventory_bento, quantity: 0)
-
-      assert_not item.in_cart?
-    end
-
-    test "bento? returns true for bento catalog" do
+    test "sold_out? and unit_price reflect inventory and pricing state" do
       item = CartItem.new(inventory: @inventory_bento)
+      assert_not item.sold_out?
+      assert_equal 550, item.unit_price
 
-      assert item.bento?
-    end
-
-    test "bento? returns false for side_menu catalog" do
-      item = CartItem.new(inventory: @inventory_salad)
-
-      assert_not item.bento?
-    end
-
-    test "side_menu? returns true for side_menu catalog" do
-      item = CartItem.new(inventory: @inventory_salad)
-
-      assert item.side_menu?
-    end
-
-    test "side_menu? returns false for bento catalog" do
-      item = CartItem.new(inventory: @inventory_bento)
-
-      assert_not item.side_menu?
-    end
-
-    test "sold_out? returns true when stock is 0" do
-      inventory = DailyInventory.new(
+      sold_out_inventory = DailyInventory.new(
         location: locations(:city_hall),
         catalog: catalogs(:daily_bento_a),
         inventory_date: Date.current,
         stock: 0,
         reserved_stock: 0
       )
-      item = CartItem.new(inventory: inventory)
+      sold_out = CartItem.new(inventory: sold_out_inventory)
+      assert sold_out.sold_out?
 
-      assert item.sold_out?
-    end
-
-    test "sold_out? returns false when stock > 0" do
-      item = CartItem.new(inventory: @inventory_bento)
-
-      assert_not item.sold_out?
-    end
-
-    test "unit_price returns regular price" do
-      item = CartItem.new(inventory: @inventory_bento)
-
-      assert_equal 550, item.unit_price
-    end
-
-    test "unit_price returns nil when no price exists" do
-      inventory = DailyInventory.new(
+      no_price_inventory = DailyInventory.new(
         location: locations(:city_hall),
         catalog: catalogs(:miso_soup),
         inventory_date: Date.current,
         stock: 5,
         reserved_stock: 0
       )
-      item = CartItem.new(inventory: inventory)
-
-      assert_nil item.unit_price
+      no_price = CartItem.new(inventory: no_price_inventory)
+      assert_nil no_price.unit_price
     end
   end
 end

@@ -11,29 +11,21 @@ module Sales
       @inventory = daily_inventories(:city_hall_bento_a_today)
     end
 
-    test "casts Hash to CartItem" do
+    test "casts hash to CartItem with integer and string quantity" do
       result = @type.cast(inventory: @inventory, quantity: 3)
-
       assert_instance_of CartItem, result
       assert_equal @inventory, result.inventory
       assert_equal 3, result.quantity
+
+      string_qty = @type.cast(inventory: @inventory, quantity: "5")
+      assert_instance_of CartItem, string_qty
+      assert_equal 5, string_qty.quantity
     end
 
-    test "casts Hash with string quantity" do
-      result = @type.cast(inventory: @inventory, quantity: "5")
-
-      assert_instance_of CartItem, result
-      assert_equal 5, result.quantity
-    end
-
-    test "returns CartItem as-is (idempotent)" do
+    test "returns CartItem as-is and nil for unsupported types" do
       item = CartItem.new(inventory: @inventory, quantity: 2)
-      result = @type.cast(item)
+      assert_same item, @type.cast(item)
 
-      assert_same item, result
-    end
-
-    test "returns nil for unsupported types" do
       assert_nil @type.cast("invalid")
       assert_nil @type.cast(123)
     end

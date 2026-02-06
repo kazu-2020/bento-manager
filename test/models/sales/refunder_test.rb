@@ -16,8 +16,6 @@ module Sales
       @inventory_salad = daily_inventories(:city_hall_salad_today)
     end
 
-    # ===== 基本的な返金（クーポンなし）=====
-
     test "弁当1個(550円)を全額返金すると550円返金される" do
       recorder = Sales::Recorder.new
       sale = recorder.record(
@@ -80,8 +78,6 @@ module Sales
       assert_equal original_stock + 1, @inventory_bento_a.stock
     end
 
-    # ===== セット割引の返金 =====
-
     test "弁当+サラダ(700円)からサラダを返品すると150円返金される" do
       recorder = Sales::Recorder.new
       sale = recorder.record(
@@ -131,8 +127,6 @@ module Sales
 
       assert_equal 450, result[:refund_amount]
     end
-
-    # ===== クーポン割引の返金 =====
 
     test "弁当1個(550円)+50円クーポンを全額返金すると500円返金される" do
       recorder = Sales::Recorder.new
@@ -209,8 +203,6 @@ module Sales
       assert_equal 500, result[:refund_amount]
     end
 
-    # ===== エラーケース =====
-
     test "既にvoidedの販売には返金処理できない" do
       voided_sale = sales(:voided_sale)
 
@@ -222,25 +214,6 @@ module Sales
           employee: @employee
         )
       end
-    end
-
-    test "返金処理は正常に実行できる" do
-      recorder = Sales::Recorder.new
-      sale = recorder.record(
-        { location: @location, customer_type: :staff, employee: @employee },
-        [ { catalog: @catalog_bento_a, quantity: 1 } ]
-      )
-
-      refunder = Sales::Refunder.new
-      result = refunder.process(
-        sale: sale,
-        remaining_items: [],
-        employee: @employee
-      )
-
-      sale.reload
-      assert sale.voided?
-      assert_equal 550, result[:refund_amount]
     end
   end
 end
