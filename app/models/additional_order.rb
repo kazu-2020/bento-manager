@@ -1,14 +1,10 @@
 class AdditionalOrder < ApplicationRecord
-  # ===== アソシエーション =====
   belongs_to :location
   belongs_to :catalog
   belongs_to :employee, optional: true
 
-  # ===== バリデーション =====
   validates :order_at, presence: true
   validates :quantity, presence: true, numericality: { greater_than: 0 }
-
-  # ===== クラスメソッド =====
 
   # 追加発注を作成し、在庫を加算する
   #
