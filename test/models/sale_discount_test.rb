@@ -1,133 +1,38 @@
 require "test_helper"
 
 class SaleDiscountTest < ActiveSupport::TestCase
-  fixtures :locations, :employees, :catalogs, :catalog_prices,
-           :daily_inventories, :sales, :coupons, :discounts, :sale_discounts
+  fixtures :sales, :discounts, :sale_discounts
 
-  # ===== Task 9.1: アソシエーションテスト =====
-
-  test "belongs to sale" do
-    sale_discount = sale_discounts(:completed_sale_fifty_yen)
-    assert_instance_of Sale, sale_discount.sale
-    assert_equal sales(:completed_sale), sale_discount.sale
-  end
-
-  test "belongs to discount" do
-    sale_discount = sale_discounts(:completed_sale_fifty_yen)
-    assert_instance_of Discount, sale_discount.discount
-    assert_equal discounts(:fifty_yen_discount), sale_discount.discount
-  end
-
-  test "sale has_many sale_discounts" do
-    sale = sales(:completed_sale)
-    assert_includes sale.sale_discounts, sale_discounts(:completed_sale_fifty_yen)
-  end
-
-  test "discount has_many sale_discounts" do
-    discount = discounts(:fifty_yen_discount)
-    assert_includes discount.sale_discounts, sale_discounts(:completed_sale_fifty_yen)
-  end
-
-  # ===== Task 9.2: バリデーションテスト =====
-
-  test "sale must be present" do
-    sale_discount = build_valid_sale_discount
-    sale_discount.sale = nil
-    assert_not sale_discount.valid?
-    assert_includes sale_discount.errors[:sale], "を入力してください"
-  end
-
-  test "discount must be present" do
-    sale_discount = build_valid_sale_discount
-    sale_discount.discount = nil
-    assert_not sale_discount.valid?
-    assert_includes sale_discount.errors[:discount], "を入力してください"
-  end
-
-  test "discount_amount must be present" do
-    sale_discount = build_valid_sale_discount
-    sale_discount.discount_amount = nil
-    assert_not sale_discount.valid?
-    assert_includes sale_discount.errors[:discount_amount], "を入力してください"
-  end
-
-  test "quantity must be present" do
-    sale_discount = build_valid_sale_discount
-    sale_discount.quantity = nil
-    assert_not sale_discount.valid?
-    assert_includes sale_discount.errors[:quantity], "を入力してください"
-  end
-
-  test "quantity must be greater than 0" do
-    sale_discount = build_valid_sale_discount
-
-    # 1 以上は有効
-    sale_discount.quantity = 1
-    assert sale_discount.valid?
-
-    # 0 は無効
-    sale_discount.quantity = 0
-    assert_not sale_discount.valid?
-    assert_includes sale_discount.errors[:quantity], "は0より大きい値にしてください"
-
-    # 負の値は無効
-    sale_discount.quantity = -1
-    assert_not sale_discount.valid?
-    assert_includes sale_discount.errors[:quantity], "は0より大きい値にしてください"
-  end
-
-  test "discount_amount must be greater than 0" do
-    sale_discount = build_valid_sale_discount
-
-    # 1 以上は有効
-    sale_discount.discount_amount = 1
-    assert sale_discount.valid?
-
-    # 0 は無効（割引が適用されるなら必ず 1 以上）
-    sale_discount.discount_amount = 0
-    assert_not sale_discount.valid?
-    assert_includes sale_discount.errors[:discount_amount], "は0より大きい値にしてください"
-
-    # 負の値は無効
-    sale_discount.discount_amount = -1
-    assert_not sale_discount.valid?
-    assert_includes sale_discount.errors[:discount_amount], "は0より大きい値にしてください"
-  end
-
-  # ===== Task 9.2: ユニーク制約テスト（同じ割引の重複適用防止） =====
-
-  test "discount_id must be unique scoped to sale_id" do
-    existing = sale_discounts(:completed_sale_fifty_yen)
-
-    duplicate = SaleDiscount.new(
-      sale: existing.sale,
-      discount: existing.discount,
-      discount_amount: 50
-    )
-
-    assert_not duplicate.valid?
-    assert_includes duplicate.errors[:discount_id], "同じ割引を複数回適用できません"
-  end
-
-  test "same discount can be applied to different sales" do
-    # 同じ割引を異なる販売に適用することは可能
-    sale_discount = SaleDiscount.new(
-      sale: sales(:prefectural_office_sale),
-      discount: discounts(:fifty_yen_discount),
-      discount_amount: 50
-    )
-
-    assert sale_discount.valid?
-  end
-
-  private
-
-  def build_valid_sale_discount
-    # voided_sale を使用（既存フィクスチャとの重複を避けるため）
-    SaleDiscount.new(
+  test "validations" do
+    @subject = SaleDiscount.new(
       sale: sales(:voided_sale),
       discount: discounts(:hundred_yen_discount),
-      discount_amount: 100
+      discount_amount: 100,
+      quantity: 1
     )
+
+    must validate_uniqueness_of(:discount_id).scoped_to(:sale_id).with_message("同じ割引を複数回適用できません")
+    must validate_presence_of(:discount_amount)
+    must validate_numericality_of(:discount_amount).is_greater_than(0)
+    must validate_presence_of(:quantity)
+    must validate_numericality_of(:quantity).is_greater_than(0)
+  end
+
+  test "associations" do
+    @subject = SaleDiscount.new
+
+    must belong_to(:sale)
+    must belong_to(:discount)
+  end
+
+  test "同じ割引は異なる販売には適用できるが同一販売への重複適用はできない" do
+    existing = sale_discounts(:completed_sale_fifty_yen)
+
+    duplicate = SaleDiscount.new(sale: existing.sale, discount: existing.discount, discount_amount: 50, quantity: 1)
+    assert_not duplicate.valid?
+    assert_includes duplicate.errors[:discount_id], "同じ割引を複数回適用できません"
+
+    different_sale = SaleDiscount.new(sale: sales(:prefectural_office_sale), discount: existing.discount, discount_amount: 50, quantity: 1)
+    assert different_sale.valid?
   end
 end
