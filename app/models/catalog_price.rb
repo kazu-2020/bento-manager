@@ -1,12 +1,13 @@
 class CatalogPrice < ApplicationRecord
   belongs_to :catalog
-  has_many :sale_items, dependent: :restrict_with_error
+  has_many   :sale_items, dependent: :restrict_with_error
 
   enum :kind, { regular: 0, bundle: 1 }, validate: true
 
-  validates :kind, presence: true
-  validates :price, presence: true, numericality: { greater_than: 0 }
+  validates :kind,           presence: true
+  validates :price,          presence: true, numericality: { greater_than: 0 }
   validates :effective_from, presence: true
+
   validate :valid_date_range
 
   scope :effective_at, ->(date) {
