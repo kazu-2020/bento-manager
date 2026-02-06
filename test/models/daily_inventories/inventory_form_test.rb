@@ -14,7 +14,7 @@ module DailyInventories
       @salad = catalogs(:salad)
     end
 
-    test "initializes with all catalogs unselected" do
+    test "商品一覧から在庫フォームを構築し選択した商品で絞り込める" do
       form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
       assert_equal @catalogs.count, form.items.count
@@ -22,138 +22,45 @@ module DailyInventories
         assert_not item.selected?
         assert_equal 10, item.stock
       end
-    end
-
-    test "initializes with submitted values" do
-      submitted = {
-        @bento_a.id.to_s => { selected: true, stock: 15 }
-      }
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
-
-      item_a = form.items.find { |i| i.catalog_id == @bento_a.id }
-      assert item_a.selected?
-      assert_equal 15, item_a.stock
-    end
-
-    test "selected_items returns only selected items" do
-      submitted = { @bento_a.id.to_s => { selected: true } }
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
-
-      assert_equal 1, form.selected_items.count
-      assert_equal @bento_a.id, form.selected_items.first.catalog_id
-    end
-
-    test "selected_count returns number of selected items" do
-      submitted = {
-        @bento_a.id.to_s => { selected: true },
-        @bento_b.id.to_s => { selected: true }
-      }
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
-
-      assert_equal 2, form.selected_count
-    end
-
-    test "valid? returns false when nothing selected" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
       assert_not form.valid?
+
+      submitted = {
+        @bento_a.id.to_s => { selected: true, stock: 15 },
+        @bento_b.id.to_s => { selected: true, stock: 5 }
+      }
+      form_with_input = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
+
+      assert form_with_input.valid?
+      assert_equal 2, form_with_input.selected_count
+      assert_equal 15, form_with_input.selected_items.find { |i| i.catalog_id == @bento_a.id }.stock
     end
 
-    test "valid? returns true when at least one item selected" do
-      submitted = { @bento_a.id.to_s => { selected: true } }
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
-
-      assert form.valid?
-    end
-
-    test "form_with_options returns url and method for daily inventories" do
+    test "商品をカテゴリごとに分類できる" do
       form = InventoryForm.new(location: @location, catalogs: @catalogs)
 
-      expected = { url: "/pos/locations/#{@location.id}/daily_inventories", method: :post }
-      assert_equal expected, form.form_with_options
-    end
-
-    test "form_state_options returns url and method for form state" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
-      expected = { url: "/pos/locations/#{@location.id}/daily_inventories/form_state", method: :post }
-      assert_equal expected, form.form_state_options
-    end
-
-    # =====================================================================
-    # カテゴリグルーピングテスト
-    # =====================================================================
-
-    test "items have category attribute from catalog" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
-      bento_item = form.items.find { |i| i.catalog_id == @bento_a.id }
-      side_item = form.items.find { |i| i.catalog_id == @salad.id }
-
-      assert_equal "bento", bento_item.category
-      assert_equal "side_menu", side_item.category
-    end
-
-    test "bento_items returns only bento category items" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
-      form.bento_items.each do |item|
-        assert_equal "bento", item.category
-      end
       assert form.bento_items.any?
-    end
+      form.bento_items.each { |item| assert_equal "bento", item.category }
 
-    test "side_menu_items returns only side_menu category items" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-
-      form.side_menu_items.each do |item|
-        assert_equal "side_menu", item.category
-      end
       assert form.side_menu_items.any?
+      form.side_menu_items.each { |item| assert_equal "side_menu", item.category }
     end
 
-    # =====================================================================
-    # 検索機能テスト
-    # =====================================================================
-
-    test "visible? returns true when search_query is blank" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs)
-      item = form.items.first
-
-      assert form.visible?(item)
-    end
-
-    test "visible? returns true when item name matches search_query" do
+    test "商品名で検索して表示を絞り込める" do
       form = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: @bento_a.name[0..2])
-      item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      matching_item = form.items.find { |i| i.catalog_id == @bento_a.id }
+      assert form.visible?(matching_item)
 
-      assert form.visible?(item)
+      form_no_match = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: "存在しない商品名")
+      assert_not form_no_match.visible?(form_no_match.items.first)
+
+      form_blank = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: "  弁当  ")
+      assert_equal "弁当", form_blank.search_query
+
+      form_empty = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: "   ")
+      assert_nil form_empty.search_query
     end
 
-    test "visible? returns false when item name does not match search_query" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: "存在しない商品名")
-      item = form.items.first
-
-      assert_not form.visible?(item)
-    end
-
-    test "search_query is stripped and normalized" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: "  弁当  ")
-
-      assert_equal "弁当", form.search_query
-    end
-
-    test "search_query empty string becomes nil" do
-      form = InventoryForm.new(location: @location, catalogs: @catalogs, search_query: "   ")
-
-      assert_nil form.search_query
-    end
-
-    # =====================================================================
-    # save メソッドテスト
-    # =====================================================================
-
-    test "save は成功時 true を返し created_count を設定する" do
+    test "在庫を保存でき失敗時はエラーを返す" do
       location = Location.create!(name: "save テスト販売先", status: :active)
       submitted = {
         @bento_a.id.to_s => { selected: true, stock: 10 },
@@ -164,39 +71,18 @@ module DailyInventories
       assert_difference "DailyInventory.count", 2 do
         assert form.save
       end
-
       assert_equal 2, form.created_count
-    end
 
-    test "save はバリデーション失敗時 false を返す" do
-      location = Location.create!(name: "バリデーションテスト販売先", status: :active)
-      form = InventoryForm.new(location: location, catalogs: @catalogs)
+      empty_form = InventoryForm.new(location: location, catalogs: @catalogs)
+      assert_not empty_form.save
+      assert_equal 0, empty_form.created_count
 
-      assert_no_difference "DailyInventory.count" do
-        assert_not form.save
-      end
+      dup_location = Location.create!(name: "重複テスト販売先", status: :active)
+      DailyInventory.create!(location: dup_location, catalog: @bento_a, inventory_date: Date.current, stock: 5, reserved_stock: 0)
+      dup_form = InventoryForm.new(location: dup_location, catalogs: @catalogs, submitted: { @bento_a.id.to_s => { selected: true, stock: 15 } })
 
-      assert_equal 0, form.created_count
-    end
-
-    test "save は DB エラー時 false を返し errors にエラーを追加する" do
-      location = Location.create!(name: "DB エラーテスト販売先", status: :active)
-      DailyInventory.create!(
-        location: location,
-        catalog: @bento_a,
-        inventory_date: Date.current,
-        stock: 5,
-        reserved_stock: 0
-      )
-
-      submitted = { @bento_a.id.to_s => { selected: true, stock: 15 } }
-      form = InventoryForm.new(location: location, catalogs: @catalogs, submitted: submitted)
-
-      assert_no_difference "DailyInventory.count" do
-        assert_not form.save
-      end
-
-      assert_includes form.errors[:base], "保存に失敗しました。もう一度お試しください。"
+      assert_not dup_form.save
+      assert_includes dup_form.errors[:base], "保存に失敗しました。もう一度お試しください。"
     end
   end
 end

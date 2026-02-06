@@ -33,22 +33,28 @@ end
 
 テストダブルは外部API等、本当に必要な場合のみ使用する。
 
-### 2. テスト名は仕様書として読める日本語
+### 2. テスト名の付け方
 
-非エンジニアが「この機能はこう振る舞う」と理解できる命名にする。
-メソッド名や実装詳細をテスト名に含めない。
+**業務フロー**（モデル/サービスの振る舞い）: 非エンジニアが読める日本語にする。
 
 ```ruby
 # 正しい例: ビジネスルールを表現
 test "販売先一覧は稼働中を先に表示し、同じ状態では名前の昇順で並ぶ" do
 test "当日の在庫がない販売先は在庫なしと判定される" do
-test "過去の在庫しかない販売先は在庫なしと判定される" do
 
 # 避けるべき例: 実装詳細が露出
 test "display_order は active を先に、同じ status 内では name 昇順" do
-test "has_today_inventory? は today_inventories.exists? を呼ぶ" do
-test "today_inventories メソッドのテスト" do
 ```
+
+**内部ユーティリティ**（型変換、パーサー、ファクトリー等）: 技術的な記述でよい。
+
+```ruby
+# OK: 非エンジニアに説明する意味がない技術テスト
+test "casts hash with symbol keys to InventoryItem" do
+test "returns nil for unsupported types" do
+```
+
+判定基準: 「非エンジニアに説明する意味があるか」で使い分ける。
 
 ### 3. shoulda-matchers の使い分け
 
