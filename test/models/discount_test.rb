@@ -3,195 +3,69 @@ require "test_helper"
 class DiscountTest < ActiveSupport::TestCase
   fixtures :coupons, :catalogs, :discounts
 
-  # ===== バリデーションテスト =====
-
-  test "name は必須" do
-    coupon = coupons(:fifty_yen_coupon)
-    discount = Discount.new(discountable: coupon, name: nil, valid_from: Date.current)
-    assert_not discount.valid?
-    assert_includes discount.errors[:name], "を入力してください"
-  end
-
-  test "valid_from は必須" do
-    coupon = coupons(:fifty_yen_coupon)
-    discount = Discount.new(discountable: coupon, name: "テスト割引", valid_from: nil)
-    assert_not discount.valid?
-    assert_includes discount.errors[:valid_from], "を入力してください"
-  end
-
-  test "valid_until は nullable" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.new(discountable: coupon, name: "テスト割引", valid_from: Date.current, valid_until: nil)
-    assert discount.valid?, "valid_until が nil でも有効: #{discount.errors.full_messages.join(', ')}"
-  end
-
-  test "有効な属性で作成できる" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.new(
-      discountable: coupon,
-      name: "50円割引クーポン",
-      valid_from: Date.current,
-      valid_until: 1.month.from_now.to_date
-    )
-    assert discount.valid?, "有効な属性で Discount を作成できるべき: #{discount.errors.full_messages.join(', ')}"
-  end
-
-  # ===== 日付範囲バリデーションテスト（Task 5.3） =====
-
-  test "valid_until が valid_from より前の場合はエラー" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.new(
-      discountable: coupon,
+  test "validations" do
+    @subject = Discount.new(
+      discountable: Coupon.create!(amount_per_unit: 50),
       name: "テスト割引",
-      valid_from: Date.current,
-      valid_until: 1.day.ago.to_date
+      valid_from: Date.current
     )
-    assert_not discount.valid?
-    assert_includes discount.errors[:valid_until], "は有効開始日より後の日付を指定してください"
+
+    must validate_presence_of(:name)
+    must validate_presence_of(:valid_from)
   end
 
-  test "valid_until が valid_from と同じ場合はエラー" do
+  test "associations" do
+    @subject = Discount.new
+
+    must belong_to(:discountable)
+    must have_many(:sale_discounts).dependent(:restrict_with_exception)
+    must have_many(:sales).through(:sale_discounts)
+  end
+
+  test "有効期間の終了日は開始日より後でなければならない" do
     coupon = Coupon.create!(amount_per_unit: 50)
     today = Date.current
-    discount = Discount.new(
-      discountable: coupon,
-      name: "テスト割引",
-      valid_from: today,
-      valid_until: today
-    )
-    assert_not discount.valid?
-    assert_includes discount.errors[:valid_until], "は有効開始日より後の日付を指定してください"
+
+    before_start = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: 1.day.ago.to_date)
+    assert_not before_start.valid?
+    assert_includes before_start.errors[:valid_until], "は有効開始日より後の日付を指定してください"
+
+    same_day = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: today)
+    assert_not same_day.valid?
+
+    after_start = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: 1.day.from_now.to_date)
+    assert after_start.valid?
+
+    no_end = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: nil)
+    assert no_end.valid?
   end
 
-  test "valid_until が valid_from より後の場合は有効" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.new(
-      discountable: coupon,
-      name: "テスト割引",
-      valid_from: Date.current,
-      valid_until: 1.day.from_now.to_date
-    )
-    assert discount.valid?, "valid_until > valid_from は有効: #{discount.errors.full_messages.join(', ')}"
-  end
-
-  # ===== Delegated Type テスト =====
-
-  test "delegated_type が Coupon を受け入れる" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.create!(
-      discountable: coupon,
-      name: "クーポン割引",
-      valid_from: Date.current
-    )
-
-    assert_equal "Coupon", discount.discountable_type
-    assert_equal coupon.id, discount.discountable_id
-    assert_equal coupon, discount.discountable
-  end
-
-  test "coupon? メソッドが使用可能" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.create!(
-      discountable: coupon,
-      name: "クーポン割引",
-      valid_from: Date.current
-    )
-
-    assert discount.coupon?
-  end
-
-  # ===== スコープテスト =====
-
-  test "active スコープは現在有効な割引のみ取得" do
+  test "有効な割引のみが取得される" do
     coupon1 = Coupon.create!(amount_per_unit: 50)
     coupon2 = Coupon.create!(amount_per_unit: 50)
     coupon3 = Coupon.create!(amount_per_unit: 50)
+    coupon4 = Coupon.create!(amount_per_unit: 50)
 
-    # 現在有効（valid_until なし）
-    active_discount = Discount.create!(
-      discountable: coupon1,
-      name: "有効割引",
-      valid_from: 1.week.ago.to_date,
-      valid_until: nil
-    )
+    active = Discount.create!(discountable: coupon1, name: "有効", valid_from: 1.week.ago.to_date)
+    with_end = Discount.create!(discountable: coupon4, name: "期間内", valid_from: 1.week.ago.to_date, valid_until: 1.week.from_now.to_date)
+    expired = Discount.create!(discountable: coupon2, name: "期限切れ", valid_from: 1.month.ago.to_date, valid_until: 1.day.ago.to_date)
+    future = Discount.create!(discountable: coupon3, name: "未来", valid_from: 1.week.from_now.to_date)
 
-    # 期限切れ
-    expired_discount = Discount.create!(
-      discountable: coupon2,
-      name: "期限切れ割引",
-      valid_from: 1.month.ago.to_date,
-      valid_until: 1.day.ago.to_date
-    )
+    result = Discount.active
 
-    # 未来の開始日
-    future_discount = Discount.create!(
-      discountable: coupon3,
-      name: "未来の割引",
-      valid_from: 1.week.from_now.to_date,
-      valid_until: nil
-    )
-
-    active_discounts = Discount.active
-
-    assert_includes active_discounts, active_discount
-    assert_not_includes active_discounts, expired_discount
-    assert_not_includes active_discounts, future_discount
+    assert_includes result, active
+    assert_includes result, with_end
+    assert_not_includes result, expired
+    assert_not_includes result, future
   end
 
-  test "active スコープは valid_until が今日以降の割引を含む" do
+  test "割引額は弁当が含まれる場合のみ適用される" do
     coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.create!(
-      discountable: coupon,
-      name: "期間内割引",
-      valid_from: 1.week.ago.to_date,
-      valid_until: 1.week.from_now.to_date
-    )
-
-    assert_includes Discount.active, discount
-  end
-
-  # ===== 委譲メソッドテスト =====
-
-  test "applicable? は discountable に委譲される" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.create!(
-      discountable: coupon,
-      name: "委譲テスト割引",
-      valid_from: Date.current
-    )
+    discount = Discount.create!(discountable: coupon, name: "テスト割引", valid_from: Date.current)
     bento = catalogs(:daily_bento_a)
-
-    sale_items = [ { catalog: bento, quantity: 1 } ]
-
-    assert discount.applicable?(sale_items)
-  end
-
-  test "calculate_discount は discountable に委譲される" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.create!(
-      discountable: coupon,
-      name: "計算委譲テスト割引",
-      valid_from: Date.current
-    )
-    bento = catalogs(:daily_bento_a)
-
-    sale_items = [ { catalog: bento, quantity: 2 } ]
-
-    # クーポン1枚あたり固定50円
-    assert_equal 50, discount.calculate_discount(sale_items)
-  end
-
-  test "calculate_discount は applicable? が false の場合 0 を返す" do
-    coupon = Coupon.create!(amount_per_unit: 50)
-    discount = Discount.create!(
-      discountable: coupon,
-      name: "非適用テスト割引",
-      valid_from: Date.current
-    )
     salad = catalogs(:salad)
 
-    sale_items = [ { catalog: salad, quantity: 2 } ]
-
-    assert_equal 0, discount.calculate_discount(sale_items)
+    assert_equal 50, discount.calculate_discount([ { catalog: bento, quantity: 2 } ])
+    assert_equal 0, discount.calculate_discount([ { catalog: salad, quantity: 2 } ])
   end
 end

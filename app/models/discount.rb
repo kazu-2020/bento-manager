@@ -1,13 +1,10 @@
 class Discount < ApplicationRecord
-  # ===== アソシエーション =====
   has_many :sale_discounts, dependent: :restrict_with_exception
   has_many :sales, through: :sale_discounts
-  delegated_type :discountable, types: %w[Coupon], autosave: true
 
-  # ===== 委譲 =====
+  delegated_type :discountable, types: %w[Coupon], autosave: true
   delegate :applicable?, :max_applicable_quantity, to: :discountable
 
-  # ===== スコープ =====
   # 指定日時点で有効な割引を取得
   scope :active_at, ->(date) {
     where(valid_from: ..date)
@@ -17,12 +14,10 @@ class Discount < ApplicationRecord
   }
   scope :active, -> { active_at(Date.current) }
 
-  # ===== バリデーション =====
   validates :name, presence: true
   validates :valid_from, presence: true
-  validate :valid_date_range
 
-  # ===== ビジネスロジック =====
+  validate :valid_date_range
 
   # 割引額を計算
   # @param sale_items [Array<Hash>] 販売明細 [{ catalog: Catalog, quantity: Integer }, ...]
