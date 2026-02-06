@@ -1,13 +1,14 @@
 class CatalogPricingRule < ApplicationRecord
   belongs_to :target_catalog, class_name: "Catalog", foreign_key: "target_catalog_id"
 
-  enum :price_kind, { regular: 0, bundle: 1 }, validate: true
+  enum :price_kind,       { regular: 0, bundle: 1 },  validate: true
   enum :trigger_category, { bento: 0, side_menu: 1 }, validate: true, prefix: :triggered_by
 
-  validates :price_kind, presence: true
+  validates :price_kind,       presence: true
   validates :trigger_category, presence: true
-  validates :max_per_trigger, presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :valid_from, presence: true
+  validates :max_per_trigger,  presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :valid_from,       presence: true
+
   validate :valid_date_range
 
   scope :active_at, ->(date) {
