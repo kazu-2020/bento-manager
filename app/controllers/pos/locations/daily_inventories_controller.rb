@@ -7,6 +7,11 @@ module Pos
       before_action :set_catalogs
 
       def new
+        if @location.has_today_inventory?
+          redirect_to new_pos_location_daily_inventories_correction_path(@location)
+          return
+        end
+
         @form = build_form
       end
 

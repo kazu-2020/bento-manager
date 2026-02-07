@@ -8,6 +8,18 @@
                   class: "flex flex-col flex-1 min-h-0",
                   data: { ghost_form_target: "originalForm" } do |f| %>
       <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
+        <%# 在庫再登録バナー（販売未開始時のみ表示） %>
+        <% if re_registerable? %>
+          <div class="shrink-0 px-3 pt-2">
+            <div class="alert alert-info alert-soft">
+              <%= helpers.icon "edit", extra_class: "shrink-0" %>
+              <span class="text-sm flex-1"><%= t(".re_registration_available") %></span>
+              <%= link_to t(".re_registration_link"), correction_url,
+                    class: "btn btn-info btn-soft btn-sm" %>
+            </div>
+          </div>
+        <% end %>
+
         <%# タブバー %>
         <div class="shrink-0 bg-base-200 px-4 pt-1">
           <div role="tablist" class="tabs tabs-lift">

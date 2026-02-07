@@ -15,4 +15,8 @@ class Location < ApplicationRecord
   def has_today_inventory?
     today_inventories.any?
   end
+
+  def sales_started_today?
+    DailyInventory.sales_started?(location: self)
+  end
 end

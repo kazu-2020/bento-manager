@@ -281,6 +281,17 @@ module Pos
         post pos_location_daily_inventories_path(@location)
         assert_redirected_to "/employee/login"
       end
+
+      test "登録済みの場合、new アクションは修正ページにリダイレクトする" do
+        login_as_employee(@employee)
+        DailyInventory.create!(
+          location: @location, catalog: @bento_a,
+          inventory_date: Date.current, stock: 10, reserved_stock: 0
+        )
+
+        get new_pos_location_daily_inventory_path(@location)
+        assert_redirected_to new_pos_location_daily_inventories_correction_path(@location)
+      end
     end
   end
 end

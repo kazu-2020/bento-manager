@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 module DailyInventories
-  class InventoryForm
+  class CorrectionForm
     include ActiveModel::Model
     include ActiveModel::Attributes
     include Rails.application.routes.url_helpers
 
     ITEM_TYPE = InventoryItemType.new
 
-    attr_reader :items, :location, :created_count, :search_query
+    attr_reader :items, :location, :registered_count, :search_query
 
     validate :at_least_one_item_selected
 
@@ -17,7 +17,7 @@ module DailyInventories
       @catalogs = catalogs
       @search_query = search_query&.strip.presence
       @items = build_items(submitted)
-      @created_count = 0
+      @registered_count = 0
     end
 
     def visible?(item)
@@ -29,9 +29,16 @@ module DailyInventories
     def save
       return false unless valid?
 
-      @created_count = DailyInventory.bulk_create(location: location, items: selected_items)
+      result = DailyInventory.bulk_recreate(location: location, items: selected_items)
 
-      if @created_count.positive?
+      if result == :sales_already_started
+        errors.add(:base, :sales_already_started)
+        return false
+      end
+
+      @registered_count = result
+
+      if @registered_count.positive?
         true
       else
         errors.add(:base, :save_failed)
@@ -41,14 +48,14 @@ module DailyInventories
 
     def form_with_options
       {
-        url: pos_location_daily_inventories_path(location),
+        url: pos_location_daily_inventories_correction_path(location),
         method: :post
       }
     end
 
     def form_state_options
       {
-        url: pos_location_daily_inventories_form_state_path(location),
+        url: pos_location_daily_inventories_corrections_form_state_path(location),
         method: :post
       }
     end

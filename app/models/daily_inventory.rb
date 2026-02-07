@@ -14,6 +14,21 @@ class DailyInventory < ApplicationRecord
 
   validate :available_stock_must_be_non_negative
 
+  def self.sales_started?(location:, date: Date.current)
+    where(location: location, inventory_date: date)
+      .where("lock_version > 0")
+      .exists?
+  end
+
+  def self.bulk_recreate(location:, items:)
+    return :sales_already_started if sales_started?(location: location)
+
+    transaction do
+      delete_by(location: location, inventory_date: Date.current)
+      bulk_create(location: location, items: items)
+    end
+  end
+
   def self.bulk_create(location:, items:)
     inventories = items.map do |item|
       new(
