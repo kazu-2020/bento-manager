@@ -9,6 +9,7 @@ module Pos
       before_action :set_discounts
 
       def new
+        @re_registerable = !@location.sales_started_today?
         @form = build_form
       end
 
@@ -28,10 +29,7 @@ module Pos
         )
 
         redirect_to new_pos_location_sale_path(@location), notice: t(".success")
-      rescue Errors::MissingPriceError => e
-        flash.now[:alert] = e.message
-        render :new, status: :unprocessable_entity
-      rescue DailyInventory::InsufficientStockError => e
+      rescue Errors::MissingPriceError, DailyInventory::InsufficientStockError => e
         flash.now[:alert] = e.message
         render :new, status: :unprocessable_entity
       end

@@ -7,6 +7,11 @@ module Pos
       before_action :set_catalogs
 
       def new
+        if @location.has_today_inventory?
+          redirect_to new_pos_location_daily_inventories_correction_path(@location)
+          return
+        end
+
         @form = build_form
       end
 
@@ -33,7 +38,8 @@ module Pos
       end
 
       def build_form(submitted = {})
-        ::DailyInventories::InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
+        items = ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
+        ::DailyInventories::InventoryForm.new(location: @location, items: items)
       end
 
       def submitted_params(key)

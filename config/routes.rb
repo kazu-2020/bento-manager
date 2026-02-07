@@ -18,6 +18,10 @@ Rails.application.routes.draw do
       resources :daily_inventories, only: [ :new, :create ], module: :locations
       namespace :daily_inventories, module: "locations/daily_inventories" do
         resource :form_state, only: [ :create ]
+        resource :correction, only: [ :new, :create ]
+        namespace :corrections, module: :corrections do
+          resource :form_state, only: [ :create ]
+        end
       end
       resources :sales, only: [ :new, :create ], module: :locations
       namespace :sales, module: "locations/sales" do
