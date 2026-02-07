@@ -1,5 +1,5 @@
-<div class="card bg-base-100 mb-4">
-  <div class="card-body p-4">
+<div class="card bg-base-100 mb-2">
+  <div class="card-body p-2">
     <details class="group">
       <summary class="flex justify-between items-center cursor-pointer [&::-webkit-details-marker]:hidden list-none">
         <span class="flex items-center gap-2">
@@ -12,7 +12,7 @@
         <span class="text-3xl font-bold text-primary"><%= total_available_stock %><span class="text-base ml-1"><%= t(".unit") %></span></span>
       </summary>
 
-      <div class="mt-3 space-y-1">
+      <div class="mt-1 space-y-1">
         <% inventories.each do |inventory| %>
           <div class="flex justify-between text-sm">
             <span><%= inventory.catalog.name %></span>

@@ -1,5 +1,5 @@
-<div class="mt-6">
-  <h2 class="flex items-center justify-between text-lg font-bold mb-3">
+<div class="mt-3">
+  <h2 class="flex items-center justify-between text-lg font-bold mb-2">
     <span><%= t(".title") %></span>
     <% if has_orders? %>
       <span class="badge badge-accent"><%= t(".total_quantity", count: total_quantity) %></span>
@@ -7,7 +7,7 @@
   </h2>
 
   <% if has_orders? %>
-    <div class="space-y-2">
+    <div class="space-y-1">
       <% additional_orders.each do |order| %>
         <%= render_history_item(order) %>
       <% end %>
