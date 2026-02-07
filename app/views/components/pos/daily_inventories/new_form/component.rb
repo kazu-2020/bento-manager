@@ -4,9 +4,10 @@ module Pos
   module DailyInventories
     module NewForm
       class Component < Application::Component
-        def initialize(location:, form:)
+        def initialize(location:, form:, back_url: nil)
           @location = location
           @form = form
+          @back_url = back_url
         end
 
         attr_reader :location, :form
@@ -19,7 +20,7 @@ module Pos
         end
 
         def back_url
-          helpers.pos_locations_path
+          @back_url || helpers.pos_locations_path
         end
 
         def today_date
