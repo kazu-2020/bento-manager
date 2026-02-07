@@ -1,9 +1,9 @@
 <%= form_with **form_with_options, id: "additional-order-form" do |f| %>
-  <h2 class="flex items-center gap-2 text-lg font-bold mb-3">
+  <h2 class="flex items-center gap-2 text-lg font-bold mb-2">
     <span><%= t(".section_title") %></span>
   </h2>
 
-  <div class="space-y-3">
+  <div class="space-y-1">
     <% items.each do |item| %>
       <%= render_item_card(item) %>
     <% end %>

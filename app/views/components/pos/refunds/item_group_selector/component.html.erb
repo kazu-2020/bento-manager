@@ -1,5 +1,5 @@
 <div class="card bg-base-100 border border-base-300 <%= 'ring-2 ring-error' if selected? %>">
-  <div class="card-body p-4">
+  <div class="card-body p-2">
     <%# 商品情報 %>
     <div class="flex items-center justify-between gap-4">
       <span class="font-bold truncate flex-1"><%= catalog_name %></span>
@@ -10,7 +10,7 @@
     </div>
 
     <%# 返品数入力 %>
-    <div class="flex items-center justify-center gap-2 mt-3 pt-3 border-t border-base-200" data-controller="quantity-stepper">
+    <div class="flex items-center justify-center gap-2 mt-1 pt-1 border-t border-base-200" data-controller="quantity-stepper">
       <span class="text-sm text-base-content/70 mr-2"><%= t(".refund") %></span>
       <button type="button"
               class="btn btn-circle btn-outline btn-sm"

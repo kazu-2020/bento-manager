@@ -1,7 +1,7 @@
 <%= fields_for item_field_name, item do |f| %>
   <div id="<%= dom_id %>" class="<%= wrapper_classes %>">
   <div class="<%= card_classes %>">
-    <div class="card-body p-4">
+    <div class="card-body p-2">
       <%# カード選択エリア %>
       <label class="flex items-center gap-3 cursor-pointer">
         <%= f.check_box :selected,
@@ -20,12 +20,12 @@
 
       <%# ステッパー（選択時のみ表示） %>
       <% if selected? %>
-        <div class="mt-4">
-          <%= component "inputs/quantity_stepper", unit: t(".unit") do |c| %>
+        <div class="mt-1">
+          <%= component "inputs/quantity_stepper", unit: t(".unit"), size: "compact" do |c| %>
             <% c.with_input do %>
               <%= f.number_field :stock,
                     min: 1, autocomplete: "off",
-                    class: "input input-bordered w-20 text-center text-2xl font-bold",
+                    class: "input input-bordered input-sm w-14 text-center text-lg font-bold",
                     data: { quantity_stepper_target: "input" } %>
             <% end %>
           <% end %>
