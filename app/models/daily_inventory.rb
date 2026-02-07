@@ -21,9 +21,9 @@ class DailyInventory < ApplicationRecord
   end
 
   def self.bulk_recreate(location:, items:)
-    return :sales_already_started if sales_started?(location: location)
-
     transaction do
+      return :sales_already_started if sales_started?(location: location)
+
       delete_by(location: location, inventory_date: Date.current)
       bulk_create(location: location, items: items)
     end
