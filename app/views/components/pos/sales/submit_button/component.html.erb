@@ -1,7 +1,7 @@
 <div id="sale-submit-button">
   <%# 顧客区分選択 %>
   <%= fields_for "cart", form do |f| %>
-    <div class="flex gap-3 mb-3">
+    <div class="flex gap-2 mb-2">
       <label class="flex-1 cursor-pointer">
         <%= f.radio_button :customer_type, "staff", class: "hidden peer" %>
         <div class="btn w-full peer-checked:btn-accent peer-checked:btn-active">
@@ -19,6 +19,6 @@
 
   <%# 販売確定ボタン %>
   <%= button_tag submit_text, type: :submit,
-        class: "btn btn-neutral btn-lg w-full",
+        class: "btn btn-neutral w-full",
         disabled: disabled? %>
 </div>

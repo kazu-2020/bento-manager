@@ -1,11 +1,11 @@
-<div class="flex items-center justify-center gap-4 <%= extra_class %>"
+<div class="flex items-center justify-center <%= gap_class %> <%= extra_class %>"
      data-controller="quantity-stepper">
 
   <button type="button"
-          class="btn btn-circle btn-outline btn-lg"
+          class="btn btn-circle btn-outline <%= button_size_class %>"
           aria-label="<%= t('.decrement') %>"
           data-action="quantity-stepper#decrement">
-    <%= helpers.icon "minus", extra_class: "h-6 w-6" %>
+    <%= helpers.icon "minus", extra_class: icon_class %>
   </button>
 
   <div class="flex items-center gap-2">
@@ -16,9 +16,9 @@
   </div>
 
   <button type="button"
-          class="btn btn-circle btn-outline btn-lg"
+          class="btn btn-circle btn-outline <%= button_size_class %>"
           aria-label="<%= t('.increment') %>"
           data-action="quantity-stepper#increment">
-    <%= helpers.icon "plus", extra_class: "h-6 w-6" %>
+    <%= helpers.icon "plus", extra_class: icon_class %>
   </button>
 </div>

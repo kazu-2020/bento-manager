@@ -1,15 +1,15 @@
 <div data-controller="ghost-form pos-cart"
      data-action="pos-cart:cartChanged->ghost-form#submit">
   <%# top-16 (4rem): navbar の高さ分オフセット %>
-  <%# bottom-16: モバイルで Dock のスペースを確保 %>
-  <div class="fixed inset-x-0 top-16 bottom-16 lg:bottom-0 lg:left-72 z-20 bg-base-200 flex flex-col">
+  <%# bottom-12: モバイルで Dock のスペースを確保 %>
+  <div class="fixed inset-x-0 top-16 bottom-12 lg:bottom-0 lg:left-72 z-20 bg-base-200 flex flex-col">
     <%# Original Form (販売処理を行うフォーム) %>
     <%= form_with **form_with_options,
                   class: "flex flex-col flex-1 min-h-0",
                   data: { ghost_form_target: "originalForm" } do |f| %>
       <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
         <%# タブバー %>
-        <div class="shrink-0 bg-base-200 px-4 pt-2">
+        <div class="shrink-0 bg-base-200 px-4 pt-1">
           <div role="tablist" class="tabs tabs-lift">
             <% tab_items.each_with_index do |tab, i| %>
               <%= button_tag tab[:label], type: :button, role: :tab,
@@ -20,20 +20,20 @@
         </div>
 
         <%# タブパネル（スクロール領域） %>
-        <main class="flex-1 overflow-y-auto p-4">
+        <main class="flex-1 overflow-y-auto px-3 py-2">
           <% tab_items.each_with_index do |tab, i| %>
             <div data-tabs-target="panel" <%= "hidden" unless i == 0 %>>
               <% case tab[:key] %>
               <% when :bento %>
-                <div class="space-y-3">
+                <div class="space-y-1">
                   <%= component "pos/sales/product_card", collection: bento_items %>
                 </div>
               <% when :side_menu %>
-                <div class="space-y-3">
+                <div class="space-y-1">
                   <%= component "pos/sales/product_card", collection: side_menu_items %>
                 </div>
               <% when :coupon %>
-                <div class="space-y-3">
+                <div class="space-y-1">
                   <%= component "pos/sales/coupon_card", collection: discounts, form: form %>
                 </div>
               <% end %>
@@ -44,11 +44,11 @@
 
       <%# フッター %>
       <footer class="shrink-0 bg-base-100 border-t border-base-300">
-        <div class="p-4 safe-area-pb">
+        <div class="px-3 py-2 safe-area-pb">
           <%# 価格内訳 %>
           <%= component "pos/sales/price_breakdown", form: form %>
 
-          <div class="divider my-2"></div>
+          <div class="divider my-1"></div>
 
           <%# 顧客区分 + 販売確定ボタン %>
           <%= component "pos/sales/submit_button", form: form %>
