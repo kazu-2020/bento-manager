@@ -38,7 +38,8 @@ module Pos
       end
 
       def build_form(submitted = {})
-        ::DailyInventories::InventoryForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
+        items = ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
+        ::DailyInventories::InventoryForm.new(location: @location, items: items)
       end
 
       def submitted_params(key)

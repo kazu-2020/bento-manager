@@ -7,16 +7,14 @@ module DailyInventories
     include Rails.application.routes.url_helpers
     include ItemSelectable
 
-    ITEM_TYPE = InventoryItemType.new
-
     attr_reader :items, :location, :created_count, :search_query
 
     validate :at_least_one_item_selected
 
-    def initialize(location:, catalogs:, submitted: {}, search_query: nil)
+    def initialize(location:, items:, search_query: nil)
       @location = location
       @search_query = search_query&.strip.presence
-      @items = build_items(catalogs, submitted)
+      @items = items
       @created_count = 0
     end
 
@@ -51,15 +49,6 @@ module DailyInventories
 
     def at_least_one_item_selected
       errors.add(:base, :no_items_selected) unless selected_count.positive?
-    end
-
-    def build_items(catalogs, submitted)
-      catalogs.map do |catalog|
-        saved = submitted[catalog.id.to_s] || {}
-        ITEM_TYPE.cast(
-          saved.symbolize_keys.merge(catalog_id: catalog.id, catalog_name: catalog.name, category: catalog.category)
-        )
-      end
     end
   end
 end

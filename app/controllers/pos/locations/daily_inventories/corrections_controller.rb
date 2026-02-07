@@ -43,19 +43,12 @@ module Pos
         end
 
         def build_form(submitted = {})
-          submitted = default_submitted if submitted.empty?
-
-          ::DailyInventories::CorrectionForm.new(
-            location: @location,
-            catalogs: @catalogs,
-            submitted: submitted
-          )
-        end
-
-        def default_submitted
-          existing_inventories.transform_keys(&:to_s).transform_values do |inv|
-            { "selected" => "1", "stock" => inv.stock.to_s }
+          items = if submitted.empty?
+            ::DailyInventories::ItemBuilder.from_inventories(@catalogs, existing_inventories)
+          else
+            ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
           end
+          ::DailyInventories::CorrectionForm.new(location: @location, items: items)
         end
 
         def submitted_params(key)
