@@ -1,4 +1,5 @@
 <% content_for(:title) { t(".title") } %>
 <%= component "pos/daily_inventories/new_form",
               location: @location,
-              form: @form %>
+              form: @form,
+              back_url: new_pos_location_sale_path(@location) %>
