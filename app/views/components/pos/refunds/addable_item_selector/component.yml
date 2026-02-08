@@ -1,0 +1,8 @@
+---
+ja:
+  add: 追加
+  unit: 個
+  decrement: 減らす
+  increment: 増やす
+  available_stock: "在庫 %{count}個"
+  sold_out: 売切

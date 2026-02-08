@@ -33,11 +33,11 @@ module Pos
         amount = result[:refund_amount]
         notice = if amount.positive?
                    t(".success_refund", amount: helpers.number_to_currency(amount))
-                 elsif amount.negative?
+        elsif amount.negative?
                    t(".success_additional_charge", amount: helpers.number_to_currency(amount.abs))
-                 else
+        else
                    t(".success_even_exchange")
-                 end
+        end
 
         redirect_to pos_location_sales_history_index_path(@location), notice: notice
       rescue Sale::AlreadyVoidedError

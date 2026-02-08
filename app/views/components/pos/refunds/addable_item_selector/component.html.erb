@@ -1,0 +1,45 @@
+<div class="card bg-base-100 border border-base-300 <%= 'ring-2 ring-info' if selected? %> <%= 'opacity-50' if sold_out? %>">
+  <div class="card-body p-2">
+    <%# 商品情報 %>
+    <div class="flex items-center justify-between gap-4">
+      <span class="font-bold truncate flex-1"><%= catalog_name %></span>
+      <div class="text-right shrink-0">
+        <span class="text-sm text-base-content/60"><%= formatted_stock %></span>
+      </div>
+    </div>
+
+    <%# 追加数入力 %>
+    <div class="flex items-center justify-center gap-2 mt-1 pt-1 border-t border-base-200" data-controller="quantity-stepper">
+      <span class="text-sm text-base-content/70 mr-2"><%= t(".add") %></span>
+      <button type="button"
+              class="btn btn-circle btn-outline btn-sm"
+              aria-label="<%= t('.decrement') %>"
+              data-action="quantity-stepper#decrement"
+              <%= "disabled" if sold_out? %>>
+        <%= helpers.icon "minus", extra_class: "h-4 w-4" %>
+      </button>
+
+      <%= number_field_tag quantity_field_name, add_quantity,
+                           id: quantity_field_id,
+                           min: 0,
+                           max: max_addable,
+                           step: 1,
+                           class: "input input-bordered input-sm w-14 text-center font-bold",
+                           disabled: sold_out?,
+                           data: {
+                             quantity_stepper_target: "input",
+                             action: "change->refund-cart#toggle"
+                           } %>
+
+      <button type="button"
+              class="btn btn-circle btn-outline btn-sm"
+              aria-label="<%= t('.increment') %>"
+              data-action="quantity-stepper#increment"
+              <%= "disabled" if sold_out? %>>
+        <%= helpers.icon "plus", extra_class: "h-4 w-4" %>
+      </button>
+
+      <span class="text-sm"><%= t(".unit") %></span>
+    </div>
+  </div>
+</div>
