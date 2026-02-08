@@ -218,7 +218,7 @@ module Sales
 
     # === 差額精算テスト ===
 
-    test "弁当Aを弁当Bに等価交換すると差額0円になる（弁当A:550円→弁当B:500円のため差額50円返金）" do
+    test "弁当A(550円)を弁当B(500円)に交換すると差額50円が返金される" do
       recorder = Sales::Recorder.new
       sale = recorder.record(
         { location: @location, customer_type: :staff, employee: @employee },

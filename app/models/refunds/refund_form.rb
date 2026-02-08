@@ -22,7 +22,7 @@ module Refunds
     end
 
     def corrected_items_for_refunder
-      corrected_quantities.filter_map do |catalog_id, qty|
+      @corrected_items_for_refunder ||= corrected_quantities.filter_map do |catalog_id, qty|
         next if qty <= 0
         catalog = find_catalog(catalog_id)
         next unless catalog
@@ -195,7 +195,7 @@ module Refunds
       calculator.calculate
     rescue Errors::MissingPriceError => e
       Rails.logger.error "[RefundForm] MissingPriceError: #{e.message}"
-      { final_total: 0, items_with_prices: [], discount_details: [], total_discount_amount: 0 }
+      { final_total: 0, items_with_prices: [], discount_details: build_full_refund_discount_details, total_discount_amount: 0 }
     end
 
     def build_full_refund_discount_details
