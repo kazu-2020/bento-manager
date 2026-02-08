@@ -179,7 +179,14 @@ module Refunds
 
     def calculate_preview_prices
       items = corrected_items_for_refunder
-      return { final_total: 0, items_with_prices: [], discount_details: [], total_discount_amount: 0 } if items.empty?
+      if items.empty?
+        return {
+          final_total: 0,
+          items_with_prices: [],
+          discount_details: build_full_refund_discount_details,
+          total_discount_amount: 0
+        }
+      end
 
       calculator = Sales::PriceCalculator.new(
         items,
@@ -189,6 +196,19 @@ module Refunds
     rescue Errors::MissingPriceError => e
       Rails.logger.error "[RefundForm] MissingPriceError: #{e.message}"
       { final_total: 0, items_with_prices: [], discount_details: [], total_discount_amount: 0 }
+    end
+
+    def build_full_refund_discount_details
+      sale.sale_discounts.includes(:discount).map do |sd|
+        {
+          discount_id: sd.discount_id,
+          discount_name: sd.discount.name,
+          discount_amount: 0,
+          quantity: 0,
+          requested_quantity: sd.quantity,
+          applicable: false
+        }
+      end
     end
 
     def build_corrected_items

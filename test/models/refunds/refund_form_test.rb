@@ -311,6 +311,38 @@ module Refunds
 
     # === tab_items テスト ===
 
+    # === 全額返金時のクーポン返却テスト ===
+
+    test "弁当1個+クーポン1枚の販売を全額返金すると、精算プレビューにクーポン1枚返却が含まれる" do
+      discount = discounts(:fifty_yen_discount)
+      sale = create_sale(
+        [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        discount_quantities: { discount.id => 1 }
+      )
+
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "0" }
+          }
+        }
+      )
+
+      result = form.preview_price_result
+      assert_equal 0, result[:final_total]
+      assert_empty result[:items_with_prices]
+
+      details = result[:discount_details]
+      coupon_detail = details.find { |d| d[:discount_id] == discount.id }
+      assert_equal 0, coupon_detail[:quantity]
+      assert_equal 1, coupon_detail[:requested_quantity]
+    end
+
+    # === tab_items テスト ===
+
     test "tab_itemsが弁当タブを含む" do
       sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
