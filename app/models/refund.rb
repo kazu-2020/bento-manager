@@ -4,5 +4,5 @@ class Refund < ApplicationRecord
   belongs_to :employee, optional: true
 
   validates :refund_datetime, presence: true
-  validates :amount,          presence: true, numericality: { greater_than_or_equal_to: 0 }
+  validates :amount,          presence: true, numericality: { only_integer: true }
 end

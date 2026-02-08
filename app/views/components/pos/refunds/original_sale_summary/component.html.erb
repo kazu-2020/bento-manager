@@ -1,20 +1,24 @@
-<div class="card bg-base-100 border border-base-300">
-  <div class="card-body p-2">
-    <h3 class="card-title text-base">
-      <svg class="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-      </svg>
-      <%= t(".title") %>
-    </h3>
-
+<details class="collapse collapse-arrow bg-base-100 border border-base-300 rounded-lg">
+  <summary class="collapse-title min-h-0 py-2 px-3">
+    <div class="flex items-center justify-between pr-6">
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-info" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        <span class="font-bold text-base"><%= t(".title") %></span>
+      </div>
+      <span class="font-bold text-base"><%= formatted_final_amount %></span>
+    </div>
+  </summary>
+  <div class="collapse-content px-3 pb-2">
     <%# 販売情報 %>
-    <div class="flex items-center gap-2 text-sm text-base-content/70 mt-2">
+    <div class="flex items-center gap-2 text-sm text-base-content/70 mt-1">
       <span><%= sale_datetime %></span>
       <span class="badge <%= customer_type_badge_class %> badge-sm"><%= customer_type_label %></span>
     </div>
 
     <%# 商品明細 %>
-    <div class="mt-4 space-y-2">
+    <div class="mt-3 space-y-2">
       <% items.each do |item| %>
         <div class="flex justify-between text-sm">
           <span>
@@ -30,7 +34,7 @@
     </div>
 
     <%# 割引・合計 %>
-    <div class="border-t border-base-200 mt-1 pt-1">
+    <div class="border-t border-base-200 mt-2 pt-2">
       <% if has_discounts? %>
         <div class="flex justify-between text-sm text-error mb-2">
           <span><%= t(".discount") %></span>
@@ -43,4 +47,4 @@
       </div>
     </div>
   </div>
-</div>
+</details>

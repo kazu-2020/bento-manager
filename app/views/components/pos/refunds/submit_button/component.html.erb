@@ -1,8 +1,15 @@
 <div id="refund-submit-button">
-  <%= button_tag type: :submit, class: "btn btn-error text-white w-full", disabled: disabled? do %>
+  <%= button_tag type: :submit, class: button_class, disabled: disabled? do %>
     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+      <% case adjustment_type %>
+      <% when :additional_charge %>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+      <% when :even_exchange %>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+      <% else %>
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+      <% end %>
     </svg>
-    <%= t(".submit") %>
+    <%= submit_label %>
   <% end %>
 </div>

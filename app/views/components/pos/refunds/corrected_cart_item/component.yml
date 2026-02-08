@@ -1,0 +1,5 @@
+---
+ja:
+  stock_count: "上限 %{count}個"
+  original_quantity: "元 %{count}個"
+  sold_out: 売り切れ

@@ -1,3 +1,5 @@
 ---
 ja:
-  title: 返金額
+  title_refund: 返金額
+  title_additional_charge: 追加請求額
+  title_even_exchange: 差額なし

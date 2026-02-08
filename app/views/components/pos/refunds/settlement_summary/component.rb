@@ -2,28 +2,27 @@
 
 module Pos
   module Refunds
-    module CorrectedSalePreview
+    module SettlementSummary
       class Component < Application::Component
-        def initialize(form:, sale: nil)
+        def initialize(form:, sale:)
           @form = form
           @sale = sale
         end
 
         attr_reader :form, :sale
 
-        delegate :remaining_items, :has_any_changes?, :all_items_selected?,
-                 :preview_price_result, to: :form
-
-        def has_remaining_items?
-          items_with_prices.any?
-        end
+        delegate :has_any_changes?, :all_items_zero?, :preview_price_result, to: :form
 
         def items_with_prices
           @items_with_prices ||= preview_price_result&.dig(:items_with_prices) || []
         end
 
+        def has_corrected_items?
+          items_with_prices.any?
+        end
+
         def formatted_corrected_amount
-          return helpers.number_to_currency(0) if all_items_selected? && !form.has_additions?
+          return helpers.number_to_currency(0) if all_items_zero?
 
           amount = preview_price_result&.dig(:final_total) || 0
           helpers.number_to_currency(amount)
@@ -31,6 +30,10 @@ module Pos
 
         def discount_details
           @discount_details ||= preview_price_result&.dig(:discount_details) || []
+        end
+
+        def applied_discounts
+          discount_details.select { |d| d[:quantity].to_i > 0 }
         end
 
         def returned_coupons
@@ -46,12 +49,6 @@ module Pos
 
         def any_returned_coupons?
           returned_coupons.any?
-        end
-
-        def added_item?(item)
-          return false unless sale
-          original_catalog_ids = sale.items.map(&:catalog_id).uniq
-          !original_catalog_ids.include?(item[:catalog].id)
         end
       end
     end

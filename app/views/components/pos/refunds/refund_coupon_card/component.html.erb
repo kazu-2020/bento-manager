@@ -1,0 +1,35 @@
+<div id="<%= dom_id %>" class="relative">
+  <div class="<%= card_classes %>">
+    <div class="card-body p-2">
+      <div class="flex items-center justify-between">
+        <div class="flex-1">
+          <span class="font-medium text-lg"><%= discount.name %></span>
+          <% if discount_amount_display %>
+            <span class="text-base-content/60 text-sm ml-2">-<%= discount_amount_display %>/<%= t(".per_unit") %></span>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="mt-1">
+        <%= component "inputs/quantity_stepper", size: "compact" do |c| %>
+          <% c.with_input do %>
+            <%= number_field_tag coupon_field_name, current_quantity,
+                  min: 0, max: effective_max, autocomplete: "off",
+                  disabled: disabled? || max_quantity <= 0,
+                  class: "input input-bordered input-sm w-14 text-center text-lg font-bold",
+                  data: {
+                    quantity_stepper_target: "input",
+                    action: "change->refund-cart#toggle"
+                  } %>
+          <% end %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+  <% if disabled? || max_quantity <= 0 %>
+    <div class="absolute inset-0 flex items-center justify-center z-10">
+      <span class="badge badge-warning badge-soft font-bold"><%= t(".requires_bento") %></span>
+    </div>
+  <% end %>
+</div>

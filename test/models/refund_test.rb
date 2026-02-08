@@ -12,7 +12,7 @@ class RefundTest < ActiveSupport::TestCase
 
     must validate_presence_of(:refund_datetime)
     must validate_presence_of(:amount)
-    must validate_numericality_of(:amount).is_greater_than_or_equal_to(0)
+    must validate_numericality_of(:amount).only_integer
   end
 
   test "associations" do

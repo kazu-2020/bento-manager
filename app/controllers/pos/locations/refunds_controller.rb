@@ -3,8 +3,11 @@
 module Pos
   module Locations
     class RefundsController < ApplicationController
+      include RefundFormBuildable
+
       before_action :set_location
       before_action :set_sale, only: [ :new, :create ]
+      before_action :set_inventories, only: [ :new, :create ]
       before_action :redirect_if_voided, only: :new
 
       def new
@@ -22,12 +25,21 @@ module Pos
         refunder = ::Sales::Refunder.new
         result = refunder.process(
           sale: @sale,
-          remaining_items: @form.remaining_items_for_refunder,
-          employee: current_employee
+          corrected_items: @form.corrected_items_for_refunder,
+          employee: current_employee,
+          discount_quantities: @form.discount_quantities_for_refunder
         )
 
-        redirect_to pos_location_sales_history_index_path(@location),
-                    notice: t(".success", amount: helpers.number_to_currency(result[:refund_amount]))
+        amount = result[:refund_amount]
+        notice = if amount.positive?
+                   t(".success_refund", amount: helpers.number_to_currency(amount))
+        elsif amount.negative?
+                   t(".success_additional_charge", amount: helpers.number_to_currency(amount.abs))
+        else
+                   t(".success_even_exchange")
+        end
+
+        redirect_to pos_location_sales_history_index_path(@location), notice: notice
       rescue Sale::AlreadyVoidedError
         flash.now[:alert] = t(".already_voided")
         render :new, status: :unprocessable_entity
@@ -38,35 +50,11 @@ module Pos
 
       private
 
-      def set_location
-        @location = Location.active.find(params[:location_id])
-      end
-
-      def set_sale
-        @sale = @location.sales
-                         .preload(items: :catalog)
-                         .find(params[:sale_id])
-      end
-
       def redirect_if_voided
         return unless @sale.voided?
 
         redirect_to pos_location_sales_history_index_path(@location),
                     alert: t("pos.locations.refunds.create.already_voided")
-      end
-
-      def build_form(submitted = {})
-        ::Refunds::RefundForm.new(
-          sale: @sale,
-          location: @location,
-          submitted: submitted
-        )
-      end
-
-      def submitted_params(key)
-        return {} unless params[key]
-
-        params[key].to_unsafe_h
       end
 
       def current_employee

@@ -2,9 +2,14 @@
               method: :post,
               id: "ghost-form",
               data: { turbo_stream: true, ghost_form_target: "ghostForm" } do %>
-  <% grouped_items.each do |group| %>
-    <%= fields_for "ghost_refund[catalogs][#{group.catalog_id}]" do |f| %>
-      <%= f.hidden_field :refund_quantity, value: group.refund_quantity %>
+  <% corrected_items.each do |item| %>
+    <%= fields_for "ghost_refund[corrected][#{item.catalog_id}]" do |f| %>
+      <%= f.hidden_field :quantity, value: item.quantity %>
+    <% end %>
+  <% end %>
+  <% available_discounts.each do |discount| %>
+    <%= fields_for "ghost_refund[coupon][#{discount.id}]" do |f| %>
+      <%= f.hidden_field :quantity, value: coupon_quantities[discount.id] || 0 %>
     <% end %>
   <% end %>
 <% end %>
