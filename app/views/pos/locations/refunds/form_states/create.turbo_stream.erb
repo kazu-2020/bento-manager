@@ -1,9 +1,23 @@
+<%# 商品カード更新 %>
+<% @form.corrected_items.each do |item| %>
+  <%= turbo_stream.replace "corrected-item-#{item.catalog_id}" do %>
+    <%= component "pos/refunds/corrected_cart_item", item: item %>
+  <% end %>
+<% end %>
+
 <%# 精算内容更新 %>
 <%= turbo_stream.replace "refund-preview" do %>
   <div id="refund-preview" class="mt-4">
     <%= component "pos/refunds/settlement_summary", form: @form, sale: @sale %>
     <%= component "pos/refunds/refund_amount_display", form: @form %>
   </div>
+<% end %>
+
+<%# クーポンカード更新 %>
+<% @form.available_discounts.each do |discount| %>
+  <%= turbo_stream.replace "refund-coupon-card-#{discount.id}" do %>
+    <%= component "pos/refunds/refund_coupon_card", discount: discount, form: @form %>
+  <% end %>
 <% end %>
 
 <%# 送信ボタン更新 %>
