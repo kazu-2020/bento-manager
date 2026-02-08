@@ -1,3 +1,7 @@
 ---
 ja:
-  title: 返金額
+  title: お客様への対応案内
+  amount_refund: 返金額
+  amount_additional_charge: 追加請求額
+  amount_even_exchange: 差額なし
+  returned_coupons_title: 返却するクーポン

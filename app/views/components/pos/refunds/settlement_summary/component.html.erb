@@ -1,0 +1,59 @@
+<% if has_any_changes? %>
+  <div class="card bg-base-100 border border-base-300">
+    <div class="card-body p-2">
+      <h3 class="card-title text-base">
+        <svg class="w-5 h-5 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <%= t(".title") %>
+      </h3>
+
+      <% if has_corrected_items? %>
+        <%# 修正後の商品明細 %>
+        <div class="mt-1 space-y-1">
+          <% items_with_prices.each do |item| %>
+            <div class="flex justify-between text-sm">
+              <span>
+                <%= item[:catalog].name %>
+                <span class="text-base-content/60">x<%= item[:quantity] %></span>
+              </span>
+              <span><%= helpers.number_to_currency(item[:unit_price] * item[:quantity]) %></span>
+            </div>
+          <% end %>
+        </div>
+
+        <%# 適用クーポン %>
+        <% applied_discounts.each do |d| %>
+          <div class="flex justify-between text-sm text-error mt-1">
+            <span>
+              <%= d[:discount_name] %>
+              <span class="text-base-content/60">x<%= d[:quantity] %></span>
+            </span>
+            <span>-<%= helpers.number_to_currency(d[:discount_amount]) %></span>
+          </div>
+        <% end %>
+
+        <%# 修正後合計 %>
+        <div class="border-t border-base-200 mt-1 pt-1">
+          <div class="flex justify-between font-bold">
+            <span><%= t(".corrected_total") %></span>
+            <span class="text-lg"><%= formatted_corrected_amount %></span>
+          </div>
+        </div>
+
+
+      <% else %>
+        <%# 全商品返品の場合 %>
+        <div class="mt-1">
+          <div class="alert alert-warning">
+            <svg class="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span><%= t(".full_refund_warning") %></span>
+          </div>
+        </div>
+
+      <% end %>
+    </div>
+  </div>
+<% end %>

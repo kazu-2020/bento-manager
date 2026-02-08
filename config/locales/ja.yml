@@ -62,7 +62,7 @@ ja:
         refunds/refund_form:
           attributes:
             base:
-              no_items_selected: "返品する商品を選択してください"
+              no_items_selected: "商品数量またはクーポン枚数を変更してください"
         sales/cart_form:
           attributes:
             base:
@@ -176,6 +176,7 @@ ja:
       category:
         bento: "弁当"
         side_menu: "サイドメニュー"
+        coupon: "クーポン"
     catalog_price:
       kind:
         regular: "通常価格"
@@ -356,8 +357,10 @@ ja:
           back: "戻る"
           no_remaining_items: "全商品を返品"
         create:
-          success: "返金処理が完了しました（返金額: %{amount}）"
-          missing_requirements: "返品する商品を選択してください"
+          success_refund: "返金処理が完了しました（返金額: %{amount}）"
+          success_additional_charge: "差額精算が完了しました（追加請求額: %{amount}）"
+          success_even_exchange: "交換処理が完了しました（差額なし）"
+          missing_requirements: "商品数量またはクーポン枚数を変更してください"
           already_voided: "この販売は既に取消済みです"
 
   discounts:

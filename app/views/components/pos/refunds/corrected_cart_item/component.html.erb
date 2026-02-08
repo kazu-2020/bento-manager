@@ -1,0 +1,38 @@
+<div id="<%= dom_id %>" class="<%= card_classes %>">
+  <div class="card-body p-2">
+    <div class="flex items-center justify-between">
+      <div class="flex-1">
+        <span class="font-medium text-lg"><%= catalog_name %></span>
+        <% if unit_price_display %>
+          <span class="text-base-content/60 text-sm ml-2"><%= unit_price_display %></span>
+        <% end %>
+      </div>
+      <div class="flex items-center gap-2">
+        <% if show_original_badge? %>
+          <span class="badge badge-sm badge-outline"><%= original_badge_text %></span>
+        <% end %>
+        <span class="badge badge-sm badge-ghost"><%= stock_badge_text %></span>
+      </div>
+    </div>
+
+    <% if sold_out? %>
+      <div class="mt-1 text-center">
+        <span class="badge badge-soft badge-error"><%= t(".sold_out") %></span>
+      </div>
+    <% else %>
+      <div class="mt-1">
+        <%= component "inputs/quantity_stepper", size: "compact" do |c| %>
+          <% c.with_input do %>
+            <%= number_field_tag quantity_field_name, quantity,
+                  min: 0, max: max_quantity, autocomplete: "off",
+                  class: "input input-bordered input-sm w-14 text-center text-lg font-bold",
+                  data: {
+                    quantity_stepper_target: "input",
+                    action: "change->refund-cart#toggle"
+                  } %>
+          <% end %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

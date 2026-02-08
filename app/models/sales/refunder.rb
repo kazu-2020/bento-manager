@@ -1,26 +1,26 @@
-# 返品・返金処理 PORO
-# 元の Sale を void し、残す商品で新規 Sale を作成し、差額を Refund に記録する
+# 返品・返金・差額精算処理 PORO
+# 元の Sale を void し、修正後の商品で新規 Sale を作成し、差額を Refund に記録する
 module Sales
   class Refunder
-    # 返品・返金処理を実行
+    # 返品・返金・差額精算処理を実行
     #
     # @param sale [Sale] 元の販売レコード
-    # @param remaining_items [Array<Hash>] 残す商品のリスト
+    # @param corrected_items [Array<Hash>] 修正後の商品リスト（残存商品 + 追加商品）
     #   - :catalog [Catalog] 商品
     #   - :quantity [Integer] 数量
-    # @param employee [Employee] 返金処理担当者
+    # @param employee [Employee] 処理担当者
     # @return [Hash] 処理結果
     #   - :refund [Refund] 作成された Refund レコード
     #   - :corrected_sale [Sale, nil] 作成された新規 Sale（全額返金の場合は nil）
-    #   - :refund_amount [Integer] 返金額
+    #   - :refund_amount [Integer] 差額（正=返金、負=追加徴収、0=等価交換）
     # @raise [Sale::AlreadyVoidedError] 既に voided の場合
     # @raise [ActiveRecord::RecordInvalid] バリデーションエラー時
-    def process(sale:, remaining_items:, employee:)
+    def process(sale:, corrected_items:, employee:, discount_quantities: nil)
       Sale.transaction do
         sale.void!(voided_by: employee)
         restore_inventory(sale)
 
-        corrected_sale = create_corrected_sale(sale, remaining_items, employee)
+        corrected_sale = create_corrected_sale(sale, corrected_items, employee, discount_quantities)
         refund_amount = calculate_refund_amount(sale, corrected_sale)
         refund = Refund.create!(
           original_sale: sale,
@@ -63,14 +63,16 @@ module Sales
       )
     end
 
-    # 残す商品で新規 Sale を作成
+    # 修正後の商品で新規 Sale を作成
     #
     # @param original_sale [Sale] 元の販売レコード
-    # @param remaining_items [Array<Hash>] 残す商品のリスト
+    # @param corrected_items [Array<Hash>] 修正後の商品リスト
     # @param employee [Employee] 販売員
     # @return [Sale, nil] 作成された Sale（全額返金の場合は nil）
-    def create_corrected_sale(original_sale, remaining_items, employee)
-      return nil if remaining_items.empty?
+    def create_corrected_sale(original_sale, corrected_items, employee, discount_quantities)
+      return nil if corrected_items.empty?
+
+      effective_discount_quantities = discount_quantities || extract_discount_quantities(original_sale)
 
       Sales::Recorder.new.record(
         {
@@ -79,8 +81,8 @@ module Sales
           employee: employee,
           corrected_from_sale_id: original_sale.id
         },
-        remaining_items,
-        discount_quantities: extract_discount_quantities(original_sale)
+        corrected_items,
+        discount_quantities: effective_discount_quantities
       )
     end
 
@@ -92,11 +94,11 @@ module Sales
       sale.sale_discounts.pluck(:discount_id, :quantity).to_h
     end
 
-    # 返金額を計算
+    # 差額を計算（正=返金、負=追加徴収、0=等価交換）
     #
     # @param original_sale [Sale] 元の販売レコード
     # @param corrected_sale [Sale, nil] 新規販売レコード
-    # @return [Integer] 返金額
+    # @return [Integer] 差額
     def calculate_refund_amount(original_sale, corrected_sale)
       original_sale.final_amount - (corrected_sale&.final_amount || 0)
     end

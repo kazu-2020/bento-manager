@@ -1,3 +1,5 @@
 ---
 ja:
-  submit: 返金を確定
+  submit_refund: 返金を確定
+  submit_additional_charge: 追加請求を確定
+  submit_even_exchange: 交換を確定

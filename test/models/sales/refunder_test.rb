@@ -28,7 +28,7 @@ module Sales
       refunder = Sales::Refunder.new
       result = refunder.process(
         sale: sale,
-        remaining_items: [],
+        corrected_items: [],
         employee: @employee
       )
 
@@ -59,7 +59,7 @@ module Sales
       refunder = Sales::Refunder.new
       result = refunder.process(
         sale: sale,
-        remaining_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
         employee: @employee
       )
 
@@ -93,7 +93,7 @@ module Sales
       refunder = Sales::Refunder.new
       result = refunder.process(
         sale: sale,
-        remaining_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
         employee: @employee
       )
 
@@ -118,7 +118,7 @@ module Sales
       refunder = Sales::Refunder.new
       result = refunder.process(
         sale: sale,
-        remaining_items: [ { catalog: @catalog_salad, quantity: 1 } ],
+        corrected_items: [ { catalog: @catalog_salad, quantity: 1 } ],
         employee: @employee
       )
 
@@ -141,7 +141,7 @@ module Sales
       refunder = Sales::Refunder.new
       result = refunder.process(
         sale: sale,
-        remaining_items: [],
+        corrected_items: [],
         employee: @employee
       )
 
@@ -162,7 +162,7 @@ module Sales
       refunder = Sales::Refunder.new
       result = refunder.process(
         sale: sale,
-        remaining_items: [ { catalog: @catalog_bento_b, quantity: 1 } ],
+        corrected_items: [ { catalog: @catalog_bento_b, quantity: 1 } ],
         employee: @employee
       )
 
@@ -189,7 +189,7 @@ module Sales
       refunder = Sales::Refunder.new
       result = refunder.process(
         sale: sale,
-        remaining_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
         employee: @employee
       )
 
@@ -210,10 +210,138 @@ module Sales
       assert_raises(Sale::AlreadyVoidedError) do
         refunder.process(
           sale: voided_sale,
-          remaining_items: [],
+          corrected_items: [],
           employee: @employee
         )
       end
+    end
+
+    # === 差額精算テスト ===
+
+    test "弁当A(550円)を弁当B(500円)に交換すると差額50円が返金される" do
+      recorder = Sales::Recorder.new
+      sale = recorder.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 } ]
+      )
+
+      assert_equal 550, sale.final_amount
+
+      refunder = Sales::Refunder.new
+      result = refunder.process(
+        sale: sale,
+        corrected_items: [ { catalog: @catalog_bento_b, quantity: 1 } ],
+        employee: @employee
+      )
+
+      corrected_sale = result[:corrected_sale]
+      assert_equal 500, corrected_sale.final_amount
+
+      # 差額: 550 - 500 = 50（返金）
+      assert_equal 50, result[:refund_amount]
+      assert result[:refund_amount].positive?
+    end
+
+    test "弁当A(550円)をサラダ(250円)に交換すると300円返金される" do
+      recorder = Sales::Recorder.new
+      sale = recorder.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 } ]
+      )
+
+      refunder = Sales::Refunder.new
+      result = refunder.process(
+        sale: sale,
+        corrected_items: [ { catalog: @catalog_salad, quantity: 1 } ],
+        employee: @employee
+      )
+
+      corrected_sale = result[:corrected_sale]
+      assert_equal 250, corrected_sale.final_amount
+
+      assert_equal 300, result[:refund_amount]
+      assert result[:refund_amount].positive?
+    end
+
+    test "弁当A(550円)にサラダを追加すると-150円（追加徴収）になる" do
+      recorder = Sales::Recorder.new
+      sale = recorder.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 } ]
+      )
+
+      assert_equal 550, sale.final_amount
+
+      refunder = Sales::Refunder.new
+      result = refunder.process(
+        sale: sale,
+        corrected_items: [
+          { catalog: @catalog_bento_a, quantity: 1 },
+          { catalog: @catalog_salad, quantity: 1 }
+        ],
+        employee: @employee
+      )
+
+      corrected_sale = result[:corrected_sale]
+      # 弁当A(550) + サラダ(セット価格150) = 700円
+      assert_equal 700, corrected_sale.final_amount
+
+      # 差額: 550 - 700 = -150（追加徴収）
+      assert_equal(-150, result[:refund_amount])
+      assert result[:refund_amount].negative?
+
+      # Refund レコードにマイナス値が保存される
+      refund = result[:refund]
+      assert_equal(-150, refund.amount)
+    end
+
+    test "サラダ(250円)を弁当A(550円)に交換すると-300円（追加徴収）になる" do
+      recorder = Sales::Recorder.new
+      sale = recorder.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_salad, quantity: 1 } ]
+      )
+
+      assert_equal 250, sale.final_amount
+
+      refunder = Sales::Refunder.new
+      result = refunder.process(
+        sale: sale,
+        corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        employee: @employee
+      )
+
+      corrected_sale = result[:corrected_sale]
+      assert_equal 550, corrected_sale.final_amount
+
+      # 差額: 250 - 550 = -300（追加徴収）
+      assert_equal(-300, result[:refund_amount])
+      assert result[:refund_amount].negative?
+    end
+
+    test "弁当A+クーポン(500円)を弁当B+クーポン(450円)に交換すると50円返金される" do
+      recorder = Sales::Recorder.new
+      sale = recorder.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        discount_quantities: { discounts(:fifty_yen_discount).id => 1 }
+      )
+
+      assert_equal 500, sale.final_amount
+
+      refunder = Sales::Refunder.new
+      result = refunder.process(
+        sale: sale,
+        corrected_items: [ { catalog: @catalog_bento_b, quantity: 1 } ],
+        employee: @employee
+      )
+
+      corrected_sale = result[:corrected_sale]
+      # 弁当B(500円) - クーポン1枚(50円) = 450円
+      assert_equal 450, corrected_sale.final_amount
+
+      # 差額: 500 - 450 = 50（返金）
+      assert_equal 50, result[:refund_amount]
     end
   end
 end

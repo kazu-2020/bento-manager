@@ -4,8 +4,11 @@ module Pos
   module Locations
     module Refunds
       class FormStatesController < ApplicationController
+        include RefundFormBuildable
+
         before_action :set_location
         before_action :set_sale
+        before_action :set_inventories
 
         def create
           @form = build_form(submitted_params(:ghost_refund))
@@ -13,32 +16,6 @@ module Pos
           respond_to do |format|
             format.turbo_stream
           end
-        end
-
-        private
-
-        def set_location
-          @location = Location.active.find(params[:location_id])
-        end
-
-        def set_sale
-          @sale = @location.sales
-                           .preload(items: :catalog)
-                           .find(params[:sale_id])
-        end
-
-        def build_form(submitted = {})
-          ::Refunds::RefundForm.new(
-            sale: @sale,
-            location: @location,
-            submitted: submitted
-          )
-        end
-
-        def submitted_params(key)
-          return {} unless params[key]
-
-          params[key].to_unsafe_h
         end
       end
     end

@@ -1,4 +1,4 @@
-<% if has_selected_items? %>
+<% if has_any_changes? %>
   <div class="card bg-base-100 border border-success">
     <div class="card-body p-2">
       <h3 class="card-title text-base">
@@ -9,13 +9,16 @@
       </h3>
 
       <% if has_remaining_items? %>
-        <%# 残る商品の明細（再計算後の価格） %>
+        <%# 修正後の商品明細（再計算後の価格） %>
         <div class="mt-1 space-y-1">
           <% items_with_prices.each do |item| %>
             <div class="flex justify-between text-sm">
               <span>
                 <%= item[:catalog].name %>
                 <span class="text-base-content/60">x<%= item[:quantity] %></span>
+                <% if added_item?(item) %>
+                  <span class="badge badge-info badge-sm ml-1"><%= t(".added_badge") %></span>
+                <% end %>
               </span>
               <span><%= helpers.number_to_currency(item[:unit_price] * item[:quantity]) %></span>
             </div>
