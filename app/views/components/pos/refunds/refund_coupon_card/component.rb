@@ -22,7 +22,7 @@ module Pos
             "card bg-base-100 border-2 transition-all duration-200",
             "border-accent bg-accent/10": !disabled? && in_cart?,
             "border-base-300": disabled? || !in_cart?,
-            "opacity-50": disabled? || max_quantity <= 0
+            "opacity-50": input_disabled?
           )
         end
 
@@ -39,11 +39,17 @@ module Pos
         end
 
         def max_quantity
-          coupon = discount.discountable
-          return 0 unless coupon.respond_to?(:max_applicable_quantity)
+          @max_quantity ||= begin
+            coupon = discount.discountable
+            return 0 unless coupon.respond_to?(:max_applicable_quantity)
 
-          cart_items = form.corrected_items_for_refunder
-          coupon.max_applicable_quantity(cart_items)
+            cart_items = form.corrected_items_for_refunder
+            coupon.max_applicable_quantity(cart_items)
+          end
+        end
+
+        def input_disabled?
+          disabled? || max_quantity <= 0
         end
 
         def effective_max

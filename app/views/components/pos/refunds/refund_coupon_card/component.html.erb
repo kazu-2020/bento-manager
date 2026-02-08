@@ -15,7 +15,7 @@
           <% c.with_input do %>
             <%= number_field_tag coupon_field_name, current_quantity,
                   min: 0, max: effective_max, autocomplete: "off",
-                  disabled: disabled? || max_quantity <= 0,
+                  disabled: input_disabled?,
                   class: "input input-bordered input-sm w-14 text-center text-lg font-bold",
                   data: {
                     quantity_stepper_target: "input",
@@ -27,7 +27,7 @@
     </div>
   </div>
 
-  <% if disabled? || max_quantity <= 0 %>
+  <% if input_disabled? %>
     <div class="absolute inset-0 flex items-center justify-center z-10">
       <span class="badge badge-warning badge-soft font-bold"><%= t(".requires_bento") %></span>
     </div>

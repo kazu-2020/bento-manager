@@ -50,8 +50,13 @@ module Pos
 
         def added_item?(item)
           return false unless sale
-          original_catalog_ids = sale.items.map(&:catalog_id).uniq
           !original_catalog_ids.include?(item[:catalog].id)
+        end
+
+        private
+
+        def original_catalog_ids
+          @original_catalog_ids ||= sale.items.map(&:catalog_id).uniq
         end
       end
     end

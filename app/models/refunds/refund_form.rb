@@ -67,7 +67,7 @@ module Refunds
     end
 
     def total_corrected_bento_quantity
-      corrected_quantities.sum do |catalog_id, qty|
+      @total_corrected_bento_quantity ||= corrected_quantities.sum do |catalog_id, qty|
         catalog = find_catalog(catalog_id)
         catalog&.category == "bento" ? qty : 0
       end
@@ -168,13 +168,17 @@ module Refunds
       errors.add(:base, :no_items_selected) unless has_any_changes?
     end
 
-    def find_catalog(catalog_id)
-      # まず元の販売から探す
-      sale_item = sale.items.find { |item| item.catalog_id == catalog_id }
-      return sale_item.catalog if sale_item
+    def catalog_lookup
+      @catalog_lookup ||= begin
+        lookup = {}
+        sale.items.each { |item| lookup[item.catalog_id] ||= item.catalog }
+        inventories.each { |inv| lookup[inv.catalog_id] ||= inv.catalog }
+        lookup
+      end
+    end
 
-      # 在庫から探す
-      inventories.find { |inv| inv.catalog_id == catalog_id }&.catalog
+    def find_catalog(catalog_id)
+      catalog_lookup[catalog_id]
     end
 
     def calculate_preview_prices
@@ -211,19 +215,26 @@ module Refunds
       end
     end
 
+    def inventory_lookup
+      @inventory_lookup ||= inventories.index_by(&:catalog_id)
+    end
+
     def build_corrected_items
       all_catalog_ids = (
         sale.items.map(&:catalog_id) +
         inventories.map(&:catalog_id)
       ).uniq
 
+      original_quantities_by_catalog = sale.items.group_by(&:catalog_id)
+        .transform_values { |items| items.sum(&:quantity) }
+
       all_catalog_ids.filter_map do |catalog_id|
         catalog = find_catalog(catalog_id)
         next unless catalog
 
         quantity = corrected_quantities[catalog_id] || 0
-        original_qty = sale.items.select { |i| i.catalog_id == catalog_id }.sum(&:quantity)
-        inventory = inventories.find { |inv| inv.catalog_id == catalog_id }
+        original_qty = original_quantities_by_catalog[catalog_id] || 0
+        inventory = inventory_lookup[catalog_id]
         available_stock = inventory&.available_stock || 0
         # 在庫上限 = 元の数量 + 利用可能在庫（返品分の在庫は復元されるため）
         max_quantity = original_qty + available_stock
