@@ -1,22 +1,37 @@
 <% if has_any_changes? %>
   <div class="card <%= card_class %> mt-2">
-    <div class="card-body p-2">
-      <div class="flex justify-between items-center">
-        <h3 class="card-title text-base">
-          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <% case adjustment_type %>
-            <% when :refund %>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-            <% when :additional_charge %>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            <% else %>
-              <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-            <% end %>
-          </svg>
-          <%= t(title_key) %>
-        </h3>
-        <span class="text-3xl font-bold"><%= formatted_amount %></span>
+    <div class="card-body p-3">
+      <%# カードタイトル %>
+      <h3 class="card-title text-sm font-medium opacity-85">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        </svg>
+        <%= t(".title") %>
+      </h3>
+
+      <%# 金額セクション %>
+      <div class="flex justify-between items-end mt-2">
+        <span class="text-base font-bold"><%= t(amount_label_key) %></span>
+        <span class="text-4xl font-bold tracking-tight"><%= formatted_amount %></span>
       </div>
+
+      <%# 返却クーポンセクション %>
+      <% if any_returned_coupons? %>
+        <div class="mt-3 p-2.5 bg-white/25 rounded-lg border border-white/20">
+          <div class="flex items-center gap-1.5 font-bold text-sm mb-1.5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+            </svg>
+            <%= t(".returned_coupons_title") %>
+          </div>
+          <% returned_coupons.each do |coupon| %>
+            <div class="flex justify-between text-sm font-medium">
+              <span><%= coupon[:name] %></span>
+              <span>x<%= coupon[:quantity] %></span>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
     </div>
   </div>
 <% end %>
