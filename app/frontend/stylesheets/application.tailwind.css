@@ -72,3 +72,8 @@ turbo-frame[busy] {
 .safe-area-pb {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
+
+/* モバイル: プルトゥリフレッシュ（下スクロールリロード）を無効化 */
+body {
+  overscroll-behavior-y: none;
+}
