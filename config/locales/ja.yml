@@ -193,8 +193,8 @@ ja:
         completed: "完了"
         voided: "取消"
       customer_type:
-        staff: "職員"
-        citizen: "市民"
+        staff: "関係者"
+        citizen: "一般"
 
   custom_errors:
     controllers:
