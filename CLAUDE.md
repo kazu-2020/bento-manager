@@ -1,45 +1,65 @@
-# AI-DLC and Spec-Driven Development
+# プロジェクトの目的
 
-Kiro-style Spec Driven Development implementation on AI-DLC (AI Development Life Cycle)
+小さなお弁当屋さんで働く母が、役場等への出張訪問販売を手助けするためのアプリケーション
 
-## Project Context
+## アーキテクチャ
 
-### Paths
-- Steering: `docs/steering/`
-- Specs: `docs/specs/`
+- Rails v8
+- Sqlite3
 
-### Steering vs Specification
+## コマンド
 
-**Steering** (`docs/steering/`) - Guide AI with project-wide rules and context
-**Specs** (`docs/specs/`) - Formalize development process for individual features
+- 'bin/setup': 開発サーバー起動
+- 'bin/rails test': テスト実行
+- 'bin/rubocop -a': Rubocop による Lint 実行
 
-### Active Specifications
-- Check `docs/specs/` for active specifications
-- Use `/kiro:spec-status [feature-name]` to check progress
+## ワークフロー・オーケストレーション
 
-## Development Guidelines
-- Think in English, generate responses in Japanese. All Markdown content written to project files (e.g., requirements.md, design.md, tasks.md, research.md, validation reports) MUST be written in the target language configured for this specification (see spec.json.language).
+### 1. 計画ファーストな開発
 
-## Minimal Workflow
-- Phase 0 (optional): `/kiro:steering`, `/kiro:steering-custom`
-- Phase 1 (Specification):
-  - `/kiro:spec-init "description"`
-  - `/kiro:spec-requirements {feature}`
-  - `/kiro:validate-gap {feature}` (optional: for existing codebase)
-  - `/kiro:spec-design {feature} [-y]`
-  - `/kiro:validate-design {feature}` (optional: design review)
-  - `/kiro:spec-tasks {feature} [-y]`
-- Phase 2 (Implementation): `/kiro:spec-impl {feature} [tasks]`
-  - `/kiro:validate-impl {feature}` (optional: after implementation)
-- Progress check: `/kiro:spec-status {feature}` (use anytime)
+- 3 ステップ以上、または設計判断を含む非自明なタスクは必ず計画を立てる
+- 問題が起きたら無理に進めず、すぐに停止して計画を立て直す
+- 検証工程でも計画を立てる
 
-## Development Rules
-- 3-phase approval workflow: Requirements → Design → Tasks → Implementation
-- Human review required each phase; use `-y` only for intentional fast-track
-- Keep steering current and verify alignment with `/kiro:spec-status`
-- Follow the user's instructions precisely, and within that scope act autonomously: gather the necessary context and complete the requested work end-to-end in this run, asking questions only when essential information is missing or the instructions are critically ambiguous.
+### 2. サブエージェント戦略
 
-## Steering Configuration
-- Load entire `docs/steering/` as project memory
-- Default files: `product.md`, `tech.md`, `structure.md`
-- Custom files are supported (managed via `/kiro:steering-custom`)
+- メインのコンテキストを綺麗に保つため積極的にサブエージェントを使う
+- 調査・探索・並列分析はサブエージェントに任せる
+- 複雑な問題にはサブエージェントで計算資源を多く投下する
+- 1サブエージェント1タスクで集中実行
+
+### 3. 自己改善ループ
+
+- ユーザーから修正を受けたら必ず `doc/lessons.md` にパターンを追記
+- 同じミスを防ぐルールを自分で作る
+- ミス率が下がるまで徹底的に改善を繰り返す
+- セッション開始時に関連プロジェクトの教訓を見直す
+
+### 4. 完了前の検証
+
+- 動作確認なしに完了扱いにしない
+- 必要に応じて main と変更差分を確認する
+- 「スタッフエンジニアが承認するか？」と自問する
+- テスト実行・ログ確認・正しさの証明を行う
+
+### 5. エレガンスの追求（バランス重視）
+
+- 重要な変更では「より美しい方法はないか？」と立ち止まる
+- ハックっぽい修正なら、最善の解決策を再実装する
+- 単純な修正では過度な設計をしない
+- 提出前に自分の仕事を疑う
+- Rails の思想である **設定より規約** を重要視する
+
+### 6. 自律的バグ修正
+
+- バグ報告を受けたら即修正する。手取り足取りは求めない
+- ログ・エラー・失敗テストを確認して解決する
+- ユーザーに文脈切替を要求しない
+- 指示がなくてもCIの失敗を直す
+
+## コア原則
+
+- **シンプル第一**: 変更は可能な限り単純に。影響範囲は最小限に。
+- **怠らない**: 根本原因を解決する。応急処置は禁止。シニア水準。
+- **最小影響**: 必要な箇所だけ変更し、新たなバグを生まない。
+- **対等な関係**: ユーザーからの提案にただ Yes で答えるのは悪いこと。客観的な事実から否定的な案を出すことを仕事を行う上で建設的なこと
