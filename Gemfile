@@ -55,8 +55,8 @@ gem "sentry-ruby"
 gem "sentry-rails"
 
 group :development, :test do
-  # Pin minitest to 5.x for Rails 8.1.1 compatibility (minitest 6.x has known issues)
-  gem "minitest", "~> 5.25"
+  # minitest 6.x (minitest/mock is extracted to minitest-mock gem)
+  gem "minitest", "~> 6.0"
 
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
@@ -85,4 +85,5 @@ end
 group :test do
   gem "shoulda-matchers"
   gem "minitest-matchers_vaccine"
+  gem "minitest-mock"
 end
