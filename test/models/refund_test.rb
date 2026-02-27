@@ -1,7 +1,7 @@
 require "test_helper"
 
 class RefundTest < ActiveSupport::TestCase
-  fixtures :sales
+  fixtures :locations, :employees, :sales
 
   test "validations" do
     @subject = Refund.new(

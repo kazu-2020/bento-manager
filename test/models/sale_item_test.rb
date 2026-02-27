@@ -1,7 +1,7 @@
 require "test_helper"
 
 class SaleItemTest < ActiveSupport::TestCase
-  fixtures :sales, :catalogs, :catalog_prices
+  fixtures :locations, :employees, :sales, :catalogs, :catalog_prices
 
   test "validations" do
     @subject = SaleItem.new(

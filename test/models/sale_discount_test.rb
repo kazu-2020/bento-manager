@@ -1,7 +1,7 @@
 require "test_helper"
 
 class SaleDiscountTest < ActiveSupport::TestCase
-  fixtures :sales, :discounts, :sale_discounts
+  fixtures :locations, :employees, :sales, :discounts, :sale_discounts
 
   test "validations" do
     @subject = SaleDiscount.new(
