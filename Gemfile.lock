@@ -180,9 +180,12 @@ GEM
     mini_magick (5.3.1)
       logger
     mini_mime (1.1.5)
-    minitest (5.27.0)
+    minitest (6.0.2)
+      drb (~> 2.0)
+      prism (~> 1.5)
     minitest-matchers_vaccine (1.1.0)
       minitest (>= 5.0, < 7.0)
+    minitest-mock (5.27.0)
     msgpack (1.8.0)
     mutex_m (0.3.0)
     net-imap (0.6.2)
@@ -446,8 +449,9 @@ DEPENDENCIES
   image_processing (~> 1.2)
   kamal
   lookbook
-  minitest (~> 5.25)
+  minitest (~> 6.0)
   minitest-matchers_vaccine
+  minitest-mock
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.2)
