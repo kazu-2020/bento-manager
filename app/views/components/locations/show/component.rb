@@ -18,11 +18,9 @@ module Locations
       end
 
       def has_sales_history?
-        false
-      end
+        return false unless location.persisted?
 
-      def has_inventory?
-        false
+        location.sales.completed.exists?
       end
     end
   end

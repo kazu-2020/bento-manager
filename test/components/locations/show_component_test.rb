@@ -3,6 +3,10 @@
 require "test_helper"
 
 class Locations::ShowComponentTest < ViewComponent::TestCase
+  include SaleTestHelper
+
+  fixtures :locations, :employees, :catalogs, :catalog_prices
+
   def setup
     @active_location = Location.new(
       id: 1,
@@ -65,11 +69,10 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
     assert_includes card["class"], "opacity-75"
   end
 
-  def test_renders_future_sections_with_empty_states
+  def test_renders_sales_history_section
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
     assert_includes result.to_html, "販売履歴"
-    assert_includes result.to_html, "在庫状況"
   end
 
   def test_has_accessible_section_headings
@@ -77,7 +80,6 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
 
     assert result.css("section[aria-labelledby='basic-info-heading']").present?
     assert result.css("section[aria-labelledby='sales-history-heading']").present?
-    assert result.css("section[aria-labelledby='inventory-heading']").present?
   end
 
   def test_renders_location_icon_in_header
@@ -93,10 +95,19 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "更新日時"
   end
 
-  def test_renders_empty_states_for_related_data
+  def test_renders_empty_state_when_no_sales_history
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
     assert_includes result.to_html, "販売履歴はありません"
-    assert_includes result.to_html, "在庫情報はありません"
+  end
+
+  def test_renders_chart_when_sales_history_exists
+    location = locations(:city_hall)
+    create_sale(location:, customer_type: :staff, sale_datetime: 3.days.ago)
+
+    result = render_inline(Locations::Show::Component.new(location:))
+
+    assert result.css("[id^='chart-']").present?
+    assert_not_includes result.to_html, "販売履歴はありません"
   end
 end

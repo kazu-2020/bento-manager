@@ -1,0 +1,5 @@
+<%= helpers.line_chart chart_data,
+      suffix: "個", ytitle: t(".y_axis_label"),
+      colors: ["#4f46e5", "#059669"], legend: "top",
+      height: "300px",
+      library: { scales: { y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 } } } } %>

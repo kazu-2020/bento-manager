@@ -2,6 +2,7 @@ import '@hotwired/turbo-rails'
 import '../controllers'
 import '../stream_actions/show_modal'
 import '../stream_actions/show_toast'
+import "chartkick/chart.js"
 
 console.log('Vite ⚡️ Rails')
 
