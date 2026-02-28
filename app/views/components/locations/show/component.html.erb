@@ -16,41 +16,20 @@
 <%# 基本情報カード（インライン編集対応） %>
 <%= component "locations/basic_info", location: location %>
 
-<%# 関連データセクション（将来拡張用プレースホルダー） %>
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-  <%# 販売履歴セクション %>
-  <section class="<%= CARD_CLASSES %>" aria-labelledby="sales-history-heading">
-    <div class="card-body">
-      <h2 id="sales-history-heading" class="card-title text-lg">
-        <%= t(".sections.sales_history") %>
-      </h2>
+<%# 販売履歴グラフ %>
+<section class="<%= CARD_CLASSES %>" aria-labelledby="sales-history-heading">
+  <div class="card-body">
+    <h2 id="sales-history-heading" class="card-title text-lg">
+      <%= t(".sections.sales_history") %>
+    </h2>
 
-      <% if has_sales_history? %>
-        <%# 将来: 販売履歴リストを表示 %>
-      <% else %>
-        <div class="text-center py-8 text-base-content/50">
-          <%= helpers.icon "catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50" %>
-          <p class="text-sm"><%= t(".empty_states.no_sales") %></p>
-        </div>
-      <% end %>
-    </div>
-  </section>
-
-  <%# 在庫状況セクション %>
-  <section class="<%= CARD_CLASSES %>" aria-labelledby="inventory-heading">
-    <div class="card-body">
-      <h2 id="inventory-heading" class="card-title text-lg">
-        <%= t(".sections.inventory") %>
-      </h2>
-
-      <% if has_inventory? %>
-        <%# 将来: 在庫状況を表示 %>
-      <% else %>
-        <div class="text-center py-8 text-base-content/50">
-          <%= helpers.icon "catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50" %>
-          <p class="text-sm"><%= t(".empty_states.no_inventory") %></p>
-        </div>
-      <% end %>
-    </div>
-  </section>
-</div>
+    <% if has_sales_history? %>
+      <%= component "locations/sales_chart", location: location %>
+    <% else %>
+      <div class="text-center py-8 text-base-content/50">
+        <%= helpers.icon "catalog", size: :lg, extra_class: "mx-auto mb-2 opacity-50" %>
+        <p class="text-sm"><%= t(".empty_states.no_sales") %></p>
+      </div>
+    <% end %>
+  </div>
+</section>

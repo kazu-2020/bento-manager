@@ -4,6 +4,8 @@ require "rails/test_help"
 require "shoulda-matchers"
 require "minitest/matchers_vaccine"
 
+Dir[Rails.root.join("test/support/**/*.rb")].each { |f| require f }
+
 Shoulda::Matchers.configure do |config|
   config.integrate do |with|
     with.test_framework :minitest

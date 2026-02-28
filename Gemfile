@@ -87,3 +87,5 @@ group :test do
   gem "minitest-matchers_vaccine"
   gem "minitest-mock"
 end
+
+gem "chartkick", "~> 5.2"
