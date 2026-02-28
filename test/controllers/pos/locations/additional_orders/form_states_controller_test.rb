@@ -66,6 +66,7 @@ module Pos
 
         test "検索クエリで商品を絞り込める" do
           login_as_employee(@employee)
+          bento_b = catalogs(:daily_bento_b)
 
           post pos_location_additional_orders_form_state_path(@location),
                params: { search_query: "弁当A" },
@@ -73,6 +74,7 @@ module Pos
 
           assert_response :success
           assert_match "order-item-#{@bento_a.id}", response.body
+          assert_match(/id="order-item-#{bento_b.id}"[^>]*class="hidden"/, response.body)
         end
 
         test "returns 404 for inactive location" do

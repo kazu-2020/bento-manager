@@ -110,12 +110,32 @@ module AdditionalOrders
       assert_not form_with_query.visible?(bento_b)
     end
 
+    test "在庫未登録の弁当を追加発注すると在庫レコードが自動作成される" do
+      unlisted = Catalog.create!(name: "トルコライスカレー", kana: "トルコライスカレー", category: :bento)
+      catalogs = Catalog.bento.available.order(:kana)
+      stock_map = @location.today_inventories
+                           .where(catalog_id: catalogs.select(:id))
+                           .to_h { |inv| [ inv.catalog_id, inv.available_stock ] }
+
+      assert_not stock_map.key?(unlisted.id)
+
+      submitted = { unlisted.id.to_s => { quantity: "3" } }
+      form = OrderForm.new(location: @location, catalogs: catalogs, stock_map: stock_map, submitted: submitted)
+
+      assert_difference [ "AdditionalOrder.count", "DailyInventory.count" ], 1 do
+        assert form.save(employee: @employee)
+      end
+
+      created_inventory = @location.today_inventories.find_by!(catalog_id: unlisted.id)
+      assert_equal 3, created_inventory.stock
+    end
+
     test "form_state_options が正しいURLとメソッドを返す" do
       form = OrderForm.new(location: @location, catalogs: @catalogs, stock_map: @stock_map)
       options = form.form_state_options
 
       assert_equal :post, options[:method]
-      assert_includes options[:url], @location.id.to_s
+      assert_equal "/pos/locations/#{@location.id}/additional_orders/form_state", options[:url]
     end
   end
 end
