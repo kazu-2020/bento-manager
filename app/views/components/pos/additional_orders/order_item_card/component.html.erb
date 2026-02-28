@@ -1,21 +1,23 @@
 <%= fields_for item_field_name, item do |f| %>
-  <div id="<%= dom_id %>" class="<%= card_classes %>">
-    <div class="card-body p-2">
-      <div class="flex items-center justify-between">
-        <span class="font-medium text-lg flex-1"><%= catalog_name %></span>
-        <span class="badge badge-sm badge-ghost"><%= stock_badge_text %></span>
-      </div>
+  <div id="<%= dom_id %>" class="<%= wrapper_classes %>">
+    <div class="<%= card_classes %>">
+      <div class="card-body p-2">
+        <div class="flex items-center justify-between">
+          <span class="font-medium text-lg flex-1"><%= catalog_name %></span>
+          <span class="badge badge-sm badge-ghost"><%= stock_badge_text %></span>
+        </div>
 
-      <div class="mt-1">
-        <%= component "inputs/quantity_stepper", unit: t(".unit"), size: "compact" do |c| %>
-          <% c.with_input do %>
-            <%= f.number_field :quantity,
-                  value: quantity,
-                  min: 0, autocomplete: "off",
-                  class: "input input-bordered input-sm w-14 text-center text-lg font-bold",
-                  data: { quantity_stepper_target: "input" } %>
+        <div class="mt-1">
+          <%= component "inputs/quantity_stepper", unit: t(".unit"), size: "compact" do |c| %>
+            <% c.with_input do %>
+              <%= f.number_field :quantity,
+                    value: quantity,
+                    min: 0, autocomplete: "off",
+                    class: "input input-bordered input-sm w-14 text-center text-lg font-bold",
+                    data: { quantity_stepper_target: "input" } %>
+            <% end %>
           <% end %>
-        <% end %>
+        </div>
       </div>
     </div>
   </div>

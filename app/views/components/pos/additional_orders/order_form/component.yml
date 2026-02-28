@@ -1,3 +1,6 @@
 ---
 ja:
   section_title: 追加発注
+  search_placeholder: 商品名で検索...
+  inventory_tab: 在庫登録済み
+  non_inventory_tab: 未登録

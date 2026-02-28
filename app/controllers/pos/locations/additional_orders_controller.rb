@@ -3,8 +3,10 @@
 module Pos
   module Locations
     class AdditionalOrdersController < ApplicationController
+      include AdditionalOrderFormBuildable
+
       before_action :set_location
-      before_action :set_inventories
+      before_action :set_inventories, only: :index
       before_action :redirect_unless_inventories
       before_action :set_additional_orders, only: :index
 
@@ -30,13 +32,9 @@ module Pos
       private
 
       def redirect_unless_inventories
-        return if @inventories.present?
+        return if @location.has_today_inventory?
 
         redirect_to new_pos_location_daily_inventory_path(@location)
-      end
-
-      def set_location
-        @location = Location.active.find(params[:location_id])
       end
 
       def set_inventories
@@ -51,20 +49,6 @@ module Pos
                                       .where(order_at: Date.current.all_day)
                                       .eager_load(:catalog)
                                       .order(order_at: :desc)
-      end
-
-      def build_form(submitted = {})
-        ::AdditionalOrders::OrderForm.new(
-          location: @location,
-          inventories: @inventories,
-          submitted: submitted
-        )
-      end
-
-      def submitted_params(key)
-        return {} unless params[key]
-
-        params[key].to_unsafe_h
       end
 
       def current_employee

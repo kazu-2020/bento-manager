@@ -28,6 +28,9 @@ Rails.application.routes.draw do
         resource :form_state, only: [ :create ]
       end
       resources :additional_orders, only: [ :index, :new, :create ], module: :locations
+      namespace :additional_orders, module: "locations/additional_orders" do
+        resource :form_state, only: [ :create ]
+      end
       resources :sales_history, only: [ :index ], module: :locations
       resources :refunds, only: [ :new, :create ], module: :locations
       namespace :refunds, module: "locations/refunds" do

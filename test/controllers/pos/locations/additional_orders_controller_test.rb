@@ -107,6 +107,16 @@ module Pos
         assert_select "#order-item-#{salad.id}", count: 0
       end
 
+      test "在庫未登録の弁当もフォームに表示される" do
+        login_as_employee(@employee)
+        unlisted_bento = Catalog.create!(name: "トルコライスカレー", kana: "トルコライスカレー", category: :bento)
+
+        get new_pos_location_additional_order_path(@location)
+
+        assert_response :success
+        assert_select "#order-item-#{unlisted_bento.id}"
+      end
+
       # ============================================================
       # create アクションのテスト
       # ============================================================
