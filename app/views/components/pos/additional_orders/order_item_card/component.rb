@@ -4,13 +4,18 @@ module Pos
   module AdditionalOrders
     module OrderItemCard
       class Component < Application::Component
-        def initialize(item:)
+        def initialize(item:, hidden: false)
           @item = item
+          @hidden = hidden
         end
 
         attr_reader :item
 
         delegate :catalog_id, :catalog_name, :available_stock, :quantity, :has_quantity?, to: :item
+
+        def hidden?
+          @hidden
+        end
 
         def dom_id
           "order-item-#{catalog_id}"
@@ -18,6 +23,10 @@ module Pos
 
         def item_field_name
           "order[#{catalog_id}]"
+        end
+
+        def wrapper_classes
+          class_names("hidden": hidden?)
         end
 
         def card_classes

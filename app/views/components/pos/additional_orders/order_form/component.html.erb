@@ -1,11 +1,59 @@
-<%= form_with **form_with_options, id: "additional-order-form" do |f| %>
-  <h2 class="flex items-center gap-2 text-lg font-bold mb-2">
-    <span><%= t(".section_title") %></span>
-  </h2>
+<div data-controller="ghost-form"
+     data-action="search-form:searchSubmit->ghost-form#submit">
 
-  <div class="space-y-1">
-    <% items.each do |item| %>
-      <%= render_item_card(item) %>
-    <% end %>
+  <%# 検索バー（form_with の外側） %>
+  <div data-controller="search-form">
+    <label class="input input-bordered flex items-center gap-2 mb-4">
+      <%= helpers.icon "magnifying_glass", extra_class: "opacity-50" %>
+      <%= search_field_tag :search_query, search_query,
+            placeholder: t(".search_placeholder"),
+            class: "grow text-base",
+            autocomplete: "off", inputmode: "search",
+            data: { search_form_target: "input", action: "input->search-form#search" } %>
+    </label>
   </div>
-<% end %>
+
+  <%# オリジナルフォーム %>
+  <%= form_with **form_with_options, id: "additional-order-form",
+        data: { ghost_form_target: "originalForm" } do |f| %>
+
+    <h2 class="flex items-center gap-2 text-lg font-bold mb-2">
+      <span><%= t(".section_title") %></span>
+    </h2>
+
+    <% if show_tabs? %>
+      <div data-controller="tabs">
+        <div role="tablist" class="tabs tabs-lift">
+          <button type="button" role="tab" class="tab min-h-12 flex-1 text-base font-medium tab-active"
+                  data-tabs-target="tab" data-action="tabs#select">
+            <%= t(".inventory_tab") %>
+          </button>
+          <button type="button" role="tab" class="tab min-h-12 flex-1 text-base font-medium"
+                  data-tabs-target="tab" data-action="tabs#select">
+            <%= t(".non_inventory_tab") %>
+          </button>
+        </div>
+
+        <div data-tabs-target="panel" class="space-y-1 py-2">
+          <% inventory_items.each do |item| %>
+            <%= render_item_card(item) %>
+          <% end %>
+        </div>
+        <div data-tabs-target="panel" hidden class="space-y-1 py-2">
+          <% non_inventory_items.each do |item| %>
+            <%= render_item_card(item) %>
+          <% end %>
+        </div>
+      </div>
+    <% else %>
+      <div class="space-y-1">
+        <% items.each do |item| %>
+          <%= render_item_card(item) %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+
+  <%# Ghost Form %>
+  <%= render_ghost_form %>
+</div>

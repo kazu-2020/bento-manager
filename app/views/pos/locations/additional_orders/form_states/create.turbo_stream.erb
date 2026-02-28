@@ -1,0 +1,16 @@
+<%# 各商品カードを更新 %>
+<% @form.items.each do |item| %>
+  <%= turbo_stream.replace "order-item-#{item.catalog_id}" do %>
+    <%= component "pos/additional_orders/order_item_card",
+                  item: item,
+                  hidden: !@form.visible?(item) %>
+  <% end %>
+<% end %>
+
+<%# Ghost Form を更新 %>
+<%= turbo_stream.replace "ghost-form" do %>
+  <%= component "pos/additional_orders/order_form_ghost_form",
+                form_state_options: @form.form_state_options,
+                items: @form.items,
+                search_query: @form.search_query %>
+<% end %>
