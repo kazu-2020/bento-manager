@@ -3,6 +3,9 @@ import '../controllers'
 import '../stream_actions/show_modal'
 import '../stream_actions/show_toast'
 import "chartkick/chart.js"
+import { Chart } from "chart.js"
+
+Chart.defaults.font.family = "Noto Sans JP"
 
 console.log('Vite ⚡️ Rails')
 
