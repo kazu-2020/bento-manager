@@ -12,7 +12,7 @@
     "chart.js": "^4.5.1",
     "chartkick": "^5.0.1",
     "daisyui": "^5.5.19",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
     "@herb-tools/linter": "^0.9.6",
