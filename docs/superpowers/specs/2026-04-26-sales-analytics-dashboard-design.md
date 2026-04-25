@@ -45,25 +45,45 @@
 
 ### ルーティング
 
+Turbo Frames の eager loading を活用し、画面のパーツごとにコントローラーを分割する。
+各パーツは `<turbo-frame src="...">` で独立して読み込まれるため、コントローラーとビューが1対1で対応しシンプルになる。
+
 ```ruby
 # config/routes.rb に追加
-resources :sales_analyses, only: [:index]
-resources :sales_histories, only: [:index, :show]
+
+# 画面A: 顧客タイプ別 商品分析
+resources :sales_analyses, only: [:index]  # ページシェル + フィルターバー
+namespace :sales_analyses do
+  resource :summary, only: [:show]         # KPI サマリーカード
+  resource :ranking, only: [:show]         # Top5 ランキング
+  resource :cross_table, only: [:show]     # クロス集計テーブル
+end
+
+# 画面B/C: 販売履歴
+resources :sales_histories, only: [:index, :show]  # カレンダーヒートマップ(index) + 日別取引一覧(show)
+namespace :sales_histories do
+  resource :daily_detail, only: [:show]    # 日別詳細パネル（Turbo Frame）
+end
 ```
 
-| HTTP | パス | アクション | 用途 |
-|------|------|-----------|------|
-| GET | `/sales_analyses` | `SalesAnalysesController#index` | 顧客タイプ別 商品分析 |
-| GET | `/sales_histories` | `SalesHistoriesController#index` | カレンダーヒートマップ |
+| HTTP | パス | コントローラー | 用途 |
+|------|------|--------------|------|
+| GET | `/sales_analyses` | `SalesAnalysesController#index` | ページシェル + フィルターバー |
+| GET | `/sales_analyses/summary` | `SalesAnalyses::SummariesController#show` | KPI サマリーカード |
+| GET | `/sales_analyses/ranking` | `SalesAnalyses::RankingsController#show` | Top5 ランキング |
+| GET | `/sales_analyses/cross_table` | `SalesAnalyses::CrossTablesController#show` | クロス集計テーブル |
+| GET | `/sales_histories` | `SalesHistoriesController#index` | カレンダーヒートマップ + 月間サマリー |
+| GET | `/sales_histories/daily_detail` | `SalesHistories::DailyDetailsController#show` | 日別詳細パネル |
 | GET | `/sales_histories/:id` | `SalesHistoriesController#show` | 日別取引履歴（`:id` は日付文字列 `2026-04-25`）|
 
-クエリパラメータ:
-- `sales_analyses`: `period`（7/30/90）, `location_id`, `from`, `to`（期間指定時）
-  - デフォルト: `period=30`, `location_id` は最初の active な Location
-- `sales_histories#index`: `month`（`2026-04` 形式）, `location_id`, `date`（選択日）
-  - デフォルト: `month` は当月、`location_id` は最初の active な Location、`date` は当日（当月の場合）または月末日
-- `sales_histories#show`: `location_id`
-  - 不正な日付（パース不能、未来日）の場合は `sales_histories#index` にリダイレクト
+共通クエリパラメータ（全パーツで共有）:
+- `period`（7/30/90）, `location_id`, `from`, `to`（期間指定時）
+- デフォルト: `period=30`, `location_id` は最初の active な Location
+
+画面B 固有:
+- `sales_histories#index`: `month`（`2026-04` 形式）。デフォルトは当月
+- `sales_histories/daily_detail#show`: `date`（`2026-04-25` 形式）。デフォルトは当日（当月の場合）または月末日
+- `sales_histories#show`: `location_id`。不正な日付（パース不能、未来日）の場合は `sales_histories#index` にリダイレクト
 
 ### サイドバー
 
@@ -78,38 +98,63 @@ MenuItem.new(path: helpers.sales_histories_path, label: "販売履歴", icon: :c
 
 ## 画面A: 顧客タイプ別 商品分析
 
-### コントローラー
+### コントローラー構成
 
-`SalesAnalysesController#index`:
-- クエリパラメータからフィルター条件を解析
-- `Sales::AnalysisSummary` を初期化し、集計結果をコンポーネントに渡す
-- Turbo Frame リクエスト時は結果部分のみレンダリング
+Turbo Frames の eager loading により、ページシェルとパーツで独立したコントローラーを持つ。
+
+| コントローラー | 役割 | PORO 呼び出し |
+|--------------|------|-------------|
+| `SalesAnalysesController#index` | ページシェル + フィルターバーを描画。Turbo Frame の `src` にフィルターパラメータを埋め込む | なし |
+| `SalesAnalyses::SummariesController#show` | KPI サマリーカードを描画 | `AnalysisSummary#summary_by_customer_type` |
+| `SalesAnalyses::RankingsController#show` | Top5 ランキングを描画 | `AnalysisSummary#ranking` |
+| `SalesAnalyses::CrossTablesController#show` | クロス集計テーブルを描画 | `AnalysisSummary#cross_table` |
+
+各パーツコントローラーは同じフィルターパラメータ（`period`, `location_id` 等）を受け取り、`Sales::AnalysisSummary` を初期化して必要なメソッドだけ呼ぶ。
 
 ### ViewComponent 構成
 
-| コンポーネント | パス | 役割 |
-|--------------|------|------|
-| ページ全体 | `sales_analyses/index_page` | レイアウト、フィルターと結果の配置 |
-| フィルターバー | `sales_analyses/filter_bar` | 期間（過去7日/30日/90日/期間指定）と出店先の選択 |
-| KPI サマリー | `sales_analyses/summary_cards` | 総販売数・関係者・一般の3カード |
-| Top5 ランキング | `sales_analyses/ranking` | 職員人気 Top5 / 一般人気 Top5（テーブル形式）|
-| クロス集計 | `sales_analyses/cross_table` | 商品×顧客タイプの集計テーブル |
+| コンポーネント | パス | 描画元コントローラー |
+|--------------|------|-------------------|
+| ページ全体 | `sales_analyses/index_page` | `SalesAnalysesController#index` |
+| フィルターバー | `sales_analyses/filter_bar` | `SalesAnalysesController#index`（index_page 内）|
+| KPI サマリー | `sales_analyses/summary_cards` | `SalesAnalyses::SummariesController#show` |
+| Top5 ランキング | `sales_analyses/ranking` | `SalesAnalyses::RankingsController#show` |
+| クロス集計 | `sales_analyses/cross_table` | `SalesAnalyses::CrossTablesController#show` |
 
 ### Turbo Frame 構成
 
 ```
-┌─ フィルターバー（期間・出店先）────────────────────┐
-│  Turbo Frame: "sales_analysis_filters"             │
-│  → GET /sales_analyses?period=30&location_id=1     │
-└────────────────────────────────────────────────────┘
-       ↓ src 属性で下記フレームを更新
-┌─ 分析結果 ─────────────────────────────────────────┐
-│  Turbo Frame: "sales_analysis_results"             │
-│  ├── KPI サマリーカード                               │
-│  ├── Top5 ランキング（職員 / 一般）                    │
-│  └── クロス集計テーブル                                │
-└────────────────────────────────────────────────────┘
+SalesAnalysesController#index が描画するページシェル:
+┌──────────────────────────────────────────────────────────┐
+│  フィルターバー（期間・出店先）                               │
+│  フィルター変更 → Turbo Drive でページ全体を再読み込み        │
+│  → 各フレームの src が新しいパラメータで再構築される           │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  <turbo-frame id="summary"                               │
+│    src="/sales_analyses/summary?period=30&location_id=1"> │
+│    <ローディング表示>                                      │
+│  </turbo-frame>                                          │
+│                                                          │
+│  <turbo-frame id="ranking"                               │
+│    src="/sales_analyses/ranking?period=30&location_id=1"> │
+│    <ローディング表示>                                      │
+│  </turbo-frame>                                          │
+│                                                          │
+│  <turbo-frame id="cross_table"                           │
+│    src="/sales_analyses/cross_table?period=30&...">      │
+│    <ローディング表示>                                      │
+│  </turbo-frame>                                          │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+
+ブラウザが各フレームを並列にフェッチ → 各コントローラーが独立して応答
 ```
+
+フィルター変更のフロー:
+1. フィルターバーのリンク/フォームが `/sales_analyses?period=7&location_id=1` に Turbo Drive で遷移
+2. `SalesAnalysesController#index` がページシェルを再描画（フレームの `src` が新パラメータで再構築）
+3. ブラウザが各フレームの `src` を並列にフェッチ
 
 ### KPI サマリーカード
 
@@ -138,42 +183,58 @@ MenuItem.new(path: helpers.sales_histories_path, label: "販売履歴", icon: :c
 
 ## 画面B: 販売履歴 カレンダーヒートマップ
 
-### コントローラー
+### コントローラー構成
 
-`SalesHistoriesController#index`:
-- クエリパラメータから月・出店先・選択日を解析
-- `Sales::HistoryCalendar` を初期化
-- 月ナビゲーション（前月/次月/今月へ）
+カレンダー本体と日別詳細パネルを別コントローラーに分割する。
+カレンダーと月間サマリーは同じ月データに依存するため、`SalesHistoriesController#index` でまとめて描画する。
+
+| コントローラー | 役割 | PORO 呼び出し |
+|--------------|------|-------------|
+| `SalesHistoriesController#index` | カレンダーヒートマップ + 月間サマリーを描画。日別詳細の Turbo Frame `src` を埋め込む | `HistoryCalendar#daily_totals`, `#monthly_summary` |
+| `SalesHistories::DailyDetailsController#show` | 日別詳細パネルを描画 | `HistoryCalendar#daily_breakdown` |
 
 ### ViewComponent 構成
 
-| コンポーネント | パス | 役割 |
-|--------------|------|------|
-| ページ全体 | `sales_histories/index_page` | レイアウト（カレンダー + 詳細パネル）|
-| カレンダーヒートマップ | `sales_histories/calendar_heatmap` | HTML テーブルで月カレンダー、売上金額で色の濃淡 |
-| 月間サマリー | `sales_histories/monthly_summary` | 月合計・営業日・1日平均・最高日 |
-| 日別詳細パネル | `sales_histories/daily_detail_panel` | 選択日の売上・販売数・商品別内訳 |
+| コンポーネント | パス | 描画元コントローラー |
+|--------------|------|-------------------|
+| ページ全体 | `sales_histories/index_page` | `SalesHistoriesController#index` |
+| カレンダーヒートマップ | `sales_histories/calendar_heatmap` | `SalesHistoriesController#index`（index_page 内）|
+| 月間サマリー | `sales_histories/monthly_summary` | `SalesHistoriesController#index`（index_page 内）|
+| 日別詳細パネル | `sales_histories/daily_detail_panel` | `SalesHistories::DailyDetailsController#show` |
 
 ### Turbo Frame 構成
 
 ```
-┌─ カレンダー + サマリー ────────────────────────────┐
-│  Turbo Frame: "sales_history_calendar"             │
-│  ├── 月ナビゲーション（前月/次月）                     │
-│  ├── カレンダーヒートマップ                            │
-│  └── 月間サマリー                                    │
-└────────────────────────────────────────────────────┘
+SalesHistoriesController#index が描画:
+┌──────────────────────────────────────────────────────────────┐
+│  出店先フィルター + 月ナビゲーション（前月/次月/今月へ）          │
+│  月変更 → Turbo Drive でページ全体を再読み込み                  │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│  ┌─ カレンダーヒートマップ ──────────────┐  ┌──────────────┐  │
+│  │  日 月 火 水 木 金 土                  │  │ <turbo-frame │  │
+│  │  [1] [2] [3] ...                      │  │   id="daily" │  │
+│  │  日付クリック → daily フレームの       │  │   src="..."> │  │
+│  │  src を更新して再フェッチ              │  │              │  │
+│  │                                       │  │  日別詳細     │  │
+│  ├───────────────────────────────────────┤  │  パネル       │  │
+│  │  月間サマリー                          │  │              │  │
+│  │  合計 | 営業日 | 平均 | 最高           │  └──────────────┘  │
+│  └───────────────────────────────────────┘                    │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
 
-┌─ 日別詳細パネル ───────────────────────────────────┐
-│  Turbo Frame: "sales_history_daily_detail"         │
-│  ├── 日付、売上、販売数                               │
-│  ├── 商品別内訳（関係者/一般の棒グラフ）               │
-│  └── 「この日の取引履歴を全件表示」リンク              │
-└────────────────────────────────────────────────────┘
+日別詳細パネルは eager loading で初期表示、日付クリック時にフレーム再フェッチ
 ```
 
-日付クリック時: `daily_detail` フレームのみ更新
-月変更時: `calendar` フレーム全体を更新
+日付クリックのフロー:
+1. カレンダーの日付セルがリンク（`data-turbo-frame="daily"`）
+2. `/sales_histories/daily_detail?date=2026-04-25&location_id=1` をフェッチ
+3. `daily` フレーム内のみ更新（ページ全体はリロードしない）
+
+月変更のフロー:
+1. 前月/次月リンクが `/sales_histories?month=2026-03&location_id=1` に Turbo Drive で遷移
+2. ページ全体が再描画（カレンダー + 日別詳細フレームの src 両方が更新）
 
 ### ヒートマップの色分け
 
@@ -341,8 +402,12 @@ end
 |------|----------|------|
 | `Sales::AnalysisSummary` | モデルテスト | 各集計メソッドの戻り値を検証。期間・出店先フィルタリング、空データ時の挙動 |
 | `Sales::HistoryCalendar` | モデルテスト | daily_totals のキー/値、monthly_summary の各項目、daily_breakdown の内訳 |
-| `SalesAnalysesController` | コントローラーテスト | ステータスコード、Turbo Frame レスポンス、フィルターパラメータの受け渡し |
+| `SalesAnalysesController` | コントローラーテスト | ステータスコード、フィルターパラメータのデフォルト値 |
+| `SalesAnalyses::SummariesController` | コントローラーテスト | Turbo Frame レスポンス、フィルターパラメータの受け渡し |
+| `SalesAnalyses::RankingsController` | コントローラーテスト | Turbo Frame レスポンス、フィルターパラメータの受け渡し |
+| `SalesAnalyses::CrossTablesController` | コントローラーテスト | Turbo Frame レスポンス、フィルターパラメータの受け渡し |
 | `SalesHistoriesController` | コントローラーテスト | index/show のステータスコード、不正な日付パラメータのハンドリング |
+| `SalesHistories::DailyDetailsController` | コントローラーテスト | Turbo Frame レスポンス、日付パラメータの受け渡し |
 | ViewComponent | コンポーネントテスト | 各コンポーネントのレンダリング、表示内容の正しさ |
 
 PORO のテストは実際の DB にデータを投入して検証する（mock 不使用）。
@@ -351,14 +416,18 @@ PORO のテストは実際の DB にデータを投入して検証する（mock 
 
 `config/locales/ja.yml` に以下のキーを追加:
 
-- `sales_analyses.index_page.*` — フィルターラベル、期間選択肢、セクションタイトル
+ViewComponent の i18n（`components.` プレフィックス配下）:
+- `sales_analyses.index_page.*` — ページタイトル、説明
+- `sales_analyses.filter_bar.*` — フィルターラベル、期間選択肢
 - `sales_analyses.summary_cards.*` — KPI カードのラベル
 - `sales_analyses.ranking.*` — ランキングのタイトル、ヘッダー
 - `sales_analyses.cross_table.*` — クロス集計のヘッダー
 - `sales_histories.index_page.*` — カレンダーページのタイトル、説明
 - `sales_histories.calendar_heatmap.*` — 曜日名、月ナビゲーション
+- `sales_histories.monthly_summary.*` — 月間サマリーのラベル
 - `sales_histories.daily_detail_panel.*` — 詳細パネルのラベル
-- `sales_histories.show_page.*` — 取引一覧のヘッダー
+- `sales_histories.show_page.*` — 取引一覧ページタイトル、パンくず
+- `sales_histories.daily_summary.*` — 日次サマリーのラベル
 - `sales_histories.transaction_table.*` — テーブルヘッダー
 
 ## ファイル一覧
@@ -366,12 +435,15 @@ PORO のテストは実際の DB にデータを投入して検証する（mock 
 ### 新規作成
 
 ```
-# ルーティング（既存ファイル編集）
-config/routes.rb
-
-# コントローラー
+# コントローラー（画面A: 売上分析）
 app/controllers/sales_analyses_controller.rb
+app/controllers/sales_analyses/summaries_controller.rb
+app/controllers/sales_analyses/rankings_controller.rb
+app/controllers/sales_analyses/cross_tables_controller.rb
+
+# コントローラー（画面B/C: 販売履歴）
 app/controllers/sales_histories_controller.rb
+app/controllers/sales_histories/daily_details_controller.rb
 
 # PORO
 app/models/sales/analysis_summary.rb
@@ -411,10 +483,11 @@ app/views/components/sales_histories/transaction_table/component.html.erb
 test/models/sales/analysis_summary_test.rb
 test/models/sales/history_calendar_test.rb
 test/controllers/sales_analyses_controller_test.rb
+test/controllers/sales_analyses/summaries_controller_test.rb
+test/controllers/sales_analyses/rankings_controller_test.rb
+test/controllers/sales_analyses/cross_tables_controller_test.rb
 test/controllers/sales_histories_controller_test.rb
-
-# I18n
-config/locales/ja.yml（既存ファイル編集）
+test/controllers/sales_histories/daily_details_controller_test.rb
 ```
 
 ### 既存ファイル編集
