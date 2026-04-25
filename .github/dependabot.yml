@@ -5,11 +5,26 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+  groups:
+    vite:
+      patterns:
+        - "vite_rails"
+        - "vite_ruby"
 - package-ecosystem: npm
   directory: "/"
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+  groups:
+    vite:
+      patterns:
+        - "vite"
+        - "vite-plugin-*"
+    tailwindcss:
+      patterns:
+        - "@tailwindcss/*"
+        - "tailwindcss"
+        - "daisyui"
 - package-ecosystem: github-actions
   directory: "/"
   schedule:

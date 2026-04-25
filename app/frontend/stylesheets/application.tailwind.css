@@ -32,7 +32,7 @@
   }
 }
 
-@plugin "daisyui" {
+@plugin "daisyui/index.js" {
   themes: caramellatte --default;
 }
 
