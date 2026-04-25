@@ -5,7 +5,7 @@ module DailyInventories
     include ActiveModel::Model
     include ActiveModel::Attributes
 
-    DEFAULT_STOCK = 10
+    DEFAULT_STOCK = 6
 
     attribute :catalog_id, :integer
     attribute :catalog_name, :string

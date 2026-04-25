@@ -21,7 +21,7 @@ module DailyInventories
       assert_equal @catalogs.count, form.items.count
       form.items.each do |item|
         assert_not item.selected?
-        assert_equal 10, item.stock
+        assert_equal InventoryItem::DEFAULT_STOCK, item.stock
       end
       assert_not form.valid?
 
