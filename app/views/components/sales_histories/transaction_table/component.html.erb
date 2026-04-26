@@ -1,0 +1,38 @@
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body p-4">
+    <h3 class="card-title text-base">取引一覧</h3>
+    <% if sales.empty? %>
+      <p class="text-sm text-base-content/50 py-4">取引データがありません</p>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>時刻</th>
+              <th>顧客</th>
+              <th>商品</th>
+              <th class="text-right">数量</th>
+              <th class="text-right">金額</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% sales.each do |sale| %>
+              <tr class="<%= row_class(sale) %>">
+                <td><%= sale.sale_datetime.strftime("%H:%M") %></td>
+                <td><span class="<%= badge_class(sale) %>"><%= badge_label(sale) %></span></td>
+                <td>
+                  <%= item_names(sale) %>
+                  <% if sale.voided? %>
+                    <span class="text-error text-xs">（取消済）</span>
+                  <% end %>
+                </td>
+                <td class="text-right"><%= total_quantity(sale) %></td>
+                <td class="text-right<%= " line-through" if sale.voided? %>">¥<%= number_with_delimiter(sale.final_amount) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+</div>

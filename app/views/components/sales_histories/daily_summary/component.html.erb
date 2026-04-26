@@ -1,0 +1,20 @@
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body p-4">
+      <p class="text-sm text-base-content/60">売上合計</p>
+      <p class="text-2xl font-bold">¥<%= number_with_delimiter(total_amount) %></p>
+    </div>
+  </div>
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body p-4">
+      <p class="text-sm text-base-content/60">取引件数</p>
+      <p class="text-2xl font-bold"><%= total_transactions %><span class="text-base font-normal">件</span></p>
+    </div>
+  </div>
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body p-4">
+      <p class="text-sm text-base-content/60">出店先</p>
+      <p class="text-2xl font-bold"><%= location.name %></p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,36 @@
+<div class="card bg-base-100 shadow-sm">
+  <div class="card-body p-4">
+    <h3 class="card-title text-base">日別売上ヒートマップ</h3>
+    <table class="table table-sm w-full">
+      <thead>
+        <tr>
+          <% WEEKDAY_NAMES.each do |name| %>
+            <th class="text-center text-xs font-normal text-base-content/50 p-1"><%= name %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% weeks.each do |week| %>
+          <tr>
+            <% week.each do |date| %>
+              <td class="p-1">
+                <% if in_month?(date) && daily_totals[date] %>
+                  <%= link_to daily_detail_path(date),
+                        class: "block rounded-lg p-2 text-center cursor-pointer hover:ring-2 hover:ring-primary #{heat_class(date)}",
+                        data: { turbo_frame: "sales_history_daily_detail" } do %>
+                    <div class="text-xs"><%= date.day %></div>
+                    <div class="text-[10px] opacity-80"><%= amount_display(date) %></div>
+                  <% end %>
+                <% elsif in_month?(date) %>
+                  <div class="rounded-lg p-2 text-center <%= HEAT_COLORS[0] %>">
+                    <div class="text-xs"><%= date.day %></div>
+                  </div>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

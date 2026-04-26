@@ -1,0 +1,54 @@
+<% content_for(:title, "販売履歴") %>
+
+<div class="space-y-6">
+  <%# ヘッダー + フィルター %>
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold">販売履歴</h2>
+      <p class="text-sm text-base-content/60">過去の販売を振り返る</p>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <%# 出店先セレクト %>
+      <select class="select select-bordered select-sm"
+              onchange="Turbo.visit(this.value)">
+        <% locations.each do |loc| %>
+          <option value="<%= location_path(loc.id) %>"
+                  <%= "selected" if loc.id == location.id %>>
+            <%= loc.name %>
+          </option>
+        <% end %>
+      </select>
+
+      <%# 月ナビゲーション %>
+      <div class="join">
+        <%= link_to "◀", prev_month_path, class: "btn btn-sm btn-ghost join-item" %>
+        <span class="btn btn-sm btn-ghost join-item no-animation"><%= month.strftime("%Y年 %m月") %></span>
+        <%= link_to "▶", next_month_path, class: "btn btn-sm btn-ghost join-item" %>
+      </div>
+      <%= link_to "今月", current_month_path, class: "btn btn-sm btn-ghost" %>
+    </div>
+  </div>
+
+  <%# メインコンテンツ: カレンダー + 詳細パネル %>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-4">
+      <%# カレンダーヒートマップ %>
+      <%= component "sales_histories/calendar_heatmap",
+            month: month,
+            daily_totals: calendar.daily_totals,
+            location: location %>
+
+      <%# 月間サマリー %>
+      <%= component "sales_histories/monthly_summary",
+            summary: calendar.monthly_summary %>
+    </div>
+
+    <%# 日別詳細パネル（Turbo Frame） %>
+    <%= helpers.turbo_frame_tag "sales_history_daily_detail", src: daily_detail_src do %>
+      <div class="flex justify-center py-8">
+        <span class="loading loading-spinner loading-md"></span>
+      </div>
+    <% end %>
+  </div>
+</div>

@@ -1,0 +1,48 @@
+<%= helpers.turbo_frame_tag "sales_history_daily_detail" do %>
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body p-4">
+      <h3 class="text-lg font-bold"><%= I18n.l(date, format: :long) %></h3>
+
+      <div class="flex gap-6 my-3">
+        <div>
+          <p class="text-xs text-base-content/60">売上</p>
+          <p class="text-xl font-bold">¥<%= number_with_delimiter(daily_total) %></p>
+        </div>
+        <div>
+          <p class="text-xs text-base-content/60">販売数</p>
+          <p class="text-xl font-bold"><%= total_quantity %><span class="text-sm font-normal">個</span></p>
+        </div>
+      </div>
+
+      <% if breakdown.empty? %>
+        <p class="text-sm text-base-content/50 py-4">この日の販売データはありません</p>
+      <% else %>
+        <p class="text-xs text-base-content/60 mb-2">商品別 内訳</p>
+        <div class="space-y-2">
+          <% breakdown.each do |row| %>
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-sm truncate flex-shrink-0" style="max-width: 40%"><%= row[:catalog_name] %></span>
+              <div class="flex items-center gap-1 flex-1">
+                <div class="flex gap-px h-3 flex-1">
+                  <% if row[:staff_quantity] > 0 %>
+                    <div class="bg-primary rounded-l-sm" style="width: <%= bar_width(row[:staff_quantity]) %>"></div>
+                  <% end %>
+                  <% if row[:citizen_quantity] > 0 %>
+                    <div class="bg-info rounded-r-sm" style="width: <%= bar_width(row[:citizen_quantity]) %>"></div>
+                  <% end %>
+                </div>
+                <span class="text-sm font-bold whitespace-nowrap"><%= row[:total_quantity] %>個</span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="mt-4 pt-3 border-t border-base-200">
+        <%= link_to show_path, class: "link link-primary text-sm" do %>
+          この日の取引履歴を全件表示 →
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

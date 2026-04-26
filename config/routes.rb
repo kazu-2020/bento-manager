@@ -56,10 +56,10 @@ Rails.application.routes.draw do
   end
 
   # 販売履歴カレンダー
-  resources :sales_histories, only: [ :index, :show ]
   namespace :sales_histories do
     resource :daily_detail, only: [ :show ]
   end
+  resources :sales_histories, only: [ :index, :show ]
 
   # Defines the root path route ("/")
   root "pos/locations#index"
