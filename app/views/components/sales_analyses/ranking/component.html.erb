@@ -1,9 +1,12 @@
 <%= helpers.turbo_frame_tag "sales_analysis_ranking" do %>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <%# 職員 Top5 %>
+    <%# 関係者 Top5 %>
     <div class="card bg-base-100 shadow-sm">
       <div class="card-body p-4">
-        <h3 class="card-title text-base">関係者 人気弁当 Top5</h3>
+        <div class="flex items-center justify-between">
+          <h3 class="card-title text-base">関係者 人気弁当 Top5</h3>
+          <%= helpers.icon :users, size: :md, extra_class: "text-base-content/30" %>
+        </div>
         <% if data[:staff].empty? %>
           <p class="text-sm text-base-content/50 py-4">データがありません</p>
         <% else %>
@@ -19,7 +22,7 @@
             <tbody>
               <% data[:staff].each_with_index do |entry, i| %>
                 <tr>
-                  <td class="font-bold text-staff"><%= i + 1 %></td>
+                  <td class="font-bold"><%= i + 1 %></td>
                   <td><%= entry[:catalog_name] %></td>
                   <td class="text-right font-bold"><%= entry[:quantity] %> 個</td>
                   <td class="text-right text-base-content/60 text-xs">¥<%= number_with_delimiter(entry[:amount]) %></td>
@@ -34,7 +37,10 @@
     <%# 一般 Top5 %>
     <div class="card bg-base-100 shadow-sm">
       <div class="card-body p-4">
-        <h3 class="card-title text-base">一般 人気弁当 Top5</h3>
+        <div class="flex items-center justify-between">
+          <h3 class="card-title text-base">一般 人気弁当 Top5</h3>
+          <%= helpers.icon :users, size: :md, extra_class: "text-base-content/30" %>
+        </div>
         <% if data[:citizen].empty? %>
           <p class="text-sm text-base-content/50 py-4">データがありません</p>
         <% else %>
@@ -50,7 +56,7 @@
             <tbody>
               <% data[:citizen].each_with_index do |entry, i| %>
                 <tr>
-                  <td class="font-bold text-citizen"><%= i + 1 %></td>
+                  <td class="font-bold"><%= i + 1 %></td>
                   <td><%= entry[:catalog_name] %></td>
                   <td class="text-right font-bold"><%= entry[:quantity] %> 個</td>
                   <td class="text-right text-base-content/60 text-xs">¥<%= number_with_delimiter(entry[:amount]) %></td>
