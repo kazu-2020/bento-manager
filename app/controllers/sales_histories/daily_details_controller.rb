@@ -3,11 +3,16 @@
 module SalesHistories
   class DailyDetailsController < ApplicationController
     def show
-      location = find_location
+      location = Location.find(params[:location_id])
       date = parse_date
+
       calendar = Sales::HistoryCalendar.new(location: location, month: date)
       breakdown = calendar.daily_breakdown(date)
-      daily_total = calendar.daily_totals[date] || 0
+
+      daily_total = Sale.completed
+                        .at_location(location)
+                        .in_period(date.in_time_zone.beginning_of_day, date.in_time_zone.end_of_day)
+                        .sum(:final_amount)
 
       render SalesHistories::DailyDetailPanel::Component.new(
         date: date,
@@ -18,10 +23,6 @@ module SalesHistories
     end
 
     private
-
-    def find_location
-      Location.find(params[:location_id])
-    end
 
     def parse_date
       Date.parse(params[:date])

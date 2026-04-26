@@ -2,6 +2,7 @@
 
 module Sales
   class HistoryCalendar
+    include CustomerTypePivot
     def initialize(location:, month:)
       @location = location
       @month = month
@@ -51,18 +52,7 @@ module Sales
           Arel.sql("SUM(sale_items.quantity)")
         )
 
-      grouped = rows.each_with_object(Hash.new { |h, k| h[k] = { staff: 0, citizen: 0 } }) do |(name, ct, qty), hash|
-        hash[name][ct.to_sym] = qty.to_i
-      end
-
-      grouped.map do |name, counts|
-        {
-          catalog_name: name,
-          staff_quantity: counts[:staff],
-          citizen_quantity: counts[:citizen],
-          total_quantity: counts[:staff] + counts[:citizen]
-        }
-      end.sort_by { |row| -row[:total_quantity] }
+      pivot_by_customer_type(rows)
     end
 
     private

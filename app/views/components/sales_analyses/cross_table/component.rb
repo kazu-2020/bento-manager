@@ -12,7 +12,7 @@ module SalesAnalyses
       attr_reader :data
 
       def grand_total
-        data.sum { |row| row[:total_quantity] }
+        @grand_total ||= data.sum { |row| row[:total_quantity] }
       end
 
       def composition_ratio(row)

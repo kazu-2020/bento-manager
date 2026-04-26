@@ -20,8 +20,7 @@ module SalesAnalyses
       end
 
       def period_class(p)
-        base = "btn btn-sm"
-        p == period ? "#{base} btn-primary" : "#{base} btn-ghost"
+        p == period ? "btn btn-sm btn-primary join-item" : "btn btn-sm btn-ghost join-item"
       end
 
       def period_path(p)
