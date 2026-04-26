@@ -11,9 +11,7 @@
               <tr>
                 <th>商品</th>
                 <th class="text-right">合計</th>
-                <th class="text-right">構成比</th>
-                <th class="text-right text-staff">関係者</th>
-                <th class="text-right text-citizen">一般</th>
+                <th>構成比 <span class="text-xs font-normal text-staff">■</span><span class="text-xs font-normal text-base-content/50">関係者</span> <span class="text-xs font-normal text-citizen">■</span><span class="text-xs font-normal text-base-content/50">一般</span></th>
                 <th class="text-right">関係者比率</th>
               </tr>
             </thead>
@@ -22,9 +20,12 @@
                 <tr>
                   <td><%= row[:catalog_name] %></td>
                   <td class="text-right font-bold"><%= row[:total_quantity] %></td>
-                  <td class="text-right"><%= composition_ratio(row) %>%</td>
-                  <td class="text-right text-staff"><%= row[:staff_quantity] %></td>
-                  <td class="text-right text-citizen"><%= row[:citizen_quantity] %></td>
+                  <td class="w-48">
+                    <div class="flex h-5 rounded-sm overflow-hidden" style="width: <%= bar_total_width(row) %>">
+                      <div class="bg-staff" style="width: <%= staff_bar_ratio(row) %>"></div>
+                      <div class="bg-citizen flex-1"></div>
+                    </div>
+                  </td>
                   <td class="text-right"><%= staff_ratio(row) %>%</td>
                 </tr>
               <% end %>
