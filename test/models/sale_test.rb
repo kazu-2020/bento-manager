@@ -1,7 +1,7 @@
 require "test_helper"
 
 class SaleTest < ActiveSupport::TestCase
-  fixtures :locations, :employees
+  fixtures :locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items
 
   test "validations" do
     @subject = Sale.new(
@@ -63,6 +63,27 @@ class SaleTest < ActiveSupport::TestCase
       voided_by_employee: nil
     )
     assert completed_sale.valid?
+  end
+
+  # --- スコープテスト ---
+
+  test "in_period は指定期間内の販売のみを返す" do
+    period_start = 8.days.ago.beginning_of_day
+    period_end = Time.current
+
+    results = Sale.in_period(period_start, period_end)
+
+    # 10日前の analysis_citizen_5 は含まれない
+    assert_not_includes results, sales(:analysis_citizen_5)
+    # 1日前の analysis_staff_1 は含まれる
+    assert_includes results, sales(:analysis_staff_1)
+  end
+
+  test "at_location は指定の販売先の販売のみを返す" do
+    results = Sale.at_location(locations(:city_hall))
+
+    assert_includes results, sales(:analysis_staff_1)
+    assert_not_includes results, sales(:analysis_pref_1)
   end
 
   test "販売を取り消すと状態が変わり取消済みの販売は再度取り消せない" do

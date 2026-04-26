@@ -18,3 +18,145 @@ voided_sale_bento_a:
   unit_price: 550
   line_total: 1100
   sold_at: <%= 1.hour.ago %>
+
+# ============================================================
+# 分析テスト用データ
+# ============================================================
+
+# analysis_staff_1: 弁当A x1
+analysis_staff_1_bento_a:
+  sale: analysis_staff_1
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 1
+  unit_price: 550
+  line_total: 550
+  sold_at: <%= 1.day.ago %>
+
+# analysis_staff_2: 弁当B x1
+analysis_staff_2_bento_b:
+  sale: analysis_staff_2
+  catalog: daily_bento_b
+  catalog_price: daily_bento_b_regular
+  quantity: 1
+  unit_price: 500
+  line_total: 500
+  sold_at: <%= 1.day.ago %>
+
+# analysis_staff_3: 弁当A x1 + サラダ x1
+analysis_staff_3_bento_a:
+  sale: analysis_staff_3
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 1
+  unit_price: 550
+  line_total: 550
+  sold_at: <%= 3.days.ago %>
+
+analysis_staff_3_salad:
+  sale: analysis_staff_3
+  catalog: salad
+  catalog_price: salad_bundle
+  quantity: 1
+  unit_price: 150
+  line_total: 150
+  sold_at: <%= 3.days.ago %>
+
+# analysis_staff_4: 弁当A x1
+analysis_staff_4_bento_a:
+  sale: analysis_staff_4
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 1
+  unit_price: 550
+  line_total: 550
+  sold_at: <%= 5.days.ago %>
+
+# analysis_staff_5: 弁当B x1
+analysis_staff_5_bento_b:
+  sale: analysis_staff_5
+  catalog: daily_bento_b
+  catalog_price: daily_bento_b_regular
+  quantity: 1
+  unit_price: 500
+  line_total: 500
+  sold_at: <%= 7.days.ago %>
+
+# analysis_citizen_1: 弁当A x1
+analysis_citizen_1_bento_a:
+  sale: analysis_citizen_1
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 1
+  unit_price: 550
+  line_total: 550
+  sold_at: <%= 1.day.ago %>
+
+# analysis_citizen_2: 弁当B x1
+analysis_citizen_2_bento_b:
+  sale: analysis_citizen_2
+  catalog: daily_bento_b
+  catalog_price: daily_bento_b_regular
+  quantity: 1
+  unit_price: 500
+  line_total: 500
+  sold_at: <%= 2.days.ago %>
+
+# analysis_citizen_3: サラダ x1
+analysis_citizen_3_salad:
+  sale: analysis_citizen_3
+  catalog: salad
+  catalog_price: salad_regular
+  quantity: 1
+  unit_price: 250
+  line_total: 250
+  sold_at: <%= 4.days.ago %>
+
+# analysis_citizen_4: 弁当A x1 + サラダ x1
+analysis_citizen_4_bento_a:
+  sale: analysis_citizen_4
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 1
+  unit_price: 550
+  line_total: 550
+  sold_at: <%= 6.days.ago %>
+
+analysis_citizen_4_salad:
+  sale: analysis_citizen_4
+  catalog: salad
+  catalog_price: salad_bundle
+  quantity: 1
+  unit_price: 150
+  line_total: 150
+  sold_at: <%= 6.days.ago %>
+
+# analysis_citizen_5: 弁当A x1
+analysis_citizen_5_bento_a:
+  sale: analysis_citizen_5
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 1
+  unit_price: 550
+  line_total: 550
+  sold_at: <%= 10.days.ago %>
+
+# analysis_voided: 弁当A x1（取消済み）
+analysis_voided_bento_a:
+  sale: analysis_voided
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 1
+  unit_price: 550
+  line_total: 550
+  sold_at: <%= 2.days.ago %>
+
+# analysis_pref_1: 弁当A x1（県庁）
+analysis_pref_1_bento_a:
+  sale: analysis_pref_1
+  catalog: daily_bento_a
+  catalog_price: daily_bento_a_regular
+  quantity: 1
+  unit_price: 550
+  line_total: 550
+  sold_at: <%= 1.day.ago %>

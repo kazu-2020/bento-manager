@@ -30,3 +30,121 @@ prefectural_office_sale:
   final_amount: 500
   employee: owner_employee
   status: 0
+
+# ============================================================
+# 分析テスト用データ（既存 fixture には手を加えない）
+# ============================================================
+
+# --- 市役所: 職員の購入（過去数日にばらける） ---
+analysis_staff_1:
+  location: city_hall
+  sale_datetime: <%= 1.day.ago %>
+  customer_type: 0
+  total_amount: 550
+  final_amount: 550
+  employee: verified_employee
+  status: 0
+
+analysis_staff_2:
+  location: city_hall
+  sale_datetime: <%= 1.day.ago %>
+  customer_type: 0
+  total_amount: 500
+  final_amount: 500
+  employee: verified_employee
+  status: 0
+
+analysis_staff_3:
+  location: city_hall
+  sale_datetime: <%= 3.days.ago %>
+  customer_type: 0
+  total_amount: 700
+  final_amount: 700
+  employee: verified_employee
+  status: 0
+
+analysis_staff_4:
+  location: city_hall
+  sale_datetime: <%= 5.days.ago %>
+  customer_type: 0
+  total_amount: 550
+  final_amount: 550
+  employee: verified_employee
+  status: 0
+
+analysis_staff_5:
+  location: city_hall
+  sale_datetime: <%= 7.days.ago %>
+  customer_type: 0
+  total_amount: 500
+  final_amount: 500
+  employee: verified_employee
+  status: 0
+
+# --- 市役所: 一般の購入 ---
+analysis_citizen_1:
+  location: city_hall
+  sale_datetime: <%= 1.day.ago %>
+  customer_type: 1
+  total_amount: 550
+  final_amount: 550
+  employee: verified_employee
+  status: 0
+
+analysis_citizen_2:
+  location: city_hall
+  sale_datetime: <%= 2.days.ago %>
+  customer_type: 1
+  total_amount: 500
+  final_amount: 500
+  employee: verified_employee
+  status: 0
+
+analysis_citizen_3:
+  location: city_hall
+  sale_datetime: <%= 4.days.ago %>
+  customer_type: 1
+  total_amount: 250
+  final_amount: 250
+  employee: verified_employee
+  status: 0
+
+analysis_citizen_4:
+  location: city_hall
+  sale_datetime: <%= 6.days.ago %>
+  customer_type: 1
+  total_amount: 700
+  final_amount: 700
+  employee: verified_employee
+  status: 0
+
+analysis_citizen_5:
+  location: city_hall
+  sale_datetime: <%= 10.days.ago %>
+  customer_type: 1
+  total_amount: 550
+  final_amount: 550
+  employee: verified_employee
+  status: 0
+
+# --- 市役所: 取消済み（分析対象外を検証するため） ---
+analysis_voided:
+  location: city_hall
+  sale_datetime: <%= 2.days.ago %>
+  customer_type: 0
+  total_amount: 550
+  final_amount: 550
+  employee: verified_employee
+  status: 1
+  voided_at: <%= 2.days.ago %>
+  voided_by_employee: owner_employee
+
+# --- 県庁: 別拠点データ（location フィルタ検証用） ---
+analysis_pref_1:
+  location: prefectural_office
+  sale_datetime: <%= 1.day.ago %>
+  customer_type: 0
+  total_amount: 550
+  final_amount: 550
+  employee: owner_employee
+  status: 0

@@ -1,0 +1,56 @@
+<% content_for(:title, "販売履歴") %>
+
+<div class="space-y-6">
+  <%# 1段目: タイトル + 出店先 %>
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <div>
+      <h2 class="text-2xl font-bold">過去の販売を振り返る</h2>
+      <p class="text-sm text-base-content/60">カレンダー上の日付をクリックすると、その日の販売詳細を表示します</p>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <select class="select select-bordered select-sm"
+              onchange="Turbo.visit(this.value)">
+        <% locations.each do |loc| %>
+          <option value="<%= location_path(loc.id) %>"
+                  <%= "selected" if loc.id == location.id %>>
+            <%= loc.name %>
+          </option>
+        <% end %>
+      </select>
+
+      <div class="flex items-center gap-2">
+        <%= link_to "◀", prev_month_path, class: "btn btn-sm btn-ghost" %>
+        <span class="text-sm font-bold"><%= month.strftime("%Y年 %m月") %></span>
+        <%= link_to "▶", next_month_path, class: "btn btn-sm btn-ghost" %>
+        <%= link_to "今月へ", current_month_path, class: "btn btn-sm btn-outline btn-primary" %>
+      </div>
+    </div>
+  </div>
+
+  <%# メインコンテンツ: カレンダー + 詳細パネル %>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:items-start">
+    <div class="lg:col-span-2">
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body p-4">
+          <%= component "sales_histories/calendar_heatmap",
+                month: month,
+                daily_totals: calendar.daily_totals,
+                location: location %>
+
+          <div class="divider my-2"></div>
+
+          <%= component "sales_histories/monthly_summary",
+                summary: calendar.monthly_summary %>
+        </div>
+      </div>
+    </div>
+
+    <%# 日別詳細パネル（Turbo Frame） %>
+    <%= helpers.turbo_frame_tag "sales_history_daily_detail", src: daily_detail_src, class: "block" do %>
+      <div class="flex justify-center py-8">
+        <span class="loading loading-spinner loading-md"></span>
+      </div>
+    <% end %>
+  </div>
+</div>

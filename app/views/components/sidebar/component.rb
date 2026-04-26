@@ -38,6 +38,8 @@ module Sidebar
     def menu_items
       @menu_items ||= [
         MenuItem.new(path: helpers.pos_locations_path, label: "販売", icon: :bento, path_prefix: nil),
+        MenuItem.new(path: helpers.sales_analyses_path, label: "売上分析", icon: :chart, path_prefix: "/sales_analyses"),
+        MenuItem.new(path: helpers.sales_histories_path, label: "販売履歴", icon: :calendar, path_prefix: "/sales_histories"),
         MenuItem.new(path: helpers.locations_path, label: "配達場所", icon: :location, path_prefix: "/locations"),
         MenuItem.new(path: helpers.catalogs_path, label: "カタログ", icon: :catalog, path_prefix: "/catalogs"),
         MenuItem.new(path: helpers.discounts_path, label: "クーポン", icon: :ticket, path_prefix: "/discounts")

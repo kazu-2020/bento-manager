@@ -5,6 +5,12 @@ class LocationDailySalesQuantityTest < ActiveSupport::TestCase
 
   fixtures :locations, :employees, :catalogs, :catalog_prices
 
+  setup do
+    # 他テストクラスの fixture が残留する場合に備え、テスト開始時にクリーンアップ
+    SaleItem.delete_all
+    Sale.delete_all
+  end
+
   test "販売先の直近1ヶ月の日次販売個数が顧客区分ごとに集計される" do
     location = locations(:city_hall)
     sale_date = 3.days.ago

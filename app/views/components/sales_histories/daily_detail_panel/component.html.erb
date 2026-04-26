@@ -1,0 +1,49 @@
+<%= helpers.turbo_frame_tag "sales_history_daily_detail" do %>
+  <div class="card bg-base-100 shadow-sm">
+    <div class="card-body p-4">
+      <p class="text-xs text-base-content/60">選択中</p>
+      <h3 class="text-lg font-bold"><%= I18n.l(date, format: :long) %></h3>
+
+      <div class="grid grid-cols-2 gap-3 my-3">
+        <div class="border border-base-300 rounded-lg p-3">
+          <p class="text-xs text-base-content/60">売上</p>
+          <p class="text-xl font-bold">¥<%= number_with_delimiter(daily_total) %></p>
+        </div>
+        <div class="border border-base-300 rounded-lg p-3">
+          <p class="text-xs text-base-content/60">販売数</p>
+          <p class="text-xl font-bold"><%= total_quantity %><span class="text-sm font-normal">個</span></p>
+        </div>
+      </div>
+
+      <% if breakdown.empty? %>
+        <p class="text-sm text-base-content/50 py-4">この日の販売データはありません</p>
+      <% else %>
+        <p class="text-xs text-base-content/60 mb-3">商品別 内訳</p>
+        <div class="space-y-3">
+          <% breakdown.each do |row| %>
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-sm"><%= row[:catalog_name] %></span>
+                <span class="text-sm font-bold"><%= row[:total_quantity] %>個</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="flex h-3 rounded-sm overflow-hidden flex-1 min-w-0" style="width: <%= bar_total_width(row) %>">
+                  <div class="bg-staff" style="width: <%= staff_ratio(row) %>"></div>
+                  <div class="bg-citizen flex-1"></div>
+                </div>
+                <span class="text-xs text-staff whitespace-nowrap"><%= row[:staff_quantity] %></span>
+                <span class="text-xs text-base-content/30">/</span>
+                <span class="text-xs text-citizen whitespace-nowrap"><%= row[:citizen_quantity] %></span>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+
+      <div class="divider my-2"></div>
+      <%= link_to show_path, class: "btn btn-sm btn-outline btn-block", data: { turbo_frame: "_top" } do %>
+        この日の取引履歴を全件表示
+      <% end %>
+    </div>
+  </div>
+<% end %>
