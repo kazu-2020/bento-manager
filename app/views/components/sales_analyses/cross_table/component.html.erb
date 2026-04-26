@@ -20,10 +20,15 @@
                 <tr>
                   <td><%= row[:catalog_name] %></td>
                   <td class="text-right font-bold"><%= row[:total_quantity] %></td>
-                  <td class="w-48">
-                    <div class="flex h-5 rounded-sm overflow-hidden" style="width: <%= bar_total_width(row) %>">
-                      <div class="bg-staff" style="width: <%= staff_bar_ratio(row) %>"></div>
-                      <div class="bg-citizen flex-1"></div>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <div class="flex h-5 rounded-full overflow-hidden flex-1" style="width: <%= bar_total_width(row) %>">
+                        <div class="bg-staff rounded-l-full" style="width: <%= staff_bar_ratio(row) %>"></div>
+                        <div class="bg-citizen rounded-r-full flex-1"></div>
+                      </div>
+                      <span class="text-xs text-staff whitespace-nowrap"><%= row[:staff_quantity] %></span>
+                      <span class="text-xs text-base-content/30">/</span>
+                      <span class="text-xs text-citizen whitespace-nowrap"><%= row[:citizen_quantity] %></span>
                     </div>
                   </td>
                   <td class="text-right"><%= staff_ratio(row) %>%</td>
