@@ -5,7 +5,6 @@
   </div>
 
   <div class="flex items-center gap-3">
-    <%# 出店先セレクト %>
     <select class="select select-bordered select-sm"
             onchange="Turbo.visit(this.value)">
       <% locations.each do |loc| %>
@@ -16,7 +15,6 @@
       <% end %>
     </select>
 
-    <%# 期間ボタン %>
     <div class="join">
       <% period_options.each do |p| %>
         <%= link_to "#{p}日", period_path(p), class: period_class(p) %>

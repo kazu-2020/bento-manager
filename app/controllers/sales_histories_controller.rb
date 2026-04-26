@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class SalesHistoriesController < ApplicationController
+  include LocationFindable
+
   def index
     @location = find_location
     @month = parse_month
@@ -33,14 +35,6 @@ class SalesHistoriesController < ApplicationController
   end
 
   private
-
-  def find_location
-    if params[:location_id].present?
-      Location.find(params[:location_id])
-    else
-      Location.display_order.first
-    end
-  end
 
   def parse_month
     if params[:month].present?
