@@ -41,8 +41,8 @@
       <% end %>
 
       <div class="divider my-2"></div>
-      <%= link_to show_path, class: "link link-primary text-sm" do %>
-        この日の取引履歴を全件表示 →
+      <%= link_to show_path, class: "btn btn-sm btn-outline btn-block", data: { turbo_frame: "_top" } do %>
+        この日の取引履歴を全件表示
       <% end %>
     </div>
   </div>
