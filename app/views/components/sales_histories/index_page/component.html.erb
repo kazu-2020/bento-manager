@@ -32,16 +32,20 @@
 
   <%# メインコンテンツ: カレンダー + 詳細パネル %>
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <div class="lg:col-span-2 space-y-4">
-      <%# カレンダーヒートマップ %>
-      <%= component "sales_histories/calendar_heatmap",
-            month: month,
-            daily_totals: calendar.daily_totals,
-            location: location %>
+    <div class="lg:col-span-2">
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body p-4">
+          <%= component "sales_histories/calendar_heatmap",
+                month: month,
+                daily_totals: calendar.daily_totals,
+                location: location %>
 
-      <%# 月間サマリー %>
-      <%= component "sales_histories/monthly_summary",
-            summary: calendar.monthly_summary %>
+          <div class="divider my-2"></div>
+
+          <%= component "sales_histories/monthly_summary",
+                summary: calendar.monthly_summary %>
+        </div>
+      </div>
     </div>
 
     <%# 日別詳細パネル（Turbo Frame） %>

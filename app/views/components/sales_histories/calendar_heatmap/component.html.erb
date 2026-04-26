@@ -1,41 +1,37 @@
-<div class="card bg-base-100 shadow-sm">
-  <div class="card-body p-4">
-    <div class="flex items-start justify-between mb-3">
-      <h3 class="card-title text-base">日別売上ヒートマップ</h3>
-      <div class="flex items-center gap-1 text-[10px] text-base-content/50">
-        <span>少</span>
-        <% HEAT_COLORS.values_at(1, 2, 3, 4, 5).each do |cls| %>
-          <div class="w-3 h-3 rounded-sm <%= cls.split.first %>"></div>
-        <% end %>
-        <span>多</span>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-7 gap-1">
-      <% WEEKDAY_NAMES.each do |name| %>
-        <div class="text-center text-xs text-base-content/50 pb-1"><%= name %></div>
-      <% end %>
-
-      <% weeks.each do |week| %>
-        <% week.each do |date| %>
-          <% if in_month?(date) && daily_totals[date] %>
-            <%= link_to daily_detail_path(date),
-                  class: "block rounded-lg aspect-square p-1.5 #{heat_class(date)} hover:ring-2 hover:ring-primary",
-                  data: { turbo_frame: "sales_history_daily_detail" } do %>
-              <div class="text-xs font-bold"><%= date.day %></div>
-              <div class="text-[10px] opacity-80 mt-auto"><%= amount_display(date) %></div>
-            <% end %>
-          <% elsif in_month?(date) %>
-            <%# 売上データなし = 休日とみなす（訪問販売で売上ゼロは現実的にないため） %>
-            <div class="rounded-lg aspect-square p-1.5 border-2 border-dashed border-base-300">
-              <div class="text-xs text-base-content/30"><%= date.day %></div>
-              <div class="text-[10px] text-base-content/20 mt-auto">休</div>
-            </div>
-          <% else %>
-            <div></div>
-          <% end %>
-        <% end %>
-      <% end %>
-    </div>
+<div class="flex items-start justify-between mb-3">
+  <h3 class="card-title text-base">日別売上ヒートマップ</h3>
+  <div class="flex items-center gap-1 text-[10px] text-base-content/50">
+    <span>少</span>
+    <% HEAT_COLORS.values_at(1, 2, 3, 4, 5).each do |cls| %>
+      <div class="w-3 h-3 rounded-sm <%= cls.split.first %>"></div>
+    <% end %>
+    <span>多</span>
   </div>
+</div>
+
+<div class="grid grid-cols-7 gap-1">
+  <% WEEKDAY_NAMES.each do |name| %>
+    <div class="text-center text-xs text-base-content/50 pb-1"><%= name %></div>
+  <% end %>
+
+  <% weeks.each do |week| %>
+    <% week.each do |date| %>
+      <% if in_month?(date) && daily_totals[date] %>
+        <%= link_to daily_detail_path(date),
+              class: "block rounded-lg aspect-square p-1.5 #{heat_class(date)} hover:ring-2 hover:ring-primary",
+              data: { turbo_frame: "sales_history_daily_detail" } do %>
+          <div class="text-xs font-bold"><%= date.day %></div>
+          <div class="text-[10px] opacity-80 mt-auto"><%= amount_display(date) %></div>
+        <% end %>
+      <% elsif in_month?(date) %>
+        <%# 売上データなし = 休日とみなす（訪問販売で売上ゼロは現実的にないため） %>
+        <div class="rounded-lg aspect-square p-1.5 border-2 border-dashed border-base-300">
+          <div class="text-xs text-base-content/30"><%= date.day %></div>
+          <div class="text-[10px] text-base-content/20 mt-auto">休</div>
+        </div>
+      <% else %>
+        <div></div>
+      <% end %>
+    <% end %>
+  <% end %>
 </div>
