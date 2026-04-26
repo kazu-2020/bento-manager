@@ -6,7 +6,7 @@
   --font-mono: "Noto Sans Mono", ui-monospace, SFMono-Regular, monospace;
 
   /* 顧客タイプ識別カラー */
-  --color-staff: oklch(45% 0.12 55);
+  --color-staff: oklch(40% 0.12 55);
   --color-citizen: oklch(45% 0.10 240);
 
   /* Toast アニメーション */

@@ -42,7 +42,7 @@ class SalesHistoriesController < ApplicationController
     else
       Date.current
     end
-  rescue Date::Error
+  rescue Date::Error, TypeError
     Date.current
   end
 

@@ -136,8 +136,8 @@ namespace :sample_data do
 
     # --- 当日分の DailyInventory を生成 ---
     unless location.has_today_inventory?
-      InventoryItem = Struct.new(:catalog_id, :stock)
-      items = Catalog.available.map { |c| InventoryItem.new(c.id, 6) }
+      inventory_item = Struct.new(:catalog_id, :stock)
+      items = Catalog.available.map { |c| inventory_item.new(c.id, 6) }
       DailyInventory.bulk_create(location: location, items: items)
       puts "当日分の在庫を登録しました（#{items.size} 商品 × 各6個）"
     end

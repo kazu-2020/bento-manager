@@ -21,7 +21,7 @@ module SalesHistories
       end
 
       def completed_sales
-        sales.select(&:completed?)
+        @completed_sales ||= sales.select(&:completed?)
       end
 
       def total_amount
