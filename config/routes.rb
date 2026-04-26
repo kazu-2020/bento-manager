@@ -47,6 +47,20 @@ Rails.application.routes.draw do
     resources :catalog_prices, only: %i[edit update], param: :kind
   end
 
+  # 販売分析
+  resources :sales_analyses, only: [ :index ]
+  namespace :sales_analyses do
+    resource :summary, only: [ :show ]
+    resource :ranking, only: [ :show ]
+    resource :cross_table, only: [ :show ]
+  end
+
+  # 販売履歴カレンダー
+  resources :sales_histories, only: [ :index, :show ]
+  namespace :sales_histories do
+    resource :daily_detail, only: [ :show ]
+  end
+
   # Defines the root path route ("/")
   root "pos/locations#index"
 end
