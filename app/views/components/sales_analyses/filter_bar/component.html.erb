@@ -17,7 +17,7 @@
 
     <div class="join">
       <% period_options.each do |p| %>
-        <%= link_to "#{p}日", period_path(p), class: period_class(p) %>
+        <%= link_to "過去#{p}日", period_path(p), class: period_class(p) %>
       <% end %>
     </div>
   </div>
