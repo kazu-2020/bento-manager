@@ -14,6 +14,9 @@ class Sale < ApplicationRecord
   enum :status,        { completed: 0, voided: 1 }, validate: true
   enum :customer_type, { staff: 0, citizen: 1 },    validate: true
 
+  scope :in_period, ->(from, to) { where(sale_datetime: from..to) }
+  scope :at_location, ->(location) { where(location: location) }
+
   validates :sale_datetime, presence: true
   validates :customer_type, presence: true
   validates :total_amount, presence: true, numericality: { greater_than_or_equal_to: 0 }
