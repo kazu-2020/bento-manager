@@ -1,0 +1,30 @@
+<% content_for(:title, "売上分析") %>
+
+<div class="space-y-6">
+  <%# フィルターバー %>
+  <%= component "sales_analyses/filter_bar",
+        location: location,
+        period: period,
+        locations: locations %>
+
+  <%# KPIサマリー %>
+  <%= helpers.turbo_frame_tag "sales_analysis_summary", src: summary_src do %>
+    <div class="flex justify-center py-8">
+      <span class="loading loading-spinner loading-md"></span>
+    </div>
+  <% end %>
+
+  <%# ランキング %>
+  <%= helpers.turbo_frame_tag "sales_analysis_ranking", src: ranking_src do %>
+    <div class="flex justify-center py-8">
+      <span class="loading loading-spinner loading-md"></span>
+    </div>
+  <% end %>
+
+  <%# クロス集計 %>
+  <%= helpers.turbo_frame_tag "sales_analysis_cross_table", src: cross_table_src do %>
+    <div class="flex justify-center py-8">
+      <span class="loading loading-spinner loading-md"></span>
+    </div>
+  <% end %>
+</div>

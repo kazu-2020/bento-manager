@@ -1,0 +1,26 @@
+<div class="flex flex-wrap items-center justify-between gap-4">
+  <div>
+    <h2 class="text-2xl font-bold">売上分析</h2>
+    <p class="text-sm text-base-content/60">顧客タイプ別 商品分析</p>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <%# 出店先セレクト %>
+    <select class="select select-bordered select-sm"
+            onchange="Turbo.visit(this.value)">
+      <% locations.each do |loc| %>
+        <option value="<%= location_path(loc.id) %>"
+                <%= "selected" if loc.id == location.id %>>
+          <%= loc.name %>
+        </option>
+      <% end %>
+    </select>
+
+    <%# 期間ボタン %>
+    <div class="join">
+      <% period_options.each do |p| %>
+        <%= link_to "#{p}日", period_path(p), class: "#{period_class(p)} join-item" %>
+      <% end %>
+    </div>
+  </div>
+</div>

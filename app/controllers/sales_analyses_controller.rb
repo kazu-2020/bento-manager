@@ -2,6 +2,25 @@
 
 class SalesAnalysesController < ApplicationController
   def index
-    head :ok
+    @period = (params[:period] || 30).to_i
+    @location = find_location
+    @period_start = @period.days.ago.beginning_of_day
+    @period_end = Time.current
+
+    render SalesAnalyses::IndexPage::Component.new(
+      location: @location,
+      period: @period,
+      locations: Location.display_order
+    )
+  end
+
+  private
+
+  def find_location
+    if params[:location_id].present?
+      Location.find(params[:location_id])
+    else
+      Location.display_order.first
+    end
   end
 end

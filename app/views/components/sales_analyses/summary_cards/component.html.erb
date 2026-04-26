@@ -1,0 +1,30 @@
+<%= helpers.turbo_frame_tag "sales_analysis_summary" do %>
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <%# 総販売数 %>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body p-4">
+        <p class="text-sm text-base-content/60">総販売数</p>
+        <p class="text-3xl font-bold"><%= total_quantity %><span class="text-base font-normal">個</span></p>
+        <p class="text-xs text-base-content/50">¥<%= number_with_delimiter(total_amount) %> 相当</p>
+      </div>
+    </div>
+
+    <%# 関係者 %>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body p-4">
+        <p class="text-sm text-base-content/60">関係者（職員）</p>
+        <p class="text-3xl font-bold text-primary"><%= data[:staff][:quantity] %><span class="text-base font-normal">個</span></p>
+        <p class="text-xs text-base-content/50"><%= staff_ratio %>% ・ ¥<%= number_with_delimiter(data[:staff][:amount]) %></p>
+      </div>
+    </div>
+
+    <%# 一般 %>
+    <div class="card bg-base-100 shadow-sm">
+      <div class="card-body p-4">
+        <p class="text-sm text-base-content/60">一般</p>
+        <p class="text-3xl font-bold text-info"><%= data[:citizen][:quantity] %><span class="text-base font-normal">個</span></p>
+        <p class="text-xs text-base-content/50"><%= citizen_ratio %>% ・ ¥<%= number_with_delimiter(data[:citizen][:amount]) %></p>
+      </div>
+    </div>
+  </div>
+<% end %>
