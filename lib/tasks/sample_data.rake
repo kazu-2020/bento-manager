@@ -72,7 +72,7 @@ namespace :sample_data do
 
           # 商品選択
           bento = weighted_bentos[rng.rand(weighted_bentos.size)]
-          items_data = [{ catalog: bento, quantity: 1 }]
+          items_data = [ { catalog: bento, quantity: 1 } ]
 
           # 20%の確率でサラダ追加
           if salad && salad_bundle_price && rng.rand < 0.2

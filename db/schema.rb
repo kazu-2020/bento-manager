@@ -19,9 +19,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.datetime "order_at", null: false
     t.integer "quantity", null: false
     t.datetime "updated_at", null: false
-    t.index ["catalog_id"], name: "index_additional_orders_on_catalog_id"
-    t.index ["employee_id"], name: "index_additional_orders_on_employee_id"
-    t.index ["location_id"], name: "index_additional_orders_on_location_id"
+    t.index [ "catalog_id" ], name: "index_additional_orders_on_catalog_id"
+    t.index [ "employee_id" ], name: "index_additional_orders_on_employee_id"
+    t.index [ "location_id" ], name: "index_additional_orders_on_location_id"
   end
 
   create_table "catalog_discontinuations", force: :cascade do |t|
@@ -30,7 +30,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.datetime "discontinued_at", null: false
     t.text "reason", null: false
     t.datetime "updated_at", null: false
-    t.index ["catalog_id"], name: "index_catalog_discontinuations_on_catalog_id", unique: true
+    t.index [ "catalog_id" ], name: "index_catalog_discontinuations_on_catalog_id", unique: true
   end
 
   create_table "catalog_prices", force: :cascade do |t|
@@ -41,9 +41,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.integer "kind", null: false
     t.integer "price", null: false
     t.datetime "updated_at", null: false
-    t.index ["catalog_id", "kind"], name: "idx_catalog_prices_catalog_kind"
-    t.index ["catalog_id"], name: "index_catalog_prices_on_catalog_id"
-    t.index ["effective_from"], name: "index_catalog_prices_on_effective_from"
+    t.index [ "catalog_id", "kind" ], name: "idx_catalog_prices_catalog_kind"
+    t.index [ "catalog_id" ], name: "index_catalog_prices_on_catalog_id"
+    t.index [ "effective_from" ], name: "index_catalog_prices_on_effective_from"
   end
 
   create_table "catalog_pricing_rules", force: :cascade do |t|
@@ -55,9 +55,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.datetime "updated_at", null: false
     t.date "valid_from", null: false
     t.date "valid_until"
-    t.index ["target_catalog_id"], name: "index_catalog_pricing_rules_on_target_catalog_id"
-    t.index ["trigger_category"], name: "index_catalog_pricing_rules_on_trigger_category"
-    t.index ["valid_from"], name: "index_catalog_pricing_rules_on_valid_from"
+    t.index [ "target_catalog_id" ], name: "index_catalog_pricing_rules_on_target_catalog_id"
+    t.index [ "trigger_category" ], name: "index_catalog_pricing_rules_on_trigger_category"
+    t.index [ "valid_from" ], name: "index_catalog_pricing_rules_on_valid_from"
   end
 
   create_table "catalogs", force: :cascade do |t|
@@ -67,9 +67,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.string "kana", default: "", null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
-    t.index ["category"], name: "index_catalogs_on_category"
-    t.index ["kana"], name: "index_catalogs_on_kana"
-    t.index ["name"], name: "idx_catalogs_name", unique: true
+    t.index [ "category" ], name: "index_catalogs_on_category"
+    t.index [ "kana" ], name: "index_catalogs_on_kana"
+    t.index [ "name" ], name: "idx_catalogs_name", unique: true
   end
 
   create_table "coupons", force: :cascade do |t|
@@ -87,8 +87,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.integer "reserved_stock", default: 0, null: false
     t.integer "stock", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.index ["catalog_id"], name: "index_daily_inventories_on_catalog_id"
-    t.index ["location_id", "catalog_id", "inventory_date"], name: "idx_daily_inventories_location_catalog_date", unique: true
+    t.index [ "catalog_id" ], name: "index_daily_inventories_on_catalog_id"
+    t.index [ "location_id", "catalog_id", "inventory_date" ], name: "idx_daily_inventories_location_catalog_date", unique: true
   end
 
   create_table "discounts", force: :cascade do |t|
@@ -99,9 +99,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.datetime "updated_at", null: false
     t.date "valid_from", null: false
     t.date "valid_until"
-    t.index ["discountable_type", "discountable_id"], name: "idx_discounts_discountable", unique: true
-    t.index ["name"], name: "idx_discounts_name"
-    t.index ["valid_from", "valid_until"], name: "idx_discounts_validity"
+    t.index [ "discountable_type", "discountable_id" ], name: "idx_discounts_discountable", unique: true
+    t.index [ "name" ], name: "idx_discounts_name"
+    t.index [ "valid_from", "valid_until" ], name: "idx_discounts_validity"
   end
 
   create_table "employee_lockouts", force: :cascade do |t|
@@ -124,7 +124,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false
     t.string "username", null: false, collation: "NOCASE"
-    t.index ["username"], name: "index_employees_on_username", unique: true, where: "status IN (1, 2)"
+    t.index [ "username" ], name: "index_employees_on_username", unique: true, where: "status IN (1, 2)"
   end
 
   create_table "locations", force: :cascade do |t|
@@ -132,8 +132,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.string "name", null: false
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.index ["name"], name: "idx_locations_name", unique: true
-    t.index ["status"], name: "index_locations_on_status"
+    t.index [ "name" ], name: "idx_locations_name", unique: true
+    t.index [ "status" ], name: "index_locations_on_status"
   end
 
   create_table "refunds", force: :cascade do |t|
@@ -144,9 +144,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.integer "original_sale_id", null: false
     t.datetime "refund_datetime", null: false
     t.datetime "updated_at", null: false
-    t.index ["corrected_sale_id"], name: "index_refunds_on_corrected_sale_id"
-    t.index ["employee_id"], name: "index_refunds_on_employee_id"
-    t.index ["original_sale_id"], name: "index_refunds_on_original_sale_id"
+    t.index [ "corrected_sale_id" ], name: "index_refunds_on_corrected_sale_id"
+    t.index [ "employee_id" ], name: "index_refunds_on_employee_id"
+    t.index [ "original_sale_id" ], name: "index_refunds_on_original_sale_id"
   end
 
   create_table "sale_discounts", force: :cascade do |t|
@@ -156,9 +156,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.integer "quantity", default: 1, null: false
     t.integer "sale_id", null: false
     t.datetime "updated_at", null: false
-    t.index ["discount_id"], name: "index_sale_discounts_on_discount_id"
-    t.index ["sale_id", "discount_id"], name: "idx_sale_discounts_unique", unique: true
-    t.index ["sale_id"], name: "index_sale_discounts_on_sale_id"
+    t.index [ "discount_id" ], name: "index_sale_discounts_on_discount_id"
+    t.index [ "sale_id", "discount_id" ], name: "idx_sale_discounts_unique", unique: true
+    t.index [ "sale_id" ], name: "index_sale_discounts_on_sale_id"
   end
 
   create_table "sale_items", force: :cascade do |t|
@@ -171,10 +171,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.datetime "sold_at", null: false
     t.integer "unit_price", null: false
     t.datetime "updated_at", null: false
-    t.index ["catalog_id"], name: "index_sale_items_on_catalog_id"
-    t.index ["catalog_price_id"], name: "index_sale_items_on_catalog_price_id"
-    t.index ["sale_id", "catalog_id"], name: "idx_sale_items_sale_catalog"
-    t.index ["sale_id"], name: "index_sale_items_on_sale_id"
+    t.index [ "catalog_id" ], name: "index_sale_items_on_catalog_id"
+    t.index [ "catalog_price_id" ], name: "index_sale_items_on_catalog_price_id"
+    t.index [ "sale_id", "catalog_id" ], name: "idx_sale_items_sale_catalog"
+    t.index [ "sale_id" ], name: "index_sale_items_on_sale_id"
   end
 
   create_table "sales", force: :cascade do |t|
@@ -190,13 +190,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.datetime "updated_at", null: false
     t.datetime "voided_at"
     t.integer "voided_by_employee_id"
-    t.index ["corrected_from_sale_id"], name: "index_sales_on_corrected_from_sale_id"
-    t.index ["employee_id"], name: "index_sales_on_employee_id"
-    t.index ["location_id", "sale_datetime"], name: "idx_sales_location_datetime"
-    t.index ["location_id"], name: "index_sales_on_location_id"
-    t.index ["sale_datetime"], name: "idx_sales_datetime"
-    t.index ["status"], name: "idx_sales_status"
-    t.index ["voided_by_employee_id"], name: "index_sales_on_voided_by_employee_id"
+    t.index [ "corrected_from_sale_id" ], name: "index_sales_on_corrected_from_sale_id"
+    t.index [ "employee_id" ], name: "index_sales_on_employee_id"
+    t.index [ "location_id", "sale_datetime" ], name: "idx_sales_location_datetime"
+    t.index [ "location_id" ], name: "index_sales_on_location_id"
+    t.index [ "sale_datetime" ], name: "idx_sales_datetime"
+    t.index [ "status" ], name: "idx_sales_status"
+    t.index [ "voided_by_employee_id" ], name: "index_sales_on_voided_by_employee_id"
   end
 
   add_foreign_key "additional_orders", "catalogs", on_delete: :restrict
