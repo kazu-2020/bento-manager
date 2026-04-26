@@ -68,6 +68,13 @@ module Sales
       assert_equal catalogs(:daily_bento_a).name, top_staff[:catalog_name]
     end
 
+    test "ランキングはサイドメニューを含まない" do
+      result = @summary.ranking(limit: 10)
+
+      all_names = result[:staff].map { |e| e[:catalog_name] } + result[:citizen].map { |e| e[:catalog_name] }
+      assert_not_includes all_names, catalogs(:salad).name
+    end
+
     test "ランキングの各行は商品名・数量・金額を含む" do
       result = @summary.ranking(limit: 5)
       entry = result[:staff].first
@@ -89,6 +96,13 @@ module Sales
       assert bento_a[:staff_quantity] > 0
       assert bento_a[:citizen_quantity] > 0
       assert_equal bento_a[:staff_quantity] + bento_a[:citizen_quantity], bento_a[:total_quantity]
+    end
+
+    test "クロス集計はサイドメニューを含まない" do
+      result = @summary.cross_table
+
+      all_names = result.map { |r| r[:catalog_name] }
+      assert_not_includes all_names, catalogs(:salad).name
     end
 
     test "クロス集計は合計数量の降順でソートされる" do

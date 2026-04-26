@@ -30,6 +30,12 @@ module SalesAnalyses
       def location_path(loc_id)
         helpers.sales_analyses_path(period: period, location_id: loc_id)
       end
+
+      def period_label
+        from = period.days.ago.to_date.strftime("%Y/%m/%d")
+        to = Date.current.strftime("%Y/%m/%d")
+        "#{from} 〜 #{to}"
+      end
     end
   end
 end

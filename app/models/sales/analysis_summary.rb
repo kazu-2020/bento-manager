@@ -37,6 +37,7 @@ module Sales
           .in_period(from, to)
           .where(customer_type: type)
           .joins(items: :catalog)
+          .where(catalogs: { category: :bento })
           .group("catalogs.name")
           .order(Arel.sql("SUM(sale_items.quantity) DESC"))
           .limit(limit)
@@ -56,6 +57,7 @@ module Sales
         .at_location(location)
         .in_period(from, to)
         .joins(items: :catalog)
+        .where(catalogs: { category: :bento })
         .group("catalogs.name", :customer_type)
         .pluck(
           Arel.sql("catalogs.name"),
