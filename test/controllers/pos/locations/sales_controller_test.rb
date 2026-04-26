@@ -147,7 +147,7 @@ module Pos
         assert_equal 1, sale.sale_discounts.count
       end
 
-      test "create defaults to citizen when customer_type is omitted" do
+      test "create defaults to staff when customer_type is omitted" do
         login_as_employee(@employee)
 
         assert_difference "Sale.count", 1 do
@@ -160,7 +160,7 @@ module Pos
         end
 
         assert_redirected_to new_pos_location_sale_path(@location)
-        assert_equal "citizen", Sale.last.customer_type
+        assert_equal "staff", Sale.last.customer_type
       end
 
       test "create fails without items in cart" do
