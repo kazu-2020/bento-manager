@@ -1,8 +1,7 @@
 <%= helpers.turbo_frame_tag "sales_analysis_cross_table" do %>
   <div class="card bg-base-100 shadow-sm">
     <div class="card-body p-4">
-      <h3 class="card-title text-base">商品 × 顧客タイプ クロス集計</h3>
-      <p class="text-xs text-base-content/50 -mt-1">弁当のみ（サイドメニューを除く）</p>
+      <h3 class="card-title text-base">弁当 × 顧客タイプ クロス集計</h3>
       <% if data.empty? %>
         <p class="text-sm text-base-content/50 py-4">データがありません</p>
       <% else %>

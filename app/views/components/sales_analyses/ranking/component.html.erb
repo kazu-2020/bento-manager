@@ -3,8 +3,7 @@
     <%# 職員 Top5 %>
     <div class="card bg-base-100 shadow-sm">
       <div class="card-body p-4">
-        <h3 class="card-title text-base">関係者 人気商品 Top5</h3>
-        <p class="text-xs text-base-content/50">関係者販売数（弁当のみ）</p>
+        <h3 class="card-title text-base">関係者 人気弁当 Top5</h3>
         <% if data[:staff].empty? %>
           <p class="text-sm text-base-content/50 py-4">データがありません</p>
         <% else %>
@@ -35,8 +34,7 @@
     <%# 一般 Top5 %>
     <div class="card bg-base-100 shadow-sm">
       <div class="card-body p-4">
-        <h3 class="card-title text-base">一般 人気商品 Top5</h3>
-        <p class="text-xs text-base-content/50">一般販売数（弁当のみ）</p>
+        <h3 class="card-title text-base">一般 人気弁当 Top5</h3>
         <% if data[:citizen].empty? %>
           <p class="text-sm text-base-content/50 py-4">データがありません</p>
         <% else %>
