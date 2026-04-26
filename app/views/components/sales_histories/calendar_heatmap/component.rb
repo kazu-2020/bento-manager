@@ -5,11 +5,11 @@ module SalesHistories
     class Component < Application::Component
       HEAT_COLORS = {
         0 => "bg-base-200 text-base-content/30",
-        1 => "bg-amber-100 text-base-content",
-        2 => "bg-amber-200 text-base-content",
-        3 => "bg-amber-400 text-white",
-        4 => "bg-amber-600 text-white",
-        5 => "bg-amber-800 text-white"
+        1 => "bg-primary/20 text-base-content",
+        2 => "bg-primary/40 text-base-content",
+        3 => "bg-primary/60 text-white",
+        4 => "bg-primary/80 text-white",
+        5 => "bg-primary text-white"
       }.freeze
 
       WEEKDAY_NAMES = %w[日 月 火 水 木 金 土].freeze
