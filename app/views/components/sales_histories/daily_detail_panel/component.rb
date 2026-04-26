@@ -26,8 +26,15 @@ module SalesHistories
         @max_quantity ||= breakdown.map { |r| r[:total_quantity] }.max || 1
       end
 
-      def bar_width(qty)
-        "#{(qty * 100.0 / max_quantity).round}%"
+      # 行全体のバー幅（最大行を100%とした相対幅）
+      def bar_total_width(row)
+        "#{(row[:total_quantity] * 100.0 / max_quantity).round}%"
+      end
+
+      # バー内の staff 部分の割合
+      def staff_ratio(row)
+        return "0%" if row[:total_quantity].zero?
+        "#{(row[:staff_quantity] * 100.0 / row[:total_quantity]).round}%"
       end
     end
   end

@@ -27,13 +27,9 @@
                 <span class="text-sm font-bold"><%= row[:total_quantity] %>個</span>
               </div>
               <div class="flex items-center gap-2">
-                <div class="flex gap-px h-3 flex-1 min-w-0">
-                  <% if row[:staff_quantity] > 0 %>
-                    <div class="bg-staff rounded-l-sm" style="width: <%= bar_width(row[:staff_quantity]) %>"></div>
-                  <% end %>
-                  <% if row[:citizen_quantity] > 0 %>
-                    <div class="bg-citizen rounded-r-sm" style="width: <%= bar_width(row[:citizen_quantity]) %>"></div>
-                  <% end %>
+                <div class="flex h-3 rounded-sm overflow-hidden flex-1 min-w-0" style="width: <%= bar_total_width(row) %>">
+                  <div class="bg-staff" style="width: <%= staff_ratio(row) %>"></div>
+                  <div class="bg-citizen flex-1"></div>
                 </div>
                 <span class="text-xs text-staff whitespace-nowrap"><%= row[:staff_quantity] %></span>
                 <span class="text-xs text-base-content/30">/</span>
