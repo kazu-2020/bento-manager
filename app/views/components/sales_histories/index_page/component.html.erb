@@ -30,7 +30,7 @@
     </div>
   </div>
 
-  <%# メインコンテンツ: カレンダー + 詳細パネル %>
+  <%# メインコンテンツ: カレンダー + 詳細パネル（lg で高さを揃える） %>
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <div class="lg:col-span-2">
       <div class="card bg-base-100 shadow-sm">
@@ -48,8 +48,8 @@
       </div>
     </div>
 
-    <%# 日別詳細パネル（Turbo Frame） %>
-    <%= helpers.turbo_frame_tag "sales_history_daily_detail", src: daily_detail_src, class: "block" do %>
+    <%# 日別詳細パネル（Turbo Frame、カレンダーと同じ高さでスクロール） %>
+    <%= helpers.turbo_frame_tag "sales_history_daily_detail", src: daily_detail_src, class: "block lg:overflow-y-auto" do %>
       <div class="flex justify-center py-8">
         <span class="loading loading-spinner loading-md"></span>
       </div>
