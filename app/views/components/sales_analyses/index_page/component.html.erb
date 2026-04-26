@@ -8,21 +8,21 @@
         locations: locations %>
 
   <%# KPIサマリー %>
-  <%= helpers.turbo_frame_tag "sales_analysis_summary", src: summary_src do %>
+  <%= helpers.turbo_frame_tag "sales_analysis_summary", src: summary_src, class: "block" do %>
     <div class="flex justify-center py-8">
       <span class="loading loading-spinner loading-md"></span>
     </div>
   <% end %>
 
   <%# ランキング %>
-  <%= helpers.turbo_frame_tag "sales_analysis_ranking", src: ranking_src do %>
+  <%= helpers.turbo_frame_tag "sales_analysis_ranking", src: ranking_src, class: "block" do %>
     <div class="flex justify-center py-8">
       <span class="loading loading-spinner loading-md"></span>
     </div>
   <% end %>
 
   <%# クロス集計 %>
-  <%= helpers.turbo_frame_tag "sales_analysis_cross_table", src: cross_table_src do %>
+  <%= helpers.turbo_frame_tag "sales_analysis_cross_table", src: cross_table_src, class: "block" do %>
     <div class="flex justify-center py-8">
       <span class="loading loading-spinner loading-md"></span>
     </div>

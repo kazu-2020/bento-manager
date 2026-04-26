@@ -45,7 +45,7 @@
     </div>
 
     <%# 日別詳細パネル（Turbo Frame） %>
-    <%= helpers.turbo_frame_tag "sales_history_daily_detail", src: daily_detail_src do %>
+    <%= helpers.turbo_frame_tag "sales_history_daily_detail", src: daily_detail_src, class: "block" do %>
       <div class="flex justify-center py-8">
         <span class="loading loading-spinner loading-md"></span>
       </div>
