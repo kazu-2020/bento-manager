@@ -25,6 +25,19 @@ ja:
       contact_admin: "アカウントのロック解除については、管理者にお問い合わせください。"
       back_to_login: "ログイン画面に戻る"
 
+  date:
+    formats:
+      long: "%-m月%-d日（%a）"
+      year_month: "%Y年%m月"
+    abbr_day_names:
+      - 日
+      - 月
+      - 火
+      - 水
+      - 木
+      - 金
+      - 土
+
   time:
     formats:
       short: "%H:%M"
