@@ -135,7 +135,7 @@ module Sales
 
       default_type = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: { @bento_a.id.to_s => { "quantity" => "1" } })
       assert default_type.valid?
-      assert_equal "citizen", default_type.customer_type
+      assert_equal "staff", default_type.customer_type
     end
 
     test "form_with_options and form_state_options return correct URLs" do
