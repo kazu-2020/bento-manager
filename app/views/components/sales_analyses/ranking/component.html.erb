@@ -5,7 +5,9 @@
       <div class="card-body p-4">
         <div class="flex items-center justify-between">
           <h3 class="card-title text-base">関係者 人気弁当 Top5</h3>
-          <%= helpers.icon :users, size: :md, extra_class: "text-base-content/30" %>
+          <div class="rounded-lg bg-staff/10 p-2">
+            <%= helpers.icon :users, size: :md, extra_class: "text-staff" %>
+          </div>
         </div>
         <% if data[:staff].empty? %>
           <p class="text-sm text-base-content/50 py-4">データがありません</p>
@@ -39,7 +41,9 @@
       <div class="card-body p-4">
         <div class="flex items-center justify-between">
           <h3 class="card-title text-base">一般 人気弁当 Top5</h3>
-          <%= helpers.icon :users, size: :md, extra_class: "text-base-content/30" %>
+          <div class="rounded-lg bg-citizen/10 p-2">
+            <%= helpers.icon :users, size: :md, extra_class: "text-citizen" %>
+          </div>
         </div>
         <% if data[:citizen].empty? %>
           <p class="text-sm text-base-content/50 py-4">データがありません</p>
