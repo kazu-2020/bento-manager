@@ -19,7 +19,7 @@
             <tbody>
               <% data[:staff].each_with_index do |entry, i| %>
                 <tr>
-                  <td class="font-bold text-primary"><%= i + 1 %></td>
+                  <td class="font-bold text-staff"><%= i + 1 %></td>
                   <td><%= entry[:catalog_name] %></td>
                   <td class="text-right font-bold"><%= entry[:quantity] %> 個</td>
                   <td class="text-right text-base-content/60 text-xs">¥<%= number_with_delimiter(entry[:amount]) %></td>
@@ -50,7 +50,7 @@
             <tbody>
               <% data[:citizen].each_with_index do |entry, i| %>
                 <tr>
-                  <td class="font-bold text-info"><%= i + 1 %></td>
+                  <td class="font-bold text-citizen"><%= i + 1 %></td>
                   <td><%= entry[:catalog_name] %></td>
                   <td class="text-right font-bold"><%= entry[:quantity] %> 個</td>
                   <td class="text-right text-base-content/60 text-xs">¥<%= number_with_delimiter(entry[:amount]) %></td>

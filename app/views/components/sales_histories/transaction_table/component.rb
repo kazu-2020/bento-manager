@@ -4,8 +4,8 @@ module SalesHistories
   module TransactionTable
     class Component < Application::Component
       CUSTOMER_BADGE_CLASSES = {
-        "staff" => "badge badge-sm bg-primary text-primary-content",
-        "citizen" => "badge badge-sm bg-info text-info-content"
+        "staff" => "badge badge-sm bg-staff text-white",
+        "citizen" => "badge badge-sm bg-citizen text-white"
       }.freeze
 
       CUSTOMER_LABELS = {

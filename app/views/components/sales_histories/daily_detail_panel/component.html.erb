@@ -25,10 +25,10 @@
               <div class="flex items-center gap-1 flex-1">
                 <div class="flex gap-px h-3 flex-1">
                   <% if row[:staff_quantity] > 0 %>
-                    <div class="bg-primary rounded-l-sm" style="width: <%= bar_width(row[:staff_quantity]) %>"></div>
+                    <div class="bg-staff rounded-l-sm" style="width: <%= bar_width(row[:staff_quantity]) %>"></div>
                   <% end %>
                   <% if row[:citizen_quantity] > 0 %>
-                    <div class="bg-info rounded-r-sm" style="width: <%= bar_width(row[:citizen_quantity]) %>"></div>
+                    <div class="bg-citizen rounded-r-sm" style="width: <%= bar_width(row[:citizen_quantity]) %>"></div>
                   <% end %>
                 </div>
                 <span class="text-sm font-bold whitespace-nowrap"><%= row[:total_quantity] %>個</span>

@@ -12,8 +12,8 @@
                 <th>商品</th>
                 <th class="text-right">合計</th>
                 <th class="text-right">構成比</th>
-                <th class="text-right text-primary">関係者</th>
-                <th class="text-right text-info">一般</th>
+                <th class="text-right text-staff">関係者</th>
+                <th class="text-right text-citizen">一般</th>
                 <th class="text-right">関係者比率</th>
               </tr>
             </thead>
@@ -23,8 +23,8 @@
                   <td><%= row[:catalog_name] %></td>
                   <td class="text-right font-bold"><%= row[:total_quantity] %></td>
                   <td class="text-right"><%= composition_ratio(row) %>%</td>
-                  <td class="text-right text-primary"><%= row[:staff_quantity] %></td>
-                  <td class="text-right text-info"><%= row[:citizen_quantity] %></td>
+                  <td class="text-right text-staff"><%= row[:staff_quantity] %></td>
+                  <td class="text-right text-citizen"><%= row[:citizen_quantity] %></td>
                   <td class="text-right"><%= staff_ratio(row) %>%</td>
                 </tr>
               <% end %>
