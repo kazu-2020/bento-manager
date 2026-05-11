@@ -36,6 +36,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     )
 
     inventory.reload
+
     assert_equal initial_stock + 5, inventory.stock
 
     future_date = Date.current + 365
@@ -54,6 +55,7 @@ class AdditionalOrderTest < ActiveSupport::TestCase
       catalog: catalogs(:daily_bento_a),
       inventory_date: future_date
     )
+
     assert_equal 10, new_inventory.stock
   end
 

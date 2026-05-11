@@ -51,7 +51,7 @@ class LocationTest < ActiveSupport::TestCase
   test "当日の在庫がある販売先は在庫ありと判定される" do
     city_hall = locations(:city_hall)
 
-    assert city_hall.has_today_inventory?
+    assert_predicate city_hall, :has_today_inventory?
   end
 
   test "当日の在庫がない販売先は在庫なしと判定される" do

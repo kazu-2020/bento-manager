@@ -16,6 +16,7 @@ module Pos
 
         test "unauthenticated user is redirected to login" do
           post pos_location_additional_orders_form_state_path(@location)
+
           assert_redirected_to "/employee/login"
         end
 

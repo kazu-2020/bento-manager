@@ -72,6 +72,9 @@ group :development, :test do
 
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
+
+  # Minitest-specific cops for RuboCop [https://github.com/rubocop/rubocop-minitest]
+  gem "rubocop-minitest", require: false
 end
 
 group :development do

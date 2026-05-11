@@ -17,7 +17,7 @@ module Sales
     test "日別売上合計は対象月の各日の売上金額をハッシュで返す" do
       result = @calendar.daily_totals
 
-      assert result.is_a?(Hash)
+      assert_kind_of Hash, result
       result.each_key { |date| assert_kind_of Date, date }
       assert result.values.all? { |v| v.is_a?(Numeric) && v > 0 }
     end
@@ -34,7 +34,7 @@ module Sales
       completed_amount = all_sales_on_voided_date.completed.sum(:final_amount)
       voided_amount = all_sales_on_voided_date.voided.sum(:final_amount)
 
-      assert voided_amount > 0, "テストデータに取消済み販売が存在するはず"
+      assert_operator voided_amount, :>, 0, "テストデータに取消済み販売が存在するはず"
       assert_equal completed_amount, result[voided_date] || 0
     end
 
@@ -43,17 +43,18 @@ module Sales
     test "月間サマリーは販売日数・総売上・1日平均・最高日を返す" do
       result = @calendar.monthly_summary
 
-      assert result[:business_days] > 0
-      assert result[:total_amount] > 0
-      assert result[:daily_average] > 0
+      assert_operator result[:business_days], :>, 0
+      assert_operator result[:total_amount], :>, 0
+      assert_operator result[:daily_average], :>, 0
       assert_not_nil result[:best_day]
-      assert result[:best_day][:amount] >= result[:daily_average]
+      assert_operator result[:best_day][:amount], :>=, result[:daily_average]
     end
 
     test "月間サマリーの1日平均は合計を営業日数で割った値" do
       result = @calendar.monthly_summary
 
       expected_avg = result[:total_amount] / result[:business_days]
+
       assert_equal expected_avg, result[:daily_average]
     end
 
@@ -63,10 +64,11 @@ module Sales
       target_date = 1.day.ago.to_date
       result = @calendar.daily_breakdown(target_date)
 
-      assert result.is_a?(Array)
-      assert result.length > 0
+      assert_kind_of Array, result
+      assert_operator result.length, :>, 0
 
       entry = result.first
+
       assert entry.key?(:catalog_name)
       assert entry.key?(:staff_quantity)
       assert entry.key?(:citizen_quantity)
@@ -78,6 +80,7 @@ module Sales
       result = @calendar.daily_breakdown(target_date)
 
       totals = result.map { |r| r[:total_quantity] }
+
       assert_equal totals.sort.reverse, totals
     end
 

@@ -18,18 +18,21 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   test "admin can access index" do
     login_as_employee(@employee)
     get discounts_path
+
     assert_response :success
   end
 
   test "admin can access show" do
     login_as_employee(@employee)
     get discount_path(@discount)
+
     assert_response :success
   end
 
   test "admin can access new" do
     login_as_employee(@employee)
     get new_discount_path, as: :turbo_stream
+
     assert_response :success
   end
 
@@ -55,6 +58,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   test "admin can access edit" do
     login_as_employee(@employee)
     get edit_discount_path(@discount)
+
     assert_response :success
   end
 
@@ -66,8 +70,10 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     patch discount_path(@discount), params: {
       discount: { valid_from: new_valid_from, valid_until: new_valid_until }
     }, as: :turbo_stream
+
     assert_response :success
     @discount.reload
+
     assert_equal new_valid_from, @discount.valid_from
     assert_equal new_valid_until, @discount.valid_until
   end
@@ -78,8 +84,10 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     patch discount_path(@discount), params: {
       discount: { name: "更新されたクーポン名" }
     }, as: :turbo_stream
+
     assert_response :success
     @discount.reload
+
     assert_equal original_name, @discount.name
   end
 
@@ -94,8 +102,10 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
         }
       }
     }, as: :turbo_stream
+
     assert_response :success
     @discount.discountable.reload
+
     assert_equal original_amount, @discount.discountable.amount_per_unit
   end
 
@@ -106,18 +116,21 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   test "employee can access index" do
     login_as_employee(@employee)
     get discounts_path
+
     assert_response :success
   end
 
   test "employee can access show" do
     login_as_employee(@employee)
     get discount_path(@discount)
+
     assert_response :success
   end
 
   test "employee can access new" do
     login_as_employee(@employee)
     get new_discount_path, as: :turbo_stream
+
     assert_response :success
   end
 
@@ -142,6 +155,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
   test "employee can access edit" do
     login_as_employee(@employee)
     get edit_discount_path(@discount)
+
     assert_response :success
   end
 
@@ -152,8 +166,10 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     patch discount_path(@discount), params: {
       discount: { valid_from: new_valid_from }
     }, as: :turbo_stream
+
     assert_response :success
     @discount.reload
+
     assert_equal new_valid_from, @discount.valid_from
   end
 
@@ -163,16 +179,19 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
 
   test "unauthenticated user is redirected to login on index" do
     get discounts_path
+
     assert_redirected_to "/employee/login"
   end
 
   test "unauthenticated user is redirected to login on show" do
     get discount_path(@discount)
+
     assert_redirected_to "/employee/login"
   end
 
   test "unauthenticated user is redirected to login on new" do
     get new_discount_path
+
     assert_redirected_to "/employee/login"
   end
 
@@ -190,6 +209,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
 
   test "unauthenticated user is redirected to login on edit" do
     get edit_discount_path(@discount)
+
     assert_redirected_to "/employee/login"
   end
 
@@ -197,6 +217,7 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     patch discount_path(@discount), params: {
       discount: { name: "不正な更新" }
     }
+
     assert_redirected_to "/employee/login"
   end
 
@@ -227,8 +248,10 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     patch discount_path(@discount), params: {
       discount: { valid_from: Date.current + 1.month, valid_until: Date.current }
     }, as: :turbo_stream
+
     assert_response :unprocessable_entity
     @discount.reload
+
     assert_equal original_valid_from, @discount.valid_from
   end
 end

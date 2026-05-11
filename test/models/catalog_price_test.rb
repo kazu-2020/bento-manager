@@ -30,17 +30,21 @@ class CatalogPriceTest < ActiveSupport::TestCase
     now = Time.current
 
     before_start = CatalogPrice.new(catalog: catalog, kind: :regular, price: 500, effective_from: now, effective_until: 1.day.ago)
+
     assert_not before_start.valid?
     assert_includes before_start.errors[:effective_until], "は適用開始日時より後の日時を指定してください"
 
     same_time = CatalogPrice.new(catalog: catalog, kind: :regular, price: 500, effective_from: now, effective_until: now)
+
     assert_not same_time.valid?
 
     after_start = CatalogPrice.new(catalog: catalog, kind: :regular, price: 500, effective_from: now, effective_until: 1.day.from_now)
-    assert after_start.valid?
+
+    assert_predicate after_start, :valid?
 
     no_end = CatalogPrice.new(catalog: catalog, kind: :regular, price: 500, effective_from: now, effective_until: nil)
-    assert no_end.valid?
+
+    assert_predicate no_end, :valid?
   end
 
   test "有効期間内の価格のみが取得される" do
@@ -69,21 +73,24 @@ class CatalogPriceTest < ActiveSupport::TestCase
     assert_equal past_price, catalog.prices.price_by_kind(kind: :regular, at: 3.days.ago)
 
     empty_catalog = catalogs(:discontinued_bento)
+
     assert_nil empty_catalog.prices.price_by_kind(kind: :regular)
   end
 
   test "新しい価格を設定すると既存の価格が終了する" do
     catalog = catalogs(:daily_bento_a)
     old_price = catalog_prices(:daily_bento_a_regular)
+
     assert_nil old_price.effective_until
 
     new_price = CatalogPrice.create_with_history!(catalog: catalog, kind: :regular, price: 600)
 
-    assert new_price.persisted?
+    assert_predicate new_price, :persisted?
     assert_equal 600, new_price.price
     assert_nil new_price.effective_until
 
     old_price.reload
+
     assert_not_nil old_price.effective_until
   end
 
@@ -96,6 +103,7 @@ class CatalogPriceTest < ActiveSupport::TestCase
     end
 
     old_price.reload
+
     assert_nil old_price.effective_until
   end
 end

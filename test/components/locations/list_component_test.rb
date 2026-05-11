@@ -11,7 +11,7 @@ class Locations::ListComponentTest < ViewComponent::TestCase
   def test_renders_grid_with_locations
     result = render_inline(Locations::List::Component.new(locations: [ @location1, @location2 ]))
 
-    assert result.css(".grid").present?
+    assert_predicate result.css(".grid"), :present?
     assert_includes result.to_html, @location1.name
     assert_includes result.to_html, @location2.name
   end
@@ -33,6 +33,7 @@ class Locations::ListComponentTest < ViewComponent::TestCase
     result = render_inline(Locations::List::Component.new(locations: [ @location1 ]))
 
     grid = result.css(".grid").first
+
     assert_includes grid["class"], "grid-cols-1"
     assert_includes grid["class"], "md:grid-cols-2"
     assert_includes grid["class"], "lg:grid-cols-3"
@@ -41,6 +42,6 @@ class Locations::ListComponentTest < ViewComponent::TestCase
   def test_empty_state_has_icon
     result = render_inline(Locations::List::Component.new(locations: []))
 
-    assert result.css(".icon").present?
+    assert_predicate result.css(".icon"), :present?
   end
 end

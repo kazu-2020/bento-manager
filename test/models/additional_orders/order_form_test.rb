@@ -19,10 +19,10 @@ module AdditionalOrders
     test "全弁当カタログからフォーム項目を構築し入力数量で絞り込める" do
       form = OrderForm.new(location: @location, catalogs: @catalogs, stock_map: @stock_map)
 
-      assert form.items.any?
+      assert_predicate form.items, :any?
       form.items.each do |item|
         assert_kind_of AdditionalOrders::OrderItem, item
-        assert item.catalog_name.present?
+        assert_predicate item.catalog_name, :present?
         assert_equal 0, item.quantity
       end
       assert_equal @stock_map.values.sum, form.total_available_stock
@@ -58,8 +58,9 @@ module AdditionalOrders
 
     test "発注数が未入力の場合や登録エラー時は保存されない" do
       form = OrderForm.new(location: @location, catalogs: @catalogs, stock_map: @stock_map)
+
       assert_not form.save(employee: @employee)
-      assert form.errors[:base].any?
+      assert_predicate form.errors[:base], :any?
 
       bento_a = catalogs(:daily_bento_a)
       form_with_input = OrderForm.new(
@@ -83,7 +84,7 @@ module AdditionalOrders
       form = OrderForm.new(location: @location, catalogs: @catalogs, stock_map: @stock_map)
 
       form.inventory_items.each do |item|
-        assert item.in_inventory?, "#{item.catalog_name} は在庫登録済みであるべき"
+        assert_predicate item, :in_inventory?, "#{item.catalog_name} は在庫登録済みであるべき"
       end
 
       form.non_inventory_items.each do |item|
@@ -95,6 +96,7 @@ module AdditionalOrders
 
     test "検索クエリで商品の表示・非表示を判定できる" do
       form_without_query = OrderForm.new(location: @location, catalogs: @catalogs, stock_map: @stock_map)
+
       form_without_query.items.each do |item|
         assert form_without_query.visible?(item), "検索クエリなしでは全商品が表示される"
       end
@@ -127,6 +129,7 @@ module AdditionalOrders
       end
 
       created_inventory = @location.today_inventories.find_by!(catalog_id: unlisted.id)
+
       assert_equal 3, created_inventory.stock
     end
 

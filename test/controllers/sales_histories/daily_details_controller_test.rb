@@ -15,6 +15,7 @@ module SalesHistories
         location_id: locations(:city_hall).id,
         date: 1.day.ago.to_date.to_s
       )
+
       assert_response :success
     end
 
@@ -24,6 +25,7 @@ module SalesHistories
         location_id: locations(:city_hall).id,
         date: Date.current.to_s
       )
+
       assert_redirected_to "/employee/login"
     end
   end

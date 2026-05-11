@@ -27,14 +27,14 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
   def test_renders_location_name_in_header
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
-    assert result.css("h1").present?
+    assert_predicate result.css("h1"), :present?
     assert_includes result.to_html, @active_location.name
   end
 
   def test_renders_status_badge
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
-    assert result.css(".badge").present?
+    assert_predicate result.css(".badge"), :present?
   end
 
   def test_renders_edit_link
@@ -42,7 +42,8 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
 
     # 編集リンクは基本情報セクション内にあり、edit へのリンク（Turbo Frame で処理）
     edit_link = result.css("a[href='/locations/1/edit']").first
-    assert edit_link.present?
+
+    assert_predicate edit_link, :present?
     assert_includes edit_link["class"], "btn"
     assert_includes edit_link["class"], "btn-ghost"
   end
@@ -51,21 +52,23 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
     back_link = result.css("nav a[href='/locations']").first
-    assert back_link.present?
+
+    assert_predicate back_link, :present?
     assert_includes result.to_html, "販売先一覧へ戻る"
   end
 
   def test_renders_basic_info_card
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
-    assert result.css(".card").present?
-    assert result.css(".card-body").present?
+    assert_predicate result.css(".card"), :present?
+    assert_predicate result.css(".card-body"), :present?
   end
 
   def test_inactive_location_has_opacity
     result = render_inline(Locations::Show::Component.new(location: @inactive_location))
 
     card = result.css("section.card").first
+
     assert_includes card["class"], "opacity-75"
   end
 
@@ -78,14 +81,14 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
   def test_has_accessible_section_headings
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
-    assert result.css("section[aria-labelledby='basic-info-heading']").present?
-    assert result.css("section[aria-labelledby='sales-history-heading']").present?
+    assert_predicate result.css("section[aria-labelledby='basic-info-heading']"), :present?
+    assert_predicate result.css("section[aria-labelledby='sales-history-heading']"), :present?
   end
 
   def test_renders_location_icon_in_header
     result = render_inline(Locations::Show::Component.new(location: @active_location))
 
-    assert result.css("header .icon").present?
+    assert_predicate result.css("header .icon"), :present?
   end
 
   def test_renders_created_at_and_updated_at
@@ -107,7 +110,7 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
 
     result = render_inline(Locations::Show::Component.new(location:))
 
-    assert result.css("[id^='chart-']").present?
+    assert_predicate result.css("[id^='chart-']"), :present?
     assert_not_includes result.to_html, "販売履歴はありません"
   end
 end

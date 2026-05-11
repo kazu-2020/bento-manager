@@ -7,7 +7,7 @@ module Sales
     test "弁当1個(550円)を販売記録するとSaleとSaleItemが正しく作成される" do
       sale = record_sale([ { catalog: catalogs(:daily_bento_a), quantity: 1 } ])
 
-      assert sale.persisted?
+      assert_predicate sale, :persisted?
       assert_equal locations(:city_hall), sale.location
       assert_equal 550, sale.total_amount
       assert_equal 550, sale.final_amount
@@ -15,6 +15,7 @@ module Sales
 
       assert_equal 1, sale.items.count
       sale_item = sale.items.first
+
       assert_equal catalogs(:daily_bento_a), sale_item.catalog
       assert_equal 1, sale_item.quantity
       assert_equal 550, sale_item.unit_price
@@ -41,6 +42,7 @@ module Sales
       assert_equal 700, sale.final_amount
 
       salad_item = sale.items.find_by(catalog: catalogs(:salad))
+
       assert_equal 150, salad_item.unit_price
       assert_equal catalog_prices(:salad_bundle).id, salad_item.catalog_price_id
     end
@@ -56,6 +58,7 @@ module Sales
       assert_equal 1, sale.sale_discounts.count
 
       sd = sale.sale_discounts.first
+
       assert_equal discounts(:fifty_yen_discount).id, sd.discount_id
       assert_equal 50, sd.discount_amount
       assert_equal 1, sd.quantity
@@ -71,6 +74,7 @@ module Sales
       assert_equal 1500, sale.final_amount
 
       sd = sale.sale_discounts.first
+
       assert_equal 150, sd.discount_amount
       assert_equal 3, sd.quantity
     end
@@ -91,10 +95,12 @@ module Sales
       assert_equal 2, sale.sale_discounts.count
 
       fifty = sale.sale_discounts.find_by(discount: discounts(:fifty_yen_discount))
+
       assert_equal 50, fifty.discount_amount
       assert_equal 1, fifty.quantity
 
       hundred = sale.sale_discounts.find_by(discount: discounts(:hundred_yen_discount))
+
       assert_equal 100, hundred.discount_amount
       assert_equal 1, hundred.quantity
     end

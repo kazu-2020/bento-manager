@@ -27,17 +27,21 @@ class DiscountTest < ActiveSupport::TestCase
     today = Date.current
 
     before_start = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: 1.day.ago.to_date)
+
     assert_not before_start.valid?
     assert_includes before_start.errors[:valid_until], "は有効開始日より後の日付を指定してください"
 
     same_day = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: today)
+
     assert_not same_day.valid?
 
     after_start = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: 1.day.from_now.to_date)
-    assert after_start.valid?
+
+    assert_predicate after_start, :valid?
 
     no_end = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: nil)
-    assert no_end.valid?
+
+    assert_predicate no_end, :valid?
   end
 
   test "有効な割引のみが取得される" do

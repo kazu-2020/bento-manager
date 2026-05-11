@@ -11,16 +11,16 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
       description: "海苔と鮭フレークをのせた弁当"
     )
 
-    assert creator.valid?
+    assert_predicate creator, :valid?
 
     assert_difference [ "Catalog.count", "CatalogPrice.count" ], 1 do
       assert_no_difference "CatalogPricingRule.count" do
         catalog = creator.create!
 
         assert_equal "のり弁当", catalog.name
-        assert catalog.bento?
+        assert_predicate catalog, :bento?
         assert_equal 450, catalog.prices.first.price
-        assert catalog.prices.first.regular?
+        assert_predicate catalog.prices.first, :regular?
         assert_equal "海苔と鮭フレークをのせた弁当", catalog.description
       end
     end
@@ -34,6 +34,7 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
     )
 
     catalog = creator.create!
+
     assert_equal "", catalog.description
   end
 
@@ -41,8 +42,8 @@ class Catalogs::BentoCreatorTest < ActiveSupport::TestCase
     creator = Catalogs::BentoCreator.new(name: "", regular_price: 0)
 
     assert_not creator.valid?
-    assert creator.errors[:name].any?
-    assert creator.errors[:regular_price].any?
+    assert_predicate creator.errors[:name], :any?
+    assert_predicate creator.errors[:regular_price], :any?
 
     assert_no_difference [ "Catalog.count", "CatalogPrice.count" ] do
       assert_raises(ActiveRecord::RecordInvalid) { creator.create! }

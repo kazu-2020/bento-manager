@@ -18,18 +18,21 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "admin can access index" do
     login_as_employee(@employee)
     get locations_path
+
     assert_response :success
   end
 
   test "admin can access show" do
     login_as_employee(@employee)
     get location_path(@location)
+
     assert_response :success
   end
 
   test "admin can access new" do
     login_as_employee(@employee)
     get new_location_path, as: :turbo_stream
+
     assert_response :success
   end
 
@@ -48,6 +51,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "admin can access edit" do
     login_as_employee(@employee)
     get edit_location_path(@location)
+
     assert_response :success
   end
 
@@ -56,8 +60,10 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     patch location_path(@location), params: {
       location: { name: "更新された販売先名" }
     }, as: :turbo_stream
+
     assert_response :success
     @location.reload
+
     assert_equal "更新された販売先名", @location.name
   end
 
@@ -68,18 +74,21 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "employee can access index" do
     login_as_employee(@employee)
     get locations_path
+
     assert_response :success
   end
 
   test "employee can access show" do
     login_as_employee(@employee)
     get location_path(@location)
+
     assert_response :success
   end
 
   test "employee can access new" do
     login_as_employee(@employee)
     get new_location_path, as: :turbo_stream
+
     assert_response :success
   end
 
@@ -98,6 +107,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
   test "employee can access edit" do
     login_as_employee(@employee)
     get edit_location_path(@location)
+
     assert_response :success
   end
 
@@ -106,8 +116,10 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     patch location_path(@location), params: {
       location: { name: "従業員更新販売先名" }
     }, as: :turbo_stream
+
     assert_response :success
     @location.reload
+
     assert_equal "従業員更新販売先名", @location.name
   end
 
@@ -117,16 +129,19 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
 
   test "unauthenticated user is redirected to login on index" do
     get locations_path
+
     assert_redirected_to "/employee/login"
   end
 
   test "unauthenticated user is redirected to login on show" do
     get location_path(@location)
+
     assert_redirected_to "/employee/login"
   end
 
   test "unauthenticated user is redirected to login on new" do
     get new_location_path
+
     assert_redirected_to "/employee/login"
   end
 
@@ -143,6 +158,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
 
   test "unauthenticated user is redirected to login on edit" do
     get edit_location_path(@location)
+
     assert_redirected_to "/employee/login"
   end
 
@@ -150,6 +166,7 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     patch location_path(@location), params: {
       location: { name: "不正な更新" }
     }
+
     assert_redirected_to "/employee/login"
   end
 
@@ -170,8 +187,10 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     login_as_employee(@employee)
     original_name = @location.name
     patch location_path(@location), params: { location: { name: "" } }, as: :turbo_stream
+
     assert_response :unprocessable_entity
     @location.reload
+
     assert_equal original_name, @location.name
   end
 end

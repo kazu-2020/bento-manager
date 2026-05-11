@@ -22,18 +22,21 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "admin can access index" do
     login_as_employee(@employee)
     get catalogs_path
+
     assert_response :success
   end
 
   test "admin can access show" do
     login_as_employee(@employee)
     get catalog_path(@catalog)
+
     assert_response :success
   end
 
   test "admin can access new" do
     login_as_employee(@employee)
     get new_catalog_path, as: :turbo_stream
+
     assert_response :success
   end
 
@@ -58,6 +61,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "admin can access edit" do
     login_as_employee(@employee)
     get edit_catalog_path(@catalog)
+
     assert_response :success
   end
 
@@ -66,8 +70,10 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     patch catalog_path(@catalog), params: {
       catalog: { name: "更新された弁当名" }
     }, as: :turbo_stream
+
     assert_response :success
     @catalog.reload
+
     assert_equal "更新された弁当名", @catalog.name
   end
 
@@ -78,18 +84,21 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "employee can access index" do
     login_as_employee(@employee)
     get catalogs_path
+
     assert_response :success
   end
 
   test "employee can access show" do
     login_as_employee(@employee)
     get catalog_path(@catalog)
+
     assert_response :success
   end
 
   test "employee can access new" do
     login_as_employee(@employee)
     get new_catalog_path, as: :turbo_stream
+
     assert_response :success
   end
 
@@ -114,6 +123,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "employee can access edit" do
     login_as_employee(@employee)
     get edit_catalog_path(@catalog)
+
     assert_response :success
   end
 
@@ -122,8 +132,10 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     patch catalog_path(@catalog), params: {
       catalog: { name: "従業員更新弁当名" }
     }, as: :turbo_stream
+
     assert_response :success
     @catalog.reload
+
     assert_equal "従業員更新弁当名", @catalog.name
   end
 
@@ -133,16 +145,19 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
 
   test "unauthenticated user is redirected to login on index" do
     get catalogs_path
+
     assert_redirected_to "/employee/login"
   end
 
   test "unauthenticated user is redirected to login on show" do
     get catalog_path(@catalog)
+
     assert_redirected_to "/employee/login"
   end
 
   test "unauthenticated user is redirected to login on new" do
     get new_catalog_path
+
     assert_redirected_to "/employee/login"
   end
 
@@ -160,6 +175,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
 
   test "unauthenticated user is redirected to login on edit" do
     get edit_catalog_path(@catalog)
+
     assert_redirected_to "/employee/login"
   end
 
@@ -167,6 +183,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     patch catalog_path(@catalog), params: {
       catalog: { name: "不正な更新" }
     }
+
     assert_redirected_to "/employee/login"
   end
 
@@ -187,8 +204,10 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     login_as_employee(@employee)
     original_name = @catalog.name
     patch catalog_path(@catalog), params: { catalog: { name: "" } }, as: :turbo_stream
+
     assert_response :unprocessable_entity
     @catalog.reload
+
     assert_equal original_name, @catalog.name
   end
 
@@ -199,6 +218,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   test "new with invalid category returns unprocessable_entity" do
     login_as_employee(@employee)
     get new_catalog_path, params: { category: "invalid_category" }
+
     assert_response :unprocessable_entity
     assert_equal({ "error" => I18n.t("catalogs.errors.invalid_category") }, response.parsed_body)
   end

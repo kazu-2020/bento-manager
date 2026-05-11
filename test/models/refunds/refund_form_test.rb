@@ -96,14 +96,17 @@ module Refunds
 
       # 弁当A: 修正後1個
       bento_a_item = corrected.find { |item| item[:catalog].id == @catalog_bento_a.id }
+
       assert_equal 1, bento_a_item[:quantity]
 
       # サラダ: 0個（含まれない）
       salad_item = corrected.find { |item| item[:catalog].id == @catalog_salad.id }
+
       assert_nil salad_item
 
       # 弁当B: 新規追加1個
       bento_b_item = corrected.find { |item| item[:catalog].id == @catalog_bento_b.id }
+
       assert_equal 1, bento_b_item[:quantity]
     end
 
@@ -124,7 +127,7 @@ module Refunds
         }
       )
 
-      assert form.has_any_changes?
+      assert_predicate form, :has_any_changes?
     end
 
     test "商品数量を減らすとhas_any_changes?がtrueになる" do
@@ -141,7 +144,7 @@ module Refunds
         }
       )
 
-      assert form.has_any_changes?
+      assert_predicate form, :has_any_changes?
     end
 
     test "全商品を0にするとhas_any_changes?がtrueになる" do
@@ -158,8 +161,8 @@ module Refunds
         }
       )
 
-      assert form.has_any_changes?
-      assert form.all_items_zero?
+      assert_predicate form, :has_any_changes?
+      assert_predicate form, :all_items_zero?
     end
 
     # === バリデーションテスト ===
@@ -192,7 +195,7 @@ module Refunds
         }
       )
 
-      assert form.valid?
+      assert_predicate form, :valid?
     end
 
     # === preview_adjustment_amount テスト ===
@@ -257,7 +260,7 @@ module Refunds
         }
       )
 
-      assert form.has_any_changes?
+      assert_predicate form, :has_any_changes?
     end
 
     test "discount_quantities_for_refunderがクーポン数量を正しく返す" do
@@ -282,6 +285,7 @@ module Refunds
       )
 
       result = form.discount_quantities_for_refunder
+
       assert_equal 1, result[discount.id]
     end
 
@@ -298,7 +302,8 @@ module Refunds
       )
 
       items = form.corrected_items
-      assert items.any?
+
+      assert_predicate items, :any?
       items.each do |item|
         assert_respond_to item, :catalog_name
         assert_respond_to item, :quantity
@@ -330,11 +335,13 @@ module Refunds
       )
 
       result = form.preview_price_result
+
       assert_equal 0, result[:final_total]
       assert_empty result[:items_with_prices]
 
       details = result[:discount_details]
       coupon_detail = details.find { |d| d[:discount_id] == discount.id }
+
       assert_equal 0, coupon_detail[:quantity]
       assert_equal 1, coupon_detail[:requested_quantity]
     end
@@ -352,6 +359,7 @@ module Refunds
       )
 
       tab_keys = form.tab_items.map { |t| t[:key] }
+
       assert_includes tab_keys, :bento
     end
   end

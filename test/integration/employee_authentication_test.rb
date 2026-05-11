@@ -6,6 +6,7 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
   test "employee can login successfully" do
     # Navigate to login page
     get "/employee/login"
+
     assert_response :success
 
     # Submit login with valid credentials
@@ -17,11 +18,13 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
     # Assert redirect after successful login
     assert_response :redirect
     follow_redirect!
+
     assert_response :success
   end
 
   test "employee cannot login with invalid credentials" do
     get "/employee/login"
+
     assert_response :success
 
     # Submit login with invalid credentials
@@ -40,6 +43,7 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
       username: "employee",
       password: "password"
     }
+
     assert_response :redirect
 
     # Logout (Rodauth uses POST for logout, not DELETE)
@@ -51,6 +55,7 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
 
     # Following redirect to root will redirect to login since root requires authentication
     follow_redirect!
+
     assert_response :redirect
     assert_redirected_to "/employee/login"
   end
@@ -73,6 +78,7 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
 
     # Access close account page
     get "/employee/close-account"
+
     assert_response :success
 
     # Submit close account request with password confirmation
@@ -86,7 +92,8 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
     # Verify employee status is now closed
     employee = employees(:verified_employee)
     employee.reload
-    assert employee.closed?, "Employee status should be closed after closing account"
+
+    assert_predicate employee, :closed?, "Employee status should be closed after closing account"
   end
 
   # パスワード変更テスト
@@ -97,6 +104,7 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
 
     # Access change password page
     get "/employee/change-password"
+
     assert_response :success
 
     # Submit password change with current and new password
@@ -115,6 +123,7 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
       username: employee.username,
       password: "newpassword123"
     }
+
     assert_response :redirect, "Should be able to login with new password"
   end
 
@@ -182,6 +191,7 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
 
     # Logout
     post "/employee/logout"
+
     assert_response :redirect
 
     # Try to login again to verify old session is invalid
@@ -190,6 +200,7 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
       username: "employee",
       password: "password"
     }
+
     assert_response :redirect, "Should be able to login again after logout"
   end
 
@@ -200,7 +211,8 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
       username: "employee",
       password: "password"
     }
-    assert first_device_session.response.redirect?, "First device should login successfully"
+
+    assert_predicate first_device_session.response, :redirect?, "First device should login successfully"
 
     # Simulate second device login (using a different session)
     second_device_session = open_session
@@ -208,12 +220,14 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
       username: "employee",
       password: "password"
     }
-    assert second_device_session.response.redirect?, "Second device should login successfully"
+
+    assert_predicate second_device_session.response, :redirect?, "Second device should login successfully"
 
     # Both sessions should be valid (concurrent login allowed)
     # Verify first session is still valid by accessing a protected page
     first_device_session.get root_path
-    assert first_device_session.response.successful?, "First device session should remain valid"
+
+    assert_predicate first_device_session.response, :successful?, "First device session should remain valid"
   end
 
   # 業務機能アクセステスト（Requirement 9.7）
@@ -223,6 +237,7 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
 
     # Employee should be able to access root path (業務機能)
     get root_path
+
     assert_response :success, "Employee should be able to access business functions"
   end
 

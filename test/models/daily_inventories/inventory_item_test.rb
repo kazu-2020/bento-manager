@@ -15,7 +15,7 @@ module DailyInventories
 
       custom = InventoryItem.new(catalog_id: 2, catalog_name: "特製弁当", category: "bento", selected: true, stock: 20)
 
-      assert custom.selected?
+      assert_predicate custom, :selected?
       assert_equal 20, custom.stock
       assert_equal "bento", custom.category
     end

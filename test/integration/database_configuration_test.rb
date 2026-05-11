@@ -49,7 +49,8 @@ class DatabaseConfigurationTest < ActiveSupport::TestCase
 
     schema_files.each do |db_name, file_path|
       full_path = Rails.root.join(file_path)
-      assert File.exist?(full_path),
+
+      assert_path_exists full_path,
         "Schema file for #{db_name} database should exist at #{file_path}"
     end
   end
@@ -61,6 +62,7 @@ class DatabaseConfigurationTest < ActiveSupport::TestCase
 
     %w[production test].each do |env|
       env_structure = database_structure_for(env)
+
       assert_equal reference_structure, env_structure,
         "Environment '#{env}' database structure should match development environment. " \
         "Inconsistencies: #{structure_diff(reference_structure, env_structure)}"

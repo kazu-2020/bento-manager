@@ -22,7 +22,8 @@ module DailyInventories
 
       assert_equal 2, items.size
       item_a = items.find { |i| i.catalog_id == @bento_a.id }
-      assert item_a.selected?
+
+      assert_predicate item_a, :selected?
       assert_equal 15, item_a.stock
       assert_equal @bento_a.name, item_a.catalog_name
       assert_equal @bento_a.category, item_a.category
@@ -45,7 +46,7 @@ module DailyInventories
       items = ItemBuilder.from_params(@catalogs, submitted)
       item_a = items.find { |i| i.catalog_id == @bento_a.id }
 
-      assert item_a.selected?
+      assert_predicate item_a, :selected?
       assert_equal 10, item_a.stock
     end
 
@@ -60,10 +61,12 @@ module DailyInventories
       items = ItemBuilder.from_inventories(@catalogs, inventories_by_catalog_id)
 
       item_a = items.find { |i| i.catalog_id == @bento_a.id }
-      assert item_a.selected?
+
+      assert_predicate item_a, :selected?
       assert_equal 20, item_a.stock
 
       item_b = items.find { |i| i.catalog_id == @bento_b.id }
+
       assert_not item_b.selected?
       assert_equal InventoryItem::DEFAULT_STOCK, item_b.stock
     end

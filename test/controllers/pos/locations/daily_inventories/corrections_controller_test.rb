@@ -28,6 +28,7 @@ module Pos
           )
 
           get new_pos_location_daily_inventories_correction_path(@location)
+
           assert_response :success
           assert_match 'value="10"', response.body
           assert_match 'value="5"', response.body
@@ -52,6 +53,7 @@ module Pos
           assert_redirected_to new_pos_location_sale_path(@location)
 
           recreated = DailyInventory.find_by(location: @location, catalog: @bento_a, inventory_date: Date.current)
+
           assert_equal 20, recreated.stock
           assert_equal 0, recreated.lock_version
         end
@@ -79,6 +81,7 @@ module Pos
           login_as_employee(@employee)
 
           get new_pos_location_daily_inventories_correction_path(@location)
+
           assert_redirected_to new_pos_location_daily_inventory_path(@location)
         end
       end

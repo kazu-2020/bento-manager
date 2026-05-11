@@ -39,11 +39,13 @@ class SaleItemTest < ActiveSupport::TestCase
     )
 
     sale_item.valid?
+
     assert_equal 1650, sale_item.line_total
 
     sale_item.unit_price = nil
     sale_item.line_total = 100
     sale_item.valid?
+
     assert_equal 100, sale_item.line_total, "単価が未入力の場合は小計を上書きしない"
   end
 end

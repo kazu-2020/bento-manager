@@ -14,12 +14,14 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     assert_not validator.price_exists?(catalogs(:daily_bento_a), :bundle)
 
     price = validator.find_price(catalogs(:daily_bento_a), :regular)
+
     assert_kind_of CatalogPrice, price
     assert_equal 550, price.price
 
     assert_nil validator.find_price(catalogs(:miso_soup), :regular)
 
     found = validator.find_price!(catalogs(:daily_bento_a), :regular)
+
     assert_equal 550, found.price
   end
 
@@ -48,6 +50,7 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
 
     miso_soup = catalogs(:miso_soup)
     missing_miso_soup = result.find { |r| r[:catalog].id == miso_soup.id }
+
     assert_not_nil missing_miso_soup
     assert_includes missing_miso_soup[:missing_kinds], "regular"
 
@@ -77,6 +80,7 @@ class Catalogs::PriceValidatorTest < ActiveSupport::TestCase
     result = Catalogs::PriceValidator.new.catalogs_with_missing_prices
 
     missing = result.find { |r| r[:catalog].id == miso_soup.id }
+
     assert_not_nil missing
     assert_includes missing[:missing_kinds], "bundle"
   end

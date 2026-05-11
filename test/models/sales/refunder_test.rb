@@ -36,12 +36,15 @@ module Sales
       assert_nil result[:corrected_sale]
 
       sale.reload
-      assert sale.voided?
+
+      assert_predicate sale, :voided?
 
       @inventory_bento_a.reload
+
       assert_equal original_stock + 1, @inventory_bento_a.stock
 
       refund = result[:refund]
+
       assert_equal sale.id, refund.original_sale_id
       assert_nil refund.corrected_sale_id
       assert_equal 550, refund.amount
@@ -64,17 +67,20 @@ module Sales
       )
 
       sale.reload
-      assert sale.voided?
+
+      assert_predicate sale, :voided?
 
       corrected_sale = result[:corrected_sale]
-      assert corrected_sale.present?
-      assert corrected_sale.completed?
+
+      assert_predicate corrected_sale, :present?
+      assert_predicate corrected_sale, :completed?
       assert_equal sale.id, corrected_sale.corrected_from_sale_id
       assert_equal 550, corrected_sale.final_amount
 
       assert_equal 550, result[:refund_amount]
 
       @inventory_bento_a.reload
+
       assert_equal original_stock + 1, @inventory_bento_a.stock
     end
 
@@ -98,6 +104,7 @@ module Sales
       )
 
       corrected_sale = result[:corrected_sale]
+
       assert_equal 550, corrected_sale.final_amount
 
       assert_equal 150, result[:refund_amount]
@@ -123,6 +130,7 @@ module Sales
       )
 
       corrected_sale = result[:corrected_sale]
+
       assert_equal 250, corrected_sale.final_amount
 
       assert_equal 450, result[:refund_amount]
@@ -235,11 +243,12 @@ module Sales
       )
 
       corrected_sale = result[:corrected_sale]
+
       assert_equal 500, corrected_sale.final_amount
 
       # 差額: 550 - 500 = 50（返金）
       assert_equal 50, result[:refund_amount]
-      assert result[:refund_amount].positive?
+      assert_predicate result[:refund_amount], :positive?
     end
 
     test "弁当A(550円)をサラダ(250円)に交換すると300円返金される" do
@@ -257,10 +266,11 @@ module Sales
       )
 
       corrected_sale = result[:corrected_sale]
+
       assert_equal 250, corrected_sale.final_amount
 
       assert_equal 300, result[:refund_amount]
-      assert result[:refund_amount].positive?
+      assert_predicate result[:refund_amount], :positive?
     end
 
     test "弁当A(550円)にサラダを追加すると-150円（追加徴収）になる" do
@@ -288,10 +298,11 @@ module Sales
 
       # 差額: 550 - 700 = -150（追加徴収）
       assert_equal(-150, result[:refund_amount])
-      assert result[:refund_amount].negative?
+      assert_predicate result[:refund_amount], :negative?
 
       # Refund レコードにマイナス値が保存される
       refund = result[:refund]
+
       assert_equal(-150, refund.amount)
     end
 
@@ -312,11 +323,12 @@ module Sales
       )
 
       corrected_sale = result[:corrected_sale]
+
       assert_equal 550, corrected_sale.final_amount
 
       # 差額: 250 - 550 = -300（追加徴収）
       assert_equal(-300, result[:refund_amount])
-      assert result[:refund_amount].negative?
+      assert_predicate result[:refund_amount], :negative?
     end
 
     test "弁当A+クーポン(500円)を弁当B+クーポン(450円)に交換すると50円返金される" do

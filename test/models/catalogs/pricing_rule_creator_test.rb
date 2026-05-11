@@ -48,9 +48,11 @@ class Catalogs::PricingRuleCreatorTest < ActiveSupport::TestCase
 
     assert_difference "CatalogPricingRule.count", 2 do
       rule = creator.create(price_kind: :regular, trigger_category: :bento, max_per_trigger: 1, valid_from: 1.month.from_now.to_date)
+
       assert_kind_of CatalogPricingRule, rule
 
       rule2 = creator.create(price_kind: :regular, trigger_category: :bento, max_per_trigger: 1, valid_from: 1.month.ago.to_date, valid_until: 1.week.ago.to_date)
+
       assert_kind_of CatalogPricingRule, rule2
     end
 
@@ -64,6 +66,7 @@ class Catalogs::PricingRuleCreatorTest < ActiveSupport::TestCase
     creator = Catalogs::PricingRuleCreator.new(target_catalog: rule.target_catalog)
 
     updated = creator.update(rule, max_per_trigger: 3)
+
     assert_equal 3, updated.max_per_trigger
 
     assert_raises(ActiveRecord::RecordInvalid) do
@@ -80,6 +83,7 @@ class Catalogs::PricingRuleCreatorTest < ActiveSupport::TestCase
     creator = Catalogs::PricingRuleCreator.new(target_catalog: catalog)
 
     updated = creator.update(rule, max_per_trigger: 2)
+
     assert_equal 2, updated.max_per_trigger
 
     error = assert_raises(Errors::MissingPriceError) do

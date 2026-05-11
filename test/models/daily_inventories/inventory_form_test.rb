@@ -32,7 +32,7 @@ module DailyInventories
       items_with_input = ItemBuilder.from_params(@catalogs, submitted)
       form_with_input = InventoryForm.new(location: @location, items: items_with_input)
 
-      assert form_with_input.valid?
+      assert_predicate form_with_input, :valid?
       assert_equal 2, form_with_input.selected_count
       assert_equal 15, form_with_input.selected_items.find { |i| i.catalog_id == @bento_a.id }.stock
     end
@@ -41,10 +41,10 @@ module DailyInventories
       items = ItemBuilder.from_params(@catalogs, {})
       form = InventoryForm.new(location: @location, items: items)
 
-      assert form.bento_items.any?
+      assert_predicate form.bento_items, :any?
       form.bento_items.each { |item| assert_equal "bento", item.category }
 
-      assert form.side_menu_items.any?
+      assert_predicate form.side_menu_items, :any?
       form.side_menu_items.each { |item| assert_equal "side_menu", item.category }
     end
 
@@ -53,15 +53,19 @@ module DailyInventories
 
       form = InventoryForm.new(location: @location, items: items, search_query: @bento_a.name[0..2])
       matching_item = form.items.find { |i| i.catalog_id == @bento_a.id }
+
       assert form.visible?(matching_item)
 
       form_no_match = InventoryForm.new(location: @location, items: items, search_query: "存在しない商品名")
+
       assert_not form_no_match.visible?(form_no_match.items.first)
 
       form_blank = InventoryForm.new(location: @location, items: items, search_query: "  弁当  ")
+
       assert_equal "弁当", form_blank.search_query
 
       form_empty = InventoryForm.new(location: @location, items: items, search_query: "   ")
+
       assert_nil form_empty.search_query
     end
 
@@ -81,6 +85,7 @@ module DailyInventories
 
       empty_items = ItemBuilder.from_params(@catalogs, {})
       empty_form = InventoryForm.new(location: location, items: empty_items)
+
       assert_not empty_form.save
       assert_equal 0, empty_form.created_count
 
