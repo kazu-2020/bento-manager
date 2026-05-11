@@ -2,7 +2,8 @@ require "test_helper"
 
 module Sales
   class HistoryCalendarTest < ActiveSupport::TestCase
-    fixtures :locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items
+    fixtures :locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items,
+             :coupons, :discounts, :sale_discounts
 
     setup do
       @location = locations(:city_hall)
@@ -20,6 +21,14 @@ module Sales
       assert_kind_of Hash, result
       result.each_key { |date| assert_kind_of Date, date }
       assert result.values.all? { |v| v.is_a?(Numeric) && v > 0 }
+    end
+
+    test "日別売上合計はクーポン割引前の金額を合算する" do
+      # completed_sale fixture: 今日の販売、total_amount=550, final_amount=500（50円クーポン適用）
+      today = Date.current
+      result = @calendar.daily_totals
+
+      assert_equal 550, result[today], "クーポン割引前の total_amount を合算するべき"
     end
 
     test "日別売上合計は取消済みの販売を含まない" do

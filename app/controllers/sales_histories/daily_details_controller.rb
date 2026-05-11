@@ -12,7 +12,7 @@ module SalesHistories
       daily_total = Sale.completed
                         .at_location(location)
                         .in_period(date.in_time_zone.beginning_of_day, date.in_time_zone.end_of_day)
-                        .sum(:final_amount)
+                        .sum(:total_amount)
 
       render SalesHistories::DailyDetailPanel::Component.new(
         date: date,

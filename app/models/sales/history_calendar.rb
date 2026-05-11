@@ -15,7 +15,7 @@ module Sales
         .at_location(location)
         .in_period(month_range.first, month_range.last)
         .group(jst_date_expression)
-        .sum(:final_amount)
+        .sum(:total_amount)
         .transform_keys { |date_str| Date.parse(date_str) }
     end
 

@@ -27,7 +27,7 @@
                   <% end %>
                 </td>
                 <td class="text-right"><%= total_quantity(sale) %></td>
-                <td class="text-right<%= " line-through" if sale.voided? %>">¥<%= number_with_delimiter(sale.final_amount) %></td>
+                <td class="text-right<%= " line-through" if sale.voided? %>">¥<%= number_with_delimiter(sale.total_amount) %></td>
               </tr>
             <% end %>
           </tbody>

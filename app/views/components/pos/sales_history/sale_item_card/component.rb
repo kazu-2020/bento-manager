@@ -18,7 +18,7 @@ module Pos
         end
 
         def formatted_amount
-          helpers.number_to_currency(sale.final_amount)
+          helpers.number_to_currency(sale.total_amount)
         end
 
         def customer_type_badge_class
