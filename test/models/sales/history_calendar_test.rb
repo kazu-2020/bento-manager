@@ -35,13 +35,13 @@ module Sales
       result = @calendar.daily_totals
       total = result.values.sum
 
-      # total には analysis_voided の final_amount が含まれないことを検証
+      # total には analysis_voided の total_amount が含まれないことを検証
       voided_date = 2.days.ago.to_date
       all_sales_on_voided_date = Sale.at_location(@location)
                                      .in_period(voided_date.beginning_of_day, voided_date.end_of_day)
 
-      completed_amount = all_sales_on_voided_date.completed.sum(:final_amount)
-      voided_amount = all_sales_on_voided_date.voided.sum(:final_amount)
+      completed_amount = all_sales_on_voided_date.completed.sum(:total_amount)
+      voided_amount = all_sales_on_voided_date.voided.sum(:total_amount)
 
       assert_operator voided_amount, :>, 0, "テストデータに取消済み販売が存在するはず"
       assert_equal completed_amount, result[voided_date] || 0
