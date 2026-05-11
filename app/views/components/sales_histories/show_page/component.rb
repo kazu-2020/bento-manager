@@ -25,7 +25,7 @@ module SalesHistories
       end
 
       def total_amount
-        completed_sales.sum(&:final_amount)
+        completed_sales.sum(&:total_amount)
       end
 
       def total_transactions

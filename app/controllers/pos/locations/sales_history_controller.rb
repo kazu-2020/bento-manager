@@ -30,7 +30,7 @@ module Pos
 
         {
           total_count: completed_sales.size,
-          total_amount: completed_sales.sum(&:final_amount),
+          total_amount: completed_sales.sum(&:total_amount),
           voided_count: voided_sales.size
         }
       end
