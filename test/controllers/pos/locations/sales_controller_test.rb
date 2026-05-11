@@ -21,17 +21,20 @@ module Pos
       test "admin can access new page" do
         login_as_employee(@employee)
         get new_pos_location_sale_path(@location)
+
         assert_response :success
       end
 
       test "employee can access new page" do
         login_as_employee(@employee)
         get new_pos_location_sale_path(@location)
+
         assert_response :success
       end
 
       test "unauthenticated user is redirected to login on new" do
         get new_pos_location_sale_path(@location)
+
         assert_redirected_to "/employee/login"
       end
 
@@ -39,6 +42,7 @@ module Pos
         login_as_employee(@employee)
         location = Location.create!(name: "在庫なし店舗", status: :active)
         get new_pos_location_sale_path(location)
+
         assert_redirected_to new_pos_location_daily_inventory_path(location)
       end
 
@@ -46,12 +50,14 @@ module Pos
         login_as_employee(@employee)
         inactive_location = locations(:prefectural_office)
         get new_pos_location_sale_path(inactive_location)
+
         assert_response :not_found
       end
 
       test "new returns 404 for non-existent location" do
         login_as_employee(@employee)
         get new_pos_location_sale_path(location_id: 999999)
+
         assert_response :not_found
       end
 
@@ -76,6 +82,7 @@ module Pos
 
         assert_redirected_to new_pos_location_sale_path(@location)
         follow_redirect!
+
         assert_select ".alert-success", /販売を記録しました/
       end
 
@@ -142,6 +149,7 @@ module Pos
              }
 
         sale = Sale.last
+
         assert_equal 550, sale.total_amount
         assert_equal 500, sale.final_amount
         assert_equal 1, sale.sale_discounts.count
@@ -197,6 +205,7 @@ module Pos
 
       test "unauthenticated user is redirected to login on create" do
         post pos_location_sales_path(@location)
+
         assert_redirected_to "/employee/login"
       end
     end

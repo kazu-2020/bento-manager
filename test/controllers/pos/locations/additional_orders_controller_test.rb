@@ -21,17 +21,20 @@ module Pos
       test "admin can access index page" do
         login_as_employee(@employee)
         get pos_location_additional_orders_path(@location)
+
         assert_response :success
       end
 
       test "employee can access index page" do
         login_as_employee(@employee)
         get pos_location_additional_orders_path(@location)
+
         assert_response :success
       end
 
       test "unauthenticated user is redirected to login on index" do
         get pos_location_additional_orders_path(@location)
+
         assert_redirected_to "/employee/login"
       end
 
@@ -39,12 +42,14 @@ module Pos
         login_as_employee(@employee)
         inactive_location = locations(:prefectural_office)
         get pos_location_additional_orders_path(inactive_location)
+
         assert_response :not_found
       end
 
       test "index page displays inventory summary" do
         login_as_employee(@employee)
         get pos_location_additional_orders_path(@location)
+
         assert_response :success
         assert_select "span", text: @bento_a.name
       end
@@ -52,6 +57,7 @@ module Pos
       test "index page displays help messages" do
         login_as_employee(@employee)
         get pos_location_additional_orders_path(@location)
+
         assert_response :success
         assert_select ".alert-info", /LINE/
         assert_select ".alert-warning", /取り消し/
@@ -60,6 +66,7 @@ module Pos
       test "index page displays link to new order page" do
         login_as_employee(@employee)
         get pos_location_additional_orders_path(@location)
+
         assert_response :success
         assert_select "a[href='#{new_pos_location_additional_order_path(@location)}']"
       end
@@ -71,17 +78,20 @@ module Pos
       test "admin can access new page" do
         login_as_employee(@employee)
         get new_pos_location_additional_order_path(@location)
+
         assert_response :success
       end
 
       test "employee can access new page" do
         login_as_employee(@employee)
         get new_pos_location_additional_order_path(@location)
+
         assert_response :success
       end
 
       test "unauthenticated user is redirected to login on new" do
         get new_pos_location_additional_order_path(@location)
+
         assert_redirected_to "/employee/login"
       end
 
@@ -89,12 +99,14 @@ module Pos
         login_as_employee(@employee)
         inactive_location = locations(:prefectural_office)
         get new_pos_location_additional_order_path(inactive_location)
+
         assert_response :not_found
       end
 
       test "new page displays bento inventory items" do
         login_as_employee(@employee)
         get new_pos_location_additional_order_path(@location)
+
         assert_response :success
         assert_select "#order-item-#{@bento_a.id}"
       end
@@ -102,8 +114,10 @@ module Pos
       test "new page does not display side menu items in order form" do
         login_as_employee(@employee)
         get new_pos_location_additional_order_path(@location)
+
         assert_response :success
         salad = catalogs(:salad)
+
         assert_select "#order-item-#{salad.id}", count: 0
       end
 
@@ -136,6 +150,7 @@ module Pos
 
         assert_redirected_to pos_location_additional_orders_path(@location)
         follow_redirect!
+
         assert_select ".alert-success", /2件の追加発注を記録しました/
       end
 
@@ -197,6 +212,7 @@ module Pos
                }
 
           order = AdditionalOrder.last
+
           assert_in_delta Time.current, order.order_at, 1.second
         end
       end
@@ -212,6 +228,7 @@ module Pos
              }
 
         order = AdditionalOrder.last
+
         assert_equal @employee, order.employee
       end
 
@@ -233,6 +250,7 @@ module Pos
 
       test "unauthenticated user is redirected to login on create" do
         post pos_location_additional_orders_path(@location)
+
         assert_redirected_to "/employee/login"
       end
     end

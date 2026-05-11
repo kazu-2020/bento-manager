@@ -24,17 +24,21 @@ class EmployeeTest < ActiveSupport::TestCase
 
   test "ユーザー名は有効なアカウント間で一意であり閉鎖アカウントは再利用できる" do
     duplicate = Employee.new(username: "employee", password: "password", status: :verified)
+
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:username], "はすでに存在します"
 
     case_variant = Employee.new(username: "EMPLOYEE", password: "password", status: :verified)
+
     assert_not case_variant.valid?
 
     reused = Employee.new(username: "closed_employee", password: "password", status: :verified)
-    assert reused.valid?
+
+    assert_predicate reused, :valid?
 
     Employee.create!(username: "duplicate_closed", password: "password", status: :closed)
     second_closed = Employee.new(username: "duplicate_closed", password: "password", status: :closed)
-    assert second_closed.valid?
+
+    assert_predicate second_closed, :valid?
   end
 end

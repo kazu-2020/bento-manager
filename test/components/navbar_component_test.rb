@@ -6,14 +6,14 @@ class NavbarComponentTest < ViewComponent::TestCase
   def test_renders_navbar
     result = render_inline(Navbar::Component.new)
 
-    assert result.css(".navbar").present?
+    assert_predicate result.css(".navbar"), :present?
   end
 
   def test_renders_mobile_menu_toggle
     result = render_inline(Navbar::Component.new)
 
-    assert result.css("label[for='main-drawer']").present?
-    assert result.css(".icon").present?
+    assert_predicate result.css("label[for='main-drawer']"), :present?
+    assert_predicate result.css(".icon"), :present?
   end
 
   def test_renders_app_title
@@ -32,6 +32,6 @@ class NavbarComponentTest < ViewComponent::TestCase
   def test_uses_custom_drawer_id
     result = render_inline(Navbar::Component.new(drawer_id: "custom-drawer"))
 
-    assert result.css("label[for='custom-drawer']").present?
+    assert_predicate result.css("label[for='custom-drawer']"), :present?
   end
 end

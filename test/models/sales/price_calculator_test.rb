@@ -29,6 +29,7 @@ module Sales
       assert_equal 550, result[:final_total]
 
       item = result[:items_with_prices].first
+
       assert_equal 550, item[:unit_price]
       assert_equal catalog_prices(:daily_bento_a_regular).id, item[:catalog_price_id]
 
@@ -57,6 +58,7 @@ module Sales
       result = Sales::PriceCalculator.new(cart_items).calculate
 
       salad_item = result[:items_with_prices].find { |i| i[:catalog].side_menu? }
+
       assert_equal 150, salad_item[:unit_price]
       assert_equal catalog_prices(:salad_bundle).id, salad_item[:catalog_price_id]
       assert_equal 700, result[:subtotal]
@@ -90,6 +92,7 @@ module Sales
       result = Sales::PriceCalculator.new(cart_items).calculate
 
       salad_item = result[:items_with_prices].find { |i| i[:catalog].side_menu? }
+
       assert_equal 150, salad_item[:unit_price]
       assert_equal 2, salad_item[:quantity]
     end
@@ -100,6 +103,7 @@ module Sales
       result = Sales::PriceCalculator.new(cart_items).calculate
 
       salad_item = result[:items_with_prices].first
+
       assert_equal 250, salad_item[:unit_price]
       assert_equal catalog_prices(:salad_regular).id, salad_item[:catalog_price_id]
       assert_equal 500, result[:subtotal]
@@ -115,6 +119,7 @@ module Sales
 
       assert_equal 1, result_1[:discount_details].length
       detail = result_1[:discount_details].first
+
       assert_equal discounts(:fifty_yen_discount).id, detail[:discount_id]
       assert_equal "50円割引クーポン", detail[:discount_name]
       assert_equal 50, detail[:discount_amount]
@@ -155,6 +160,7 @@ module Sales
       result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
       detail = result[:discount_details].first
+
       assert_not detail[:applicable]
       assert_equal 0, detail[:discount_amount]
       assert_equal 0, result[:total_discount_amount]
@@ -234,7 +240,7 @@ module Sales
       assert_equal 550, result[:subtotal]
       assert_equal 100, result[:total_discount_amount]
       assert_equal 450, result[:final_total]
-      assert result[:final_total] >= 0
+      assert_operator result[:final_total], :>=, 0
     end
 
     test "価格未設定の商品を会計するとエラーになり商品名と価格種別が含まれる" do
@@ -250,6 +256,7 @@ module Sales
       assert_equal 1, error.missing_prices.length
 
       missing = error.missing_prices.first
+
       assert_equal catalogs(:miso_soup).id, missing[:catalog_id]
       assert_equal "味噌汁", missing[:catalog_name]
       assert_equal "regular", missing[:price_kind]
@@ -267,6 +274,7 @@ module Sales
 
       assert_equal 2, error.missing_prices.length
       catalog_names = error.missing_prices.map { |mp| mp[:catalog_name] }
+
       assert_includes catalog_names, "味噌汁"
       assert_includes catalog_names, "販売終了弁当"
     end

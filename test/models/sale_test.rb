@@ -48,6 +48,7 @@ class SaleTest < ActiveSupport::TestCase
       voided_at: nil,
       voided_by_employee: nil
     )
+
     assert_not voided_sale.valid?
     assert_includes voided_sale.errors[:voided_at], "を入力してください"
     assert_includes voided_sale.errors[:voided_by_employee], "を入力してください"
@@ -62,7 +63,8 @@ class SaleTest < ActiveSupport::TestCase
       voided_at: nil,
       voided_by_employee: nil
     )
-    assert completed_sale.valid?
+
+    assert_predicate completed_sale, :valid?
   end
 
   # --- スコープテスト ---
@@ -100,7 +102,7 @@ class SaleTest < ActiveSupport::TestCase
       sale.void!(voided_by: employees(:verified_employee))
       sale.reload
 
-      assert sale.voided?
+      assert_predicate sale, :voided?
       assert_equal Time.current, sale.voided_at
       assert_equal employees(:verified_employee), sale.voided_by_employee
     end

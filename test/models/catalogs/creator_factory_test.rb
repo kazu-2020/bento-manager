@@ -5,10 +5,12 @@ require "test_helper"
 class Catalogs::CreatorFactoryTest < ActiveSupport::TestCase
   test "カテゴリに応じた作成クラスを生成し不明なカテゴリではエラーになる" do
     bento_creator = Catalogs::CreatorFactory.build("bento", name: "のり弁当", regular_price: 450)
+
     assert_kind_of Catalogs::BentoCreator, bento_creator
     assert_equal "のり弁当", bento_creator.name
 
     side_menu_creator = Catalogs::CreatorFactory.build("side_menu", name: "唐揚げ", regular_price: 150, bundle_price: 100)
+
     assert_kind_of Catalogs::SideMenuCreator, side_menu_creator
     assert_equal "唐揚げ", side_menu_creator.name
 

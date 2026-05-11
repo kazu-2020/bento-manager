@@ -22,18 +22,21 @@ module Pos
       test "admin can access new page" do
         login_as_employee(@employee)
         get new_pos_location_daily_inventory_path(@location)
+
         assert_response :success
       end
 
       test "employee can access new page" do
         login_as_employee(@employee)
         get new_pos_location_daily_inventory_path(@location)
+
         assert_response :success
       end
 
       test "new page displays available bento catalogs" do
         login_as_employee(@employee)
         get new_pos_location_daily_inventory_path(@location)
+
         assert_response :success
         assert_select "span", text: @bento_a.name
       end
@@ -41,6 +44,7 @@ module Pos
       test "new page displays available side menu catalogs" do
         login_as_employee(@employee)
         get new_pos_location_daily_inventory_path(@location)
+
         assert_response :success
         assert_select "span", text: @salad.name
       end
@@ -55,6 +59,7 @@ module Pos
         )
 
         get new_pos_location_daily_inventory_path(@location)
+
         assert_response :success
         assert_select "span", text: discontinued_bento.name, count: 0
       end
@@ -62,12 +67,14 @@ module Pos
       test "new page shows submit button disabled by default" do
         login_as_employee(@employee)
         get new_pos_location_daily_inventory_path(@location)
+
         assert_response :success
         assert_select "button[type='submit'][disabled]"
       end
 
       test "unauthenticated user is redirected to login on new" do
         get new_pos_location_daily_inventory_path(@location)
+
         assert_redirected_to "/employee/login"
       end
 
@@ -75,6 +82,7 @@ module Pos
         login_as_employee(@employee)
         inactive_location = locations(:prefectural_office)
         get new_pos_location_daily_inventory_path(inactive_location)
+
         assert_response :not_found
       end
 
@@ -151,6 +159,7 @@ module Pos
 
         assert_redirected_to new_pos_location_sale_path(@location)
         follow_redirect!
+
         assert_select ".alert-success", /2種類/
       end
 
@@ -195,6 +204,7 @@ module Pos
              }
 
         inventory = DailyInventory.last
+
         assert_equal Date.current, inventory.inventory_date
       end
 
@@ -209,6 +219,7 @@ module Pos
              }
 
         inventory = DailyInventory.last
+
         assert_equal 0, inventory.reserved_stock
       end
 
@@ -223,6 +234,7 @@ module Pos
              }
 
         inventory = DailyInventory.last
+
         assert_equal 25, inventory.stock
       end
 
@@ -240,6 +252,7 @@ module Pos
 
         assert_redirected_to new_pos_location_sale_path(@location)
         follow_redirect!
+
         assert_select ".alert-success", /1種類/
       end
 
@@ -259,6 +272,7 @@ module Pos
 
         assert_redirected_to new_pos_location_sale_path(@location)
         follow_redirect!
+
         assert_select ".alert-success", /3種類/
       end
 
@@ -274,11 +288,13 @@ module Pos
 
         assert_redirected_to new_pos_location_sale_path(@location)
         follow_redirect!
+
         assert_select ".alert-success", text: /商品を登録しました/
       end
 
       test "unauthenticated user is redirected to login on create" do
         post pos_location_daily_inventories_path(@location)
+
         assert_redirected_to "/employee/login"
       end
 
@@ -290,6 +306,7 @@ module Pos
         )
 
         get new_pos_location_daily_inventory_path(@location)
+
         assert_redirected_to new_pos_location_daily_inventories_correction_path(@location)
       end
     end

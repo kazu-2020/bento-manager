@@ -1,6 +1,22 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+plugins:
+  - rubocop-minitest
+
+AllCops:
+  NewCops: enable
+
+# Rails のテスト慣習として 1 メソッド内の複数 assertion は許容する
+Minitest/MultipleAssertions:
+  Enabled: false
+
+# refute_* vs assert_not_* の方針: rubocop-minitest 寄せ (refute_* を採用)
+# omakase の Rails/RefuteMethods は `assert_not_*` を推奨するが、本プロジェクトでは
+# Minitest/Refute* 系 cop と方向が衝突するため明示的に無効化する。
+Rails/RefuteMethods:
+  Enabled: false
+
 # Overwrite or add rules to create your own house style
 #
 # # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`

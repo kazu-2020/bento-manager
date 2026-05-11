@@ -42,6 +42,7 @@ class ActionDispatch::IntegrationTest
       username: employee_username,
       password: password
     }
+
     assert_response :redirect, "Failed to login as #{employee_username}"
     follow_redirect!
   end

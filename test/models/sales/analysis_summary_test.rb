@@ -20,10 +20,10 @@ module Sales
 
       assert result.key?(:staff)
       assert result.key?(:citizen)
-      assert result[:staff][:quantity] > 0
-      assert result[:citizen][:quantity] > 0
-      assert result[:staff][:amount] > 0
-      assert result[:citizen][:amount] > 0
+      assert_operator result[:staff][:quantity], :>, 0
+      assert_operator result[:citizen][:quantity], :>, 0
+      assert_operator result[:staff][:amount], :>, 0
+      assert_operator result[:citizen][:amount], :>, 0
     end
 
     test "顧客タイプ別サマリーは取消済みの販売を含まない" do
@@ -60,11 +60,12 @@ module Sales
 
       assert result.key?(:staff)
       assert result.key?(:citizen)
-      assert result[:staff].length <= 5
-      assert result[:citizen].length <= 5
+      assert_operator result[:staff].length, :<=, 5
+      assert_operator result[:citizen].length, :<=, 5
 
       # 職員: 弁当A が最も多い（staff_1, staff_3, staff_4 + completed_sale = 4個）
       top_staff = result[:staff].first
+
       assert_equal catalogs(:daily_bento_a).name, top_staff[:catalog_name]
     end
 
@@ -72,6 +73,7 @@ module Sales
       result = @summary.ranking(limit: 10)
 
       all_names = result[:staff].map { |e| e[:catalog_name] } + result[:citizen].map { |e| e[:catalog_name] }
+
       assert_not_includes all_names, catalogs(:salad).name
     end
 
@@ -89,12 +91,13 @@ module Sales
     test "クロス集計は商品ごとに職員と一般の販売数量を並べる" do
       result = @summary.cross_table
 
-      assert result.is_a?(Array)
+      assert_kind_of Array, result
 
       bento_a = result.find { |r| r[:catalog_name] == catalogs(:daily_bento_a).name }
+
       assert_not_nil bento_a
-      assert bento_a[:staff_quantity] > 0
-      assert bento_a[:citizen_quantity] > 0
+      assert_operator bento_a[:staff_quantity], :>, 0
+      assert_operator bento_a[:citizen_quantity], :>, 0
       assert_equal bento_a[:staff_quantity] + bento_a[:citizen_quantity], bento_a[:total_quantity]
     end
 
@@ -102,6 +105,7 @@ module Sales
       result = @summary.cross_table
 
       all_names = result.map { |r| r[:catalog_name] }
+
       assert_not_includes all_names, catalogs(:salad).name
     end
 
@@ -109,6 +113,7 @@ module Sales
       result = @summary.cross_table
 
       totals = result.map { |r| r[:total_quantity] }
+
       assert_equal totals.sort.reverse, totals
     end
   end

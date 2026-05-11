@@ -13,16 +13,19 @@ class SalesHistoriesControllerTest < ActionDispatch::IntegrationTest
 
   test "認証済みユーザーが index にアクセスできる" do
     get sales_histories_path
+
     assert_response :success
   end
 
   test "month パラメータで月を指定できる" do
     get sales_histories_path, params: { month: "2026-04" }
+
     assert_response :success
   end
 
   test "不正な month パラメータでも正常に動作する" do
     get sales_histories_path, params: { month: "invalid" }
+
     assert_response :success
   end
 
@@ -30,11 +33,13 @@ class SalesHistoriesControllerTest < ActionDispatch::IntegrationTest
 
   test "認証済みユーザーが日別取引履歴にアクセスできる" do
     get sales_history_path(1.day.ago.to_date.to_s, location_id: locations(:city_hall).id)
+
     assert_response :success
   end
 
   test "不正な日付パラメータではリダイレクトされる" do
     get sales_history_path("invalid-date", location_id: locations(:city_hall).id)
+
     assert_redirected_to sales_histories_path
   end
 
@@ -43,6 +48,7 @@ class SalesHistoriesControllerTest < ActionDispatch::IntegrationTest
   test "未認証ユーザーはログインページにリダイレクトされる" do
     reset!
     get sales_histories_path
+
     assert_redirected_to "/employee/login"
   end
 end

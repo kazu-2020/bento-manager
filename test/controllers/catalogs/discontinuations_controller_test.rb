@@ -23,6 +23,7 @@ module Catalogs
     test "admin can access new (discontinue confirmation modal)" do
       login_as_employee(@employee)
       get new_catalog_discontinuation_path(@catalog), as: :turbo_stream
+
       assert_response :success
     end
 
@@ -35,7 +36,8 @@ module Catalogs
       end
       assert_redirected_to catalog_path(@catalog)
       @catalog.reload
-      assert @catalog.discontinued?
+
+      assert_predicate @catalog, :discontinued?
     end
 
     # ============================================================
@@ -45,6 +47,7 @@ module Catalogs
     test "employee can access new (discontinue confirmation modal)" do
       login_as_employee(@employee)
       get new_catalog_discontinuation_path(@catalog), as: :turbo_stream
+
       assert_response :success
     end
 
@@ -57,7 +60,8 @@ module Catalogs
       end
       assert_redirected_to catalog_path(@catalog)
       @catalog.reload
-      assert @catalog.discontinued?
+
+      assert_predicate @catalog, :discontinued?
     end
 
     # ============================================================
@@ -66,6 +70,7 @@ module Catalogs
 
     test "unauthenticated user is redirected to login on new" do
       get new_catalog_discontinuation_path(@catalog)
+
       assert_redirected_to "/employee/login"
     end
 
@@ -75,6 +80,7 @@ module Catalogs
       end
       assert_redirected_to "/employee/login"
       @catalog.reload
+
       assert_not @catalog.discontinued?
     end
 
@@ -94,18 +100,22 @@ module Catalogs
     test "create with reason saves the reason" do
       login_as_employee(@employee)
       post catalog_discontinuation_path(@catalog), params: { reason: "季節終了のため" }
+
       assert_redirected_to catalog_path(@catalog)
       @catalog.reload
-      assert @catalog.discontinued?
+
+      assert_predicate @catalog, :discontinued?
       assert_equal "季節終了のため", @catalog.discontinuation.reason
     end
 
     test "create without reason uses default reason" do
       login_as_employee(@employee)
       post catalog_discontinuation_path(@catalog)
+
       assert_redirected_to catalog_path(@catalog)
       @catalog.reload
-      assert @catalog.discontinued?
+
+      assert_predicate @catalog, :discontinued?
       assert_equal I18n.t("catalogs.discontinuations.default_reason"), @catalog.discontinuation.reason
     end
   end

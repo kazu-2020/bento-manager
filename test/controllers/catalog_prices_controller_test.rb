@@ -19,12 +19,14 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   test "admin can access edit for existing price" do
     login_as_employee(@employee)
     get edit_catalog_catalog_price_path(@catalog, :regular), as: :turbo_stream
+
     assert_response :success
   end
 
   test "admin can access edit for non-existing price" do
     login_as_employee(@employee)
     get edit_catalog_catalog_price_path(@catalog_without_bundle, :bundle), as: :turbo_stream
+
     assert_response :success
   end
 
@@ -50,9 +52,11 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
     assert_equal original_count + 1, CatalogPrice.count
 
     @catalog_price.reload
+
     assert_not_nil @catalog_price.effective_until
 
     new_price = @catalog.price_by_kind(:regular)
+
     assert_equal 600, new_price.price
     assert_nil new_price.effective_until
   end
@@ -64,6 +68,7 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   test "employee can access edit" do
     login_as_employee(@employee)
     get edit_catalog_catalog_price_path(@catalog, :regular), as: :turbo_stream
+
     assert_response :success
   end
 
@@ -86,6 +91,7 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     new_price = @catalog.price_by_kind(:regular)
+
     assert_equal 580, new_price.price
   end
 
@@ -95,6 +101,7 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
 
   test "unauthenticated user is redirected to login on edit" do
     get edit_catalog_catalog_price_path(@catalog, :regular), as: :turbo_stream
+
     assert_redirected_to "/employee/login"
   end
 
@@ -103,8 +110,10 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
     patch catalog_catalog_price_path(@catalog, :regular), params: {
       catalog_price: { price: 999 }
     }, as: :turbo_stream
+
     assert_redirected_to "/employee/login"
     @catalog_price.reload
+
     assert_equal original_price, @catalog_price.price
   end
 
@@ -115,6 +124,7 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   test "returns not found for invalid kind on edit" do
     login_as_employee(@employee)
     get edit_catalog_catalog_price_path(@catalog, :invalid), as: :turbo_stream
+
     assert_response :not_found
   end
 
@@ -123,6 +133,7 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
     patch catalog_catalog_price_path(@catalog, :invalid), params: {
       catalog_price: { price: 500 }
     }, as: :turbo_stream
+
     assert_response :not_found
   end
 
@@ -151,6 +162,7 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_equal original_count, CatalogPrice.count
     @catalog_price.reload
+
     assert_nil @catalog_price.effective_until
   end
 end

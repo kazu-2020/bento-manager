@@ -29,10 +29,12 @@ class SaleDiscountTest < ActiveSupport::TestCase
     existing = sale_discounts(:completed_sale_fifty_yen)
 
     duplicate = SaleDiscount.new(sale: existing.sale, discount: existing.discount, discount_amount: 50, quantity: 1)
+
     assert_not duplicate.valid?
     assert_includes duplicate.errors[:discount_id], "同じ割引を複数回適用できません"
 
     different_sale = SaleDiscount.new(sale: sales(:prefectural_office_sale), discount: existing.discount, discount_amount: 50, quantity: 1)
-    assert different_sale.valid?
+
+    assert_predicate different_sale, :valid?
   end
 end

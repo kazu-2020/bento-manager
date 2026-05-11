@@ -14,7 +14,7 @@ class Locations::SalesChartComponentTest < ViewComponent::TestCase
 
     result = render_inline(Locations::SalesChart::Component.new(location:))
 
-    assert result.css("[id^='chart-']").present?
+    assert_predicate result.css("[id^='chart-']"), :present?
   end
 
   test "chart_data に職員・市民の2系列と直近1ヶ月分の全日データが含まれる" do
@@ -29,6 +29,7 @@ class Locations::SalesChartComponentTest < ViewComponent::TestCase
     assert_equal "市民", data[1][:name]
 
     expected_days = (1.month.ago.to_date..Date.current).count
+
     assert_equal expected_days, data[0][:data].size
     assert_equal expected_days, data[1][:data].size
   end

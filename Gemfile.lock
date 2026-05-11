@@ -322,6 +322,10 @@ GEM
     rubocop-ast (1.49.0)
       parser (>= 3.3.7.2)
       prism (~> 1.7)
+    rubocop-minitest (0.39.1)
+      lint_roller (~> 1.1)
+      rubocop (>= 1.75.0, < 2.0)
+      rubocop-ast (>= 1.38.0, < 2.0)
     rubocop-performance (1.26.1)
       lint_roller (~> 1.1)
       rubocop (>= 1.75.0, < 2.0)
@@ -460,6 +464,7 @@ DEPENDENCIES
   rails-i18n (~> 8.0)
   reactionview
   rodauth-rails
+  rubocop-minitest
   rubocop-rails-omakase
   sentry-rails
   sentry-ruby

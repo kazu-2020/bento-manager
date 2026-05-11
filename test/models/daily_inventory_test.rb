@@ -30,12 +30,14 @@ class DailyInventoryTest < ActiveSupport::TestCase
 
   test "利用可能在庫数は総在庫から予約在庫を引いた値であり負数は許可されない" do
     inventory = daily_inventories(:city_hall_bento_b_today)
+
     assert_equal 3, inventory.available_stock  # stock: 5, reserved_stock: 2
 
     over_reserved = DailyInventory.new(
       location: locations(:city_hall), catalog: catalogs(:daily_bento_a),
       inventory_date: Date.current + 1.day, stock: 5, reserved_stock: 10
     )
+
     assert_not over_reserved.valid?
     assert_includes over_reserved.errors[:base], "利用可能在庫数（stock - reserved_stock）は0以上である必要があります"
 
@@ -43,7 +45,8 @@ class DailyInventoryTest < ActiveSupport::TestCase
       location: locations(:city_hall), catalog: catalogs(:daily_bento_a),
       inventory_date: Date.current + 2.days, stock: 5, reserved_stock: 5
     )
-    assert exactly_zero.valid?
+
+    assert_predicate exactly_zero, :valid?
   end
 
   test "在庫から販売数を減算できる" do
@@ -59,6 +62,7 @@ class DailyInventoryTest < ActiveSupport::TestCase
 
     inventory.decrement_stock!(inventory.stock)
     inventory.reload
+
     assert_equal 0, inventory.stock
 
     assert_raises(DailyInventory::InsufficientStockError) { inventory.decrement_stock!(1) }
@@ -90,6 +94,7 @@ class DailyInventoryTest < ActiveSupport::TestCase
 
     assert_difference "DailyInventory.count", 2 do
       result = DailyInventory.bulk_create(location: location, items: items)
+
       assert_equal 2, result
     end
 
@@ -135,10 +140,12 @@ class DailyInventoryTest < ActiveSupport::TestCase
 
     assert_difference "DailyInventory.count", 1 do
       result = DailyInventory.bulk_recreate(location: location, items: items)
+
       assert_equal 2, result
     end
 
     recreated = DailyInventory.where(location: location, inventory_date: Date.current)
+
     assert_equal 2, recreated.count
     assert_equal 20, recreated.find_by(catalog: catalogs(:daily_bento_a)).stock
   end
@@ -157,6 +164,7 @@ class DailyInventoryTest < ActiveSupport::TestCase
 
     assert_no_difference "DailyInventory.count" do
       result = DailyInventory.bulk_recreate(location: location, items: items)
+
       assert_equal :sales_already_started, result
     end
   end
@@ -178,9 +186,11 @@ class DailyInventoryTest < ActiveSupport::TestCase
     ]
 
     result = DailyInventory.bulk_recreate(location: location, items: items)
+
     assert_equal 2, result
 
     remaining = DailyInventory.where(location: location, inventory_date: Date.current)
+
     assert_equal 2, remaining.count
     assert_nil remaining.find_by(catalog: catalogs(:daily_bento_a))
     assert_equal 8, remaining.find_by(catalog: catalogs(:daily_bento_b)).stock
@@ -201,6 +211,7 @@ class DailyInventoryTest < ActiveSupport::TestCase
     DailyInventory.bulk_recreate(location: location, items: items)
 
     recreated = DailyInventory.find_by(location: location, catalog: catalogs(:daily_bento_a), inventory_date: Date.current)
+
     assert_equal 0, recreated.lock_version
     assert_not DailyInventory.sales_started?(location: location)
   end
@@ -222,6 +233,7 @@ class DailyInventoryTest < ActiveSupport::TestCase
 
     assert_no_difference "DailyInventory.count" do
       result = DailyInventory.bulk_create(location: location, items: items)
+
       assert_equal 0, result
     end
   end

@@ -30,6 +30,7 @@ class CatalogTest < ActiveSupport::TestCase
 
   test "新規作成時のデフォルトカテゴリは未設定である" do
     catalog = Catalog.new(name: "デフォルトテスト")
+
     assert_nil catalog.category
   end
 
@@ -93,6 +94,7 @@ class CatalogTest < ActiveSupport::TestCase
     assert_equal bundle_price, catalog.price_by_kind(:bundle)
 
     catalog_without_prices = Catalog.create!(name: "価格なしテスト", kana: "カカクナシテスト", category: :bento)
+
     assert_nil catalog_without_prices.price_by_kind(:regular)
   end
 
@@ -106,7 +108,7 @@ class CatalogTest < ActiveSupport::TestCase
       reason: "販売終了"
     )
 
-    assert discontinued_catalog.discontinued?
+    assert_predicate discontinued_catalog, :discontinued?
     assert_not available_catalog.discontinued?
 
     assert_includes Catalog.available, available_catalog
@@ -146,6 +148,6 @@ class CatalogTest < ActiveSupport::TestCase
 
     assert_not result, "destroy は false を返すべき"
     assert_equal initial_count, Catalog.count, "レコード数は変わらないべき"
-    assert catalog.persisted?, "レコードは削除されていないべき"
+    assert_predicate catalog, :persisted?, "レコードは削除されていないべき"
   end
 end
