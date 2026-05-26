@@ -8,10 +8,10 @@
   "dependencies": {
     "@hotwired/stimulus": "^3.2.2",
     "@hotwired/turbo-rails": "^8.0.23",
-    "@tailwindcss/vite": "^4.2.2",
+    "@tailwindcss/vite": "^4.3.0",
     "chart.js": "^4.5.1",
     "chartkick": "^5.0.1",
-    "daisyui": "^5.5.19",
+    "daisyui": "^5.5.20",
     "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
