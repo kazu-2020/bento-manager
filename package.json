@@ -11,7 +11,7 @@
     "@tailwindcss/vite": "^4.3.0",
     "chart.js": "^4.5.1",
     "chartkick": "^5.0.1",
-    "daisyui": "^5.5.20",
+    "daisyui": "^5.5.23",
     "tailwindcss": "^4.2.4"
   },
   "devDependencies": {
