@@ -1,32 +1,91 @@
 version: 2
+
 updates:
 - package-ecosystem: bundler
   directory: "/"
   schedule:
     interval: weekly
-  open-pull-requests-limit: 10
+    day: monday
+    time: "09:00"
+    timezone: "Asia/Tokyo"
+  open-pull-requests-limit: 5
   groups:
+    # vite_rails は npm 側の vite とバージョンが連動するため、major も含めて 1 本にまとめる
     vite:
       patterns:
         - "vite_rails"
         - "vite_ruby"
+      update-types:
+        - major
+        - minor
+        - patch
+    # 開発・テスト用の gem は major 以外まとめて 1 PR にする
+    dev-dependencies:
+      dependency-type: development
+      update-types:
+        - minor
+        - patch
+    # 本番で動く gem も major 以外はまとめる。major だけ個別 PR で内容を確認する
+    production-dependencies:
+      dependency-type: production
+      update-types:
+        - minor
+        - patch
+
 - package-ecosystem: npm
   directory: "/"
   schedule:
     interval: weekly
-  open-pull-requests-limit: 10
+    day: monday
+    time: "09:00"
+    timezone: "Asia/Tokyo"
+  open-pull-requests-limit: 5
   groups:
+    # tailwindcss / daisyui は互いにバージョンが連動するため major も含めてまとめる
+    tailwindcss:
+      patterns:
+        - "tailwindcss"
+        - "@tailwindcss/*"
+        - "daisyui"
+      update-types:
+        - major
+        - minor
+        - patch
+    # vite 本体とプラグイン、Ruby 側 vite_rails と歩調を合わせる必要があるためまとめる
     vite:
       patterns:
         - "vite"
         - "vite-plugin-*"
-    tailwindcss:
-      patterns:
-        - "@tailwindcss/*"
-        - "tailwindcss"
-        - "daisyui"
+        - "stimulus-vite-helpers"
+      update-types:
+        - major
+        - minor
+        - patch
+    dev-dependencies:
+      dependency-type: development
+      update-types:
+        - minor
+        - patch
+    production-dependencies:
+      dependency-type: production
+      update-types:
+        - minor
+        - patch
+
 - package-ecosystem: github-actions
   directory: "/"
   schedule:
     interval: weekly
-  open-pull-requests-limit: 10
+    day: monday
+    time: "09:00"
+    timezone: "Asia/Tokyo"
+  open-pull-requests-limit: 5
+  groups:
+    # Actions の更新は内容が軽いので major も含めて 1 PR にまとめる
+    github-actions:
+      patterns:
+        - "*"
+      update-types:
+        - major
+        - minor
+        - patch
