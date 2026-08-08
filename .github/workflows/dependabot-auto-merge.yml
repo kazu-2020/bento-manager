@@ -3,32 +3,50 @@ name: Dependabot auto-merge
 # Dependabot の PR のうち minor / patch 更新を auto-merge の対象にする。
 #
 # auto-merge が待つのは Ruleset で「必須」に指定されたチェックだけで、CI 全体ではない。
-# main の Ruleset に scan_ruby / lint / test を必須チェックとして登録していない場合、
+# main の Ruleset に lint / test を必須チェックとして登録していない場合、
 # 待機対象が無いため CI の結果と無関係にマージされる。この 2 つはセットで運用すること。
 on: pull_request_target
 
-permissions:
-  contents: write
-  pull-requests: write
+# pull_request_target は fork からの PR でも書き込み権限を持つトークンで動くため、
+# 既定の権限を空にし、必要なジョブにだけ最小限を付与する。
+permissions: {}
 
 jobs:
-  auto-merge:
+  # サードパーティ製の action に書き込み権限のあるトークンを渡さないよう、
+  # メタデータの取得だけを読み取り専用のジョブに分離する。
+  metadata:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: read
+
+    outputs:
+      update-type: ${{ steps.metadata.outputs.update-type }}
 
     steps:
       # グループ PR の場合、update-type にはグループ内で最も大きい更新種別が入る。
       # major を 1 つでも含むグループは手動レビューに回る。
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v2
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      # major を除外する否定形ではなく許可リストで判定する。update-type が空になる
-      # ケース（更新種別を解決できなかった場合）に否定形だと条件が真になり素通りするため。
-      - name: Enable auto-merge for minor and patch updates
-        if: contains(fromJSON('["version-update:semver-minor", "version-update:semver-patch"]'), steps.metadata.outputs.update-type)
+  # major を除外する否定形ではなく許可リストで判定する。update-type が空になる
+  # ケース（更新種別を解決できなかった場合）に否定形だと条件が真になり素通りするため。
+  auto-merge:
+    needs: metadata
+    if: contains(fromJSON('["version-update:semver-minor", "version-update:semver-patch"]'), needs.metadata.outputs.update-type)
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Enable auto-merge
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
