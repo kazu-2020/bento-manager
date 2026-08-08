@@ -24,6 +24,29 @@ jobs:
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
 
+  lint_workflows:
+    runs-on: ubuntu-latest
+    env:
+      # 更新時は checksum も差し替える。値は以下で取得できる。
+      # curl -sSfL https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz | sha256sum
+      ACTIONLINT_VERSION: 1.7.12
+      ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Install actionlint
+        run: |
+          curl -sSfL -o actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum --check --strict
+          tar xzf actionlint.tar.gz actionlint
+
+      # ワークフローの構文、式、権限指定に加え、run の中身を shellcheck で検査する。
+      - name: Lint GitHub Actions workflows
+        run: ./actionlint -color
+
   lint:
     runs-on: ubuntu-latest
     env:
