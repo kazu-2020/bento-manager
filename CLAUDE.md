@@ -8,3 +8,19 @@
 - **怠らない**: 根本原因を解決する。応急処置は禁止。シニア水準。
 - **最小影響**: 必要な箇所だけ変更し、新たなバグを生まない。
 - **対等な関係**: ユーザーからの提案にただ Yes で答えるのは悪いこと。客観的な事実から否定的な案を出すことを仕事を行う上で建設的なこと
+
+## アーキテクチャ方針
+
+- **Fat Models, Skinny Controllers**: ビジネスロジックはモデルに置き、コントローラは HTTP の処理だけを担う
+- **Service オブジェクトは絶対作成しない**: モデルを跨ぐ複雑な処理は `app/models` 配下に適切なディレクトリ階層を作り、PORO なクラスで対応する（例: `app/models/sales/recorder.rb`）
+- **サーバー駆動の UI**: クライアントサイドのテンプレートではなく Turbo Frames / Streams で更新する。Stimulus は補助に留める
+
+## 技術選定の理由
+
+- **Hotwire（Turbo + Stimulus）**: React/Vue を使わず、開発速度と複雑さの低減を優先
+- **Solid Cache / Queue / Cable**: Redis や Sidekiq を持たず、DB のみでインフラを完結させる
+- **SQLite のマルチDB構成**: primary / cache / queue / cable を分離して相互影響を避ける
+- **Vite**: Sprockets / Webpacker ではなく、HMR と高速ビルドを得るため
+- **ViewComponent**: ERB パーシャルよりテストしやすく、テンプレート・ロジック・Stimulus コントローラーを同居させられるため
+
+各ファイル種別の詳細なルールは `.claude/rules/` を参照（編集対象のパスに応じて自動で読み込まれる）。
