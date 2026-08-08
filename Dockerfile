@@ -19,7 +19,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
 <<EOF bash -ex
   apt-get update -qq
-  apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3
+  apt-get install --no-install-recommends -y curl libjemalloc2 sqlite3
   ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so
 EOF
 
