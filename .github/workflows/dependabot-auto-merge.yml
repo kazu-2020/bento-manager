@@ -7,21 +7,18 @@ name: Dependabot auto-merge
 # 待機対象が無いため CI の結果と無関係にマージされる。この 2 つはセットで運用すること。
 on: pull_request_target
 
-# pull_request_target は fork からの PR でも書き込み権限を持つトークンで動くため、
-# 既定の権限を空にし、必要なジョブにだけ最小限を付与する。
+# pull_request_target は書き込み可能なトークンで動くため、既定では何も許可せず
+# ジョブ単位で必要な権限だけを付与する。
 permissions: {}
 
 jobs:
-  # サードパーティ製の action に書き込み権限のあるトークンを渡さないよう、
-  # メタデータの取得だけを読み取り専用のジョブに分離する。
+  # サードパーティの action を動かすジョブ。書き込み権限を持たせない。
   metadata:
     if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       pull-requests: read
-
     outputs:
       update-type: ${{ steps.metadata.outputs.update-type }}
 
@@ -34,19 +31,19 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+  # 書き込み権限を持つジョブ。実行するのは gh コマンドだけに限定する。
   # major を除外する否定形ではなく許可リストで判定する。update-type が空になる
   # ケース（更新種別を解決できなかった場合）に否定形だと条件が真になり素通りするため。
   auto-merge:
     needs: metadata
     if: contains(fromJSON('["version-update:semver-minor", "version-update:semver-patch"]'), needs.metadata.outputs.update-type)
     runs-on: ubuntu-latest
-
     permissions:
       contents: write
       pull-requests: write
 
     steps:
-      - name: Enable auto-merge
+      - name: Enable auto-merge for minor and patch updates
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
