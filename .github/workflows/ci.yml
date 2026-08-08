@@ -5,9 +5,14 @@ on:
   push:
     branches: [ main ]
 
+# 既定の権限は与えず、ジョブごとに必要な分だけ宣言する。
+permissions: {}
+
 jobs:
   scan_ruby:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -26,6 +31,9 @@ jobs:
 
   lint_workflows:
     runs-on: ubuntu-latest
+    # actionlint のリリース取得と attestation の検証は読み取り権限だけで足りる。
+    permissions:
+      contents: read
     env:
       ACTIONLINT_VERSION: 1.7.12
 
@@ -50,6 +58,8 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
@@ -76,6 +86,8 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     # services:
     #  redis:
