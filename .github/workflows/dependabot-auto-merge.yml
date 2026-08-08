@@ -1,8 +1,10 @@
 name: Dependabot auto-merge
 
-# Dependabot の PR のうち major 以外を auto-merge の対象にする。
-# auto-merge はブランチ保護の必須チェックが全て通ってからマージされるため、
-# CI が落ちた PR がそのまま入ることはない。
+# Dependabot の PR のうち minor / patch 更新を auto-merge の対象にする。
+#
+# auto-merge が待つのは Ruleset で「必須」に指定されたチェックだけで、CI 全体ではない。
+# main の Ruleset に scan_ruby / lint / test を必須チェックとして登録していない場合、
+# 待機対象が無いため CI の結果と無関係にマージされる。この 2 つはセットで運用すること。
 on: pull_request_target
 
 permissions:
@@ -23,8 +25,10 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      # major を除外する否定形ではなく許可リストで判定する。update-type が空になる
+      # ケース（更新種別を解決できなかった場合）に否定形だと条件が真になり素通りするため。
       - name: Enable auto-merge for minor and patch updates
-        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        if: contains(fromJSON('["version-update:semver-minor", "version-update:semver-patch"]'), steps.metadata.outputs.update-type)
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
