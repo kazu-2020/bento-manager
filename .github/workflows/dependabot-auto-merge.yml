@@ -1,0 +1,31 @@
+name: Dependabot auto-merge
+
+# Dependabot の PR のうち major 以外を auto-merge の対象にする。
+# auto-merge はブランチ保護の必須チェックが全て通ってからマージされるため、
+# CI が落ちた PR がそのまま入ることはない。
+on: pull_request_target
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      # グループ PR の場合、update-type にはグループ内で最も大きい更新種別が入る。
+      # major を 1 つでも含むグループは手動レビューに回る。
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge for minor and patch updates
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr merge --auto --squash "$PR_URL"
