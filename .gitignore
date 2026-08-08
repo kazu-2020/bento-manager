@@ -48,3 +48,6 @@ node_modules
 *.gem
 
 .superpowers/
+
+# Claude Code が作成する git worktree の実体
+/.claude/worktrees/
