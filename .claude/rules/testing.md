@@ -114,6 +114,90 @@ test "販売可能な商品には提供終了していないものだけが含�
 - enum のスコープ（`Catalog.bento`）、変更メソッド（`catalog.bento!`）→ `define_enum_for` でカバー
 - スコープのチェーン（`Catalog.available.bento`）→ Rails の ActiveRecord が保証
 
+### 5. フィクスチャは明示的に宣言する
+
+`fixtures :all` は使用しない。各テストクラスで必要なフィクスチャだけを宣言し、依存関係を可視化する。
+
+```ruby
+# 正しい例: 必要なフィクスチャのみ宣言
+class DailyInventoryTest < ActiveSupport::TestCase
+  fixtures :locations, :catalogs, :daily_inventories
+
+  test "..." do
+    inventory = daily_inventories(:city_hall_bento_a_today)
+  end
+end
+
+# 正しい例: 新規作成のみのテストは宣言不要
+class LocationTest < ActiveSupport::TestCase
+  test "name は一意" do
+    Location.create!(name: "テスト市役所A")
+  end
+end
+```
+
+フィクスチャは必要最小限のレコードにとどめ、`verified_employee` や `city_hall_bento_a_today` のように意図が読める名前を付ける。
+
+### 6. 状態変化は Rails のアサーションで検証する
+
+DB のレコード数や属性値の増減は、一時変数を使わず `assert_difference` / `assert_changes` で表現する。
+
+```ruby
+# 正しい例: レコード数の増減
+assert_difference "Sale.count" do
+  create_sale
+end
+
+# 正しい例: 数値の増減（ラムダ使用）
+assert_difference -> { inventory.reload.stock }, -3 do
+  inventory.decrement_stock!(3)
+end
+
+# 正しい例: from/to で具体値を指定
+assert_changes -> { inventory.reload.stock }, from: 10, to: 8 do
+  inventory.decrement_stock!(2)
+end
+
+# 正しい例: ネストでトランザクションのロールバックを検証
+assert_no_difference [ "Sale.count", "SaleItem.count" ] do
+  assert_no_changes -> { inventory.reload.stock } do
+    assert_raises ActiveRecord::RecordNotFound do
+      @recorder.record(@sale_params, invalid_items)
+    end
+  end
+end
+
+# 避けるべき例: 一時変数を使用
+initial_count = Sale.count
+create_sale
+assert_equal initial_count + 1, Sale.count
+```
+
+| ヘルパー | 用途 |
+|---------|------|
+| `assert_difference` / `assert_no_difference` | レコード数や数値の増減 |
+| `assert_changes` / `assert_no_changes` | 任意の属性値の変化（from/to 指定） |
+
+### 7. ViewComponent は render_inline で検証する
+
+コンポーネントテストは `ViewComponent::TestCase` を継承し、`test/components/{namespace}/{name}_component_test.rb` に配置する（コンポーネント本体のディレクトリ構造とは対応しない）。プレビューは `test/components/previews/` に置き、開発環境の `/lookbook` で確認する。
+
+```ruby
+# test/components/locations/list_component_test.rb
+class Locations::ListComponentTest < ViewComponent::TestCase
+  def test_renders_grid_with_locations
+    result = render_inline(Locations::List::Component.new(locations: [ @location1 ]))
+
+    assert_predicate result.css(".grid"), :present?
+    assert_includes result.to_html, @location1.name
+  end
+end
+```
+
+共通のテストヘルパーは `test/support/` に置く（`test_helper.rb` で自動読み込み済み）。
+
+`t()` はレンダリング前に呼ぶと `TranslateCalledBeforeRenderError` になる。`render_inline` を先に実行してからメソッド経由でデータを参照する。
+
 ## 理由
 
 1. **仕様書としての価値**: テスト名がそのままドキュメントになる
