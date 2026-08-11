@@ -24,3 +24,17 @@
 - **ViewComponent**: ERB パーシャルよりテストしやすく、テンプレート・ロジック・Stimulus コントローラーを同居させられるため
 
 各ファイル種別の詳細なルールは `.claude/rules/` を参照（編集対象のパスに応じて自動で読み込まれる）。
+
+## Agent skills
+
+### Issue tracker
+
+イシューは GitHub Issues（`kazu-2020/bento-manager`）で管理し、`gh` CLI で操作する。詳細は `docs/agents/issue-tracker.md` を参照。
+
+### Triage labels
+
+triage の 5 つのラベルはデフォルト名をそのまま使用する。詳細は `docs/agents/triage-labels.md` を参照。
+
+### Domain docs
+
+single-context 構成（ルートの `CONTEXT.md` + `docs/adr/`）。詳細は `docs/agents/domain.md` を参照。
