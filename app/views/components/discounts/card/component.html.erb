@@ -1,4 +1,4 @@
-<% card = capture do %>
+<%= component "status_indicator", flagged: expired?, label: t(".status.expired") do %>
   <%= link_to show_path, class: card_classes, data: { turbo_frame: "_top" } do %>
     <div class="card-body p-4 gap-3">
       <h3 class="card-title text-base font-bold line-clamp-1">
@@ -17,15 +17,4 @@
       </div>
     </div>
   <% end %>
-<% end %>
-
-<% if expired? %>
-  <div class="indicator w-full">
-    <span class="indicator-item indicator-center indicator-middle badge badge-error badge-soft font-bold z-10">
-      <%= t(".status.expired") %>
-    </span>
-    <%= card %>
-  </div>
-<% else %>
-  <%= card %>
 <% end %>

@@ -1,0 +1,11 @@
+<%# バッジは装飾扱い。pointer-events-none で下のカードリンクへクリックを素通しする %>
+<% if flagged? %>
+  <div class="indicator w-full">
+    <span class="indicator-item indicator-center indicator-middle badge badge-error badge-soft font-bold z-10 pointer-events-none">
+      <%= label %>
+    </span>
+    <%= content %>
+  </div>
+<% else %>
+  <%= content %>
+<% end %>
