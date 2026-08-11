@@ -1,11 +1,11 @@
 default: &default
   adapter: sqlite3
-  # データベース接続プールの最大接続数（デフォルト: 5）
-  # RAILS_MAX_THREADS環境変数で設定可能（Pumaのスレッド数と同じ変数を参照）
-  # Pumaのスレッド数（config/puma.rbのデフォルトは3）以上であればスレッドが
-  # 接続待ちでブロックされない。デフォルト5はその余裕を意図的に取っている
+  # データベース接続プールの最大接続数
+  # RAILS_MAX_THREADS環境変数で設定可能（Pumaと同じ変数を参照）
+  # Pumaのスレッド数（config/puma.rb）以上であればスレッドが接続待ちでブロックされない。
+  # 未設定時はプール5 / Pumaスレッド3となり、この差は意図的に取った余裕
   # NOTE: Rails 8.1でpool:はmax_connections:にリネームされた（pool:は8.2で削除予定）。
-  #       max_connections:が正しいキーであり、pool:に戻してはならない
+  #       pool:に戻してはならない
   max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
   # データベースロック待機のタイムアウト（ミリ秒）
   # SQLiteの書き込みロック待ちでブロックされた場合の最大待機時間
