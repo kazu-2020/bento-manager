@@ -4,9 +4,11 @@ CI.run do
   step "Setup", "bin/setup --skip-server"
 
   step "Style: Ruby", "bin/rubocop"
+  step "Style: ERB", "npm run herb:lint"
 
   step "Security: Gem audit", "bin/bundler-audit"
-  # step "Security: Yarn vulnerability audit", "yarn audit"
+  # JS 側の依存監査はローカルでは意図的に行わない。GitHub の dependency-review-action が
+  # PR の依存差分だけを見るため、手元で全依存を監査しても PR で落ちる条件と一致しない。
   step "Security: Brakeman code analysis", "bin/brakeman --quiet --no-pager --exit-on-warn --exit-on-error"
   step "Tests: Rails", "bin/rails test"
   step "Tests: Seeds", "env RAILS_ENV=test bin/rails db:seed:replant"

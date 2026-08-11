@@ -29,6 +29,24 @@ jobs:
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
 
+  # PR で追加・更新された依存だけを GitHub Advisory と突き合わせる。既存の
+  # 脆弱性では落ちないので、bundler-audit と違って CI が赤いまま固定されない。
+  # dependency graph を使う都合上 pull_request でしか動かせない。
+  dependency_review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+
   lint_workflows:
     runs-on: ubuntu-latest
     # actionlint のリリース取得と attestation の検証は読み取り権限だけで足りる。
@@ -84,6 +102,27 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  herb_lint:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      - name: Lint ERB templates
+        run: npm run herb:lint
+
   test:
     runs-on: ubuntu-latest
     permissions:
@@ -127,3 +166,28 @@ jobs:
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
+
+  # db/seeds.rb はテストから呼ばれないため、壊れても通常のテストでは気付けない。
+  # 空の DB に流し直して投入できることだけを独立して確認する。
+  seeds:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Load seeds into a freshly prepared database
+        env:
+          RAILS_ENV: test
+        # 同一プロセスでチェーンすると db:test:prepare 後のコネクションが古いスキーマを
+        # 掴んだままになり seed が落ちるため、rails は 2 回に分けて起動する。
+        run: |
+          bin/rails db:test:prepare
+          bin/rails db:seed:replant
