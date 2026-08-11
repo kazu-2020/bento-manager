@@ -238,4 +238,11 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
     assert_equal({ "error" => I18n.t("catalogs.errors.invalid_category") }, response.parsed_body)
   end
+
+  # 引退は discontinuation で表現するため destroy ルートは持たない
+  test "DELETE /catalogs/:id is not routable" do
+    assert_raises(ActionController::RoutingError) do
+      Rails.application.routes.recognize_path("/catalogs/1", method: :delete)
+    end
+  end
 end
