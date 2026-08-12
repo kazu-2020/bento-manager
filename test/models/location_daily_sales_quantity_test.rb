@@ -42,12 +42,14 @@ class LocationDailySalesQuantityTest < ActiveSupport::TestCase
   end
 
   test "1ヶ月より前の販売は集計に含まれない" do
-    old_sale = create_sale(location: @location, customer_type: :staff, sale_datetime: 2.months.ago)
+    sale_date = 2.months.ago
+
+    old_sale = create_sale(location: @location, customer_type: :staff, sale_datetime: sale_date)
     create_sale_item(sale: old_sale, quantity: 10)
 
     result = @location.daily_sales_quantity
 
-    assert_nil result[[ 2.months.ago.to_date.to_s, "staff" ]]
+    assert_nil result[[ sale_date.to_date.to_s, "staff" ]]
   end
 
   test "販売データがない販売先は空のハッシュを返す" do
