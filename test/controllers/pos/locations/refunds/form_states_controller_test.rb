@@ -54,8 +54,6 @@ module Pos
           login_as_employee(@employee)
           post_form_state(corrected: { @bento_a => 0 }, coupon: { @fifty_yen => 0 })
 
-          assert_response :success
-
           [
             "corrected-item-#{@bento_a.id}",
             "refund-preview",
@@ -63,8 +61,7 @@ module Pos
             "refund-submit-button",
             "ghost-form"
           ].each do |target|
-            assert_equal 1, turbo_stream_targets.count(target),
-                         "turbo_stream に #{target} の置き換えが1件含まれること"
+            assert_turbo_stream action: "replace", target: target
           end
         end
 
@@ -109,10 +106,14 @@ module Pos
           login_as_employee(@employee)
           post_form_state(corrected: { @bento_a => 0, @bento_b => 2 }, coupon: { @fifty_yen => 0 })
 
-          assert_response :success
-          assert_equal "0", ghost_form_value("ghost_refund[corrected][#{@bento_a.id}][quantity]")
-          assert_equal "2", ghost_form_value("ghost_refund[corrected][#{@bento_b.id}][quantity]")
-          assert_equal "0", ghost_form_value("ghost_refund[coupon][#{@fifty_yen.id}][quantity]")
+          assert_turbo_stream action: "replace", target: "ghost-form" do
+            assert_select "template input[name=?][value=?]",
+                          "ghost_refund[corrected][#{@bento_a.id}][quantity]", "0"
+            assert_select "template input[name=?][value=?]",
+                          "ghost_refund[corrected][#{@bento_b.id}][quantity]", "2"
+            assert_select "template input[name=?][value=?]",
+                          "ghost_refund[coupon][#{@fifty_yen.id}][quantity]", "0"
+          end
         end
 
         private
@@ -126,28 +127,7 @@ module Pos
         def post_form_state(location: @location, sale: @sale, corrected: {}, coupon: {})
           post pos_location_refunds_form_state_path(location, sale_id: sale.id),
                params: { ghost_refund: refund_quantity_params(corrected:, coupon:) },
-               headers: { "Accept" => "text/vnd.turbo-stream.html" }
-        end
-
-        # レスポンスに含まれる turbo_stream の置き換え対象 ID
-        #
-        # @return [Array<String>]
-        def turbo_stream_targets
-          response_document.css("turbo-stream[action='replace']").map { |el| el["target"] }
-        end
-
-        # 再描画された Ghost Form の hidden field の値
-        #
-        # @param name [String] input の name 属性
-        # @return [String, nil]
-        def ghost_form_value(name)
-          response_document
-            .at_css("turbo-stream[target='ghost-form'] template input[name='#{name}']")
-            &.[]("value")
-        end
-
-        def response_document
-          Nokogiri::HTML5.fragment(response.body)
+               as: :turbo_stream
         end
       end
     end
