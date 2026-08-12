@@ -1,7 +1,7 @@
 require "test_helper"
 
 class RefundTest < ActiveSupport::TestCase
-  fixtures :locations, :employees, :sales
+  fixtures :locations, :employees, :sales, :refunds
 
   test "validations" do
     @subject = Refund.new(
@@ -21,5 +21,15 @@ class RefundTest < ActiveSupport::TestCase
     must belong_to(:original_sale).class_name("Sale")
     must belong_to(:corrected_sale).class_name("Sale").optional
     must belong_to(:employee).optional
+  end
+
+  test "返金記録が残っている販売は削除できない" do
+    sale = sales(:voided_sale)
+
+    assert_no_difference [ "Sale.count", "Refund.count" ] do
+      assert_not sale.destroy
+    end
+
+    assert_predicate sale.errors[:base], :present?
   end
 end

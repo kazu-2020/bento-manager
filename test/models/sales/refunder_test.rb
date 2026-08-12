@@ -355,5 +355,91 @@ module Sales
       # 差額: 500 - 450 = 50（返金）
       assert_equal 50, result[:refund_amount]
     end
+
+    # === 割引を明示指定する経路（コントローラが常に通す経路）===
+    #
+    # discount_quantities を省略すると元の販売の割引が引き継がれる。
+    # コントローラは常に修正後のクーポン枚数を明示的に渡すため、
+    # 引き継ぎではなく指定値が使われることを検証する。
+
+    test "クーポンを外して同じ商品を買い直すとクーポン分が追加徴収される" do
+      recorder = Sales::Recorder.new
+      sale = recorder.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        discount_quantities: { discounts(:fifty_yen_discount).id => 1 }
+      )
+
+      assert_equal 500, sale.final_amount
+
+      refunder = Sales::Refunder.new
+      result = refunder.process(
+        sale: sale,
+        corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        employee: @employee,
+        discount_quantities: {}
+      )
+
+      corrected_sale = result[:corrected_sale]
+      # クーポンが引き継がれず弁当A(550円)のみ
+      assert_equal 550, corrected_sale.final_amount
+      assert_empty corrected_sale.sale_discounts
+
+      # 差額: 500 - 550 = -50（追加徴収）
+      assert_equal(-50, result[:refund_amount])
+    end
+
+    test "クーポンを新たに適用して買い直すとクーポン分が返金される" do
+      recorder = Sales::Recorder.new
+      sale = recorder.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 } ]
+      )
+
+      assert_equal 550, sale.final_amount
+
+      refunder = Sales::Refunder.new
+      result = refunder.process(
+        sale: sale,
+        corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        employee: @employee,
+        discount_quantities: { discounts(:fifty_yen_discount).id => 1 }
+      )
+
+      corrected_sale = result[:corrected_sale]
+      # 元の販売にはなかったクーポンが適用される
+      assert_equal 500, corrected_sale.final_amount
+      assert_equal 1, corrected_sale.sale_discounts.count
+
+      # 差額: 550 - 500 = 50（返金）
+      assert_equal 50, result[:refund_amount]
+    end
+
+    test "弁当A+クーポン(500円)を弁当B(500円)に交換すると差額なしになる" do
+      recorder = Sales::Recorder.new
+      sale = recorder.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        discount_quantities: { discounts(:fifty_yen_discount).id => 1 }
+      )
+
+      assert_equal 500, sale.final_amount
+
+      refunder = Sales::Refunder.new
+      result = refunder.process(
+        sale: sale,
+        corrected_items: [ { catalog: @catalog_bento_b, quantity: 1 } ],
+        employee: @employee,
+        discount_quantities: {}
+      )
+
+      corrected_sale = result[:corrected_sale]
+
+      assert_equal 500, corrected_sale.final_amount
+
+      # 差額: 500 - 500 = 0（等価交換）
+      assert_predicate result[:refund_amount], :zero?
+      assert_equal 0, result[:refund].amount
+    end
   end
 end

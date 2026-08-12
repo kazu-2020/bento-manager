@@ -15,7 +15,7 @@ module Pos
       end
 
       def create
-        @form = build_form(submitted_params(:refund).merge("_submitting" => "true"))
+        @form = build_form(submitted_params(:refund))
 
         unless @form.valid?
           flash.now[:alert] = t(".missing_requirements")
