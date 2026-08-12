@@ -11,7 +11,7 @@ module Pos
         before_action :set_discounts
 
         def create
-          @form = build_form(submitted_params(:ghost_cart, **::Sales::CartForm::SUBMITTED_PARAMS_SHAPE))
+          @form = build_form(submitted_params(:ghost_cart, form: ::Sales::CartForm))
 
           respond_to do |format|
             format.turbo_stream

@@ -10,7 +10,7 @@ module Pos
         before_action :set_catalogs
 
         def create
-          @form = build_form(submitted_params(:ghost_inventory))
+          @form = build_form(submitted_params(:ghost_inventory, form: ::DailyInventories::InventoryForm))
 
           respond_to do |format|
             format.turbo_stream

@@ -18,7 +18,7 @@ module Pos
       end
 
       def create
-        @form = build_form(submitted_params(:order))
+        @form = build_form(submitted_params(:order, form: ::AdditionalOrders::OrderForm))
 
         if @form.save(employee: current_employee)
           redirect_to pos_location_additional_orders_path(@location),

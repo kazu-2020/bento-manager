@@ -11,7 +11,7 @@ module Pos
           before_action :set_catalogs
 
           def create
-            @form = build_form(submitted_params(:ghost_inventory))
+            @form = build_form(submitted_params(:ghost_inventory, form: ::DailyInventories::CorrectionForm))
 
             respond_to do |format|
               # 新規登録と同じ turbo_stream テンプレートを共有

@@ -9,7 +9,7 @@ module Pos
         before_action :set_location
 
         def create
-          @form = build_form(submitted_params(:ghost_order))
+          @form = build_form(submitted_params(:ghost_order, form: ::AdditionalOrders::OrderForm))
 
           respond_to do |format|
             format.turbo_stream

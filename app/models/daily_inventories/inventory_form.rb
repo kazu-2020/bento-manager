@@ -5,7 +5,11 @@ module DailyInventories
     include ActiveModel::Model
     include ActiveModel::Attributes
     include Rails.application.routes.url_helpers
+
     include ItemSelectable
+
+    # submitted は全キーが商品 ID の group（GhostForms::ParamsFilter が使う）
+    SUBMITTED_PARAMS_SHAPE = {}.freeze
 
     attr_reader :items, :location, :created_count, :search_query
 

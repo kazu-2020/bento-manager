@@ -59,10 +59,10 @@ refund[items][<id>][quantity]       → ghost_refund[items][<id>][quantity]
 
 ```ruby
 # FormStatesController（Ghost Form 受信）
-@form = build_form(submitted_params(:ghost_cart, **::Sales::CartForm::SUBMITTED_PARAMS_SHAPE))
+@form = build_form(submitted_params(:ghost_cart, form: ::Sales::CartForm))
 
 # SalesController（メインフォーム受信）
-@form = build_form(submitted_params(:cart, **::Sales::CartForm::SUBMITTED_PARAMS_SHAPE))
+@form = build_form(submitted_params(:cart, form: ::Sales::CartForm))
 ```
 
 `build_form` / `set_*` は両コントローラーで共有するため concern に切り出す（例: [refund_form_buildable.rb](app/controllers/concerns/refund_form_buildable.rb)）。
@@ -70,46 +70,22 @@ refund[items][<id>][quantity]       → ghost_refund[items][<id>][quantity]
 ### 4. パラメータは SubmittedParamsFilterable 経由で取り出す
 
 送信キーが catalog_id や discount_id で実行時にしか決まらないため `permit` のホワイトリストを静的に書けない。
-[submitted_params_filterable.rb](app/controllers/concerns/submitted_params_filterable.rb) を include し、`submitted_params` で構造を検証して取り出す。`to_unsafe_h` を直接呼んではいけない。
-
-受け取れる構造は 3 種類だけ。
-
-| 種類 | 例 | 宣言 |
-| --- | --- | --- |
-| scalar | `cart["customer_type"]` | `scalar_keys` |
-| group | `cart["<catalog_id>"]["quantity"]` | 宣言なし（既定） |
-| collection | `cart["coupon"]["<discount_id>"]["quantity"]` | `collection_keys` |
-
-これに加えて 2 つの制約がかかる。
-
-- **group と collection のキーは数値に限る**。ID 以外を許すとフォーム側の `transform_keys(&:to_i)` が `"abc"` を 0 に潰し、存在しない商品を変更ありと誤判定する
-- **葉は `String` か `Numeric` に限る**。フォーム側は葉に `.to_i` / `.to_s` を掛けるため、JSON ボディで `true` を送られると `true.to_i` が NoMethodError になる
-
-宣言はフォームオブジェクト側に `SUBMITTED_PARAMS_SHAPE` として置き、コントローラーはそれを展開して渡す。
-どの位置に何が来るかを知っているのは submitted を読むフォームなので、宣言もそこに置く。
+`SubmittedParamsFilterable` を include し、フォームクラスを渡して取り出す。`to_unsafe_h` を直接呼んではいけない。
 
 ```ruby
-# app/models/sales/cart_form.rb
+# app/models/sales/cart_form.rb — どの位置に何が来るかはフォームが宣言する
 SUBMITTED_PARAMS_SHAPE = {
   scalar_keys: %w[customer_type],
   collection_keys: %w[coupon]
 }.freeze
 
 # app/controllers/pos/locations/sales_controller.rb
-class SalesController < ApplicationController
-  include SubmittedParamsFilterable
-  # ...
-  @form = build_form(submitted_params(:cart, **::Sales::CartForm::SUBMITTED_PARAMS_SHAPE))
-end
+@form = build_form(submitted_params(:cart, form: ::Sales::CartForm))
 ```
 
-宣言と型が合わない値は黙って破棄される（戻り値は `HashWithIndifferentAccess`）。
-**深さから型を推測してはいけない**。位置ごとに型を固定しないと、宣言のない位置に scalar が紛れ込み、
-`v["quantity"]` が `Integer#[]` の TypeError になって 500 する。JSON ボディなら数値も送れるため、
-form-encoded しか来ない前提も置けない。
-
-フォームが新しく `submitted["foo"]` を読むようになったら `SUBMITTED_PARAMS_SHAPE` の更新が必須。
-忘れると値が黙って捨てられる。
+宣言と合わない値は黙って破棄される。フォームが新しく `submitted["foo"]` を読むようになったら
+`SUBMITTED_PARAMS_SHAPE` の更新が必須で、忘れると値が捨てられる。
+検証できる構造と、そう決めた理由は [params_filter.rb](app/models/ghost_forms/params_filter.rb) に書いてある。
 
 ### 5. Turbo Stream で Ghost Form 自身も差し替える
 

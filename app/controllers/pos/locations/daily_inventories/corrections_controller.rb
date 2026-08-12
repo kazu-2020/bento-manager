@@ -19,7 +19,7 @@ module Pos
         end
 
         def create
-          @form = build_form(submitted_params(:inventory))
+          @form = build_form(submitted_params(:inventory, form: ::DailyInventories::CorrectionForm))
 
           if @form.save
             redirect_to new_pos_location_sale_path(@location),
