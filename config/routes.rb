@@ -42,7 +42,7 @@ Rails.application.routes.draw do
   # 共有リソース（Admin と Employee 両方がアクセス可能）
   resources :locations, except: [ :destroy ]
   resources :discounts, except: [ :destroy ]
-  resources :catalogs do
+  resources :catalogs, except: [ :destroy ] do
     resource :discontinuation, only: %i[new create], controller: "catalogs/discontinuations"
     resources :catalog_prices, only: %i[edit update], param: :kind
   end
