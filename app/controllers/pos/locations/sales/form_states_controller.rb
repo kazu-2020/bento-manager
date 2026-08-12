@@ -4,12 +4,14 @@ module Pos
   module Locations
     module Sales
       class FormStatesController < ApplicationController
+        include SubmittedParamsFilterable
+
         before_action :set_location
         before_action :set_inventories
         before_action :set_discounts
 
         def create
-          @form = build_form(submitted_params(:ghost_cart))
+          @form = build_form(submitted_params(:ghost_cart, **::Sales::CartForm::SUBMITTED_PARAMS_SHAPE))
 
           respond_to do |format|
             format.turbo_stream
@@ -40,12 +42,6 @@ module Pos
             discounts: @discounts,
             submitted: submitted
           )
-        end
-
-        def submitted_params(key)
-          return {} unless params[key]
-
-          params[key].to_unsafe_h
         end
       end
     end

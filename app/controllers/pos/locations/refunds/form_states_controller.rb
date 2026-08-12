@@ -11,7 +11,9 @@ module Pos
         before_action :set_inventories
 
         def create
-          @form = build_form(submitted_params(:ghost_refund))
+          @form = build_form(
+            submitted_params(:ghost_refund, **::Refunds::RefundForm::SUBMITTED_PARAMS_SHAPE)
+          )
 
           respond_to do |format|
             format.turbo_stream

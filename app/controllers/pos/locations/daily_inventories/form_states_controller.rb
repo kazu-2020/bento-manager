@@ -4,6 +4,8 @@ module Pos
   module Locations
     module DailyInventories
       class FormStatesController < ApplicationController
+        include SubmittedParamsFilterable
+
         before_action :set_location
         before_action :set_catalogs
 
@@ -30,12 +32,6 @@ module Pos
           ::DailyInventories::InventoryForm.new(
             location: @location, items: items, search_query: params[:search_query]
           )
-        end
-
-        def submitted_params(key)
-          return {} unless params[key]
-
-          params[key].to_unsafe_h
         end
       end
     end

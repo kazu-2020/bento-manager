@@ -134,6 +134,46 @@ module Pos
           assert_response :success
         end
 
+        # ============================================================
+        # 不正パラメータ耐性
+        # ============================================================
+
+        test "構造が壊れたカートを送られても画面は通常どおり再描画される" do
+          login_as_employee(@employee)
+
+          post pos_location_sales_form_state_path(@location),
+               params: {
+                 ghost_cart: {
+                   @bento_a.id.to_s => "商品ごとのハッシュではなく文字列",
+                   "coupon" => [ "ハッシュではなく配列" ],
+                   "customer_type" => "staff"
+                 }
+               },
+               headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+          assert_response :success
+          assert_match "price-breakdown", response.body
+        end
+
+        test "JSON ボディで数量の位置に数値や真偽値を送られても画面は通常どおり再描画される" do
+          login_as_employee(@employee)
+
+          post pos_location_sales_form_state_path(@location),
+               params: {
+                 ghost_cart: {
+                   "coupon" => { "5" => 3, "6" => { "quantity" => true } },
+                   "7" => { "quantity" => nil }
+                 }
+               }.to_json,
+               headers: {
+                 "Accept" => "text/vnd.turbo-stream.html",
+                 "Content-Type" => "application/json"
+               }
+
+          assert_response :success
+          assert_match "price-breakdown", response.body
+        end
+
         test "returns 404 for inactive location" do
           login_as_employee(@employee)
           inactive_location = locations(:prefectural_office)

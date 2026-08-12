@@ -3,6 +3,8 @@
 module Pos
   module Locations
     class DailyInventoriesController < ApplicationController
+      include SubmittedParamsFilterable
+
       before_action :set_location
       before_action :set_catalogs
 
@@ -40,12 +42,6 @@ module Pos
       def build_form(submitted = {})
         items = ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
         ::DailyInventories::InventoryForm.new(location: @location, items: items)
-      end
-
-      def submitted_params(key)
-        return {} unless params[key]
-
-        params[key].to_unsafe_h
       end
     end
   end

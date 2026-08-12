@@ -4,6 +4,8 @@ module Pos
   module Locations
     module DailyInventories
       class CorrectionsController < ApplicationController
+        include SubmittedParamsFilterable
+
         before_action :set_location
         before_action :set_catalogs
 
@@ -49,12 +51,6 @@ module Pos
             ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
           end
           ::DailyInventories::CorrectionForm.new(location: @location, items: items)
-        end
-
-        def submitted_params(key)
-          return {} unless params[key]
-
-          params[key].to_unsafe_h
         end
       end
     end
