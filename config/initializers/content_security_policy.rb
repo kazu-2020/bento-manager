@@ -15,13 +15,14 @@ Rails.application.configure do
     # JS も自ドメインのみ。Chartkick が出すインラインスクリプトは nonce で許可する
     policy.script_src :self
 
-    # Google Fonts のスタイルシートと本体。
+    # 外部から読むのは Google Fonts だけなので、:https ではなく配信元だけを許可する
+    # （スタイルシートは fonts.googleapis.com、フォント本体は fonts.gstatic.com）。
     # 棒グラフの幅と Icon の CSS 変数を style 属性で渡しているため 'unsafe_inline' が要る。
     # style 属性だけを許す style_src_attr もあるが、非対応ブラウザでは style-src に
     # フォールバックして style 属性が丸ごと効かなくなる。CSS による情報漏洩の経路は
     # img_src が :self に絞られていて塞がっているので、互換性を優先して style-src 側で許可する。
-    policy.style_src :self, :https, :unsafe_inline
-    policy.font_src  :self, :https, :data
+    policy.style_src :self, "https://fonts.googleapis.com", :unsafe_inline
+    policy.font_src  :self, "https://fonts.gstatic.com", :data
 
     if Rails.env.development?
       # @vite/client が HMR でアセットを配信・接続できるようにする

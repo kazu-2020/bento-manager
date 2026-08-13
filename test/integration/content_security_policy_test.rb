@@ -38,7 +38,8 @@ class ContentSecurityPolicyTest < ActionDispatch::IntegrationTest
 
     assert_equal 1, header_nonces.size, "script-src に nonce が 1 つ含まれること"
 
-    inline_nonces = css_select("script[nonce]").map { |script| "'nonce-#{script["nonce"]}'" }
+    # src 付きは nonce が無くても :self で通るので、検証対象はインラインだけに絞る
+    inline_nonces = css_select("script[nonce]:not([src])").map { |script| "'nonce-#{script["nonce"]}'" }
 
     assert_not_empty inline_nonces, "グラフのインラインスクリプトが描画されていること"
     assert_equal header_nonces, inline_nonces.uniq, "インラインスクリプトの nonce がヘッダーと一致すること"
@@ -49,9 +50,10 @@ class ContentSecurityPolicyTest < ActionDispatch::IntegrationTest
 
     assert_response :success
 
-    nonce = csp_directives["script-src"].grep(/\A'nonce-/).first
+    nonces = csp_directives["script-src"].grep(/\A'nonce-/)
 
-    assert_not_equal "'nonce-'", nonce, "空の nonce はどのインラインスクリプトとも一致しない"
+    assert_equal 1, nonces.size, "nonce が欠落していると .first が nil になり、空文字の検査をすり抜ける"
+    assert_not_equal "'nonce-'", nonces.first, "空の nonce はどのインラインスクリプトとも一致しない"
   end
 
   # CSP はレスポンスヘッダーなので、ブラウザは document を読み込んだ時点の nonce を
