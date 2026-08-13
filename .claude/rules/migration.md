@@ -85,6 +85,8 @@ SQLite は CHECK 制約の追加・外部キーの変更・カラムの型や照
 | 外側トランザクションなし（上流テストと同条件） | 残る |
 | 外側トランザクションあり（マイグレーションの既定） | **消える** |
 
+マイグレーション経路の修正は [rails/rails#57128](https://github.com/rails/rails/pull/57128) で提案されているが、2026-08 時点で **open のまま**。本番でのデータ消失報告が複数寄せられている既知の不具合であり、`ON DELETE SET NULL` では外部キー列の破損も起きる。この PR がマージされるまで `disable_ddl_transaction!` は外せない。
+
 ```ruby
 # 必須: テーブル再作成を伴うマイグレーション
 class AddCheckConstraints < ActiveRecord::Migration[8.1]
@@ -95,15 +97,23 @@ end
 
 これを怠ると子テーブルが全件削除される。**例外も `PRAGMA foreign_key_check` の警告も出ない**ため、本番で気づく手段がない。
 
-対象となる操作:
+対象となる操作（Rails 8.1.3.1 の `sqlite3_adapter.rb` で確認）:
 
 | 操作 | 再作成 |
 | --- | --- |
 | `add_check_constraint` / `remove_check_constraint` | する |
 | `add_foreign_key` / `remove_foreign_key` | する |
-| `change_column`（型・`collation`・`null` の変更） | する |
+| `change_column` / `change_column_default` / `change_column_null` | する |
+| `remove_column` / `remove_columns` | する |
+| `rename_column` | する |
+| `add_timestamps` | する |
+| `add_column` | **条件付き**（下記） |
 | `add_index` / `remove_index` | しない |
-| `add_column` / `remove_column` | しない |
+| `rename_table` | しない |
+
+`add_column` が再作成するのは `invalid_alter_table_type?` が真になる場合、すなわち主キーの追加、**`null: false` を `default` なしで指定した場合**、`virtual` かつ `stored` の列を足す場合。`null: false` は日常的に書くので、実質「多くの `add_column` は再作成する」と考えたほうがよい。
+
+「カラムを 1 本足すだけ」「NOT NULL に変えるだけ」のような軽い変更でも子テーブルが全消えするため、**再作成しない操作だけで構成されていると確信できない限り `disable_ddl_transaction!` を付ける**。
 
 `disable_ddl_transaction!` を付けるとマイグレーション全体の原子性は失われるが、個々の再作成は内部で自前のトランザクションを張るため途中状態のテーブルは生まれない。データ起因で失敗しうる変更（CHECK 制約の追加など）は、実行前に違反行がないことを検査してから進めること。
 
