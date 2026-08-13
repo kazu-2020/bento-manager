@@ -44,8 +44,11 @@ module Pos
           @existing_inventories ||= @location.today_inventories.index_by(&:catalog_id)
         end
 
-        def build_form(submitted = {})
-          items = if submitted.empty?
+        # 送信の有無で分岐する。フィルタ後の中身で分岐すると、不正なパラメータだけの
+        # 送信が空に畳まれて既存在庫からの再構築に化け、拒否すべき要求が
+        # bulk_recreate による破壊的な書き込みを行ってしまう。
+        def build_form(submitted = nil)
+          items = if submitted.nil?
             ::DailyInventories::ItemBuilder.from_inventories(@catalogs, existing_inventories)
           else
             ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)

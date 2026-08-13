@@ -67,10 +67,13 @@ module GhostForms
         ID_KEY.match?(name)
       end
 
-      # 葉はフォーム側で `.to_i` / `.to_s` を掛けられるため、それに応答する型に限る。
-      # ActionController の PERMITTED_SCALAR_TYPES は Date や IO まで含むので流用できない。
+      # 葉は String に限る。form-encoded の HTTP は常に String を返すので実害はなく、
+      # 型変換はフォーム側の責務にできる。JSON ボディなら数値も真偽値も送れてしまい、
+      # 葉に掛かる `.to_i` や `.to_sym` が NoMethodError で 500 する
+      # （`true.to_i` / `1.to_sym`）。ActionController の PERMITTED_SCALAR_TYPES は
+      # Date や IO まで含むので流用できない。
       def scalar?(value)
-        value.is_a?(String) || value.is_a?(Numeric)
+        value.is_a?(String)
       end
     end
   end

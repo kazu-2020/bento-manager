@@ -76,10 +76,16 @@ module GhostForms
       assert_equal({ "12" => {} }, filtered)
     end
 
-    test "drops leaves that do not respond to the coercions the forms apply" do
-      filtered = filter({ "12" => { "quantity" => true, "stock" => nil, "selected" => "1" } })
+    test "drops leaves that are not strings" do
+      filtered = filter({ "12" => { "quantity" => true, "stock" => nil, "count" => 3, "selected" => "1" } })
 
       assert_equal({ "12" => { "selected" => "1" } }, filtered)
+    end
+
+    test "drops declared scalars that are not strings" do
+      filtered = filter({ "customer_type" => 1 }, **CART_SHAPE)
+
+      assert_equal({}, filtered)
     end
 
     test "returns an empty hash when the node is missing or not a hash" do

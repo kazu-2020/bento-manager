@@ -77,6 +77,21 @@ module Pos
           assert_match "販売が開始されているため", response.body
         end
 
+        test "不正なパラメータだけの再登録は既存の在庫を作り直さずエラーになる" do
+          login_as_employee(@employee)
+          existing = DailyInventory.create!(
+            location: @location, catalog: @bento_a,
+            inventory_date: Date.current, stock: 10, reserved_stock: 3
+          )
+
+          assert_no_changes -> { existing.reload.attributes } do
+            post pos_location_daily_inventories_correction_path(@location),
+                 params: { inventory: { "abc" => { selected: "1", stock: "1" } } }
+          end
+
+          assert_response :unprocessable_entity
+        end
+
         test "登録がない場合は新規登録ページにリダイレクトされる" do
           login_as_employee(@employee)
 

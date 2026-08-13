@@ -186,6 +186,24 @@ module Pos
         assert_response :unprocessable_entity
       end
 
+      # 不正な顧客区分は未送信と同じ扱いに畳まれ、既定の staff にフォールバックする
+      test "顧客区分に文字列以外を送られても既定の区分で販売が記録される" do
+        login_as_employee(@employee)
+
+        assert_difference "Sale.count", 1 do
+          post pos_location_sales_path(@location),
+               params: {
+                 cart: {
+                   @bento_a.id.to_s => { quantity: "1" },
+                   customer_type: 1
+                 }
+               }.to_json,
+               headers: { "Content-Type" => "application/json" }
+        end
+
+        assert_predicate Sale.order(:id).last, :staff?
+      end
+
       test "create fails with insufficient stock" do
         login_as_employee(@employee)
         inventory = daily_inventories(:city_hall_bento_a_today)
