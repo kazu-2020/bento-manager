@@ -59,23 +59,35 @@ refund[items][<id>][quantity]       → ghost_refund[items][<id>][quantity]
 
 ```ruby
 # FormStatesController（Ghost Form 受信）
-@form = build_form(submitted_params(:ghost_cart))
+@form = build_form(submitted_params(:ghost_cart, form: ::Sales::CartForm))
 
 # SalesController（メインフォーム受信）
-@form = build_form(submitted_params(:cart))
+@form = build_form(submitted_params(:cart, form: ::Sales::CartForm))
 ```
 
-`build_form` / `submitted_params` / `set_*` は両コントローラーで共有するため concern に切り出す（例: [refund_form_buildable.rb](app/controllers/concerns/refund_form_buildable.rb)）。
+`build_form` / `set_*` は両コントローラーで共有するため concern に切り出す（例: [refund_form_buildable.rb](app/controllers/concerns/refund_form_buildable.rb)）。
+
+### 4. パラメータは SubmittedParamsFilterable 経由で取り出す
+
+送信キーが catalog_id や discount_id で実行時にしか決まらないため `permit` のホワイトリストを静的に書けない。
+`SubmittedParamsFilterable` を include し、フォームクラスを渡して取り出す。`to_unsafe_h` を直接呼んではいけない。
 
 ```ruby
-def submitted_params(key)
-  return {} unless params[key]
+# app/models/sales/cart_form.rb — どの位置に何が来るかはフォームが宣言する
+SUBMITTED_PARAMS_SHAPE = {
+  scalar_keys: %w[customer_type],
+  collection_keys: %w[coupon]
+}.freeze
 
-  params[key].to_unsafe_h
-end
+# app/controllers/pos/locations/sales_controller.rb
+@form = build_form(submitted_params(:cart, form: ::Sales::CartForm))
 ```
 
-### 4. Turbo Stream で Ghost Form 自身も差し替える
+宣言と合わない値は黙って破棄される。フォームが新しく `submitted["foo"]` を読むようになったら
+`SUBMITTED_PARAMS_SHAPE` の更新が必須で、忘れると値が捨てられる。
+検証できる構造と、そう決めた理由は [params_filter.rb](app/models/ghost_forms/params_filter.rb) に書いてある。
+
+### 5. Turbo Stream で Ghost Form 自身も差し替える
 
 再描画対象に Ghost Form を含めないと、hidden field が古い状態のまま残り、次の送信で以前の値を送ってしまう。
 

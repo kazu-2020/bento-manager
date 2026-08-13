@@ -2,6 +2,7 @@
 
 module AdditionalOrderFormBuildable
   extend ActiveSupport::Concern
+  include SubmittedParamsFilterable
 
   private
 
@@ -22,11 +23,5 @@ module AdditionalOrderFormBuildable
       search_query: params[:search_query],
       submitted: submitted
     )
-  end
-
-  def submitted_params(key)
-    return {} unless params[key]
-
-    params[key].to_unsafe_h
   end
 end

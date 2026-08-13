@@ -4,11 +4,13 @@ module Pos
   module Locations
     module DailyInventories
       class FormStatesController < ApplicationController
+        include SubmittedParamsFilterable
+
         before_action :set_location
         before_action :set_catalogs
 
         def create
-          @form = build_form(submitted_params(:ghost_inventory))
+          @form = build_form(submitted_params(:ghost_inventory, form: ::DailyInventories::InventoryForm))
 
           respond_to do |format|
             format.turbo_stream
@@ -30,12 +32,6 @@ module Pos
           ::DailyInventories::InventoryForm.new(
             location: @location, items: items, search_query: params[:search_query]
           )
-        end
-
-        def submitted_params(key)
-          return {} unless params[key]
-
-          params[key].to_unsafe_h
         end
       end
     end

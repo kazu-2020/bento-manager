@@ -65,6 +65,21 @@ module Pos
           end
         end
 
+        test "構造が壊れた返品内容を送られても画面は通常どおり再描画される" do
+          login_as_employee(@employee)
+
+          post pos_location_refunds_form_state_path(@location, sale_id: @sale.id),
+               params: {
+                 ghost_refund: {
+                   corrected: "ハッシュではなく文字列",
+                   coupon: [ "ハッシュではなく配列" ]
+                 }
+               },
+               as: :turbo_stream
+
+          assert_turbo_stream action: "replace", target: "ghost-form"
+        end
+
         # ============================================================
         # サーバーサイド再計算
         # ============================================================
@@ -123,6 +138,9 @@ module Pos
         private
 
         # Ghost Form の送信を組み立てる
+        #
+        # sale_id は実際の Ghost Form と同じくクエリで渡す
+        # （app/views/components/pos/refunds/ghost_form/component.rb 参照）
         #
         # @param location [Location] 販売先（既定は @location）
         # @param sale [Sale] 対象の販売（既定は @sale）
