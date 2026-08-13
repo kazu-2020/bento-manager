@@ -1,14 +1,10 @@
 require "test_helper"
 
 class RefundTest < ActiveSupport::TestCase
-  fixtures :locations, :employees, :sales
+  fixtures :locations, :employees, :sales, :refunds
 
   test "validations" do
-    @subject = Refund.new(
-      original_sale: sales(:completed_sale),
-      refund_datetime: Time.current,
-      amount: 500
-    )
+    @subject = refunds(:partial_refund)
 
     must validate_presence_of(:refund_datetime)
     must validate_presence_of(:amount)
