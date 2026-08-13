@@ -13,11 +13,8 @@ class AddLedgerConstraintsAndForeignKeyActions < ActiveRecord::Migration[8.1]
   #       元の名前で復元）を行う。全体は 1 トランザクション内で実行され、
   #       失敗時は丸ごとロールバックされる。
 
-  # 制約種別 => [演算子, 制約名の接尾辞]
-  KINDS = {
-    positive:     [ ">",  "positive" ],
-    non_negative: [ ">=", "non_negative" ]
-  }.freeze
+  # 制約種別 => 演算子。制約名の接尾辞は種別名をそのまま使う。
+  KINDS = { positive: ">", non_negative: ">=" }.freeze
 
   # [テーブル, カラム, 制約種別]
   CHECK_CONSTRAINTS = [
@@ -95,10 +92,10 @@ class AddLedgerConstraintsAndForeignKeyActions < ActiveRecord::Migration[8.1]
   end
 
   def expression(column, kind)
-    "#{column} #{KINDS.fetch(kind).first} 0"
+    "#{column} #{KINDS.fetch(kind)} 0"
   end
 
   def constraint_name(table, column, kind)
-    "chk_#{table}_#{column}_#{KINDS.fetch(kind).last}"
+    "chk_#{table}_#{column}_#{kind}"
   end
 end

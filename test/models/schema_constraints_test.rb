@@ -2,16 +2,23 @@ require "test_helper"
 
 # DB レベルの CHECK 制約と外部キーの削除時挙動を検証する。
 #
-# モデルのバリデーションを迂回した書き込み（update_column / delete_all 等）でも
-# 台帳が壊れないことを保証するためのテストなので、意図的にバリデーションを
-# 通さない経路で書き込んでいる。
+# モデルのバリデーションを迂回した書き込みでも台帳が壊れないことを保証するのが目的なので、
+# 書き込みには一貫して update_all を使う。update_column は attr_readonly を尊重するため
+# AR 層で止まってしまい、DB の制約に到達しない。
 class SchemaConstraintsTest < ActiveSupport::TestCase
+  include SaleTestHelper
+
   fixtures :locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items,
            :daily_inventories, :coupons, :discounts, :sale_discounts, :catalog_pricing_rules
 
-  # Rodauth 管理のテーブル群。AR モデルを持たないため直接 SQL で操作する。
-  # 値は id 以外の必須カラムとその埋め込み値。
-  RODAUTH_TABLES = {
+  # Rodauth 管理のテーブル群。id 以外の必須カラムと、そこに入れる値。
+  #
+  # これらを fixture にしてはならない。fixture はプロセス全体で生存するため、
+  # 同一ワーカー内の他テストにも認証状態が漏れる。実際 employee_lockouts を
+  # fixture 化したところ verified_employee がロックアウト扱いになり、
+  # 認証を伴うテストが軒並みログインに失敗した。
+  # テスト内で挿入すればテストごとのトランザクションで巻き戻る。
+  RODAUTH_ROWS = {
     employee_lockouts: { key: "lockout-key", deadline: "2099-01-01 00:00:00" },
     employee_login_failures: { number: 1 },
     employee_remember_keys: { key: "remember-token", deadline: "2099-01-01 00:00:00" }
@@ -24,46 +31,38 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
   test "販売明細の数量・単価・小計にゼロ以下は保存できない" do
     item = sale_items(:completed_sale_bento_a)
 
-    assert_raises(ActiveRecord::StatementInvalid) { item.update_column(:quantity, 0) }
-    assert_raises(ActiveRecord::StatementInvalid) { item.update_column(:unit_price, 0) }
-
-    # line_total は attr_readonly で update_column が AR 層で弾かれるため、
-    # それも迂回する update_all で DB 側の制約に到達させる
-    assert_raises(ActiveRecord::StatementInvalid) do
-      SaleItem.where(id: item.id).update_all(line_total: -1)
-    end
+    assert_db_rejects item, quantity: 0
+    assert_db_rejects item, unit_price: 0
+    assert_db_rejects item, line_total: -1
   end
 
   test "販売の小計と合計はゼロを許すが負の金額は保存できない" do
     sale = sales(:completed_sale)
 
     assert_changes -> { sale.reload.final_amount }, to: 0 do
-      sale.update_column(:total_amount, 0)
-      sale.update_column(:final_amount, 0)
+      Sale.where(id: sale.id).update_all(total_amount: 0, final_amount: 0)
     end
 
-    assert_raises(ActiveRecord::StatementInvalid) { sale.update_column(:total_amount, -1) }
-    assert_raises(ActiveRecord::StatementInvalid) { sale.update_column(:final_amount, -1) }
+    assert_db_rejects sale, total_amount: -1
+    assert_db_rejects sale, final_amount: -1
   end
 
   test "当日在庫の在庫数と引当数に負の数は保存できない" do
     inventory = daily_inventories(:city_hall_bento_a_today)
 
-    assert_raises(ActiveRecord::StatementInvalid) { inventory.update_column(:stock, -1) }
-    assert_raises(ActiveRecord::StatementInvalid) { inventory.update_column(:reserved_stock, -1) }
+    assert_db_rejects inventory, stock: -1
+    assert_db_rejects inventory, reserved_stock: -1
   end
 
   test "カタログ価格にゼロ以下は保存できない" do
-    price = catalog_prices(:daily_bento_a_regular)
-
-    assert_raises(ActiveRecord::StatementInvalid) { price.update_column(:price, 0) }
+    assert_db_rejects catalog_prices(:daily_bento_a_regular), price: 0
   end
 
   test "適用済み割引の割引額と枚数にゼロ以下は保存できない" do
     sale_discount = sale_discounts(:completed_sale_fifty_yen)
 
-    assert_raises(ActiveRecord::StatementInvalid) { sale_discount.update_column(:discount_amount, 0) }
-    assert_raises(ActiveRecord::StatementInvalid) { sale_discount.update_column(:quantity, 0) }
+    assert_db_rejects sale_discount, discount_amount: 0
+    assert_db_rejects sale_discount, quantity: 0
   end
 
   test "追加発注の数量にゼロ以下は保存できない" do
@@ -74,19 +73,15 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
       quantity: 5
     )
 
-    assert_raises(ActiveRecord::StatementInvalid) { order.update_column(:quantity, 0) }
+    assert_db_rejects order, quantity: 0
   end
 
   test "クーポンの一枚あたり割引額にゼロ以下は保存できない" do
-    coupon = coupons(:fifty_yen_coupon)
-
-    assert_raises(ActiveRecord::StatementInvalid) { coupon.update_column(:amount_per_unit, 0) }
+    assert_db_rejects coupons(:fifty_yen_coupon), amount_per_unit: 0
   end
 
   test "価格ルールの最大適用数に負の数は保存できない" do
-    rule = catalog_pricing_rules(:salad_bundle_by_bento)
-
-    assert_raises(ActiveRecord::StatementInvalid) { rule.update_column(:max_per_trigger, -1) }
+    assert_db_rejects catalog_pricing_rules(:salad_bundle_by_bento), max_per_trigger: -1
   end
 
   test "返金の差額には負の値を保存できる" do
@@ -106,10 +101,8 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
 
   test "従業員を物理削除すると販売の担当者と取消担当者が空になる" do
     sale = sales(:voided_sale)
-    salesperson = sale.employee
-    voider = sale.voided_by_employee
 
-    Employee.where(id: [ salesperson.id, voider.id ]).delete_all
+    Employee.where(id: [ sale.employee_id, sale.voided_by_employee_id ]).delete_all
 
     sale.reload
 
@@ -119,9 +112,9 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
 
   test "従業員を物理削除すると認証の付属情報も削除される" do
     employee = employees(:verified_employee)
-    RODAUTH_TABLES.each_key { |table| insert_rodauth_row(table, employee) }
+    RODAUTH_ROWS.each_key { |table| insert_rodauth_row(table, employee) }
 
-    counts = RODAUTH_TABLES.keys.map { |table| -> { rodauth_row_count(table, employee) } }
+    counts = RODAUTH_ROWS.keys.map { |table| -> { rodauth_row_count(table, employee) } }
 
     assert_difference counts, -1 do
       Employee.where(id: employee.id).delete_all
@@ -136,12 +129,10 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
 
   test "訂正元として参照されている販売は物理削除できない" do
     original = sales(:completed_sale)
-    Sale.create!(
+    create_sale(
       location: locations(:city_hall),
-      sale_datetime: Time.current,
       customer_type: :staff,
-      total_amount: 400,
-      final_amount: 400,
+      sale_datetime: Time.current,
       corrected_from_sale: original
     )
 
@@ -150,27 +141,25 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
 
   private
 
-  def insert_rodauth_row(table, employee)
-    columns = RODAUTH_TABLES.fetch(table)
-    names = [ "id", *columns.keys ].join(", ")
-    placeholders = Array.new(columns.size + 1, "?").join(", ")
+  # バリデーションも attr_readonly も迂回して DB へ直接書き込み、制約に弾かれることを確認する
+  def assert_db_rejects(record, attributes)
+    assert_raises(ActiveRecord::StatementInvalid) do
+      record.class.where(id: record.id).update_all(attributes)
+    end
+  end
 
-    connection.execute(
-      sanitize("INSERT INTO #{table} (#{names}) VALUES (#{placeholders})", employee.id, *columns.values)
+  # AR モデルを持たないテーブルなので、Rails の型変換込みの行挿入 API を直接使う
+  def insert_rodauth_row(table, employee)
+    ActiveRecord::Base.connection.insert_fixture(
+      { "id" => employee.id, **RODAUTH_ROWS.fetch(table).stringify_keys }, table
     )
   end
 
   def rodauth_row_count(table, employee)
-    connection.select_value(
-      sanitize("SELECT COUNT(*) FROM #{table} WHERE id = ?", employee.id)
+    ActiveRecord::Base.connection.select_value(
+      ActiveRecord::Base.sanitize_sql_array(
+        [ "SELECT COUNT(*) FROM #{table} WHERE id = ?", employee.id ]
+      )
     )
-  end
-
-  def connection
-    ActiveRecord::Base.connection
-  end
-
-  def sanitize(sql, *binds)
-    ActiveRecord::Base.sanitize_sql_array([ sql, *binds ])
   end
 end
