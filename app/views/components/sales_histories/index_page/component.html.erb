@@ -10,7 +10,8 @@
 
     <div class="flex flex-wrap items-center gap-3">
       <select class="select select-bordered select-sm"
-              onchange="Turbo.visit(this.value)">
+              data-controller="select-navigate"
+              data-action="change->select-navigate#visit">
         <% locations.each do |loc| %>
           <option value="<%= location_path(loc.id) %>"
                   <%= "selected" if loc.id == location.id %>>
