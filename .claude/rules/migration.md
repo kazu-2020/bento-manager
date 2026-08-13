@@ -107,6 +107,8 @@ end
 
 `disable_ddl_transaction!` を付けるとマイグレーション全体の原子性は失われるが、個々の再作成は内部で自前のトランザクションを張るため途中状態のテーブルは生まれない。データ起因で失敗しうる変更（CHECK 制約の追加など）は、実行前に違反行がないことを検査してから進めること。
 
+**`disable_referential_integrity` のブロックで囲んでも代用にならない。** 同メソッドは `defer_foreign_keys = ON` と `foreign_keys = OFF` を発行するが、トランザクション内では後者だけが無視される。前者が遅延させるのは制約違反の**判定**であって `ON DELETE CASCADE` の**アクション**は止まらないため、囲んでも子テーブルは消える（実測で確認）。逆に `disable_ddl_transaction!` を付けたあとは `alter_table` が内部で同メソッドを呼ぶので、明示的に囲む必要もない。
+
 テストでは検知できない。テスト DB は `schema.rb` から構築され、マイグレーションを一度も実行しないため。
 
 ## Migration Modification
