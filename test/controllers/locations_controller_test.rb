@@ -36,19 +36,36 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  # 送信ボタンにすると tree order 上これが default button になり、
+  # 販売先フォームの送信ボタンが「作成」だけであることが要点。キャンセルがこのフォームの
+  # 送信ボタンになると、tree order 上いちばん先頭なので default button を奪い、
   # 名前欄で Enter を押したときに「作成」ではなく「閉じる」が起きる
-  test "販売先登録モーダルのキャンセルはフォームを送信しない" do
+  test "販売先登録モーダルのキャンセルは販売先フォームを送信しない" do
     login_as_employee(@employee)
     get new_location_path, as: :turbo_stream
 
     assert_response :success
 
-    cancel = Nokogiri::HTML5.fragment(response.body).css("button[data-controller='dialog-close']").first
+    html = Nokogiri::HTML5.fragment(response.body)
+    location_form = html.css("form[action='#{locations_path}']").first
 
-    assert cancel, "キャンセルボタンが描画されていること"
-    assert_equal "button", cancel["type"], "type=submit にすると Enter キーが「閉じる」に化ける"
-    assert_nil cancel["formmethod"], "formmethod で閉じると送信ボタンになってしまう"
+    assert location_form, "販売先フォームが描画されていること"
+
+    # form 属性を持つボタンは所有者が別フォームなので、このフォームの送信ボタンではない
+    submitters = location_form
+                 .css("button[type='submit'], button:not([type]), input[type='submit']")
+                 .reject { |button| button["form"] }
+
+    assert_equal 1, submitters.size,
+                 "販売先フォームの送信ボタンは「作成」だけにする（キャンセルが混ざると Enter が「閉じる」に化ける）"
+
+    cancel = location_form.css("button[form]").first
+
+    assert cancel, "キャンセルボタンが form= で別フォームに紐付いていること"
+
+    close_form = html.css("form##{cancel['form']}").first
+
+    assert close_form, "紐付け先のフォームが同じダイアログ内にあること"
+    assert_equal "dialog", close_form["method"], "紐付け先は method=dialog でなければ閉じない"
   end
 
   test "admin can create location" do
