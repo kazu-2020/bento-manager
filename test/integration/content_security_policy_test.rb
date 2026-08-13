@@ -54,6 +54,23 @@ class ContentSecurityPolicyTest < ActionDispatch::IntegrationTest
     assert_not_equal "'nonce-'", nonce, "空の nonce はどのインラインスクリプトとも一致しない"
   end
 
+  # CSP はレスポンスヘッダーなので、ブラウザは document を読み込んだ時点の nonce を
+  # その document が生きている間ずっと強制する。一方 Rodauth はセッション固定攻撃対策として
+  # ログイン時にセッション ID を張り替えるため、nonce はログインの前後で変わる。
+  # ログインを Turbo に処理させると document が作り直されず、強制中の nonce（ログイン前）と
+  # 以降のインラインスクリプトの nonce（ログイン後）がずれ、グラフが白紙のままになる。
+  test "ログインフォームは Turbo を経由せず document を作り直す" do
+    get "/employee/login"
+
+    assert_response :success
+
+    form = css_select("form[action='/employee/login']").first
+
+    assert form, "ログインフォームが描画されていること"
+    assert_equal "false", form["data-turbo"],
+                 "Turbo で送信すると document が再利用され、CSP の nonce がログイン前のまま固定される"
+  end
+
   private
 
   def csp_directives
