@@ -5,6 +5,10 @@ class AddLedgerConstraintsAndForeignKeyActions < ActiveRecord::Migration[8.1]
   # sale_items と sale_discounts が全件消える。例外も PRAGMA foreign_key_check の
   # 警告も出ないため、本番で気づく手段がない。
   #
+  # rails/rails#55907 が alter_table 内部の順序を修正済みだが、それが効くのは
+  # alter_table をトランザクション外で呼んだ場合だけ。マイグレーションは既定で
+  # 外側に DDL トランザクションを張るため、8.1.3.1 でも消える（実測で確認）。
+  #
   # 引き換えにマイグレーション全体の原子性は失われるが、
   # 個々の alter_table は内部で自前のトランザクションを張るので途中状態は生まれない。
   # データ起因の失敗は reject_violating_rows! が事前に弾く。

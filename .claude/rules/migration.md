@@ -78,6 +78,13 @@ SQLite は CHECK 制約の追加・外部キーの変更・カラムの型や照
 
 このとき `DROP TABLE` の暗黙 DELETE が、子テーブルの `ON DELETE CASCADE` を発火させる。Rails は `disable_referential_integrity` で `PRAGMA foreign_keys = OFF` を発行して防ごうとするが、**この PRAGMA は SQLite ではトランザクション内で no-op** になる。マイグレーションは既定でトランザクションに包まれているため、防御が効かない。
 
+[rails/rails#55907](https://github.com/rails/rails/pull/55907) がこの問題を修正しているが、直っているのは `alter_table` を**トランザクション外**で呼んだ場合だけで、マイグレーション経由では Rails 8.1.3.1 でも消える。実測:
+
+| 条件 | 子テーブルの行 |
+| --- | --- |
+| 外側トランザクションなし（上流テストと同条件） | 残る |
+| 外側トランザクションあり（マイグレーションの既定） | **消える** |
+
 ```ruby
 # 必須: テーブル再作成を伴うマイグレーション
 class AddCheckConstraints < ActiveRecord::Migration[8.1]
