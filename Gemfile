@@ -8,8 +8,7 @@ gem "sqlite3", ">= 2.1"
 gem "puma", ">= 5.0"
 # Hotwire's SPA-like page accelerator [https://turbo.hotwired.dev]
 gem "turbo-rails"
-# Hotwire's modest JavaScript framework [https://stimulus.hotwired.dev]
-gem "stimulus-rails"
+# No stimulus-rails gem: Stimulus is served from npm (@hotwired/stimulus) via Vite
 
 # Rails internationalization (I18n) locale data
 gem "rails-i18n", "~> 8.0"
@@ -41,11 +40,13 @@ gem "kamal", require: false
 # Add HTTP asset caching/compression and X-Sendfile acceleration to Puma [https://github.com/basecamp/thruster/]
 gem "thruster", require: false
 
-gem "vite_rails"   # https://github.com/ElMassimo/vite_ruby
-gem "reactionview" # https://github.com/marcoroth/reactionview
+gem "vite_rails" # https://github.com/ElMassimo/vite_ruby
 
 # ViewComponent - A framework for creating reusable, testable & encapsulated view components
 gem "view_component"
+
+# Charting view helpers; the JS side is served from npm (chartkick / chart.js)
+gem "chartkick", "~> 5.2"
 
 # monitoring
 gem "sentry-ruby"
@@ -57,9 +58,6 @@ group :development, :test do
 
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
-
-  # Propshaft added temporarily for reactionview devtools (requires Rails asset pipeline)
-  gem "propshaft"
 
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
   gem "bundler-audit", require: false
@@ -87,5 +85,3 @@ group :test do
   gem "minitest-matchers_vaccine"
   gem "minitest-mock"
 end
-
-gem "chartkick", "~> 5.2"
