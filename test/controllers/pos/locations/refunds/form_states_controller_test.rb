@@ -34,7 +34,7 @@ module Pos
 
         test "returns 404 for inactive location" do
           login_as_employee(@employee)
-          post_form_state(location: locations(:prefectural_office))
+          post_form_state(location: locations(:prefectural_office), sale: sales(:prefectural_office_sale))
 
           assert_response :not_found
         end
@@ -75,7 +75,9 @@ module Pos
 
           assert_response :success
           assert_match "返金額", response.body
-          assert_match "¥500", response.body
+          assert_turbo_stream action: "replace", target: "refund-preview" do
+            assert_select ".text-4xl", text: "¥500"
+          end
         end
 
         test "商品を追加すると精算内容が追加徴収として再計算される" do
@@ -88,7 +90,9 @@ module Pos
           assert_response :success
           # 弁当A(550) + サラダ(セット価格150) - クーポン50 = 650円。元の会計との差額150円
           assert_match "追加請求額", response.body
-          assert_match "¥150", response.body
+          assert_turbo_stream action: "replace", target: "refund-preview" do
+            assert_select ".text-4xl", text: "¥150"
+          end
         end
 
         test "同額の商品に交換すると差額なしと再計算される" do

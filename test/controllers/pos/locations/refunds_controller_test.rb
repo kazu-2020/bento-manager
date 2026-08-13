@@ -40,7 +40,8 @@ module Pos
 
       test "new returns 404 for inactive location" do
         login_as_employee(@employee)
-        get new_pos_location_refund_path(locations(:prefectural_office), sale_id: @sale.id)
+        get new_pos_location_refund_path(locations(:prefectural_office),
+                                         sale_id: sales(:prefectural_office_sale).id)
 
         assert_response :not_found
       end
