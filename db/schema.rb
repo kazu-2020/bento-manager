@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_13_100001) do
   create_table "additional_orders", force: :cascade do |t|
     t.integer "catalog_id", null: false
     t.datetime "created_at", null: false
@@ -22,6 +22,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.index [ "catalog_id" ], name: "index_additional_orders_on_catalog_id"
     t.index [ "employee_id" ], name: "index_additional_orders_on_employee_id"
     t.index [ "location_id" ], name: "index_additional_orders_on_location_id"
+    t.check_constraint "quantity > 0", name: "chk_additional_orders_quantity_positive"
   end
 
   create_table "catalog_discontinuations", force: :cascade do |t|
@@ -42,8 +43,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.integer "price", null: false
     t.datetime "updated_at", null: false
     t.index [ "catalog_id", "kind" ], name: "idx_catalog_prices_catalog_kind"
-    t.index [ "catalog_id" ], name: "index_catalog_prices_on_catalog_id"
     t.index [ "effective_from" ], name: "index_catalog_prices_on_effective_from"
+    t.check_constraint "price > 0", name: "chk_catalog_prices_price_positive"
   end
 
   create_table "catalog_pricing_rules", force: :cascade do |t|
@@ -58,6 +59,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.index [ "target_catalog_id" ], name: "index_catalog_pricing_rules_on_target_catalog_id"
     t.index [ "trigger_category" ], name: "index_catalog_pricing_rules_on_trigger_category"
     t.index [ "valid_from" ], name: "index_catalog_pricing_rules_on_valid_from"
+    t.check_constraint "max_per_trigger >= 0", name: "chk_catalog_pricing_rules_max_per_trigger_non_negative"
   end
 
   create_table "catalogs", force: :cascade do |t|
@@ -76,6 +78,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.integer "amount_per_unit", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.check_constraint "amount_per_unit > 0", name: "chk_coupons_amount_per_unit_positive"
   end
 
   create_table "daily_inventories", force: :cascade do |t|
@@ -89,6 +92,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.datetime "updated_at", null: false
     t.index [ "catalog_id" ], name: "index_daily_inventories_on_catalog_id"
     t.index [ "location_id", "catalog_id", "inventory_date" ], name: "idx_daily_inventories_location_catalog_date", unique: true
+    t.check_constraint "reserved_stock >= 0", name: "chk_daily_inventories_reserved_stock_non_negative"
+    t.check_constraint "stock >= 0", name: "chk_daily_inventories_stock_non_negative"
   end
 
   create_table "discounts", force: :cascade do |t|
@@ -158,7 +163,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.datetime "updated_at", null: false
     t.index [ "discount_id" ], name: "index_sale_discounts_on_discount_id"
     t.index [ "sale_id", "discount_id" ], name: "idx_sale_discounts_unique", unique: true
-    t.index [ "sale_id" ], name: "index_sale_discounts_on_sale_id"
+    t.check_constraint "discount_amount > 0", name: "chk_sale_discounts_discount_amount_positive"
+    t.check_constraint "quantity > 0", name: "chk_sale_discounts_quantity_positive"
   end
 
   create_table "sale_items", force: :cascade do |t|
@@ -174,7 +180,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.index [ "catalog_id" ], name: "index_sale_items_on_catalog_id"
     t.index [ "catalog_price_id" ], name: "index_sale_items_on_catalog_price_id"
     t.index [ "sale_id", "catalog_id" ], name: "idx_sale_items_sale_catalog"
-    t.index [ "sale_id" ], name: "index_sale_items_on_sale_id"
+    t.check_constraint "line_total > 0", name: "chk_sale_items_line_total_positive"
+    t.check_constraint "quantity > 0", name: "chk_sale_items_quantity_positive"
+    t.check_constraint "unit_price > 0", name: "chk_sale_items_unit_price_positive"
   end
 
   create_table "sales", force: :cascade do |t|
@@ -193,10 +201,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
     t.index [ "corrected_from_sale_id" ], name: "index_sales_on_corrected_from_sale_id"
     t.index [ "employee_id" ], name: "index_sales_on_employee_id"
     t.index [ "location_id", "sale_datetime" ], name: "idx_sales_location_datetime"
-    t.index [ "location_id" ], name: "index_sales_on_location_id"
     t.index [ "sale_datetime" ], name: "idx_sales_datetime"
     t.index [ "status" ], name: "idx_sales_status"
     t.index [ "voided_by_employee_id" ], name: "index_sales_on_voided_by_employee_id"
+    t.check_constraint "final_amount >= 0", name: "chk_sales_final_amount_non_negative"
+    t.check_constraint "total_amount >= 0", name: "chk_sales_total_amount_non_negative"
   end
 
   add_foreign_key "additional_orders", "catalogs", on_delete: :restrict
@@ -207,9 +216,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
   add_foreign_key "catalog_pricing_rules", "catalogs", column: "target_catalog_id", on_delete: :restrict
   add_foreign_key "daily_inventories", "catalogs", on_delete: :restrict
   add_foreign_key "daily_inventories", "locations", on_delete: :restrict
-  add_foreign_key "employee_lockouts", "employees", column: "id"
-  add_foreign_key "employee_login_failures", "employees", column: "id"
-  add_foreign_key "employee_remember_keys", "employees", column: "id"
+  add_foreign_key "employee_lockouts", "employees", column: "id", on_delete: :cascade
+  add_foreign_key "employee_login_failures", "employees", column: "id", on_delete: :cascade
+  add_foreign_key "employee_remember_keys", "employees", column: "id", on_delete: :cascade
   add_foreign_key "refunds", "employees", on_delete: :nullify
   add_foreign_key "refunds", "sales", column: "corrected_sale_id", on_delete: :restrict
   add_foreign_key "refunds", "sales", column: "original_sale_id", on_delete: :restrict
@@ -218,8 +227,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_04_142648) do
   add_foreign_key "sale_items", "catalog_prices", on_delete: :restrict
   add_foreign_key "sale_items", "catalogs", on_delete: :restrict
   add_foreign_key "sale_items", "sales", on_delete: :cascade
-  add_foreign_key "sales", "employees"
-  add_foreign_key "sales", "employees", column: "voided_by_employee_id"
-  add_foreign_key "sales", "locations"
-  add_foreign_key "sales", "sales", column: "corrected_from_sale_id"
+  add_foreign_key "sales", "employees", column: "voided_by_employee_id", on_delete: :nullify
+  add_foreign_key "sales", "employees", on_delete: :nullify
+  add_foreign_key "sales", "locations", on_delete: :restrict
+  add_foreign_key "sales", "sales", column: "corrected_from_sale_id", on_delete: :restrict
 end
