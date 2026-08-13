@@ -5,11 +5,13 @@ module Pos
     module DailyInventories
       module Corrections
         class FormStatesController < ApplicationController
+          include SubmittedParamsFilterable
+
           before_action :set_location
           before_action :set_catalogs
 
           def create
-            @form = build_form(submitted_params(:ghost_inventory))
+            @form = build_form(submitted_params(:ghost_inventory, form: ::DailyInventories::CorrectionForm))
 
             respond_to do |format|
               # 新規登録と同じ turbo_stream テンプレートを共有
@@ -34,12 +36,6 @@ module Pos
             ::DailyInventories::CorrectionForm.new(
               location: @location, items: items, search_query: params[:search_query]
             )
-          end
-
-          def submitted_params(key)
-            return {} unless params[key]
-
-            params[key].to_unsafe_h
           end
         end
       end

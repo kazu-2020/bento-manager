@@ -7,6 +7,12 @@ module Sales
 
     ITEM_TYPE = CartItemType.new
 
+    # submitted のどの位置に何が来るかの宣言（SubmittedParamsFilterable が使う）
+    SUBMITTED_PARAMS_SHAPE = {
+      scalar_keys: %w[customer_type],
+      collection_keys: %w[coupon]
+    }.freeze
+
     attr_reader :location, :items, :discounts, :customer_type
 
     validate :at_least_one_item_in_cart

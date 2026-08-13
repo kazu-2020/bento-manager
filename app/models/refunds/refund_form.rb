@@ -5,6 +5,9 @@ module Refunds
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
+    # submitted のどの位置に何が来るかの宣言（SubmittedParamsFilterable が使う）
+    SUBMITTED_PARAMS_SHAPE = { collection_keys: %w[corrected coupon] }.freeze
+
     attr_reader :sale, :location, :corrected_quantities, :coupon_quantities, :inventories
 
     validate :at_least_one_change

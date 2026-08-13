@@ -5,6 +5,9 @@ module AdditionalOrders
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
+    # submitted は全キーが商品 ID の group（GhostForms::ParamsFilter が使う）
+    SUBMITTED_PARAMS_SHAPE = {}.freeze
+
     attr_reader :items, :location, :created_count, :search_query
 
     validate :at_least_one_item_has_quantity

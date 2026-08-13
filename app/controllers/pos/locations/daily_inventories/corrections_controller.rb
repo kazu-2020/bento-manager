@@ -4,6 +4,8 @@ module Pos
   module Locations
     module DailyInventories
       class CorrectionsController < ApplicationController
+        include SubmittedParamsFilterable
+
         before_action :set_location
         before_action :set_catalogs
 
@@ -17,7 +19,7 @@ module Pos
         end
 
         def create
-          @form = build_form(submitted_params(:inventory))
+          @form = build_form(submitted_params(:inventory, form: ::DailyInventories::CorrectionForm))
 
           if @form.save
             redirect_to new_pos_location_sale_path(@location),
@@ -42,19 +44,16 @@ module Pos
           @existing_inventories ||= @location.today_inventories.index_by(&:catalog_id)
         end
 
-        def build_form(submitted = {})
-          items = if submitted.empty?
+        # 送信の有無で分岐する。フィルタ後の中身で分岐すると、不正なパラメータだけの
+        # 送信が空に畳まれて既存在庫からの再構築に化け、拒否すべき要求が
+        # bulk_recreate による破壊的な書き込みを行ってしまう。
+        def build_form(submitted = nil)
+          items = if submitted.nil?
             ::DailyInventories::ItemBuilder.from_inventories(@catalogs, existing_inventories)
           else
             ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
           end
           ::DailyInventories::CorrectionForm.new(location: @location, items: items)
-        end
-
-        def submitted_params(key)
-          return {} unless params[key]
-
-          params[key].to_unsafe_h
         end
       end
     end

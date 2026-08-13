@@ -3,6 +3,8 @@
 module Pos
   module Locations
     class SalesController < ApplicationController
+      include SubmittedParamsFilterable
+
       before_action :set_location
       before_action :set_inventories
       before_action :redirect_unless_inventories, only: :new
@@ -14,7 +16,7 @@ module Pos
       end
 
       def create
-        @form = build_form(submitted_params(:cart))
+        @form = build_form(submitted_params(:cart, form: ::Sales::CartForm))
 
         unless @form.valid?
           flash.now[:alert] = t(".missing_requirements")
@@ -64,12 +66,6 @@ module Pos
           discounts: @discounts,
           submitted: submitted
         )
-      end
-
-      def submitted_params(key)
-        return {} unless params[key]
-
-        params[key].to_unsafe_h
       end
 
       def current_employee

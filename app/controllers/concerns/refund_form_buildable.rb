@@ -2,6 +2,7 @@
 
 module RefundFormBuildable
   extend ActiveSupport::Concern
+  include SubmittedParamsFilterable
 
   private
 
@@ -29,11 +30,5 @@ module RefundFormBuildable
       inventories: @inventories,
       submitted: submitted
     )
-  end
-
-  def submitted_params(key)
-    return {} unless params[key]
-
-    params[key].to_unsafe_h
   end
 end
