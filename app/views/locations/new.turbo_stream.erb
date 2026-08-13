@@ -3,14 +3,13 @@
     <div class="modal-box">
       <h3 class="text-lg font-bold mb-4"><%= t("locations.new.title") %></h3>
 
-      <%# キャンセルボタンもこのフォームに紐付けて閉じる（_modal_form の close_form_id） %>
-      <form method="dialog" id="location_modal_close">
+      <form method="dialog">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 modal-close-button">
           <%= icon "close" %>
         </button>
       </form>
 
-      <%= render "modal_form", location: @location, close_form_id: "location_modal_close" %>
+      <%= render "modal_form", location: @location %>
     </div>
 
     <form method="dialog" class="modal-backdrop">
