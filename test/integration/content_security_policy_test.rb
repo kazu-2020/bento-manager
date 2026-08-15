@@ -15,6 +15,13 @@ class ContentSecurityPolicyTest < ActionDispatch::IntegrationTest
 
     assert_not_empty directives, "Content-Security-Policy ヘッダーが送出されていること"
     assert_equal [ "'none'" ], directives["object-src"]
+
+    # この 2 つは default-src にフォールバックしないので、消すと無制限に戻る
+    assert_equal [ "'self'" ], directives["base-uri"],
+                 "<base> を差し替えられると相対 URL の解決先を丸ごと奪われる"
+    assert_equal [ "'none'" ], directives["frame-ancestors"],
+                 "クリックジャッキング対策"
+
     assert_includes directives["script-src"], "'self'"
     assert_not_includes directives["script-src"], "'unsafe-inline'",
                         "インラインスクリプトを一括で許可すると CSP の意味がなくなる"

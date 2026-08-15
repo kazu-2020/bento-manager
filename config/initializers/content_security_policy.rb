@@ -9,7 +9,13 @@ Rails.application.configure do
     policy.default_src :self
     policy.object_src  :none
 
-    # 画像・アイコンはすべて Vite が自ドメインから配信する（data: は inline SVG 用）
+    # base-uri / frame-ancestors は default-src にフォールバックしないので、
+    # 書かないと無制限になる。<base> の差し替えとクリックジャッキングを塞ぐ。
+    policy.base_uri        :self
+    policy.frame_ancestors :none
+
+    # 画像・アイコンは Vite が自ドメインから配信する。
+    # data: は daisyUI が CSS に埋め込んでいる SVG マスク（.loading 等）に必要。
     policy.img_src :self, :data
 
     # JS も自ドメインのみ。Chartkick が出すインラインスクリプトは nonce で許可する
@@ -22,7 +28,7 @@ Rails.application.configure do
     # フォールバックして style 属性が丸ごと効かなくなる。CSS による情報漏洩の経路は
     # img_src が :self に絞られていて塞がっているので、互換性を優先して style-src 側で許可する。
     policy.style_src :self, "https://fonts.googleapis.com", :unsafe_inline
-    policy.font_src  :self, "https://fonts.gstatic.com", :data
+    policy.font_src  :self, "https://fonts.gstatic.com"
 
     if Rails.env.development?
       # @vite/client が HMR でアセットを配信・接続できるようにする
@@ -34,6 +40,10 @@ Rails.application.configure do
       policy.img_src(*policy.img_src, vite_origin)
       policy.font_src(*policy.font_src, vite_origin)
       policy.connect_src(:self, vite_origin, "ws://#{vite_host}")
+
+      # Lookbook は ViewComponent のプレビューを iframe で描画するので、同一オリジンの
+      # フレーム化だけ許可する。攻撃者のページは別オリジンなのでクリックジャッキングは防げる。
+      policy.frame_ancestors :self
     end
   end
 
