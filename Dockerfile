@@ -41,6 +41,14 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
   apt-get install --no-install-recommends -y build-essential git libyaml-dev node-gyp pkg-config python-is-python3
 EOF
 
+# Install Litestream (ADR-0001 決定 5)
+# accessory がレプリケーションを担うのとは別に、app イメージにもバイナリを置く。
+# 用途は 2 つ: 日次リストア訓練の実行手段と、本番復旧時に
+# `kamal app exec` から直接リストアを叩く手段。
+ARG LITESTREAM_VERSION=0.5.16
+RUN curl -fsSL "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-${LITESTREAM_VERSION}-linux-x86_64.tar.gz" \
+    | tar -xz -C /usr/local/bin litestream
+
 # Install JavaScript dependencies
 ARG NODE_VERSION=25.2.1
 ENV PATH=/usr/local/node/bin:$PATH
@@ -91,6 +99,7 @@ USER 1000:1000
 # Copy built artifacts: gems, application
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
+COPY --from=build /usr/local/bin/litestream /usr/local/bin/litestream
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]

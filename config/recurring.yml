@@ -13,3 +13,11 @@ production:
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+  # 日次のリストア訓練（ADR-0001 決定 5）。
+  # スケジュールは infra/terraform/sentry.tf の sentry_cron_monitor と一致していること。
+  # ずらすと Sentry 側が「来るはずの時刻に来なかった」と判定して誤検知する。
+  # 3 時なのは出張販売の準備時間帯を避けるため。Sentry は Free プランなので頻度は上げない。
+  litestream_restore_drill:
+    command: "Backups::RestoreDrill.new.run"
+    schedule: "0 3 * * *"
