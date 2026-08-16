@@ -27,7 +27,13 @@ module Backups
     end
 
     def call
-      restored = SQLite3::Database.new(@restored_path.to_s, readonly: true)
+      begin
+        restored = SQLite3::Database.new(@restored_path.to_s, readonly: true)
+      rescue SQLite3::Exception => e
+        # litestream が終了コード 0 のまま出力を作らなかった場合がここに来る。
+        # 開けないことも「戻せない」という検証結果なので、例外で抜けずに失敗として返す。
+        return DrillResult.failure("復元したコピーを開けなかった: #{e.message}")
+      end
 
       integrity = integrity_check(restored)
       return DrillResult.failure("PRAGMA integrity_check が通らなかった: #{integrity}") unless integrity == "ok"
@@ -41,15 +47,17 @@ module Backups
         return DrillResult.failure("復元したコピーからテーブルを読み出せなかった: #{e.message}")
       end
 
-      # 本番は復元「後」に読む。順序を逆にすると、復元中に入った売上が
-      # 「復元側の遅れ」として現れ、営業時間中の訓練が理由なく赤くなる。
+      # 本番は復元「後」に読む。先に読むと、リストア中に入った売上のぶん復元側が本番より
+      # 「進んで」見え、別のデータベースを復元した疑いとして誤検知する。後に読めば同じズレは
+      # 遅れとして現れ、許容差で吸収できる。
       # 最大 id と件数は 1 クエリで取る。2 回に分けると、その間に売上が入ったとき
       # 別時点の値どうしを比べることになり、許容差の判定が意味を失う。
       production_max_id, production_count = Sale.pick(*SALES_STATE_COLUMNS)
+      production_heartbeat_id = Heartbeat.maximum(:id) || 0
 
       compare("売上の最大 id", restored_max_id, production_max_id) ||
         compare("売上の件数", restored_count, production_count) ||
-        check_heartbeat(restored_heartbeat_id) ||
+        check_heartbeat(restored_heartbeat_id, production_heartbeat_id) ||
         DrillResult.success(
           "復元したコピーは本番に追いついている" \
           "（売上 #{restored_count}/#{production_count} 件、ハートビート id #{restored_heartbeat_id}）"
@@ -69,7 +77,12 @@ module Backups
 
     # 今回書いたハートビートが復元側に無ければ、複製は今この瞬間止まっている。
     # 売上と違い訓練は毎日走るので、この条件は店の営業日に左右されない。
-    def check_heartbeat(restored_heartbeat_id)
+    def check_heartbeat(restored_heartbeat_id, production_heartbeat_id)
+      ahead_of_production("ハートビートの id", restored_heartbeat_id, production_heartbeat_id) ||
+        missing_heartbeat(restored_heartbeat_id)
+    end
+
+    def missing_heartbeat(restored_heartbeat_id)
       return nil if restored_heartbeat_id >= @required_heartbeat_id
 
       DrillResult.failure(
@@ -78,13 +91,20 @@ module Backups
       )
     end
 
+    # 本番に存在しない値が復元側にあるのは、遅れではなく別物を復元したということ。
+    # 売上とハートビートで判定が食い違わないよう、どちらもこれを先に通す。
+    def ahead_of_production(label, restored_value, production_value)
+      return nil unless restored_value > production_value
+
+      DrillResult.failure(
+        "復元したコピーの#{label}が本番より進んでいる" \
+        "（復元 #{restored_value} / 本番 #{production_value}）。別のデータベースを復元している可能性がある"
+      )
+    end
+
     def compare(label, restored_value, production_value)
-      if restored_value > production_value
-        return DrillResult.failure(
-          "復元したコピーの#{label}が本番より進んでいる" \
-          "（復元 #{restored_value} / 本番 #{production_value}）。別のデータベースを復元している可能性がある"
-        )
-      end
+      ahead = ahead_of_production(label, restored_value, production_value)
+      return ahead if ahead
 
       lag = production_value - restored_value
       return nil if lag <= @tolerance
