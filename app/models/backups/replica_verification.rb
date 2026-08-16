@@ -1,31 +1,20 @@
 module Backups
   # 復元したコピーが「事故ったときに実際に戻せるもの」かを判定する（ADR-0001 決定 6）
   #
-  # 判定は 2 段構え。
-  #
-  #   1. PRAGMA integrity_check — 復元物がデータベースとして壊れていないこと
-  #   2. 本番との一致            — 復元物が本番の今の状態に追いついていること
-  #
-  # 1 だけでは足りない。レプリケーションが 3 週間前に止まっていても、
+  # integrity_check だけでは足りない。レプリケーションが 3 週間前に止まっていても、
   # 「3 週間前の完全に健全な DB」が復元されて緑を返し続けるため。
   #
   # 逆に「復元した DB の最新の売上が十分新しいこと」を条件にしてはならない。
   # 出張販売は毎日あるとは限らず、休業日には必ず誤検知する。業務データの新しさを
   # 健全性の指標に使うと、業務のリズムがそのまま監視のノイズになる。
-  #
-  # 「本番と一致しているか」は業務のリズムに影響されない。休業日は本番も止まるので
-  # 一致し、営業日にレプリケーションが止まれば即座に不一致になる。
   class ReplicaVerification
     SALES_STATE_SQL = "SELECT COALESCE(MAX(id), 0), COUNT(*) FROM sales".freeze
 
-    # @param restored_path [String, Pathname] 復元したコピーのパス
-    # @param tolerance [Integer] 復元側が本番より遅れていることを許容する幅
     def initialize(restored_path:, tolerance:)
       @restored_path = restored_path
       @tolerance = tolerance
     end
 
-    # @return [DrillResult]
     def call
       restored = SQLite3::Database.new(@restored_path.to_s, readonly: true)
 
@@ -65,7 +54,6 @@ module Backups
       "復元物を読めなかった（#{e.message}）"
     end
 
-    # @return [DrillResult, nil] 不合格なら理由付きの結果、問題なければ nil
     def compare(label, restored_value, production_value)
       if restored_value > production_value
         return DrillResult.failure(

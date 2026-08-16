@@ -39,8 +39,6 @@ resource "sentry_alert" "restore_drill" {
   organization = local.sentry_organization
   name         = "リストア訓練の失敗を通知する"
 
-  # #247 で訓練（Backups::RestoreDrill）が実装され、config/recurring.yml から
-  # 日次でチェックインが送られるようになったため有効にした。
   enabled = true
 
   monitor_ids = [sentry_cron_monitor.restore_drill.id]

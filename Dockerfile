@@ -46,9 +46,7 @@ EOF
 # 用途は 2 つ: 日次リストア訓練の実行手段と、本番復旧時に
 # `kamal app exec` から直接リストアを叩く手段。
 #
-# バージョンの出所は config/deploy.yml の builder.args。accessory の image tag と
-# ずれると「書いた形式を戻せない」という一番遅い場所で壊れるため、
-# デプロイ経路では必ず deploy.yml の値で上書きされる。下のデフォルトは
+# バージョンの出所は config/deploy.yml の builder.args。下のデフォルトは
 # kamal を通さない `docker build` 用のフォールバック。
 ARG LITESTREAM_VERSION=0.5.16
 RUN curl -fsSL "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-${LITESTREAM_VERSION}-linux-x86_64.tar.gz" \

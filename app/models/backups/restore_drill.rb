@@ -8,22 +8,17 @@ module Backups
   # 「プロセスが動いていること」でも「S3 にオブジェクトがあること」でもなく、
   # 「事故ったときに実際に戻せること」であり、代理指標には必ず
   # 「指標は緑なのに実物は壊れている」隙間ができる。だから毎日ほんとうに復元する。
-  #
-  # config/recurring.yml から日次で起動される。
   class RestoreDrill
     DEFAULT_TOLERANCE = 5
 
     def initialize(restorer: LitestreamRestorer.new,
                    check_in: SentryCheckIn.new,
-                   # 本番の値は config/deploy.yml の RESTORE_DRILL_TOLERANCE。
-                   # 定数は開発・テストで env を置かないときのフォールバック。
                    tolerance: ENV.fetch("RESTORE_DRILL_TOLERANCE", DEFAULT_TOLERANCE).to_i)
       @restorer = restorer
       @check_in = check_in
       @tolerance = tolerance
     end
 
-    # @return [DrillResult]
     def run
       check_in_id = @check_in.start
       started_at = Process.clock_gettime(Process::CLOCK_MONOTONIC)

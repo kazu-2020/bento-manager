@@ -115,9 +115,6 @@ accessories:
   # -exec なら「バックアップが壊れたら Rails も起動しない」という強い保証が得られるが、
   # それは「バックアップが壊れたら店が売上を記録できなくなる」ことを意味する。
   # バックアップを 1 日失うのは復旧可能だが、営業中に POS が上がらないのは復旧不能。
-  #
-  # accessory は `kamal deploy` の対象外。設定を変えたら明示的に叩くこと:
-  #   kamal accessory reboot litestream
   litestream:
     # バージョンは builder.args.LITESTREAM_VERSION と揃えること
     image: litestream/litestream:0.5.16

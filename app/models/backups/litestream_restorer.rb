@@ -1,10 +1,7 @@
 require "open3"
 
 module Backups
-  # `litestream restore` を叩くだけのアダプタ
-  #
-  # バイナリは app のイメージにも同梱してある（ADR-0001 決定 5）。復元は設定内の
-  # path に一致する db を探すため、config/litestream.yml の path と
+  # 復元は設定内の path に一致する db を探すため、config/litestream.yml の path と
   # database.yml の production primary が一致していることが前提になっている。
   class LitestreamRestorer
     class RestoreFailed < StandardError; end
@@ -17,8 +14,6 @@ module Backups
     # Sentry 側の max_runtime（15 分）は検知であって停止ではないので、自分で打ち切る。
     TIMEOUT_SECONDS = 600
 
-    # @param destination [String] 復元先のパス
-    # @raise [RestoreFailed] litestream が非ゼロで終了した、または打ち切られた場合
     def restore(destination:)
       Open3.popen2e(
         "litestream", "restore",

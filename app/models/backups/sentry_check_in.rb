@@ -1,6 +1,4 @@
 module Backups
-  # 日次リストア訓練の Sentry Cron Monitor へのチェックイン
-  #
   # monitor そのものは Terraform が所有している（infra/terraform/sentry.tf）。
   # チェックインに monitor_config を添えると設定が二重管理になり、次の apply で
   # drift が出て往復するため、slug だけを送る。
@@ -19,9 +17,6 @@ module Backups
       Sentry.capture_check_in(SLUG, :in_progress)
     end
 
-    # @param check_in_id [String, nil] start が返した ID
-    # @param status [Symbol] :ok または :error
-    # @param duration [Float] 訓練の所要秒数
     def finish(check_in_id, status, duration:)
       Sentry.capture_check_in(SLUG, status, check_in_id:, duration:)
     end

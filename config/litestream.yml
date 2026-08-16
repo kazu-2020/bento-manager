@@ -1,13 +1,7 @@
 # Litestream のレプリケーション設定（ADR-0001）
 #
-# このファイルは 2 箇所から参照される。
-#   1. litestream accessory  — config/deploy.yml の files: で /etc/litestream.yml にマウントされ、
-#                              `litestream replicate` が常時 S3 へ複製する
-#   2. app コンテナ           — イメージに含まれる /rails/config/litestream.yml を
-#                              日次リストア訓練と本番復旧の `litestream restore` が -config で指す
-#
-# 復元は「設定内の path に一致する db」を探すため、両者で path が一致していることが前提。
-# app コンテナと accessory は同じ named volume を /rails/storage にマウントしている。
+# accessory（複製する側）と app コンテナ（`litestream restore` で戻す側）の両方がこの
+# ファイルを読む。復元は「設定内の path に一致する db」を探すため、path がずれると戻せない。
 #
 # 変更しても accessory には自動反映されない。`kamal accessory reboot litestream` が必要
 # （ADR-0001 決定 3 で引き受けた負債）。
@@ -33,7 +27,6 @@ levels:
   - interval: 1h
 
 # ADR-0001 決定 9 の専用 IAM ユーザーの認証情報。
-# Kamal のシークレット機構から環境変数として渡され、ここで展開される。
 access-key-id: ${AWS_ACCESS_KEY_ID}
 secret-access-key: ${AWS_SECRET_ACCESS_KEY}
 
