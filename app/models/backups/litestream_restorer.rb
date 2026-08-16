@@ -9,23 +9,25 @@ module Backups
   class LitestreamRestorer
     class RestoreFailed < StandardError; end
 
-    def initialize(config_path: Rails.root.join("config/litestream.yml"),
-                   database_path: Rails.root.join(ActiveRecord::Base.connection_db_config.database))
-      @config_path = config_path
-      @database_path = database_path
-    end
+    CONFIG_PATH = "config/litestream.yml".freeze
 
     # @param destination [String] 復元先のパス
     # @raise [RestoreFailed] litestream が非ゼロで終了した場合
     def restore(destination:)
       output, status = Open3.capture2e(
         "litestream", "restore",
-        "-config", @config_path.to_s,
+        "-config", Rails.root.join(CONFIG_PATH).to_s,
         "-o", destination.to_s,
-        @database_path.to_s
+        database_path.to_s
       )
 
       raise RestoreFailed, output.strip unless status.success?
+    end
+
+    private
+
+    def database_path
+      Rails.root.join(ActiveRecord::Base.connection_db_config.database)
     end
   end
 end

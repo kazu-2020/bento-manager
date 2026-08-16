@@ -96,7 +96,24 @@ ssh root@<新しい 100.x アドレス> \
   'docker run -d --restart always --name registry -p 127.0.0.1:5550:5000 registry:2'
 ```
 
-## 6. アプリをデプロイする（この時点ではまだ空の DB）
+## 6. 1Password からシークレットを取得できることを確かめる
+
+`kamal deploy` は `.kamal/secrets` を毎回評価し、1Password から値を引く。**ここが失敗すると
+デプロイは途中で止まる**ので、ビルドを待つ前に確かめる。
+
+```bash
+op signin
+mise exec -- bundle exec kamal secrets print
+```
+
+`SECRET_KEY_BASE` / `SENTRY_DSN` / `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` の 4 つが
+値付きで出れば通っている（値は端末に出るので、共有画面では叩かないこと）。
+
+`item not found` で落ちる場合は、`.kamal/secrets` の `--account` と `--from` が指す
+1Password のアカウント・vault item が生きているかを確認する。**AWS の 2 つが欠けていると、
+手順 8 のレプリケーション再開だけが後から静かに失敗する**ので、ここで揃っていることを見る。
+
+## 7. アプリをデプロイする（この時点ではまだ空の DB）
 
 ```bash
 mise exec -- bundle exec kamal deploy
@@ -110,7 +127,7 @@ mise exec -- bundle exec kamal deploy
 > バックアップを自分で壊す。** `kamal deploy` は accessory を起動しないので安全である
 > （ADR-0001 決定 3 で「負債」として引き受けた性質が、ここでは安全装置として働く）。
 
-## 7. データベースを復元する
+## 8. データベースを復元する
 
 アプリを止めてから、volume 上の DB ファイルを S3 の中身で上書きする。
 止めずに上書きすると、Rails が開いたままのファイルを差し替えることになる。
@@ -140,9 +157,9 @@ mise exec -- bundle exec kamal app exec \
 mise exec -- bundle exec kamal app boot
 ```
 
-## 8. レプリケーションを再開する
+## 9. レプリケーションを再開する
 
-**必ず復元の後で起動する。** 順序を逆にすると手順 6 の空 DB が S3 に複製される。
+**必ず復元の後で起動する。** 順序を逆にすると手順 7 の空 DB が S3 に複製される。
 
 ```bash
 mise exec -- bundle exec kamal accessory boot litestream
@@ -152,7 +169,7 @@ mise exec -- bundle exec kamal accessory logs litestream
 ログに `AccessDenied` が出る場合は IAM 側の問題。`s3:GetBucketLocation` を含む
 専用ユーザーのポリシーは `infra/terraform/backup.tf` にある（ADR-0002）。
 
-## 9. 復旧を確認する
+## 10. 復旧を確認する
 
 ```bash
 # 1. ヘルスチェック

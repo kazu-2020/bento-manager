@@ -26,7 +26,7 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
 
   test "レプリケーションが止まり復元したコピーが本番より遅れていると訓練は失敗する" do
     replicated_ids = production_sale_ids
-    10.times { create_sale(location: locations(:city_hall), customer_type: :citizen, sale_datetime: Time.current) }
+    advance_production(10)
     build_replica(@replica_path, ids: replicated_ids)
 
     result = verify(tolerance: 5)
@@ -37,7 +37,7 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
 
   test "訓練の実行中に売上が入っても、遅れが許容差の範囲内なら訓練は成功する" do
     replicated_ids = production_sale_ids
-    2.times { create_sale(location: locations(:city_hall), customer_type: :citizen, sale_datetime: Time.current) }
+    advance_production(2)
     build_replica(@replica_path, ids: replicated_ids)
 
     assert_predicate verify(tolerance: 5), :passed?
@@ -63,10 +63,6 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
   end
 
   private
-
-  def production_sale_ids
-    Sale.order(:id).pluck(:id)
-  end
 
   def verify(tolerance: 5)
     Backups::ReplicaVerification.new(restored_path: @replica_path, tolerance:).call

@@ -16,10 +16,6 @@ module Backups
   # 「本番と一致しているか」は業務のリズムに影響されない。休業日は本番も止まるので
   # 一致し、営業日にレプリケーションが止まれば即座に不一致になる。
   class ReplicaVerification
-    Result = Data.define(:passed, :message) do
-      def passed? = passed
-    end
-
     SALES_STATE_SQL = "SELECT COALESCE(MAX(id), 0), COUNT(*) FROM sales".freeze
 
     # @param restored_path [String, Pathname] 復元したコピーのパス
@@ -29,7 +25,7 @@ module Backups
       @tolerance = tolerance
     end
 
-    # @return [Result]
+    # @return [DrillResult]
     def call
       restored = SQLite3::Database.new(@restored_path.to_s, readonly: true)
 
@@ -73,14 +69,11 @@ module Backups
         )
       end
 
-      Result.new(
-        passed: true,
-        message: "復元したコピーは本番に追いついている（#{axes.map { |label, r, p| "#{label} #{r}/#{p}" }.join('、')}）"
+      DrillResult.success(
+        "復元したコピーは本番に追いついている（#{axes.map { |label, r, p| "#{label} #{r}/#{p}" }.join('、')}）"
       )
     end
 
-    def failure(message)
-      Result.new(passed: false, message:)
-    end
+    def failure(message) = DrillResult.failure(message)
   end
 end

@@ -15,4 +15,16 @@ module RestoredReplicaHelper
   def build_corrupted_replica(path)
     File.binwrite(path, "this is not a sqlite database")
   end
+
+  # 訓練が本番として見る状態
+  def production_sale_ids
+    Sale.order(:id).pluck(:id)
+  end
+
+  # レプリケーションが止まった後も本番だけが進んだ状態を作る
+  def advance_production(count)
+    count.times do
+      create_sale(location: locations(:city_hall), customer_type: :citizen, sale_datetime: Time.current)
+    end
+  end
 end

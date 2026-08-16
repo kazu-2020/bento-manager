@@ -5,11 +5,8 @@ module Backups
   # チェックインに monitor_config を添えると設定が二重管理になり、次の apply で
   # drift が出て往復するため、slug だけを送る。
   class SentryCheckIn
+    # infra/terraform/sentry.tf の sentry_cron_monitor と一致していること
     SLUG = "litestream-restore-drill".freeze
-
-    def initialize(slug: SLUG)
-      @slug = slug
-    end
 
     # 開始時の in_progress を省いてはならない。Sentry の max_runtime_minutes は
     # 「in_progress のチェックインがタイムアウト扱いになるまでの分数」であり、
@@ -19,14 +16,14 @@ module Backups
     #
     # @return [String, nil] チェックイン ID（Sentry 未初期化時は nil）
     def start
-      Sentry.capture_check_in(@slug, :in_progress)
+      Sentry.capture_check_in(SLUG, :in_progress)
     end
 
     # @param check_in_id [String, nil] start が返した ID
     # @param status [Symbol] :ok または :error
     # @param duration [Float] 訓練の所要秒数
     def finish(check_in_id, status, duration:)
-      Sentry.capture_check_in(@slug, status, check_in_id:, duration:)
+      Sentry.capture_check_in(SLUG, status, check_in_id:, duration:)
     end
   end
 end

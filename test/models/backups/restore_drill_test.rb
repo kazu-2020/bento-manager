@@ -21,7 +21,7 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
   end
 
   class RecordingCheckIn
-    attr_reader :events
+    attr_reader :events, :duration
 
     def initialize
       @events = []
@@ -47,18 +47,19 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
   end
 
   test "訓練は開始時に in_progress を送り、判定後に同じチェックインを結果で閉じる" do
-    drill = build_drill { |destination| build_replica(destination, ids: Sale.order(:id).pluck(:id)) }
+    drill = build_drill { |destination| build_replica(destination, ids: production_sale_ids) }
 
     result = drill.run
 
     assert_predicate result, :passed?
     assert_equal [ :in_progress, :ok ], @check_in.statuses
     assert_equal [ "check-in-id" ], @check_in.events.map(&:last).compact.uniq
+    assert_operator @check_in.duration, :>, 0
   end
 
   test "復元したコピーが本番と食い違うと訓練は失敗としてチェックインする" do
-    replicated_ids = Sale.order(:id).pluck(:id)
-    10.times { create_sale(location: locations(:city_hall), customer_type: :citizen, sale_datetime: Time.current) }
+    replicated_ids = production_sale_ids
+    advance_production(10)
     drill = build_drill { |destination| build_replica(destination, ids: replicated_ids) }
 
     result = drill.run
@@ -78,7 +79,7 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
   end
 
   test "訓練は成功しても失敗しても一時ファイルを残さない" do
-    succeeding = FakeRestorer.new { |destination| build_replica(destination, ids: Sale.order(:id).pluck(:id)) }
+    succeeding = FakeRestorer.new { |destination| build_replica(destination, ids: production_sale_ids) }
     failing = FakeRestorer.new { raise Backups::LitestreamRestorer::RestoreFailed, "boom" }
 
     [ succeeding, failing ].each do |restorer|
