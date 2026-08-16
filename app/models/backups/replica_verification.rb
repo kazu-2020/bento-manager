@@ -9,21 +9,21 @@ module Backups
   # 健全性の指標に使うと、業務のリズムがそのまま監視のノイズになる。
   #
   # ただし売上だけを突き合わせると、売上が動かない日は両者が自明に一致し、
-  # 判定が integrity_check だけに退化する。そこを塞ぐのが BackupHeartbeat で、
+  # 判定が integrity_check だけに退化する。そこを塞ぐのが Heartbeat で、
   # 訓練が毎回書くため業務のリズムに影響されない。
   class ReplicaVerification
-    SALES_STATE_SQL = "SELECT COALESCE(MAX(id), 0), COUNT(*) FROM sales".freeze
-    HEARTBEATS_STATE_SQL = "SELECT COALESCE(MAX(id), 0), COUNT(*) FROM backup_heartbeats".freeze
+    SALES_STATE_SQL = "SELECT COALESCE(MAX(id), 0), COUNT(*) FROM #{Sale.table_name}".freeze
+    MAX_HEARTBEAT_ID_SQL = "SELECT COALESCE(MAX(id), 0) FROM #{Heartbeat.table_name}".freeze
 
-    # 今回の実行で書いた鼓動は、復元の時点でまだ S3 に届いていないことがある。
-    # 遅れ 2 は「前回の鼓動も届いていない」ということなので、複製は 1 日以上死んでいる。
-    HEARTBEAT_TOLERANCE = 1
+    SALES_STATE_COLUMNS = [ Arel.sql("COALESCE(MAX(id), 0)"), Arel.sql("COUNT(*)") ].freeze
 
-    STATE_COLUMNS = [ Arel.sql("COALESCE(MAX(id), 0)"), Arel.sql("COUNT(*)") ].freeze
-
-    def initialize(restored_path:, tolerance:)
+    # @param required_heartbeat_id [Integer, nil] 復元側に入っているべき鼓動の id。
+    #   訓練が今回の鼓動を書く「直前」の最大 id を渡す。初回の訓練では nil。
+    #   今回書いた分を条件にしないのは、復元の時点でまだ S3 に届いていないことがあるため。
+    def initialize(restored_path:, tolerance:, required_heartbeat_id:)
       @restored_path = restored_path
       @tolerance = tolerance
+      @required_heartbeat_id = required_heartbeat_id
     end
 
     def call
@@ -33,8 +33,8 @@ module Backups
       return DrillResult.failure("PRAGMA integrity_check が通らなかった: #{integrity}") unless integrity == "ok"
 
       begin
-        restored_sales = restored.get_first_row(SALES_STATE_SQL)
-        restored_beats = restored.get_first_row(HEARTBEATS_STATE_SQL)
+        restored_max_id, restored_count = restored.get_first_row(SALES_STATE_SQL)
+        restored_heartbeat_id = restored.get_first_value(MAX_HEARTBEAT_ID_SQL)
       rescue SQLite3::Exception => e
         # integrity_check を通ったのにテーブルが読めないのは、健全な「別の」データベースを
         # 復元したということ。壊れている場合と原因が違うので、混ぜて報告しない。
@@ -45,16 +45,14 @@ module Backups
       # 「復元側の遅れ」として現れ、営業時間中の訓練が理由なく赤くなる。
       # 最大 id と件数は 1 クエリで取る。2 回に分けると、その間に売上が入ったとき
       # 別時点の値どうしを比べることになり、許容差の判定が意味を失う。
-      production_sales = Sale.pick(*STATE_COLUMNS)
-      production_beats = BackupHeartbeat.pick(*STATE_COLUMNS)
+      production_max_id, production_count = Sale.pick(*SALES_STATE_COLUMNS)
 
-      compare("売上の最大 id", restored_sales.first, production_sales.first) ||
-        compare("売上の件数", restored_sales.last, production_sales.last) ||
-        compare("訓練の鼓動", restored_beats.last, production_beats.last, tolerance: HEARTBEAT_TOLERANCE) ||
+      compare("売上の最大 id", restored_max_id, production_max_id) ||
+        compare("売上の件数", restored_count, production_count) ||
+        check_heartbeat(restored_heartbeat_id) ||
         DrillResult.success(
           "復元したコピーは本番に追いついている" \
-          "（売上 #{restored_sales.last}/#{production_sales.last} 件、" \
-          "鼓動 #{restored_beats.last}/#{production_beats.last} 回）"
+          "（売上 #{restored_count}/#{production_count} 件、鼓動 id #{restored_heartbeat_id}）"
         )
     ensure
       restored&.close
@@ -69,7 +67,19 @@ module Backups
       "復元物を読めなかった（#{e.message}）"
     end
 
-    def compare(label, restored_value, production_value, tolerance: @tolerance)
+    # 前回の訓練の鼓動が復元側に無ければ、複製は少なくとも前回の訓練から死んでいる。
+    # 売上と違い訓練は毎日走るので、この条件は店の営業日に左右されない。
+    def check_heartbeat(restored_heartbeat_id)
+      return nil if @required_heartbeat_id.nil?
+      return nil if restored_heartbeat_id >= @required_heartbeat_id
+
+      DrillResult.failure(
+        "前回の訓練の鼓動（id #{@required_heartbeat_id}）が復元したコピーに無い" \
+        "（復元側の最新は id #{restored_heartbeat_id}）。前回の訓練からレプリケーションが止まっている"
+      )
+    end
+
+    def compare(label, restored_value, production_value)
       if restored_value > production_value
         return DrillResult.failure(
           "復元したコピーの#{label}が本番より進んでいる" \
@@ -78,10 +88,10 @@ module Backups
       end
 
       lag = production_value - restored_value
-      return nil if lag <= tolerance
+      return nil if lag <= @tolerance
 
       DrillResult.failure(
-        "復元したコピーの#{label}が本番より #{lag} 遅れている（許容差 #{tolerance}）。" \
+        "復元したコピーの#{label}が本番より #{lag} 遅れている（許容差 #{@tolerance}）。" \
         "レプリケーションが止まっている可能性がある"
       )
     end

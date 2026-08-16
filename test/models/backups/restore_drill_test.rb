@@ -59,7 +59,7 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
   test "訓練は実行のたびに本番へ鼓動を 1 つ残す" do
     drill = build_drill { |destination| build_replica(destination, ids: production_sale_ids) }
 
-    assert_difference "BackupHeartbeat.count", 1 do
+    assert_difference "Backups::Heartbeat.count", 1 do
       assert_predicate drill.run, :passed?
     end
   end

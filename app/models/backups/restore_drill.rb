@@ -41,14 +41,16 @@ module Backups
     # 復元の途中で落ちても数 MB の一時ファイルが本番サーバーに溜まらない。
     def restore_and_verify
       # 復元より先に書く。これが復元側に現れるかどうかが、売上が動かない日に
-      # 唯一残る手がかりになる。
-      BackupHeartbeat.beat!
+      # 唯一残る手がかりになる。判定に使うのは今回の分ではなく前回の分なので、
+      # 書く前の最大 id を控えておく。
+      required_heartbeat_id = Heartbeat.maximum(:id)
+      Heartbeat.create!
 
       Dir.mktmpdir("restore-drill") do |dir|
         destination = File.join(dir, "restored.sqlite3")
         @restorer.restore(destination:)
 
-        ReplicaVerification.new(restored_path: destination, tolerance: @tolerance).call
+        ReplicaVerification.new(restored_path: destination, tolerance: @tolerance, required_heartbeat_id:).call
       end
     rescue LitestreamRestorer::RestoreFailed => e
       DrillResult.failure("リストアそのものが失敗した: #{e.message}")

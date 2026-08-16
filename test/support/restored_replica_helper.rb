@@ -1,4 +1,5 @@
-# 訓練が復元物から読むのは sales の最大 id と件数だけなので、その 2 つだけを再現すれば足りる。
+# 訓練が復元物から読むのは sales の最大 id・件数と、鼓動の最大 id だけ。
+# heartbeat_ids の既定は「本番と完全に一致している」状態で、売上側だけを見たいテストはこれに任せる。
 module RestoredReplicaHelper
   def build_replica(path, ids:, heartbeat_ids: production_heartbeat_ids)
     db = SQLite3::Database.new(path.to_s)
@@ -20,7 +21,7 @@ module RestoredReplicaHelper
   end
 
   def production_heartbeat_ids
-    BackupHeartbeat.order(:id).pluck(:id)
+    Backups::Heartbeat.order(:id).pluck(:id)
   end
 
   def advance_production(count)

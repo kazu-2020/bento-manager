@@ -26,24 +26,26 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
 
   test "売上が 1 件も入らない日でも、レプリケーションが止まっていれば訓練は失敗する" do
     replicated_beats = production_heartbeat_ids
-    2.times { BackupHeartbeat.beat! }
+    previous = Backups::Heartbeat.create!  # 前回の訓練。ここまで複製が届かなかった
+    Backups::Heartbeat.create!             # 今回の訓練
 
     # 売上は本番も復元側もまったく同じ。休業日はこれが正常な姿になる
     build_replica(@replica_path, ids: production_sale_ids, heartbeat_ids: replicated_beats)
 
-    result = verify
+    result = verify(required_heartbeat_id: previous.id)
 
     refute_predicate result, :passed?
     assert_match(/鼓動/, result.message)
   end
 
   test "今回の鼓動がまだ複製されていない状態は正常とみなす" do
-    replicated_beats = production_heartbeat_ids
-    BackupHeartbeat.beat!
+    previous = Backups::Heartbeat.create!
+    replicated_beats = production_heartbeat_ids  # 前回の鼓動までは届いている
+    Backups::Heartbeat.create!
 
     build_replica(@replica_path, ids: production_sale_ids, heartbeat_ids: replicated_beats)
 
-    assert_predicate verify, :passed?
+    assert_predicate verify(required_heartbeat_id: previous.id), :passed?
   end
 
   test "レプリケーションが止まり復元したコピーが本番より遅れていると訓練は失敗する" do
@@ -86,7 +88,7 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
 
   private
 
-  def verify(tolerance: 5)
-    Backups::ReplicaVerification.new(restored_path: @replica_path, tolerance:).call
+  def verify(tolerance: 5, required_heartbeat_id: nil)
+    Backups::ReplicaVerification.new(restored_path: @replica_path, tolerance:, required_heartbeat_id:).call
   end
 end
