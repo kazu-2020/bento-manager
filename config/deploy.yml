@@ -89,6 +89,12 @@ asset_path: /rails/public/vite/assets
 builder:
   arch: amd64
 
+  args:
+    # 書く側（accessory の image）と戻す側（app イメージ内のバイナリ）でバージョンが
+    # ずれないよう、このファイルを唯一の出所にする。Dockerfile 側の ARG のデフォルトは
+    # kamal を通さない `docker build` 用のフォールバック。
+    LITESTREAM_VERSION: 0.5.16
+
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server
   #
@@ -113,6 +119,7 @@ accessories:
   # accessory は `kamal deploy` の対象外。設定を変えたら明示的に叩くこと:
   #   kamal accessory reboot litestream
   litestream:
+    # バージョンは builder.args.LITESTREAM_VERSION と揃えること
     image: litestream/litestream:0.5.16
     host: 100.68.213.116
     cmd: replicate

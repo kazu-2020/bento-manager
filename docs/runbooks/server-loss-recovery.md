@@ -187,6 +187,8 @@ mise exec -- bundle exec kamal app exec --reuse \
 ```
 
 4 が `passed=true` を返せば、バックアップと監視の両方が復旧している。
+赤くなった場合の理由は `mise exec -- bundle exec kamal logs | grep Backups::RestoreDrill` で読む
+（Sentry の通知には理由が載らない）。
 Sentry の [monitor ページ](https://matazou.sentry.io/crons/bento-manager/litestream-restore-drill/)
 にチェックインが 1 件増えていることも確認する。
 

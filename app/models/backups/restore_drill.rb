@@ -62,12 +62,12 @@ module Backups
     # 失敗の理由はログにだけ残す。Sentry には Cron Monitor のチェックインしか送らない。
     # 理由を別イベントとしても送ると、1 回の失敗で届く通知が増えるだけで
     # 「このメールは無視してよい」という学習を招く（ADR-0002）。
-    # 通知を受けたら `kamal logs | grep restore-drill` で理由を読むこと。
+    # 通知を受けたら `kamal logs | grep Backups::RestoreDrill` で理由を読むこと。
     def report(result)
       if result.passed?
-        Rails.logger.info { "[restore-drill] #{result.message}" }
+        Rails.logger.info { "[Backups::RestoreDrill] #{result.message}" }
       else
-        Rails.logger.error { "[restore-drill] #{result.message}" }
+        Rails.logger.error { "[Backups::RestoreDrill] #{result.message}" }
       end
     end
   end

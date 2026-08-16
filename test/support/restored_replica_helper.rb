@@ -7,7 +7,7 @@ module RestoredReplicaHelper
   def build_replica(path, ids:)
     db = SQLite3::Database.new(path.to_s)
     db.execute("CREATE TABLE sales (id INTEGER PRIMARY KEY)")
-    ids.each { |id| db.execute("INSERT INTO sales (id) VALUES (?)", id) }
+    db.transaction { ids.each { |id| db.execute("INSERT INTO sales (id) VALUES (?)", id) } }
     db.close
   end
 

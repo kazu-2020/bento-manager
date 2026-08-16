@@ -21,24 +21,23 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
   end
 
   class RecordingCheckIn
-    attr_reader :events, :duration
+    CHECK_IN_ID = "check-in-id".freeze
+
+    attr_reader :statuses, :finished_check_in_id, :duration
 
     def initialize
-      @events = []
+      @statuses = []
     end
 
     def start
-      @events << [ :in_progress, nil ]
-      "check-in-id"
+      @statuses << :in_progress
+      CHECK_IN_ID
     end
 
     def finish(check_in_id, status, duration:)
-      @events << [ status, check_in_id ]
+      @statuses << status
+      @finished_check_in_id = check_in_id
       @duration = duration
-    end
-
-    def statuses
-      @events.map(&:first)
     end
   end
 
@@ -53,14 +52,12 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
 
     assert_predicate result, :passed?
     assert_equal [ :in_progress, :ok ], @check_in.statuses
-    assert_equal [ "check-in-id" ], @check_in.events.map(&:last).compact.uniq
+    assert_equal RecordingCheckIn::CHECK_IN_ID, @check_in.finished_check_in_id
     assert_operator @check_in.duration, :>, 0
   end
 
-  test "復元したコピーが本番と食い違うと訓練は失敗としてチェックインする" do
-    replicated_ids = production_sale_ids
-    advance_production(10)
-    drill = build_drill { |destination| build_replica(destination, ids: replicated_ids) }
+  test "復元したコピーが検証に落ちると訓練は失敗としてチェックインする" do
+    drill = build_drill { |destination| build_corrupted_replica(destination) }
 
     result = drill.run
 

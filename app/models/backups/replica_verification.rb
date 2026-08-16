@@ -29,51 +29,58 @@ module Backups
     def call
       restored = SQLite3::Database.new(@restored_path.to_s, readonly: true)
 
-      integrity = restored.get_first_value("PRAGMA integrity_check")
-      return failure("PRAGMA integrity_check が通らなかった: #{integrity}") unless integrity == "ok"
+      integrity = integrity_check(restored)
+      return DrillResult.failure("PRAGMA integrity_check が通らなかった: #{integrity}") unless integrity == "ok"
 
-      restored_max_id, restored_count = restored.get_first_row(SALES_STATE_SQL)
+      begin
+        restored_max_id, restored_count = restored.get_first_row(SALES_STATE_SQL)
+      rescue SQLite3::Exception => e
+        # integrity_check を通ったのに sales が読めないのは、健全な「別の」データベースを
+        # 復元したということ。壊れている場合と原因が違うので、混ぜて報告しない。
+        return DrillResult.failure("復元したコピーから sales を読み出せなかった: #{e.message}")
+      end
 
       # 本番は復元「後」に読む。順序を逆にすると、復元中に入った売上が
       # 「復元側の遅れ」として現れ、営業時間中の訓練が理由なく赤くなる。
-      production_max_id = Sale.maximum(:id) || 0
-      production_count = Sale.count
+      # 最大 id と件数は 1 クエリで取る。2 回に分けると、その間に売上が入ったとき
+      # 別時点の値どうしを比べることになり、許容差の判定が意味を失う。
+      production_max_id, production_count = Sale.pick(Arel.sql("COALESCE(MAX(id), 0)"), Arel.sql("COUNT(*)"))
 
-      compare(
-        [ "最大 id", restored_max_id, production_max_id ],
-        [ "件数", restored_count, production_count ]
-      )
-    rescue SQLite3::Exception => e
-      failure("PRAGMA integrity_check を実行できなかった: #{e.message}")
+      compare("最大 id", restored_max_id, production_max_id) ||
+        compare("件数", restored_count, production_count) ||
+        DrillResult.success(
+          "復元したコピーは本番に追いついている" \
+          "（最大 id #{restored_max_id}/#{production_max_id}、件数 #{restored_count}/#{production_count}）"
+        )
     ensure
       restored&.close
     end
 
     private
 
-    def compare(*axes)
-      axes.each do |label, restored_value, production_value|
-        if restored_value > production_value
-          return failure(
-            "復元したコピーの sales の#{label}が本番より進んでいる" \
-            "（復元 #{restored_value} / 本番 #{production_value}）。別のデータベースを復元している可能性がある"
-          )
-        end
+    # 復元物が壊れていると PRAGMA そのものが例外になる
+    def integrity_check(restored)
+      restored.get_first_value("PRAGMA integrity_check")
+    rescue SQLite3::Exception => e
+      "復元物を読めなかった（#{e.message}）"
+    end
 
-        lag = production_value - restored_value
-        next if lag <= @tolerance
-
-        return failure(
-          "復元したコピーの sales の#{label}が本番より #{lag} 遅れている（許容差 #{@tolerance}）。" \
-          "レプリケーションが止まっている可能性がある"
+    # @return [DrillResult, nil] 不合格なら理由付きの結果、問題なければ nil
+    def compare(label, restored_value, production_value)
+      if restored_value > production_value
+        return DrillResult.failure(
+          "復元したコピーの sales の#{label}が本番より進んでいる" \
+          "（復元 #{restored_value} / 本番 #{production_value}）。別のデータベースを復元している可能性がある"
         )
       end
 
-      DrillResult.success(
-        "復元したコピーは本番に追いついている（#{axes.map { |label, r, p| "#{label} #{r}/#{p}" }.join('、')}）"
+      lag = production_value - restored_value
+      return nil if lag <= @tolerance
+
+      DrillResult.failure(
+        "復元したコピーの sales の#{label}が本番より #{lag} 遅れている（許容差 #{@tolerance}）。" \
+        "レプリケーションが止まっている可能性がある"
       )
     end
-
-    def failure(message) = DrillResult.failure(message)
   end
 end
