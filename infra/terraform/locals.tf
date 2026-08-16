@@ -17,4 +17,10 @@ locals {
 
   # ADR-0001 決定 7 と揃える
   noncurrent_version_retention_days = 30
+
+  # Sentry の組織とプロジェクト。monitor と alert の両方から参照する。
+  # ずれると monitor_ids が別組織の ID を指すが、Terraform は文字列集合としか
+  # 見ないため plan では検知できず apply 時の 404 で初めて分かる。
+  sentry_organization = "matazou"
+  sentry_project      = "bento-manager"
 }

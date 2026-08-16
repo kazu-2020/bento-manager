@@ -7,8 +7,8 @@
 # この monitor を Terraform が所有するため、実装側はチェックイン時に
 # monitor_config を送らないこと。送ると設定が二重管理になり drift が出る。
 resource "sentry_cron_monitor" "restore_drill" {
-  organization = "matazou"
-  project      = "bento-manager"
+  organization = local.sentry_organization
+  project      = local.sentry_project
 
   name        = "litestream-restore-drill"
   description = "Litestream の日次リストア訓練。失敗はバックアップから復旧できない状態を意味する"
@@ -34,44 +34,49 @@ resource "sentry_cron_monitor" "restore_drill" {
   recovery_threshold      = 1
 }
 
-# 訓練が失敗したときに通知を飛ばす。
-#
-# ADR-0002 決定 7 のとおり、通知先を管理できることが Terraform を選んだ理由である。
-# monitor があっても通知が届かなければ、ADR-0001 決定 5 が退けた
-# 「指標は緑なのに実物は壊れている」状態そのものになる。
-#
-# 通知先の故障は静かに起きる。メールアドレスの変更、メンバーの離脱、
-# チャンネルの削除。どれもエラーを出さず、ただ届かなくなるだけである。
-# コードに置くことで、変更が PR に現れ drift として検出できる。
+# 訓練の失敗を人に届ける。Terraform で管理する理由は ADR-0002 決定 7 を参照。
 resource "sentry_alert" "restore_drill" {
-  organization = "matazou"
+  organization = local.sentry_organization
   name         = "リストア訓練の失敗を通知する"
+
+  # #247 の訓練スクリプトがまだ存在せず、チェックインを送るものが何もない。
+  # この状態で有効にすると、実装されていない訓練の missed 判定が失敗メールになり、
+  # 「このメールは無視してよい」という学習だけが残る。#247 の実装と同時に true にする。
+  enabled = false
 
   monitor_ids = [sentry_cron_monitor.restore_drill.id]
 
-  # 同じ issue について再通知する間隔。訓練は日次なので 1 日 1 回で足りる
+  # 必須属性。同一 issue の再通知間隔だが、下の trigger はいずれも状態遷移でしか
+  # 発火せず、同じ issue が 24 時間以内に再発することはない。現状この値が効く場面はない。
   frequency_minutes = 1440
 
   trigger_conditions = [
-    # 訓練が失敗すると新しい issue が作られる
     { first_seen_event = {} },
 
-    # 解決済みの失敗が再発した
+    # recovery_threshold = 1 により、訓練が 1 度成功すると issue は resolved になる。
+    # 以降の失敗は新規ではなく regression として届くため、これを外すと
+    # 史上初回の失敗しか通知されない。
     { regression_event = {} },
   ]
 
+  # 【既知の穴】継続中の失敗は再通知されない。失敗が 3 日続いても届くのは初日の
+  # 1 通だけで、2 日目以降の沈黙は正常時と区別できない。初日のメールを取りこぼすと
+  # 無期限に無音になる。native な trigger に「継続」を表す選択肢がないため、
+  # 定期リマインドには legacy_trigger_conditions が要る（#282 で追跡）。
+
   action_filters = [
     {
+      # actions と logic_type は必須。conditions を空にすると恒真になる。
+      # 訓練は日次で 1 回しか動かないため、件数や頻度での間引きは要らない。
       logic_type = "all"
-
-      # 条件を付けない。訓練の失敗はすべて通知する。
-      # 頻度で間引くと「今日は静かだから正常」という誤った安心を生む。
 
       actions = [
         {
-          # target_id を必要としない issue_owners を使う。この monitor に
-          # オーナーは設定していないため、実際には fallthrough が効いて
-          # 全メンバーに届く。1 人運用では宛先の取り違えが起きない分こちらが堅い。
+          # 【注意】このリソースだけでは宛先が固定されていない。
+          # issue_owners は Sentry のプロジェクト所有者設定（Terraform 管理外）を
+          # 経由して解決され、該当者がいなければ fallthrough で全メンバーに届く。
+          # 誰かが所有者ルールを追加すれば、PR も drift も無いまま宛先が変わる。
+          # 宛先までコードで固定するには sentry_project_ownership の管理が要る（#282）。
           email = {
             target_type      = "issue_owners"
             fallthrough_type = "AllMembers"
