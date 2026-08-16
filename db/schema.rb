@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_100001) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_16_130000) do
   create_table "additional_orders", force: :cascade do |t|
     t.integer "catalog_id", null: false
     t.datetime "created_at", null: false
@@ -23,6 +23,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_100001) do
     t.index [ "employee_id" ], name: "index_additional_orders_on_employee_id"
     t.index [ "location_id" ], name: "index_additional_orders_on_location_id"
     t.check_constraint "quantity > 0", name: "chk_additional_orders_quantity_positive"
+  end
+
+  create_table "backup_heartbeats", force: :cascade do |t|
+    t.datetime "created_at", null: false
   end
 
   create_table "catalog_discontinuations", force: :cascade do |t|
