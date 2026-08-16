@@ -40,7 +40,15 @@ env:
   secret:
     - SECRET_KEY_BASE
     - SENTRY_DSN
+    # 日次リストア訓練が app コンテナ内で `litestream restore` を叩くため、
+    # accessory だけでなく app 側にも S3 の認証情報が要る（ADR-0001 決定 5）。
+    - AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY
   clear:
+    # リストア訓練で許容する「復元側が本番より遅れている件数」。
+    # 訓練の実行中にも売上が入りうるため、厳密一致では営業中に誤検知する（ADR-0001 決定 6）。
+    RESTORE_DRILL_TOLERANCE: 5
+
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
     SOLID_QUEUE_IN_PUMA: true
@@ -81,6 +89,12 @@ asset_path: /rails/public/vite/assets
 builder:
   arch: amd64
 
+  args:
+    # 書く側（accessory の image）と戻す側（app イメージ内のバイナリ）でバージョンが
+    # ずれないよう、このファイルを唯一の出所にする。Dockerfile 側の ARG のデフォルトは
+    # kamal を通さない `docker build` 用のフォールバック。
+    LITESTREAM_VERSION: 0.5.16
+
   # # Build image via remote server (useful for faster amd64 builds on arm64 computers)
   # remote: ssh://docker@docker-builder-server
   #
@@ -96,25 +110,37 @@ builder:
 #   user: app
 
 # Use accessory services (secrets come from .kamal/secrets).
-# accessories:
-#   db:
-#     image: mysql:8.0
-#     host: 192.168.0.2
-#     # Change to 3306 to expose port to the world instead of just local network.
-#     port: "127.0.0.1:3306:3306"
-#     env:
-#       clear:
-#         MYSQL_ROOT_HOST: '%'
-#       secret:
-#         - MYSQL_ROOT_PASSWORD
-#     files:
-#       - config/mysql/production.cnf:/etc/mysql/my.cnf
-#       - db/production.sql:/docker-entrypoint-initdb.d/setup.sql
-#     directories:
-#       - data:/var/lib/mysql
-#   redis:
-#     image: valkey/valkey:8
-#     host: 192.168.0.2
-#     port: 6379
-#     directories:
-#       - data:/data
+accessories:
+  # ADR-0001 決定 3: Litestream は app に -exec で同梱せず、独立コンテナとして動かす。
+  # -exec なら「バックアップが壊れたら Rails も起動しない」という強い保証が得られるが、
+  # それは「バックアップが壊れたら店が売上を記録できなくなる」ことを意味する。
+  # バックアップを 1 日失うのは復旧可能だが、営業中に POS が上がらないのは復旧不能。
+  #
+  # 【初回導入時】`kamal deploy` は accessory を起動しない。app を先に起動して
+  # volume を作らせたうえで `kamal accessory boot litestream` を明示的に叩くこと。
+  # 忘れると複製が 1 バイトも動かないまま、当日 03:00 の訓練が空の S3 を読んで失敗し、
+  # 監視を入れた初日に失敗メールが届く。逆に `kamal setup`（accessory を app より先に
+  # 起動する）を使ってもいけない。詳細は docs/runbooks/server-loss-recovery.md 手順 7。
+  litestream:
+    # バージョンは builder.args.LITESTREAM_VERSION と揃えること
+    image: litestream/litestream:0.5.16
+    # アドレスを直書きせず web ロールに追従させる。同じ volume を共有する以上
+    # app と別のホストに置く意味はなく、サーバー移設時に片方だけ古いアドレスが
+    # 残ると、レプリケーションだけが旧サーバーで動き続ける
+    roles:
+      - web
+    cmd: replicate
+    options:
+      # app コンテナと同じ uid に揃える。root で動かすと Litestream が作る
+      # -shm / -wal などの所有者が app とずれる（ADR-0001 決定 3）。
+      user: 1000:1000
+      restart: always
+    env:
+      secret:
+        - AWS_ACCESS_KEY_ID
+        - AWS_SECRET_ACCESS_KEY
+    files:
+      - config/litestream.yml:/etc/litestream.yml
+    volumes:
+      # app コンテナと同じ named volume を共有し、同じファイルを参照させる
+      - bento_manager_storage:/rails/storage

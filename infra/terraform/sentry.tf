@@ -39,10 +39,7 @@ resource "sentry_alert" "restore_drill" {
   organization = local.sentry_organization
   name         = "リストア訓練の失敗を通知する"
 
-  # #247 の訓練スクリプトがまだ存在せず、チェックインを送るものが何もない。
-  # この状態で有効にすると、実装されていない訓練の missed 判定が失敗メールになり、
-  # 「このメールは無視してよい」という学習だけが残る。#247 の実装と同時に true にする。
-  enabled = false
+  enabled = true
 
   monitor_ids = [sentry_cron_monitor.restore_drill.id]
 

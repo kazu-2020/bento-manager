@@ -1,0 +1,48 @@
+# Litestream のレプリケーション設定（ADR-0001）
+#
+# accessory（複製する側）と app コンテナ（`litestream restore` で戻す側）の両方がこの
+# ファイルを読む。復元は「設定内の path に一致する db」を探すため、path がずれると戻せない。
+#
+# 反映経路が 2 つに分かれている。変更したら両方を実行すること（ADR-0001 決定 3 で
+# 引き受けた負債）。片方だけだと書く側と戻す側が別の設定で動き、翌 03:00 の訓練から
+# 毎日赤くなる。
+#   - accessory: ホストへアップロードされたコピーを読む → `kamal accessory reboot litestream`
+#   - app: イメージに焼き込まれた /rails/config/litestream.yml を読む → `kamal deploy`
+
+# ADR-0001 決定 7: 保持期間は 30 日。
+# 守るのは「壊れたデプロイ」— マイグレーションのバグでデータが欠損し、
+# 日次の集計を見て初めて気づくまでに数日から数週間かかるシナリオ。
+# v0.5 のデフォルトは 24h なので、明示しないと気づく前に窓が閉じる。
+snapshot:
+  interval: 24h
+  retention: 720h
+
+# 保持期間を過ぎたオブジェクトを実際に削除させる。
+# S3 側はバージョニング + ライフサイクルで 30 日守っている（ADR-0001 決定 9）ため、
+# Litestream の削除は非現行バージョンとして残る。
+retention:
+  enabled: true
+
+# L1 以降のコンパクション間隔（L0 は設定できない）。いずれも v0.5 の既定値と同じ。
+# RPO を決めるのはここではなく L0 の sync-interval（既定 1 秒）なので、
+# この値を詰めても復旧時点は縮まらず、S3 のリクエストが増えるだけ。
+levels:
+  - interval: 30s
+  - interval: 5m
+  - interval: 1h
+
+# ADR-0001 決定 9 の専用 IAM ユーザーの認証情報。
+access-key-id: ${AWS_ACCESS_KEY_ID}
+secret-access-key: ${AWS_SECRET_ACCESS_KEY}
+
+# ADR-0001 決定 4: 対象は production の primary 1 本のみ。
+# cache / queue / cable は bin/docker-entrypoint の db:prepare で作り直されるため含めない。
+# とりわけ queue は仕事がゼロでも Solid Queue のハートビートで書き込みが発生し続け、
+# 含めると復旧価値ゼロのデータが監視対象の大半を占めることになる。
+dbs:
+  - path: /rails/storage/production.sqlite3
+    replica:
+      type: s3
+      bucket: bento-manager-backup-394123064455
+      path: production
+      region: ap-northeast-1
