@@ -51,6 +51,9 @@
 /.dockerignore
 /Dockerfile*
 
+# Ignore infrastructure as code.
+/infra
+
 # Ignore AI files
 /.claude
 /docs
