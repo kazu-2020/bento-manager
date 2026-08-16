@@ -129,10 +129,18 @@ mise exec -- bundle exec kamal deploy
 `bin/docker-entrypoint` の `db:prepare` が空の `production.sqlite3` を作る。これは想定どおりで、
 次の手順で本物に置き換える。
 
-> **`kamal setup` を使ってはならない。** setup は accessory も一緒に起動する。
-> Litestream が空の DB を掴むと、その空の状態が S3 に複製され、**復旧しようとしていた
-> バックアップを自分で壊す。** `kamal deploy` は accessory を起動しないので安全である
-> （ADR-0001 決定 3 で「負債」として引き受けた性質が、ここでは安全装置として働く）。
+> **`kamal setup` を使ってはならない。** setup は `accessory boot all` を **app より先に**
+> 実行する（kamal 2.12 の `Main#deploy`）。白紙の VPS には volume がまだ無いため、
+> 先に起動した litestream コンテナが `bento_manager_storage` を作ることになる。
+> litestream のイメージに `/rails/storage` は存在しないので、**volume は root 所有の空
+> ディレクトリとして作られ、uid 1000 で動く app は `db:prepare` すらできず起動しない。**
+> 起動できたとしても、Litestream が空の DB を掴めばその状態が S3 に複製され、
+> **復旧しようとしていたバックアップを自分で壊す。**
+>
+> `kamal deploy` は accessory を起動しない。app が先に volume を作れば
+> （app イメージの `/rails/storage` は uid 1000 所有なので volume もそれを引き継ぐ）
+> どちらも起きない。ADR-0001 決定 3 で「負債」として引き受けた性質が、
+> ここでは安全装置として働く。
 
 ## 8. データベースを復元する
 
@@ -218,13 +226,21 @@ mise exec -- bundle exec kamal app exec --reuse "bin/rails runner 'puts Sale.cou
 aws s3 ls s3://bento-manager-backup-394123064455/production/ --recursive | tail -3
 
 # 4. リストア訓練を手で 1 回回し、緑になること
+#    3 で新しいオブジェクトを確認してから叩くこと。訓練の伝播待ちは 60 秒しかないので、
+#    accessory を起動した直後だと初期同期が終わっておらず、複製は健全なのに
+#    「ハートビートが復元したコピーに無い」で赤くなる。しかもこの失敗は
+#    failure_issue_threshold = 1 の monitor に本物の error として記録され、
+#    復旧作業の最中に失敗メールが飛ぶ。
 mise exec -- bundle exec kamal app exec --reuse \
   "bin/rails runner 'pp Backups::RestoreDrill.new.run'"
 ```
 
 4 が `passed=true` を返せば、バックアップと監視の両方が復旧している。
-赤くなった場合の理由は `mise exec -- bundle exec kamal logs | grep Backups::RestoreDrill` で読む
+赤くなった場合の理由は
+`mise exec -- bundle exec kamal app logs --grep Backups::RestoreDrill` で読む
 （Sentry の通知には理由が載らない）。
+alias の `kamal logs` は follow なので、パイプで grep すると直近 10 行しか出ないまま
+ブロックする。`--grep` を渡した場合だけ kamal は tail の制限を外す。
 Sentry の [monitor ページ](https://matazou.sentry.io/crons/bento-manager/litestream-restore-drill/)
 にチェックインが 1 件増えていることも確認する。
 

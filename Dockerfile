@@ -48,9 +48,23 @@ EOF
 #
 # バージョンの出所は config/deploy.yml の builder.args。下のデフォルトは
 # kamal を通さない `docker build` 用のフォールバック。
+#
+# アーキテクチャは BuildKit の TARGETARCH から導出する。直書きすると
+# config/deploy.yml の builder.arch を変えたときに黙って別アーキのバイナリが入り、
+# 気づくのは訓練が Errno::ENOEXEC で落ちる翌朝か、全損復旧の最中になる。
 ARG LITESTREAM_VERSION=0.5.16
-RUN curl -fsSL "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-${LITESTREAM_VERSION}-linux-x86_64.tar.gz" \
+ARG TARGETARCH
+# デリミタを quote するのは、外側の sh が litestream_arch を（未定義なので空文字に）
+# 展開してしまうため。quote すれば展開は内側の bash だけが行う。
+RUN <<'EOF' bash -ex
+  case "${TARGETARCH:-amd64}" in
+    amd64) litestream_arch=x86_64 ;;
+    arm64) litestream_arch=arm64 ;;
+    *) echo "unsupported TARGETARCH: ${TARGETARCH}" >&2; exit 1 ;;
+  esac
+  curl -fsSL "https://github.com/benbjohnson/litestream/releases/download/v${LITESTREAM_VERSION}/litestream-${LITESTREAM_VERSION}-linux-${litestream_arch}.tar.gz" \
     | tar -xz -C /usr/local/bin litestream
+EOF
 
 # Install JavaScript dependencies
 ARG NODE_VERSION=25.2.1
