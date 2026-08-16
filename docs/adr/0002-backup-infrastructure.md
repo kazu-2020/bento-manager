@@ -66,7 +66,7 @@ HCP Terraform の Dynamic provider credentials 機能がロールと OIDC プロ
 
 > 1 人運用で事故は忘れた頃に起きる以上、コードに残らない設定は負債である
 
-画面から手でアタッチしたポリシーは、1 年後に「これは何のための権限か」を辿る手段がない。権限は S3 をバケット名プレフィックスで、IAM ユーザーをパスで限定し、`iam:AttachUserPolicy` を意図的に除外して `AdministratorAccess` をアタッチする経路を塞いでいる。
+画面から手でアタッチしたポリシーは、1 年後に「これは何のための権限か」を辿る手段がない。付与している権限の範囲はテンプレートを参照すること。
 
 ### 6. Litestream のアクセスキーは Terraform で作らない
 
@@ -76,22 +76,23 @@ Terraform は IAM ユーザーとインラインポリシーまでを管理す�
 
 副次的な利点として、キーのローテーションに `terraform apply` が不要になる。ローテーションを重い操作にしないこと自体が、ローテーションを実際に行う確率を上げる。
 
+この決定は規約ではなく権限で表現する。run ロールに `iam:CreateAccessKey` を与えていないため、**`terraform apply` がキーを発行する経路自体が存在しない**。決定 4 が OIDC を選んだのと同じ形で、失敗モードを構造的に消している。
+
 ## 決定不要として閉じた論点
 
 - **plan / apply でロールを分ける**: `run_phase` を `plan` / `apply` に固定した 2 つのロールを作れば、plan フェーズから書き込み権限を外せる。ただし Terraform の plan は本来読み取りのみであり、この規模では管理対象を倍にするだけの実益がない。
 - **run ロールの Resource 限定**: バケット名のプレフィックスや IAM ユーザーのパスで Resource を絞ることも検討したが採らない。**このアカウントは bento-manager 専用であり、保護すべき「他のリソース」が存在しない。** 守りたい当のバケットが限定範囲の中にいる以上、限定に防御としての実体はなく、Terraform 側の命名と CloudFormation 側のパラメータという暗黙の結合だけが残る。片方を変えただけでは検知されず `AccessDenied` になる類の負債である。代わりにアクションを絞り、EC2 等の起動（コスト）と `iam:CreateRole`（他アカウントから引けるロールの作成）を塞いでいる。
 - **Permissions Boundary の強制**: run ロールは `iam:PutUserPolicy` を持つため、理屈の上では強い権限を持つ IAM ユーザーを作れる。ただし影響は bento-manager アカウント内に閉じており、決定 1 のアカウント分離が主たる防御線として機能している。Boundary を足すのはこのアカウントに他のワークロードが同居し始めてからでよい。
-- **保管時の暗号化**: ADR-0001 で決定不要として閉じたとおり SSE-S3 で充足する。ただし既定に依存せず `aws_s3_bucket_server_side_encryption_configuration` で明示する。
 
 ## 影響
 
 - 管理対象が増える: AWS アカウント 1 つ、HCP Terraform ワークスペース 1 つ、CloudFormation スタック 1 つ
 - Control Tower のベースラインにより新アカウントでも AWS Config が有効になり、月 $0.05 程度の増加
+- **run ロールの信頼ポリシー（決定 4 の `sub` 固定）はコード化されていない。** ロールと OIDC プロバイダーは HCP Terraform の Dynamic provider credentials 機能がコンソール操作で作成したもので、リポジトリに定義が存在しない。決定 5 が「コードに残らない設定は負債」として権限をコード化した一方で、**より影響の大きい信頼境界の方が画面にしか無い**状態になっている。ロール本体を CloudFormation で管理すれば解消でき、次項の名前の結合も同時に消える
 - ワークスペースの環境変数 `TFC_AWS_RUN_ROLE_ARN` は HCP Terraform の画面にしか存在しない。ロール名を変える場合は AWS 側と両方を直す必要がある
-- `s3:ListBucket` に `s3:prefix` の Condition を付けているため、Litestream がプレフィックスなしで列挙する挙動を示した場合は `AccessDenied` になる。その際は Condition を外し、Resource 側のプレフィックス限定だけを残す
+- `s3:ListBucket` のプレフィックス制限により Litestream が動かない可能性がある。詳細と対処は `infra/terraform/backup.tf` の `ListBucketWithinPrefix` を参照
 
 ## 参照
 
 - [HCP Terraform Dynamic Provider Credentials (AWS)](https://developer.hashicorp.com/terraform/cloud-docs/workspaces/dynamic-provider-credentials/aws-configuration)
-- [AWS::IAM::OIDCProvider](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iam-oidcprovider.html)
 - [Control Tower のベースラインと OU 登録](https://docs.aws.amazon.com/controltower/latest/userguide/types-of-baselines.html)

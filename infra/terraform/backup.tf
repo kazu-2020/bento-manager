@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "backup" {
-  bucket = var.bucket_name
+  bucket = local.bucket_name
 }
 
 # ADR-0001 決定 9: 本番サーバー内に置く認証情報からバックアップを消されても、
@@ -21,8 +21,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "backup" {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
     }
-
-    bucket_key_enabled = true
   }
 }
 
@@ -35,7 +33,7 @@ resource "aws_s3_bucket_public_access_block" "backup" {
   restrict_public_buckets = true
 }
 
-# ADR-0001 決定 7 と揃えて非現行バージョンを 30 日で失効させる。
+# ADR-0001 決定 7 と揃えて非現行バージョンを失効させる。
 # 現行バージョンには失効を設定しない。Litestream は compaction と保持期間管理のために
 # 日常的にオブジェクトを削除しており、現行バージョンの寿命は Litestream 側が管理する。
 resource "aws_s3_bucket_lifecycle_configuration" "backup" {
@@ -48,7 +46,14 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
     filter {}
 
     noncurrent_version_expiration {
-      noncurrent_days = var.noncurrent_version_retention_days
+      noncurrent_days = local.noncurrent_version_retention_days
+    }
+
+    # Litestream の DeleteObject はバージョニング下で delete marker を作る。
+    # 非現行バージョンが失効した後も delete marker だけが孤児として残るため、
+    # これを消さないとこの構成で唯一、上限なく増え続ける項目になる。
+    expiration {
+      expired_object_delete_marker = true
     }
   }
 
@@ -68,14 +73,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
   depends_on = [aws_s3_bucket_versioning.backup]
 }
 
-#
-# Litestream 用 IAM ユーザー
-#
 # path はこのアカウント内での分類のためのもので、権限には影響しない。
 #
 # アクセスキーはここでは作らない。Terraform で作ると state に平文で載るため、
 # 手動で発行して 1Password に保存し、kamal secrets 経由で本番に渡す。
-#
+# run ロールにも作成権限を与えていない（infra/bootstrap/tfc-run-role-policy.yaml）。
 resource "aws_iam_user" "litestream" {
   name = "litestream"
   path = "/bento-manager/"
@@ -98,7 +100,7 @@ resource "aws_iam_user_policy" "litestream" {
         Resource = aws_s3_bucket.backup.arn
         Condition = {
           StringLike = {
-            "s3:prefix" = ["${var.replica_prefix}/*"]
+            "s3:prefix" = ["${local.replica_prefix}/*"]
           }
         }
       },
@@ -112,7 +114,7 @@ resource "aws_iam_user_policy" "litestream" {
           "s3:PutObject",
           "s3:DeleteObject",
         ]
-        Resource = "${aws_s3_bucket.backup.arn}/${var.replica_prefix}/*"
+        Resource = "${aws_s3_bucket.backup.arn}/${local.replica_prefix}/*"
       },
     ]
   })

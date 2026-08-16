@@ -18,17 +18,13 @@ terraform {
   }
 }
 
-# 認証情報はワークスペースの環境変数（TFC_AWS_PROVIDER_AUTH / TFC_AWS_RUN_ROLE_ARN）
-# 経由で OIDC により動的に発行される。アクセスキーはどこにも保存しない。
-#
-# ロールと OIDC プロバイダーは HCP Terraform の Dynamic provider credentials が作成する。
-# run ロールに与える権限は infra/bootstrap/tfc-run-role-policy.yaml で定義している。
+# 認証情報は OIDC により run のたびに動的に発行される。アクセスキーは保存しない。
+# 経緯と責任分界は docs/adr/0002-backup-infrastructure.md の決定 4・5 を参照。
 provider "aws" {
-  region = var.region
+  region = local.region
 
   default_tags {
     tags = {
-      Project   = "bento-manager"
       ManagedBy = "terraform"
     }
   }
