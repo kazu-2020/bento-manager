@@ -118,7 +118,7 @@ mise exec -- bundle exec kamal secrets print
 
 `item not found` で落ちる場合は、`.kamal/secrets` の `--account` と `--from` が指す
 1Password のアカウント・vault item が生きているかを確認する。**AWS の 2 つが欠けていると、
-手順 8 のレプリケーション再開だけが後から静かに失敗する**ので、ここで揃っていることを見る。
+手順 9 のレプリケーション再開だけが後から静かに失敗する**ので、ここで揃っていることを見る。
 
 ## 7. アプリをデプロイする（この時点ではまだ空の DB）
 
