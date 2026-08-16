@@ -52,7 +52,7 @@ Auto-apply を無効にするのは、このワークスペースが売上台帳
 
 `sub` にワイルドカードを使うと、**組織内の任意のワークスペースがこのロールを引ける**。バックアップを消せる権限を、無関係なワークスペースに配ることになる。
 
-```
+```text
 organization:matazou_organization:project:workload:workspace:bento-manager:run_phase:*
 ```
 
