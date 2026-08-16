@@ -78,6 +78,18 @@ Terraform は IAM ユーザーとインラインポリシーまでを管理す�
 
 この決定は規約ではなく権限で表現する。run ロールに `iam:CreateAccessKey` を与えていないため、**`terraform apply` がキーを発行する経路自体が存在しない**。決定 4 が OIDC を選んだのと同じ形で、失敗モードを構造的に消している。
 
+### 7. Sentry の Cron Monitor も Terraform で管理する
+
+`jianyuan/sentry` プロバイダーで `sentry_cron_monitor` を定義する。チェックイン時に `monitor_config` を送って upsert する方式は採らない。
+
+**理由**: 決定 5 と同じ原則の適用である。ダッシュボードで手作業で作ると、スケジュールも猶予時間もコードのどこにも残らない。
+
+upsert 方式でも設定は訓練スクリプト内に残るが、**アラートの通知先を管理できない**。監視は「異常を検知すること」ではなく「異常が人に届くこと」で完成する。ADR-0001 決定 5 が代理指標を退けたのと同じ理由で、**通知が飛ばない監視は緑を返し続ける監視と変わらない**。通知設定をコードに乗せられる点が upsert 方式との決定的な差になる。
+
+**引き受けた負債**: Sentry は OIDC に対応しておらず、静的な `SENTRY_AUTH_TOKEN` を HCP Terraform のワークスペースに保存する必要がある。決定 4 で AWS の長期認証情報を排した直後に、別の長期認証情報を持ち込むことになる。**この構成で唯一の長期認証情報**であり、緩和策は internal integration でスコープを絞ることだけである。プロバイダーが 0.x のコミュニティメンテナンスである点は、バージョンをパッチ固定（`~> 0.15.4`）して受け止める。
+
+**upsert との併用は不可**: 両方が monitor 設定を書くと drift が出て apply が往復する。実装側（#247）はチェックイン時に slug のみを指定し、`monitor_config` を送らないこと。
+
 ## 決定不要として閉じた論点
 
 - **plan / apply でロールを分ける**: `run_phase` を `plan` / `apply` に固定した 2 つのロールを作れば、plan フェーズから書き込み権限を外せる。ただし Terraform の plan は本来読み取りのみであり、この規模では管理対象を倍にするだけの実益がない。
@@ -90,6 +102,8 @@ Terraform は IAM ユーザーとインラインポリシーまでを管理す�
 - Control Tower のベースラインにより新アカウントでも AWS Config が有効になり、月 $0.05 程度の増加
 - **run ロールの信頼ポリシー（決定 4 の `sub` 固定）はコード化されていない。** ロールと OIDC プロバイダーは HCP Terraform の Dynamic provider credentials 機能がコンソール操作で作成したもので、リポジトリに定義が存在しない。決定 5 が「コードに残らない設定は負債」として権限をコード化した一方で、**より影響の大きい信頼境界の方が画面にしか無い**状態になっている。ロール本体を CloudFormation で管理すれば解消でき、次項の名前の結合も同時に消える
 - ワークスペースの環境変数 `TFC_AWS_RUN_ROLE_ARN` は HCP Terraform の画面にしか存在しない。ロール名を変える場合は AWS 側と両方を直す必要がある
+- **`SENTRY_AUTH_TOKEN` はこの構成で唯一の長期認証情報**であり、HCP Terraform の画面にしか存在しない。ローテーションは手作業になる。決定 4 で AWS 側の長期キーを排した一方で、Sentry には同じ手段がない
+- `sentry_cron_monitor` は slug を返さない（`id` は内部 ID）。チェックインに使う slug は apply 後に Sentry のダッシュボードで確認する必要がある
 - `s3:ListBucket` のプレフィックス制限により Litestream が動かない可能性がある。詳細と対処は `infra/terraform/backup.tf` の `ListBucketWithinPrefix` を参照
 
 ## 参照
