@@ -59,10 +59,20 @@ resource "sentry_alert" "restore_drill" {
     { regression_event = {} },
   ]
 
-  # 【既知の穴】継続中の失敗は再通知されない。失敗が 3 日続いても届くのは初日の
-  # 1 通だけで、2 日目以降の沈黙は正常時と区別できない。初日のメールを取りこぼすと
-  # 無期限に無音になる。native な trigger に「継続」を表す選択肢がないため、
-  # 定期リマインドには legacy_trigger_conditions が要る（#282 で追跡）。
+  # 【既知の穴】連続失敗は初日しか通知されない。
+  #
+  # 失敗が続く間、同じ unresolved の issue に occurrence が積まれるだけなので
+  # first_seen も regression も発火しない。3 日続いても届くのは初日の 1 通で、
+  # 2 日目以降の沈黙は正常時と区別できない。初日のメールを取りこぼすと
+  # 復旧できない状態が無音のまま続く。
+  #
+  # 無音になるのは連続失敗の場合だけで、fail → ok → fail と flap するときは
+  # regression が拾う。つまり最も危険なパターンでだけ落ちる。
+  #
+  # trigger を足しても埋まらない。reappeared_event は archive からの復帰を指すので、
+  # archive していない issue には効かない。イベントごとに発火する条件は
+  # legacy_trigger_conditions にしかなく、プロバイダが deprecation を明記している。
+  # 制約として受け入れ、継続中の失敗は Sentry の issue を見に行くこととする（#282）。
 
   action_filters = [
     {
