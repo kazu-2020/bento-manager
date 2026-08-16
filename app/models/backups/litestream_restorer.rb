@@ -14,6 +14,10 @@ module Backups
     # Sentry 側の max_runtime（15 分）は検知であって停止ではないので、自分で打ち切る。
     TIMEOUT_SECONDS = 600
 
+    # 子プロセスの終了後に出力を読み切るまでの上限。孫プロセスが pipe の書き込み端を
+    # 握っていると EOF が来ないため、ここに上限が無いと TIMEOUT_SECONDS の意味が消える。
+    OUTPUT_READ_TIMEOUT_SECONDS = 10
+
     def restore(destination:)
       Open3.popen2e(
         "litestream", "restore",
@@ -30,16 +34,39 @@ module Backups
         reader = Thread.new { output.read }
 
         unless wait_thread.join(TIMEOUT_SECONDS)
-          Process.kill("KILL", wait_thread.pid)
+          # 判定の直後に子が自然終了して回収済みだと kill は ESRCH を投げる。
+          # 素通しすると失敗理由が「打ち切った」ではなく無関係な OS エラーに化ける。
+          begin
+            Process.kill("KILL", wait_thread.pid)
+          rescue Errno::ESRCH
+            nil
+          end
           reader.kill
           raise RestoreFailed, "#{TIMEOUT_SECONDS} 秒で終わらなかったため打ち切った"
         end
 
-        raise RestoreFailed, reader.value.to_s.strip unless wait_thread.value.success?
+        status = wait_thread.value
+        raise RestoreFailed, failure_message(status, read_output(reader)) unless status.success?
       end
     end
 
     private
+
+    def read_output(reader)
+      return reader.value if reader.join(OUTPUT_READ_TIMEOUT_SECONDS)
+
+      reader.kill
+      nil
+    end
+
+    # litestream は何も出力せずに落ちることがある。理由をログにしか残さない設計
+    # （RestoreDrill#report）なので、出力が空でも終了コードだけは必ず残す。
+    def failure_message(status, output)
+      reason = output.to_s.strip
+      how = status.signaled? ? "シグナル #{status.termsig} で終了" : "終了コード #{status.exitstatus}"
+
+      reason.empty? ? how : "#{how}: #{reason}"
+    end
 
     def database_path
       Rails.root.join(ActiveRecord::Base.connection_db_config.database)

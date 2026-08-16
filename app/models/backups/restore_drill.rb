@@ -21,9 +21,15 @@ module Backups
     # 走るため、この待ちが出張販売にぶつかることもない。
     PROPAGATION_WAIT_SECONDS = 60
 
+    # 空値や数字でない値を .to_i で 0 に落とすと、許容差 0 として営業中に誤検知する。
+    # 読めない値は設定ミスなので、既定値へフォールバックする。
+    def self.configured_tolerance
+      Integer(ENV["RESTORE_DRILL_TOLERANCE"], exception: false) || DEFAULT_TOLERANCE
+    end
+
     def initialize(restorer: LitestreamRestorer.new,
                    check_in: SentryCheckIn.new,
-                   tolerance: ENV.fetch("RESTORE_DRILL_TOLERANCE", DEFAULT_TOLERANCE).to_i,
+                   tolerance: RestoreDrill.configured_tolerance,
                    propagation_wait: PROPAGATION_WAIT_SECONDS)
       @restorer = restorer
       @check_in = check_in
@@ -37,12 +43,15 @@ module Backups
 
       result = restore_and_verify
 
+      # チェックインより先に書く。理由が残る唯一の場所はログなので、
+      # Sentry の呼び出しが例外を投げたときに理由ごと失われてはならない。
+      report(result)
+
       @check_in.finish(
         check_in_id,
         result.passed? ? :ok : :error,
         duration: Process.clock_gettime(Process::CLOCK_MONOTONIC) - started_at
       )
-      report(result)
 
       result
     end
@@ -78,7 +87,9 @@ module Backups
     # 失敗の理由はログにだけ残す。Sentry には Cron Monitor のチェックインしか送らない。
     # 理由を別イベントとしても送ると、1 回の失敗で届く通知が増えるだけで
     # 「このメールは無視してよい」という学習を招く（ADR-0002）。
-    # 通知を受けたら `kamal logs | grep Backups::RestoreDrill` で理由を読むこと。
+    # 通知を受けたら `kamal app logs --grep Backups::RestoreDrill` で理由を読むこと。
+    # alias の `kamal logs` は follow なので、パイプで grep すると直近 10 行しか出ないまま
+    # ブロックする（kamal は --grep 指定時だけ tail の制限を外す）。
     def report(result)
       if result.passed?
         Rails.logger.info { "[Backups::RestoreDrill] #{result.message}" }
