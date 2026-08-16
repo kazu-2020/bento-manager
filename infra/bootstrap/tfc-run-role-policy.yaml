@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  HCP Terraform の run ロールに付与する権限ポリシー。
+  ロール本体と OIDC プロバイダーは HCP Terraform の Dynamic provider credentials 機能が
+  作成する（信頼関係のみ。権限は付与されない）ため、ここでは権限だけを定義してアタッチする。
+
+  責任分界:
+    ロール・信頼関係 … HCP Terraform が管理
+    権限ポリシー     … このテンプレートが管理
+
+Parameters:
+  RunRoleName:
+    Type: String
+    Default: tfc-bento-manager-run
+    Description: >-
+      HCP Terraform の Dynamic provider credentials が作成したロール名。
+      ワークスペースの環境変数 TFC_AWS_RUN_ROLE_ARN が指すロールと一致させること。
+
+Resources:
+  # Resource はいずれも "*" とする。
+  # このアカウントは bento-manager 専用であり、保護すべき「他のリソース」が存在しない。
+  # バケット名やユーザーのパスで絞っても、守りたい当のリソースが限定範囲の中にいるため
+  # 防御としての実体がなく、Terraform 側の命名との暗黙の結合だけが残る。
+  # アカウント境界そのものが分離線である（ADR-0002 決定 1）。
+  #
+  # 一方でアクションは絞る。Resource を開放した以上、ここが唯一の歯止めになる。
+  TfcRunPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "${RunRoleName}-permissions"
+      # Description は更新時に置換が必要なプロパティ（IAM API に説明の更新手段がない）。
+      # 変更すると同名のポリシーを作ろうとして AlreadyExists で失敗するため、迂闊に触らない。
+      # 権限の実際の範囲は下の PolicyDocument とコメントを参照。
+      Description: >-
+        ADR-0001 のバックアップ基盤（S3 バケットと Litestream 用 IAM ユーザー）を
+        構築するために必要な最小限の権限
+      Roles:
+        - !Ref RunRoleName
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          # バケットの作成と設定。オブジェクト操作は含めない。
+          # Terraform はバケットを作るだけで中身に触れないため、
+          # GetObject / PutObject / DeleteObject は不要。
+          - Sid: ManageBuckets
+            Effect: Allow
+            Action:
+              - s3:CreateBucket
+              - s3:DeleteBucket
+              - s3:ListBucket
+              - s3:ListAllMyBuckets
+              - s3:GetBucket*
+              - s3:PutBucket*
+              - s3:DeleteBucketPolicy
+              - s3:GetLifecycleConfiguration
+              - s3:PutLifecycleConfiguration
+              - s3:GetEncryptionConfiguration
+              - s3:PutEncryptionConfiguration
+              - s3:GetAccelerateConfiguration
+              - s3:GetReplicationConfiguration
+            Resource: "*"
+
+          # IAM ユーザーの管理。ロール関連のアクションは含めない。
+          # iam:CreateRole を与えると、別アカウントから引けるロールを作られる経路ができる。
+          # なお iam:PutUserPolicy がある以上、任意の権限を持つユーザー自体は作れる。
+          # これは完全な防御ではなく難易度を上げる措置である。
+          - Sid: ManageUsers
+            Effect: Allow
+            Action:
+              - iam:CreateUser
+              - iam:DeleteUser
+              - iam:GetUser
+              - iam:TagUser
+              - iam:UntagUser
+              - iam:ListUserTags
+              - iam:CreateAccessKey
+              - iam:DeleteAccessKey
+              - iam:ListAccessKeys
+              - iam:PutUserPolicy
+              - iam:GetUserPolicy
+              - iam:DeleteUserPolicy
+              - iam:ListUserPolicies
+              - iam:ListAttachedUserPolicies
+              - iam:ListGroupsForUser
+            Resource: "*"
+
+          # Terraform が provider 初期化時に呼ぶ
+          - Sid: ReadCallerIdentity
+            Effect: Allow
+            Action: sts:GetCallerIdentity
+            Resource: "*"
+
+Outputs:
+  PolicyArn:
+    Description: 作成したマネージドポリシーの ARN
+    Value: !Ref TfcRunPolicy
+
+  AttachedRole:
+    Description: ポリシーをアタッチしたロール名
+    Value: !Ref RunRoleName
