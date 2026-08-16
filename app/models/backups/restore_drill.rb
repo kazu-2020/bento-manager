@@ -11,12 +11,24 @@ module Backups
   class RestoreDrill
     DEFAULT_TOLERANCE = 5
 
+    # ハートビートを書いてから復元するまでに置く間。
+    #
+    # ここで待たずに「今回の分は未着でも正常」と見逃すと、その 1 日分の猶予が
+    # そのまま検知の遅れになる。営業終了後に複製が止まった場合、翌日の訓練は
+    # 前回のハートビートしか見ないので緑を返し、赤くなるのは翌々日 = 停止から 31 時間後。
+    #
+    # L0 の同期は 1 秒前後なので 60 秒は二桁分の余裕がある。訓練は 03:00 に
+    # 走るため、この待ちが出張販売にぶつかることもない。
+    PROPAGATION_WAIT_SECONDS = 60
+
     def initialize(restorer: LitestreamRestorer.new,
                    check_in: SentryCheckIn.new,
-                   tolerance: ENV.fetch("RESTORE_DRILL_TOLERANCE", DEFAULT_TOLERANCE).to_i)
+                   tolerance: ENV.fetch("RESTORE_DRILL_TOLERANCE", DEFAULT_TOLERANCE).to_i,
+                   propagation_wait: PROPAGATION_WAIT_SECONDS)
       @restorer = restorer
       @check_in = check_in
       @tolerance = tolerance
+      @propagation_wait = propagation_wait
     end
 
     def run
@@ -41,16 +53,19 @@ module Backups
     # 復元の途中で落ちても数 MB の一時ファイルが本番サーバーに溜まらない。
     def restore_and_verify
       # 復元より先に書く。これが復元側に現れるかどうかが、売上が動かない日に
-      # 唯一残る手がかりになる。判定に使うのは今回の分ではなく前回の分なので、
-      # 書く前の最大 id を控えておく。
-      required_heartbeat_id = Heartbeat.maximum(:id)
-      Heartbeat.create!
+      # 唯一残る手がかりになる。
+      heartbeat = Heartbeat.create!
+      sleep @propagation_wait
 
       Dir.mktmpdir("restore-drill") do |dir|
         destination = File.join(dir, "restored.sqlite3")
         @restorer.restore(destination:)
 
-        ReplicaVerification.new(restored_path: destination, tolerance: @tolerance, required_heartbeat_id:).call
+        ReplicaVerification.new(
+          restored_path: destination,
+          tolerance: @tolerance,
+          required_heartbeat_id: heartbeat.id
+        ).call
       end
     rescue LitestreamRestorer::RestoreFailed => e
       DrillResult.failure("リストアそのものが失敗した: #{e.message}")

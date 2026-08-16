@@ -26,26 +26,34 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
 
   test "売上が 1 件も入らない日でも、レプリケーションが止まっていれば訓練は失敗する" do
     replicated_beats = production_heartbeat_ids
-    previous = Backups::Heartbeat.create!  # 前回の訓練。ここまで複製が届かなかった
-    Backups::Heartbeat.create!             # 今回の訓練
+    heartbeat = Backups::Heartbeat.create!  # 今回の訓練。複製が止まっていて届かない
 
     # 売上は本番も復元側もまったく同じ。休業日はこれが正常な姿になる
     build_replica(@replica_path, ids: production_sale_ids, heartbeat_ids: replicated_beats)
 
-    result = verify(required_heartbeat_id: previous.id)
+    result = verify(required_heartbeat_id: heartbeat.id)
 
     refute_predicate result, :passed?
     assert_match(/ハートビート/, result.message)
   end
 
-  test "今回のハートビートがまだ複製されていない状態は正常とみなす" do
-    previous = Backups::Heartbeat.create!
-    replicated_beats = production_heartbeat_ids  # 前回のハートビートまでは届いている
+  test "前回のハートビートしか届いていない状態も失敗とする" do
     Backups::Heartbeat.create!
+    replicated_beats = production_heartbeat_ids  # 前回の分までは届いている
+    heartbeat = Backups::Heartbeat.create!
 
     build_replica(@replica_path, ids: production_sale_ids, heartbeat_ids: replicated_beats)
 
-    assert_predicate verify(required_heartbeat_id: previous.id), :passed?
+    # ここを正常とみなすと、複製の停止に気づくのが 1 日遅れる
+    refute_predicate verify(required_heartbeat_id: heartbeat.id), :passed?
+  end
+
+  test "今回のハートビートが届いていれば訓練は成功する" do
+    heartbeat = Backups::Heartbeat.create!
+
+    build_replica(@replica_path, ids: production_sale_ids, heartbeat_ids: production_heartbeat_ids)
+
+    assert_predicate verify(required_heartbeat_id: heartbeat.id), :passed?
   end
 
   test "レプリケーションが止まり復元したコピーが本番より遅れていると訓練は失敗する" do
@@ -88,7 +96,8 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
 
   private
 
-  def verify(tolerance: 5, required_heartbeat_id: nil)
+  # 売上側だけを見たいテストは 0 を渡す（COALESCE により復元側は必ず 0 以上）
+  def verify(tolerance: 5, required_heartbeat_id: 0)
     Backups::ReplicaVerification.new(restored_path: @replica_path, tolerance:, required_heartbeat_id:).call
   end
 end

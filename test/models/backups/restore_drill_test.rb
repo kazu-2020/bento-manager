@@ -88,7 +88,7 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
     failing = FakeRestorer.new { raise Backups::LitestreamRestorer::RestoreFailed, "boom" }
 
     [ succeeding, failing ].each do |restorer|
-      Backups::RestoreDrill.new(restorer:, check_in: RecordingCheckIn.new, tolerance: 5).run
+      Backups::RestoreDrill.new(restorer:, check_in: RecordingCheckIn.new, tolerance: 5, propagation_wait: 0).run
 
       refute_path_exists restorer.destination
       refute_path_exists File.dirname(restorer.destination)
@@ -98,6 +98,11 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
   private
 
   def build_drill(&restore)
-    Backups::RestoreDrill.new(restorer: FakeRestorer.new(&restore), check_in: @check_in, tolerance: 5)
+    Backups::RestoreDrill.new(
+      restorer: FakeRestorer.new(&restore),
+      check_in: @check_in,
+      tolerance: 5,
+      propagation_wait: 0
+    )
   end
 end
