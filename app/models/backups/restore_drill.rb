@@ -40,6 +40,10 @@ module Backups
     # ブロック付きの mktmpdir は例外で抜けてもディレクトリごと消えるため、
     # 復元の途中で落ちても数 MB の一時ファイルが本番サーバーに溜まらない。
     def restore_and_verify
+      # 復元より先に書く。これが復元側に現れるかどうかが、売上が動かない日に
+      # 唯一残る手がかりになる。
+      BackupHeartbeat.beat!
+
       Dir.mktmpdir("restore-drill") do |dir|
         destination = File.join(dir, "restored.sqlite3")
         @restorer.restore(destination:)

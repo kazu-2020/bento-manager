@@ -98,7 +98,10 @@ ja:
       discount: "割引"
       coupon: "クーポン"
       refund: "返金処理"
+      backup_heartbeat: "リストア訓練の鼓動"
     attributes:
+      backup_heartbeat:
+        created_at: "訓練の実行日時"
       employee:
         username: "アカウント名"
         status: "ステータス"

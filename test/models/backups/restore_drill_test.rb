@@ -56,6 +56,14 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
     assert_operator @check_in.duration, :>, 0
   end
 
+  test "訓練は実行のたびに本番へ鼓動を 1 つ残す" do
+    drill = build_drill { |destination| build_replica(destination, ids: production_sale_ids) }
+
+    assert_difference "BackupHeartbeat.count", 1 do
+      assert_predicate drill.run, :passed?
+    end
+  end
+
   test "復元したコピーが検証に落ちると訓練は失敗としてチェックインする" do
     drill = build_drill { |destination| build_corrupted_replica(destination) }
 

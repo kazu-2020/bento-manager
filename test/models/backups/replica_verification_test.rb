@@ -24,6 +24,28 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
     assert_predicate result, :passed?
   end
 
+  test "売上が 1 件も入らない日でも、レプリケーションが止まっていれば訓練は失敗する" do
+    replicated_beats = production_heartbeat_ids
+    2.times { BackupHeartbeat.beat! }
+
+    # 売上は本番も復元側もまったく同じ。休業日はこれが正常な姿になる
+    build_replica(@replica_path, ids: production_sale_ids, heartbeat_ids: replicated_beats)
+
+    result = verify
+
+    refute_predicate result, :passed?
+    assert_match(/鼓動/, result.message)
+  end
+
+  test "今回の鼓動がまだ複製されていない状態は正常とみなす" do
+    replicated_beats = production_heartbeat_ids
+    BackupHeartbeat.beat!
+
+    build_replica(@replica_path, ids: production_sale_ids, heartbeat_ids: replicated_beats)
+
+    assert_predicate verify, :passed?
+  end
+
   test "レプリケーションが止まり復元したコピーが本番より遅れていると訓練は失敗する" do
     replicated_ids = production_sale_ids
     advance_production(10)
