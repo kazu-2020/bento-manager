@@ -17,8 +17,8 @@ module Backups
 
     SALES_STATE_COLUMNS = [ Arel.sql("COALESCE(MAX(id), 0)"), Arel.sql("COUNT(*)") ].freeze
 
-    # @param required_heartbeat_id [Integer, nil] 復元側に入っているべき鼓動の id。
-    #   訓練が今回の鼓動を書く「直前」の最大 id を渡す。初回の訓練では nil。
+    # @param required_heartbeat_id [Integer, nil] 復元側に入っているべきハートビートの id。
+    #   訓練が今回のハートビートを書く「直前」の最大 id を渡す。初回の訓練では nil。
     #   今回書いた分を条件にしないのは、復元の時点でまだ S3 に届いていないことがあるため。
     def initialize(restored_path:, tolerance:, required_heartbeat_id:)
       @restored_path = restored_path
@@ -52,7 +52,7 @@ module Backups
         check_heartbeat(restored_heartbeat_id) ||
         DrillResult.success(
           "復元したコピーは本番に追いついている" \
-          "（売上 #{restored_count}/#{production_count} 件、鼓動 id #{restored_heartbeat_id}）"
+          "（売上 #{restored_count}/#{production_count} 件、ハートビート id #{restored_heartbeat_id}）"
         )
     ensure
       restored&.close
@@ -67,14 +67,14 @@ module Backups
       "復元物を読めなかった（#{e.message}）"
     end
 
-    # 前回の訓練の鼓動が復元側に無ければ、複製は少なくとも前回の訓練から死んでいる。
+    # 前回の訓練のハートビートが復元側に無ければ、複製は少なくとも前回の訓練から死んでいる。
     # 売上と違い訓練は毎日走るので、この条件は店の営業日に左右されない。
     def check_heartbeat(restored_heartbeat_id)
       return nil if @required_heartbeat_id.nil?
       return nil if restored_heartbeat_id >= @required_heartbeat_id
 
       DrillResult.failure(
-        "前回の訓練の鼓動（id #{@required_heartbeat_id}）が復元したコピーに無い" \
+        "前回の訓練のハートビート（id #{@required_heartbeat_id}）が復元したコピーに無い" \
         "（復元側の最新は id #{restored_heartbeat_id}）。前回の訓練からレプリケーションが止まっている"
       )
     end

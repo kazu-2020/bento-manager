@@ -20,7 +20,7 @@ snapshot:
 retention:
   enabled: true
 
-# 増分の圧縮間隔。L1 が実質の RPO を決める。
+# コンパクションの間隔。L1 が実質の RPO を決める。
 levels:
   - interval: 30s
   - interval: 5m

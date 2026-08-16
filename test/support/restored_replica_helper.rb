@@ -1,4 +1,4 @@
-# 訓練が復元物から読むのは sales の最大 id・件数と、鼓動の最大 id だけ。
+# 訓練が復元物から読むのは sales の最大 id・件数と、ハートビートの最大 id だけ。
 # heartbeat_ids の既定は「本番と完全に一致している」状態で、売上側だけを見たいテストはこれに任せる。
 module RestoredReplicaHelper
   def build_replica(path, ids:, heartbeat_ids: production_heartbeat_ids)

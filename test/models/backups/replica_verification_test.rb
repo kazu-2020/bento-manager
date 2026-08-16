@@ -35,12 +35,12 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
     result = verify(required_heartbeat_id: previous.id)
 
     refute_predicate result, :passed?
-    assert_match(/鼓動/, result.message)
+    assert_match(/ハートビート/, result.message)
   end
 
-  test "今回の鼓動がまだ複製されていない状態は正常とみなす" do
+  test "今回のハートビートがまだ複製されていない状態は正常とみなす" do
     previous = Backups::Heartbeat.create!
-    replicated_beats = production_heartbeat_ids  # 前回の鼓動までは届いている
+    replicated_beats = production_heartbeat_ids  # 前回のハートビートまでは届いている
     Backups::Heartbeat.create!
 
     build_replica(@replica_path, ids: production_sale_ids, heartbeat_ids: replicated_beats)
