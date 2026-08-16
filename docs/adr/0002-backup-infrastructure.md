@@ -109,6 +109,10 @@ upsert 方式でも設定は訓練スクリプト内に残るが、**アラー�
 - **`SENTRY_AUTH_TOKEN` は HCP Terraform のワークスペースに保存される唯一の長期認証情報**であり、画面にしか存在しない。ローテーションは手作業になる。決定 4 で AWS 側の長期キーを排した一方で、Sentry には同じ手段がない。この構成の長期認証情報はもう 1 つ、決定 6 の Litestream 用アクセスキー（1Password 保管）がある
 - `sentry_cron_monitor` は slug を返さない（`id` は内部 ID）。チェックインに使う slug は apply 後に Sentry のダッシュボードで確認する必要がある
 - `s3:ListBucket` のプレフィックス制限により Litestream が動かない可能性がある。詳細と対処は `infra/terraform/backup.tf` の `ListBucketWithinPrefix` を参照
+- Sentry のプロジェクトには既定のアラートルール `Send a notification for high priority issues` が存在する。これが Cron Monitor の issue も拾う場合、1 回の失敗で 2 通届く。**通知が来ることの確認が済むまでは既定ルールを消さないこと。** 重複はノイズだが、届かないよりはるかにましである。解消の判断は #282 で追跡する
+- **通知の宛先は Terraform で固定できていない。** `issue_owners` は Sentry のプロジェクト所有者設定を経由して解決され、その設定はダッシュボードにしか存在しない。誰かが所有者ルールを追加すれば、PR も drift も無いまま宛先が変わる。決定 7 が「通知先を管理できること」を理由に Terraform を選んだにもかかわらず、**宛先を決める最後の一手だけが管理外に残っている**。`sentry_project_ownership` の管理で閉じられる（#282）
+- **連続失敗は初日しか通知されない。** 失敗が続く間は同じ unresolved の issue に occurrence が積まれるだけで、`first_seen_event` も `regression_event` も発火しない。3 日続いても届くのは初日の 1 通で、2 日目以降の沈黙は正常時と区別できない。ADR-0001 決定 1 が最大のリスクとした「失敗していたことに誰も気づかない」状態を、通知の側で再現しうる。**無音になるのは連続失敗の場合だけで、`fail → ok → fail` と flap するときは `regression_event` が拾う。最も危険なパターンでだけ落ちる。** trigger を足しても埋まらない（`reappeared_event` は archive からの復帰を指すため、archive していない issue には効かない）。イベントごとに発火する条件は `legacy_trigger_conditions` にしかなく、プロバイダが deprecation を明記しているため採らない。**制約として受け入れ、継続中の失敗は Sentry の issue を見に行くこととする**（#282）
+- **alert は #247 の実装まで `enabled = false` とする。** チェックインを送るものが存在しない段階で有効にすると、missed 判定が失敗メールになり「このメールは無視してよい」という学習だけが残る。監視を入れる前にアラート疲れを作ることになる
 
 ## 参照
 
