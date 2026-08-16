@@ -95,6 +95,20 @@ class Backups::RestoreDrillTest < ActiveSupport::TestCase
     end
   end
 
+  test "許容差は設定値を使うが、判定として成立しない値なら既定値に戻す" do
+    original = ENV["RESTORE_DRILL_TOLERANCE"]
+    default = Backups::RestoreDrill::DEFAULT_TOLERANCE
+
+    # 負数は遅れ 0 でも比較に落ちるため、健全なレプリケーションが赤くなる
+    { "9" => 9, "0" => 0, "-1" => default, "abc" => default, "" => default }.each do |configured, expected|
+      ENV["RESTORE_DRILL_TOLERANCE"] = configured
+
+      assert_equal expected, Backups::RestoreDrill.configured_tolerance, "#{configured.inspect} を設定した場合"
+    end
+  ensure
+    ENV["RESTORE_DRILL_TOLERANCE"] = original
+  end
+
   private
 
   def build_drill(&restore)

@@ -22,9 +22,12 @@ module Backups
     PROPAGATION_WAIT_SECONDS = 60
 
     # 空値や数字でない値を .to_i で 0 に落とすと、許容差 0 として営業中に誤検知する。
+    # 負数も同じで、遅れ 0 でも比較に落ちるため健全なレプリケーションが赤くなる。
     # 読めない値は設定ミスなので、既定値へフォールバックする。
     def self.configured_tolerance
-      Integer(ENV["RESTORE_DRILL_TOLERANCE"], exception: false) || DEFAULT_TOLERANCE
+      configured = Integer(ENV["RESTORE_DRILL_TOLERANCE"], exception: false)
+
+      configured && configured >= 0 ? configured : DEFAULT_TOLERANCE
     end
 
     def initialize(restorer: LitestreamRestorer.new,

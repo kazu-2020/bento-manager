@@ -42,11 +42,18 @@ module Backups
             nil
           end
           reader.kill
+          reader.join
           raise RestoreFailed, "#{TIMEOUT_SECONDS} 秒で終わらなかったため打ち切った"
         end
 
         status = wait_thread.value
-        raise RestoreFailed, failure_message(status, read_output(reader)) unless status.success?
+        # 成功時も必ず読み切る。ここを通さないと、孫プロセスが書き込み端を握って
+        # reader がブロックしたまま popen2e の ensure に入り、pipe が閉じられた
+        # 拍子に IOError で死ぬ。訓練の理由はログにしか残らない以上、成功した夜に
+        # 無関係な例外が流れる余地を残さない。
+        output = read_output(reader)
+
+        raise RestoreFailed, failure_message(status, output) unless status.success?
       end
     end
 
