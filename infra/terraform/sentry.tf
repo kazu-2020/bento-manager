@@ -33,3 +33,51 @@ resource "sentry_cron_monitor" "restore_drill" {
   failure_issue_threshold = 1
   recovery_threshold      = 1
 }
+
+# 訓練が失敗したときに通知を飛ばす。
+#
+# ADR-0002 決定 7 のとおり、通知先を管理できることが Terraform を選んだ理由である。
+# monitor があっても通知が届かなければ、ADR-0001 決定 5 が退けた
+# 「指標は緑なのに実物は壊れている」状態そのものになる。
+#
+# 通知先の故障は静かに起きる。メールアドレスの変更、メンバーの離脱、
+# チャンネルの削除。どれもエラーを出さず、ただ届かなくなるだけである。
+# コードに置くことで、変更が PR に現れ drift として検出できる。
+resource "sentry_alert" "restore_drill" {
+  organization = "matazou"
+  name         = "リストア訓練の失敗を通知する"
+
+  monitor_ids = [sentry_cron_monitor.restore_drill.id]
+
+  # 同じ issue について再通知する間隔。訓練は日次なので 1 日 1 回で足りる
+  frequency_minutes = 1440
+
+  trigger_conditions = [
+    # 訓練が失敗すると新しい issue が作られる
+    { first_seen_event = {} },
+
+    # 解決済みの失敗が再発した
+    { regression_event = {} },
+  ]
+
+  action_filters = [
+    {
+      logic_type = "all"
+
+      # 条件を付けない。訓練の失敗はすべて通知する。
+      # 頻度で間引くと「今日は静かだから正常」という誤った安心を生む。
+
+      actions = [
+        {
+          # target_id を必要としない issue_owners を使う。この monitor に
+          # オーナーは設定していないため、実際には fallthrough が効いて
+          # 全メンバーに届く。1 人運用では宛先の取り違えが起きない分こちらが堅い。
+          email = {
+            target_type      = "issue_owners"
+            fallthrough_type = "AllMembers"
+          }
+        },
+      ]
+    },
+  ]
+}

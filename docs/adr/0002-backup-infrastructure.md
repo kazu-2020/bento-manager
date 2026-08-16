@@ -109,6 +109,7 @@ upsert 方式でも設定は訓練スクリプト内に残るが、**アラー�
 - **`SENTRY_AUTH_TOKEN` は HCP Terraform のワークスペースに保存される唯一の長期認証情報**であり、画面にしか存在しない。ローテーションは手作業になる。決定 4 で AWS 側の長期キーを排した一方で、Sentry には同じ手段がない。この構成の長期認証情報はもう 1 つ、決定 6 の Litestream 用アクセスキー（1Password 保管）がある
 - `sentry_cron_monitor` は slug を返さない（`id` は内部 ID）。チェックインに使う slug は apply 後に Sentry のダッシュボードで確認する必要がある
 - `s3:ListBucket` のプレフィックス制限により Litestream が動かない可能性がある。詳細と対処は `infra/terraform/backup.tf` の `ListBucketWithinPrefix` を参照
+- Sentry のプロジェクトには既定のアラートルール `Send a notification for high priority issues` が存在する。これが Cron Monitor の issue も拾う場合、1 回の失敗で 2 通届く。**通知が来ることの確認が済むまでは既定ルールを消さないこと。** 重複はノイズだが、届かないよりはるかにましである
 
 ## 参照
 
