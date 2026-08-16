@@ -91,6 +91,15 @@ resource "aws_iam_user_policy" "litestream" {
     Version = "2012-10-17"
     Statement = [
       {
+        # Litestream は初期化時にバケットのリージョン解決で GetBucketLocation を呼ぶ。
+        # litestream.yml に region を書いても呼ばれる（公式ガイドの最小ポリシーにも含まれる）。
+        # s3:prefix 条件を取らないアクションなので、下の ListBucketWithinPrefix には足せない。
+        Sid      = "GetBucketLocation"
+        Effect   = "Allow"
+        Action   = "s3:GetBucketLocation"
+        Resource = aws_s3_bucket.backup.arn
+      },
+      {
         # ListBucket はバケット単位の権限なので、Condition でプレフィックスを絞る。
         # Litestream が prefix なしで列挙する挙動を示した場合はここが AccessDenied になる。
         # その際は Condition を外し、Resource のプレフィックス限定だけを残す。
