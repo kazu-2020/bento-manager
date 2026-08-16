@@ -7,6 +7,10 @@ S3 のバックアップと、この Git リポジトリと、1Password だけ�
 
 **所要時間の目安**: 1〜2 時間。大半は VPS の払い出しと DNS の反映待ち。
 
+**戻らないもの**: Litestream の複製は非同期で、およそ 1 秒ごとに送られる。
+突発的な障害では**最後の数秒の書き込みが失われる**（正常なシャットダウンなら最終同期が走る）。
+売上 1〜2 件が欠ける可能性があるということなので、復旧後に当日の記録を目視で突き合わせること。
+
 > **この手順はまだ実地で検証されていない**（[#283](https://github.com/kazu-2020/bento-manager/issues/283)）。
 > 詰まった箇所はその場で本ファイルを直すこと。半年後の自分が読む唯一の資料である。
 
@@ -135,9 +139,22 @@ mise exec -- bundle exec kamal deploy
 ```bash
 mise exec -- bundle exec kamal app stop
 
+# 手順 7 で db:prepare が作った空 DB の残骸を先に消す。
+# SQLite の DB は 3 ファイル 1 組なので、本体だけ差し替えてはならない。
 mise exec -- bundle exec kamal app exec \
-  "litestream restore -config /rails/config/litestream.yml -force -o /rails/storage/production.sqlite3 /rails/storage/production.sqlite3"
+  "rm -f /rails/storage/production.sqlite3 /rails/storage/production.sqlite3-wal /rails/storage/production.sqlite3-shm"
+
+mise exec -- bundle exec kamal app exec \
+  "litestream restore -config /rails/config/litestream.yml -o /rails/storage/production.sqlite3 /rails/storage/production.sqlite3"
 ```
+
+> **`-wal` と `-shm` を消し忘れないこと。** 本体だけを `-force` で上書きすると、**空 DB のときの
+> WAL が復元後の DB の隣に残る。** 多くの場合 SQLite はヘッダの不一致で無視するが、そこに
+> 賭ける理由がない。3 ファイルまとめて消してから復元すれば `-force` 自体も要らなくなる。
+>
+> 復旧を途中からやり直す場合は、Litestream のメタデータディレクトリ
+> `/rails/storage/.production.sqlite3-litestream` も消すこと（`litestream reset` でも同じ）。
+> 前回の試行の状態が残っていると、再開したレプリケーションが噛み合わない。
 
 `--reuse` を付けないこと。付けると停止中のコンテナを掴もうとして失敗する。
 `--reuse` なしの `app exec` は同じ volume をマウントした一時コンテナを新しく立てるので、
@@ -160,6 +177,22 @@ mise exec -- bundle exec kamal app boot
 ## 9. レプリケーションを再開する
 
 **必ず復元の後で起動する。** 順序を逆にすると手順 7 の空 DB が S3 に複製される。
+
+> **旧サーバーの Litestream が完全に死んでいることを先に確かめること。**
+>
+> 同じバケットの同じパスへ 2 つの Litestream が同時に書くと、レプリカが壊れる。
+> 「サーバーが落ちた」と判断してこの手順に入ったが、実際にはネットワークが切れただけで
+> **旧サーバーは生きていて複製を続けている**、というのが最も嵌まりやすい形。
+>
+> 旧サーバーに到達できるなら明示的に止める。到達できないなら、Xserver VPS の
+> コンソールから電源を落とすか、IAM のアクセスキーを無効化して書き込みを断つ。
+>
+> ```bash
+> ssh root@<旧サーバー> 'docker stop bento_manager-litestream'   # 到達できる場合
+> ```
+>
+> 万一 2 重書き込みを起こした場合は、`litestream restore` した上で
+> `PRAGMA integrity_check` を通してから複製を再開すること。
 
 ```bash
 mise exec -- bundle exec kamal accessory boot litestream
