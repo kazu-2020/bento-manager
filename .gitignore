@@ -46,5 +46,11 @@ node_modules
 
 .superpowers/
 
+# Terraform の作業ディレクトリ。
+# .terraform.lock.hcl は意図的にコミットする（プロバイダーのバージョンを固定するため）
+**/.terraform/
+*.tfstate
+*.tfstate.*
+
 # Claude Code が作成する git worktree の実体
 /.claude/worktrees/

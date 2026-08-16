@@ -23,7 +23,9 @@ resource "sentry_cron_monitor" "restore_drill" {
   # 訓練の遅延を許容する幅。日次なので 1 時間まで待つ
   checkin_margin_minutes = 60
 
-  # 実際は数十秒で終わる。これを超えるのは異常
+  # in_progress のチェックインがタイムアウト扱いになるまでの分数。
+  # 終端（ok / error）だけを送る実装では機能しないため、訓練は開始時に
+  # in_progress を送ること（ADR-0002 決定 7）。実際の所要は数十秒。
   max_runtime_minutes = 15
 
   # 1 回の失敗も見逃さない。ADR-0001 決定 1 のとおり、バックアップにおける
