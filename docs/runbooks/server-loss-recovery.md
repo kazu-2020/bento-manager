@@ -74,6 +74,9 @@ ssh root@<新しい 100.x アドレス> 'echo OK'
 | `config/deploy.yml` | `proxy.host` | 新しい `*.static.xvps.ne.jp` |
 | `config/environments/production.rb` | `config.hosts` と `action_mailer.default_url_options[:host]` | 同上 |
 
+litestream accessory は `roles: [web]` で `servers.web` に追従するため、
+別途アドレスを書き換える必要はない。
+
 独自ドメインを使っている場合は、DNS の A レコードを新しいグローバル IP に向け、
 反映されてから次に進む（Let's Encrypt の証明書取得が DNS を見る）。
 

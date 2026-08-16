@@ -121,7 +121,11 @@ accessories:
   litestream:
     # バージョンは builder.args.LITESTREAM_VERSION と揃えること
     image: litestream/litestream:0.5.16
-    host: 100.68.213.116
+    # アドレスを直書きせず web ロールに追従させる。同じ volume を共有する以上
+    # app と別のホストに置く意味はなく、サーバー移設時に片方だけ古いアドレスが
+    # 残ると、レプリケーションだけが旧サーバーで動き続ける
+    roles:
+      - web
     cmd: replicate
     options:
       # app コンテナと同じ uid に揃える。root で動かすと Litestream が作る

@@ -28,12 +28,19 @@ module Backups
       ) do |stdin, output, wait_thread|
         stdin.close
 
+        # 出力は別スレッドで読み続ける。読まずに終了だけ待つと、litestream が
+        # pipe の容量を超えて書いた時点で子プロセスが書き込みでブロックし、
+        # 終了待ちが解けないまま上のタイムアウトまで進む。本当は正常に動いていたのに
+        # 「打ち切った」と報告することになる。
+        reader = Thread.new { output.read }
+
         unless wait_thread.join(TIMEOUT_SECONDS)
           Process.kill("KILL", wait_thread.pid)
+          reader.kill
           raise RestoreFailed, "#{TIMEOUT_SECONDS} 秒で終わらなかったため打ち切った"
         end
 
-        raise RestoreFailed, output.read.strip unless wait_thread.value.success?
+        raise RestoreFailed, reader.value.to_s.strip unless wait_thread.value.success?
       end
     end
 
