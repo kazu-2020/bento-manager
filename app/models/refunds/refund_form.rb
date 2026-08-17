@@ -130,12 +130,7 @@ module Refunds
     end
 
     def default_corrected_quantities
-      quantities = {}
-
-      # 元の販売の商品数量
-      sale.items.group_by(&:catalog_id).each do |catalog_id, items|
-        quantities[catalog_id] = items.sum(&:quantity)
-      end
+      quantities = original_item_quantities.dup
 
       # 在庫にある未購入商品は0
       inventories.each do |inventory|
@@ -145,25 +140,32 @@ module Refunds
       quantities
     end
 
+    def original_item_quantities
+      @original_item_quantities ||= sale.items.group_by(&:catalog_id)
+        .transform_values { |items| items.sum(&:quantity) }
+    end
+
     def original_discount_quantities
-      sale.sale_discounts.pluck(:discount_id, :quantity).to_h
+      @original_discount_quantities ||= sale.sale_discounts.pluck(:discount_id, :quantity).to_h
     end
 
     def quantities_changed?
-      original = sale.items.group_by(&:catalog_id).transform_values { |items| items.sum(&:quantity) }
-
-      corrected_quantities.any? do |catalog_id, qty|
-        original_qty = original[catalog_id] || 0
-        qty != original_qty
-      end
+      changed_from_original?(corrected_quantities, original_item_quantities)
     end
 
     def coupons_changed?
-      original = original_discount_quantities
+      changed_from_original?(coupon_quantities, original_discount_quantities)
+    end
 
-      coupon_quantities.any? do |discount_id, qty|
-        original_qty = original[discount_id] || 0
-        qty != original_qty
+    # 送信されたキーだけを走査すると、元の販売にあった数量が送信されなかったときに
+    # 「減った」ことを見落とす。両方のキーを突き合わせ、無いキーは 0 として比較する。
+    #
+    # NOTE: refund[coupon] のようにコレクションごと送信されなかった場合は、
+    # build_coupon_quantities / build_corrected_quantities が元の販売の値を
+    # 復元するためここまで届かない。その復元をやめるのはイシュー #297 の範囲。
+    def changed_from_original?(current, original)
+      (current.keys | original.keys).any? do |id|
+        (current[id] || 0) != (original[id] || 0)
       end
     end
 
@@ -228,15 +230,12 @@ module Refunds
         inventories.map(&:catalog_id)
       ).uniq
 
-      original_quantities_by_catalog = sale.items.group_by(&:catalog_id)
-        .transform_values { |items| items.sum(&:quantity) }
-
       all_catalog_ids.filter_map do |catalog_id|
         catalog = find_catalog(catalog_id)
         next unless catalog
 
         quantity = corrected_quantities[catalog_id] || 0
-        original_qty = original_quantities_by_catalog[catalog_id] || 0
+        original_qty = original_item_quantities[catalog_id] || 0
         inventory = inventory_lookup[catalog_id]
         available_stock = inventory&.available_stock || 0
         # 在庫上限 = 元の数量 + 利用可能在庫（返品分の在庫は復元されるため）

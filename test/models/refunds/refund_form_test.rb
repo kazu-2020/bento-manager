@@ -263,6 +263,53 @@ module Refunds
       assert_predicate form, :has_any_changes?
     end
 
+    test "クーポンを2種類使った販売で、片方のクーポンが送信されなければ、その分が減ったものとして変更ありと判定される" do
+      fifty_yen = discounts(:fifty_yen_discount)
+      hundred_yen = discounts(:hundred_yen_discount)
+      sale = create_sale(
+        [ { catalog: @catalog_bento_a, quantity: 2 } ],
+        discount_quantities: { fifty_yen.id => 1, hundred_yen.id => 1 }
+      )
+
+      # 100円クーポンの枚数入力が無効化され、送信ボディからキーごと欠落した状況
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "2" }
+          },
+          "coupon" => {
+            fifty_yen.id.to_s => { "quantity" => "1" }
+          }
+        }
+      )
+
+      assert_predicate form, :has_any_changes?
+    end
+
+    test "元の販売にあった商品が送信されなければ、その商品が減ったものとして変更ありと判定される" do
+      sale = create_sale([
+        { catalog: @catalog_bento_a, quantity: 1 },
+        { catalog: @catalog_salad, quantity: 1 }
+      ])
+
+      # サラダの数量入力が送信ボディからキーごと欠落した状況
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "1" }
+          }
+        }
+      )
+
+      assert_predicate form, :has_any_changes?
+    end
+
     test "discount_quantities_for_refunderがクーポン数量を正しく返す" do
       discount = discounts(:fifty_yen_discount)
       sale = create_sale(
