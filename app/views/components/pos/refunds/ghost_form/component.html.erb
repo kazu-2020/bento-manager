@@ -9,7 +9,7 @@
   <% end %>
   <% available_discounts.each do |discount| %>
     <%= fields_for "ghost_refund[coupon][#{discount.id}]" do |f| %>
-      <%= f.hidden_field :quantity, value: coupon_quantities[discount.id] || 0 %>
+      <%= f.hidden_field :quantity, value: coupon_quantities[discount.id] %>
     <% end %>
   <% end %>
 <% end %>

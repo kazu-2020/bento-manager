@@ -45,6 +45,49 @@ module Refunds
       assert_not form.has_any_changes?
     end
 
+    # === 数量ハッシュの母集合テスト ===
+
+    test "画面に無い商品が送信されても修正カートには入らない" do
+      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      # 元の販売にも当日の在庫にも無い商品。数量入力そのものが描画されないので、
+      # 届いたとしても画面の操作ではありえない
+      unlisted = Catalog.create!(name: "画面に無い弁当", kana: "ガメンニナイベントウ", category: :bento)
+
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "1" },
+            unlisted.id.to_s => { "quantity" => "5" }
+          }
+        }
+      )
+
+      assert_not_includes form.corrected_quantities.keys, unlisted.id
+      assert_not form.has_any_changes?
+    end
+
+    test "correctedが1件も届かない送信は、全て0ではなく壊れた送信として弾かれる" do
+      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+
+      # 数量が母集合の分だけ埋まっても、送信そのものが壊れていたことは見分けられなければ
+      # ならない。ここを通すと corrected_items_for_refunder が空になり、修正後の販売が
+      # 作られないまま元の販売が取り消されて全額返金になる
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {}
+      )
+
+      assert_predicate form, :all_items_zero?
+      assert_not form.valid?
+      assert_includes form.errors[:base],
+                      "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください"
+    end
+
     # === corrected パラメータのパーステスト ===
 
     test "correctedパラメータが正しくパースされる" do
@@ -244,7 +287,7 @@ module Refunds
         }
       )
 
-      assert_empty form.coupon_quantities
+      assert_equal 0, form.coupon_quantities[discount.id]
       assert_empty form.discount_quantities_for_refunder
     end
 
@@ -323,6 +366,8 @@ module Refunds
 
       assert_not form.has_any_changes?
       assert_equal 0, form.preview_adjustment_amount
+      # 描画されないクーポンは母集合そのものに入らない
+      assert_not_includes form.coupon_quantities.keys, discount.id
     end
 
     test "元の販売にあった商品が送信されなければ、その商品が減ったものとして変更ありと判定される" do
@@ -344,6 +389,35 @@ module Refunds
       )
 
       assert_predicate form, :has_any_changes?
+      # 届かなかったキーは、元の販売にあった商品も在庫にだけある商品も 0 として読める
+      assert_equal 0, form.corrected_quantities[@catalog_salad.id]
+      assert_equal 0, form.corrected_quantities[@catalog_bento_b.id]
+      # 0 で埋めたキーが集計に混ざらない
+      assert_not form.all_items_zero?
+      assert_equal 1, form.total_corrected_bento_quantity
+    end
+
+    test "変更有無を何度判定してもクーポン枚数の取得は1回で済む" do
+      discount = discounts(:fifty_yen_discount)
+      sale = create_sale(
+        [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        discount_quantities: { discount.id => 1 }
+      )
+
+      # 1リクエスト中に画面の各パーツから has_any_changes? が繰り返し呼ばれる。
+      # クエリキャッシュを切り、フォーム自身が取得を1回に抑えていることを検証する
+      ActiveRecord::Base.uncached do
+        assert_queries_match(/FROM ["`]sale_discounts["`]/, count: 1) do
+          # sale_discounts が未ロードの Sale（コントローラーが渡すのと同じ状態）から始める
+          form = RefundForm.new(
+            sale: Sale.find(sale.id),
+            location: @location,
+            inventories: @inventories
+          )
+
+          3.times { form.has_any_changes? }
+        end
+      end
     end
 
     test "discount_quantities_for_refunderがクーポン数量を正しく返す" do
