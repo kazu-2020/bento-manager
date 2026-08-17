@@ -120,7 +120,7 @@ module Refunds
     def submitted_quantities(submitted, key)
       return nil if submitted.nil?
 
-      (submitted[key] || {}).transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
+      GhostForms::Quantities.from(submitted[key])
     end
 
     # 母集合のキーを 1 つ残らず埋める。「届かなかったキーは 0」をこの 1 箇所だけで
