@@ -29,4 +29,17 @@ module RestoredReplicaHelper
       create_sale(location: locations(:city_hall), customer_type: :citizen, sale_datetime: Time.current)
     end
   end
+
+  # 本番側の最大 id を採番済みの位置に合わせてから訓練を始める。
+  #
+  # sales の id は AUTOINCREMENT なので、次の id は「今ある行の最大 + 1」ではなく
+  # 「sqlite_sequence の値 + 1」になる。sqlite_sequence はテスト用 DB のファイルに
+  # 残り続ける一方、sales フィクスチャはそれを宣言したテストクラスが走るまで投入されない。
+  # そのため、このヘルパーを使うクラスが先に走ると「行は 0 件なのに sqlite_sequence だけ
+  # 数億」という状態になり、advance_production の 1 件目で最大 id が一気に跳ぶ。
+  # 遅れが増えた件数と一致しなくなり、許容差の検証が成立しない。
+  # 先に 1 件入れておけば最大 id が採番済みの位置に揃い、以降は本番と同じく連番で進む。
+  def align_production_ids
+    advance_production(1)
+  end
 end
