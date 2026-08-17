@@ -45,8 +45,10 @@ module Refunds
       coupon_quantities.select { |_, qty| qty > 0 }
     end
 
+    # 現在値と初期値は同じ母集合で組まれているので、単純な突き合わせで足りる
     def has_any_changes?
-      quantities_changed? || coupons_changed?
+      corrected_quantities != original_corrected_quantities ||
+        coupon_quantities != original_coupon_quantities
     end
 
     def all_items_zero?
@@ -78,10 +80,7 @@ module Refunds
     end
 
     def total_corrected_bento_quantity
-      @total_corrected_bento_quantity ||= corrected_quantities.sum do |catalog_id, qty|
-        catalog = find_catalog(catalog_id)
-        catalog&.category == "bento" ? qty : 0
-      end
+      @total_corrected_bento_quantity ||= bento_corrected_items.sum(&:quantity)
     end
 
     def tab_items
@@ -125,35 +124,38 @@ module Refunds
     end
 
     # 母集合のキーを 1 つ残らず埋める。「届かなかったキーは 0」をこの 1 箇所だけで
-    # 吸収するので、読み手は || 0 を書かずに添字アクセスしてよい。
-    # submitted が nil の初回描画では initial が初期値になる
-    def dense_quantities(ids, submitted, initial)
-      source = submitted || initial
+    # 吸収するので、読み手は || 0 を書かずに添字アクセスしてよい
+    def dense_quantities(ids, source)
       ids.index_with { |id| source[id] || 0 }
     end
 
-    # 母集合は「元の販売の商品 + 当日の在庫」で、画面が数量入力を描画する範囲そのもの
+    # 母集合は「元の販売の商品 + 当日の在庫」で、画面が数量入力を描画する範囲そのもの。
+    # 未送信の初回描画では初期値がそのまま現在値なので、同じハッシュを共有する
     def build_corrected_quantities(submitted)
-      dense_quantities(catalog_lookup.keys, submitted, original_item_quantities)
+      return original_corrected_quantities if submitted.nil?
+
+      dense_quantities(catalog_lookup.keys, submitted)
     end
 
     # 母集合は available_discounts。有効期限切れなどで描画されないクーポンは枚数入力が
     # 出ず送信されようがないので、母集合に入れてはいけない。入れると「届かない」を
     # 「0枚に減った」と読んでしまう
     def build_coupon_quantities(submitted)
-      dense_quantities(submittable_discount_ids, submitted, original_discount_quantities)
+      return original_coupon_quantities if submitted.nil?
+
+      dense_quantities(submittable_discount_ids, submitted)
     end
 
     def submittable_discount_ids
-      @submittable_discount_ids ||= available_discounts.map(&:id)
+      available_discounts.map(&:id)
     end
 
     def original_corrected_quantities
-      @original_corrected_quantities ||= build_corrected_quantities(nil)
+      @original_corrected_quantities ||= dense_quantities(catalog_lookup.keys, original_item_quantities)
     end
 
     def original_coupon_quantities
-      @original_coupon_quantities ||= build_coupon_quantities(nil)
+      @original_coupon_quantities ||= dense_quantities(submittable_discount_ids, original_discount_quantities)
     end
 
     def original_item_quantities
@@ -163,15 +165,6 @@ module Refunds
 
     def original_discount_quantities
       @original_discount_quantities ||= sale.sale_discounts.pluck(:discount_id, :quantity).to_h
-    end
-
-    # 現在値と初期値は同じ母集合で組まれているので、単純な突き合わせで足りる
-    def quantities_changed?
-      corrected_quantities != original_corrected_quantities
-    end
-
-    def coupons_changed?
-      coupon_quantities != original_coupon_quantities
     end
 
     # 数量が1件も読めないなら「変更されたか」は判定しようがないので、

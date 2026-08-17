@@ -47,59 +47,6 @@ module Refunds
 
     # === 数量ハッシュの母集合テスト ===
 
-    test "送信されなかった商品は0枚として読め、集計にも影響しない" do
-      sale = create_sale([
-        { catalog: @catalog_bento_a, quantity: 2 },
-        { catalog: @catalog_salad, quantity: 1 }
-      ])
-
-      # サラダの1件が欠落した送信。読み手が || 0 を書かなくても0が読めなければならない
-      form = RefundForm.new(
-        sale: sale,
-        location: @location,
-        inventories: @inventories,
-        submitted: {
-          "corrected" => {
-            @catalog_bento_a.id.to_s => { "quantity" => "1" }
-          }
-        }
-      )
-
-      # 元の販売にあった商品も、在庫にだけある商品も、届かなければ0
-      assert_equal 1, form.corrected_quantities[@catalog_bento_a.id]
-      assert_equal 0, form.corrected_quantities[@catalog_salad.id]
-      assert_equal 0, form.corrected_quantities[@catalog_bento_b.id]
-      # 0で埋めたキーが集計に混ざらない
-      assert_not form.all_items_zero?
-      assert_equal 1, form.total_corrected_bento_quantity
-    end
-
-    test "クーポンは画面に描画されるものだけが読め、送信されなければ0枚になる" do
-      fifty_yen = discounts(:fifty_yen_discount)
-      hundred_yen = discounts(:hundred_yen_discount)
-      sale = create_sale(
-        [ { catalog: @catalog_bento_a, quantity: 2 } ],
-        discount_quantities: { fifty_yen.id => 1, hundred_yen.id => 1 }
-      )
-
-      # 有効期限が切れると available_discounts から外れ、枚数入力そのものが描画されない
-      hundred_yen.update!(valid_until: 1.day.ago.to_date)
-
-      form = RefundForm.new(
-        sale: sale,
-        location: @location,
-        inventories: @inventories,
-        submitted: {
-          "corrected" => {
-            @catalog_bento_a.id.to_s => { "quantity" => "2" }
-          }
-        }
-      )
-
-      assert_equal 0, form.coupon_quantities[fifty_yen.id]
-      assert_not_includes form.coupon_quantities.keys, hundred_yen.id
-    end
-
     test "画面に無い商品が送信されても修正カートには入らない" do
       sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
       # 元の販売にも当日の在庫にも無い商品。数量入力そのものが描画されないので、
@@ -419,6 +366,8 @@ module Refunds
 
       assert_not form.has_any_changes?
       assert_equal 0, form.preview_adjustment_amount
+      # 描画されないクーポンは母集合そのものに入らない
+      assert_not_includes form.coupon_quantities.keys, discount.id
     end
 
     test "元の販売にあった商品が送信されなければ、その商品が減ったものとして変更ありと判定される" do
@@ -440,6 +389,12 @@ module Refunds
       )
 
       assert_predicate form, :has_any_changes?
+      # 届かなかったキーは、元の販売にあった商品も在庫にだけある商品も 0 として読める
+      assert_equal 0, form.corrected_quantities[@catalog_salad.id]
+      assert_equal 0, form.corrected_quantities[@catalog_bento_b.id]
+      # 0 で埋めたキーが集計に混ざらない
+      assert_not form.all_items_zero?
+      assert_equal 1, form.total_corrected_bento_quantity
     end
 
     test "discount_quantities_for_refunderがクーポン数量を正しく返す" do
