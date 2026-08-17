@@ -13,12 +13,12 @@
         </tr>
       </thead>
       <tbody>
-        <% IconsPreview::ICON_NAMES.each do |icon| %>
+        <% IconsPreview.icon_names.each do |icon_name| %>
           <tr>
-            <td class="font-mono text-sm"><%= icon %></td>
+            <td class="font-mono text-sm"><%= icon_name %></td>
             <% %i[xs sm md lg xl].each do |size| %>
               <td class="text-center">
-                <%= render "Icons::#{icon.camelize}::Component".constantize.new(size: size) %>
+                <%= render Icon::Component.new(name: icon_name, size: size) %>
               </td>
             <% end %>
           </tr>
