@@ -272,6 +272,80 @@ module Refunds
       assert_predicate form, :has_any_changes?
     end
 
+    test "クーポンを2種類使った販売で、片方のクーポンが送信されなければ、その分が減ったものとして変更ありと判定される" do
+      fifty_yen = discounts(:fifty_yen_discount)
+      hundred_yen = discounts(:hundred_yen_discount)
+      sale = create_sale(
+        [ { catalog: @catalog_bento_a, quantity: 2 } ],
+        discount_quantities: { fifty_yen.id => 1, hundred_yen.id => 1 }
+      )
+
+      # 100円クーポンの入力だけが無効化され、coupon の中からその1件だけが欠落した状況。
+      # 弁当の数量は元のままなので、減枚を見落とすと変更なしと判定されてしまう
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "2" }
+          },
+          "coupon" => {
+            fifty_yen.id.to_s => { "quantity" => "1" }
+          }
+        }
+      )
+
+      assert_predicate form, :has_any_changes?
+    end
+
+    test "販売後に有効期限が切れたクーポンは、画面に描画されないので変更として数えない" do
+      discount = discounts(:fifty_yen_discount)
+      sale = create_sale(
+        [ { catalog: @catalog_bento_a, quantity: 2 } ],
+        discount_quantities: { discount.id => 1 }
+      )
+
+      # 有効期限が切れると available_discounts から外れ、枚数入力そのものが描画されない。
+      # 送信されようがないのだから、届かないことを「0枚に減った」と読んではいけない
+      discount.update!(valid_until: 1.day.ago.to_date)
+
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "2" }
+          }
+        }
+      )
+
+      assert_not form.has_any_changes?
+      assert_equal 0, form.preview_adjustment_amount
+    end
+
+    test "元の販売にあった商品が送信されなければ、その商品が減ったものとして変更ありと判定される" do
+      sale = create_sale([
+        { catalog: @catalog_bento_a, quantity: 1 },
+        { catalog: @catalog_salad, quantity: 1 }
+      ])
+
+      # corrected の中からサラダの1件だけが欠落した状況
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "1" }
+          }
+        }
+      )
+
+      assert_predicate form, :has_any_changes?
+    end
+
     test "discount_quantities_for_refunderがクーポン数量を正しく返す" do
       discount = discounts(:fifty_yen_discount)
       sale = create_sale(
