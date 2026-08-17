@@ -20,7 +20,7 @@ module Pos
         unless @form.valid?
           # 差し戻す理由はフォームが持っている。壊れた送信と「変更なし」では
           # 案内すべき内容が違うため、固定文ではなく実際のエラーを出す
-          flash.now[:alert] = @form.errors.full_messages.first || t(".missing_requirements")
+          flash.now[:alert] = @form.errors.full_messages.first
           return render :new, status: :unprocessable_entity
         end
 

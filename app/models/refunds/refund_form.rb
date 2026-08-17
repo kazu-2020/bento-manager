@@ -160,7 +160,11 @@ module Refunds
       end
     end
 
+    # 数量が1件も読めないなら「変更されたか」は判定しようがないので、
+    # 読み取れなかったことだけを案内する（corrected_quantities_readable が担う）
     def at_least_one_change
+      return if corrected_quantities.empty?
+
       errors.add(:base, :no_items_selected) unless has_any_changes?
     end
 

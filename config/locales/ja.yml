@@ -366,7 +366,6 @@ ja:
           success_refund: "返金処理が完了しました（返金額: %{amount}）"
           success_additional_charge: "追加請求が完了しました（追加請求額: %{amount}）"
           success_even_exchange: "交換処理が完了しました（差額なし）"
-          missing_requirements: "商品数量またはクーポン枚数を変更してください"
           already_voided: "この販売は既に取消済みです"
 
   discounts:

@@ -190,6 +190,21 @@ module Pos
                      flash[:alert]
       end
 
+      test "修正後の数量が読めない送信は、クーポンの有無で案内が変わらない" do
+        login_as_employee(@employee)
+
+        # 数量が読めない時点で「変更されたか」は判定しようがない。クーポンが
+        # 付いていないだけで「変更してください」と案内しても直しようがない
+        assert_no_difference "Refund.count" do
+          post pos_location_refunds_path(@location),
+               params: { sale_id: @sale.id, refund: { corrected: "ハッシュではなく文字列" } }
+        end
+
+        assert_response :unprocessable_entity
+        assert_equal "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください",
+                     flash[:alert]
+      end
+
       test "取消済みの販売に差額精算を送信しても処理されない" do
         login_as_employee(@employee)
         voided_sale = sales(:voided_sale)
