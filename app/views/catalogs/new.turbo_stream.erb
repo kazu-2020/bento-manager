@@ -3,6 +3,13 @@
 <%= modal_stream_show do %>
   <dialog class="modal">
     <div class="modal-box max-w-lg">
+      <%# turbo-frame の外に置くこと。中に入れるとフレーム差し替えで消える %>
+      <form method="dialog" id="<%= modal_close_form_id %>">
+        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+          <%= icon "close" %>
+        </button>
+      </form>
+
       <turbo-frame id="<%= Catalogs::NewForm::Component::MODAL_FRAME_ID %>">
         <%= render "modal_header", new_form: new_form %>
         <%= render new_form %>
