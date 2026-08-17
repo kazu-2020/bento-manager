@@ -150,12 +150,9 @@ module Refunds
       changed_from_original?(coupon_quantities, original_discount_quantities)
     end
 
+    # quantities_from が「届かなかったキーは 0」で読む以上、比較もその規則に従う。
     # 送信されたキーだけを走査すると、元の販売にあった数量が送信されなかったときに
     # 「減った」ことを見落とす。両方のキーを突き合わせ、無いキーは 0 として比較する。
-    #
-    # NOTE: refund[coupon] のようにコレクションごと送信されなかった場合は、
-    # build_coupon_quantities / build_corrected_quantities が元の販売の値を
-    # 復元するためここまで届かない。その復元をやめるのはイシュー #297 の範囲。
     def changed_from_original?(current, original)
       (current.keys | original.keys).any? do |id|
         (current[id] || 0) != (original[id] || 0)

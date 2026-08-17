@@ -280,7 +280,8 @@ module Refunds
         discount_quantities: { fifty_yen.id => 1, hundred_yen.id => 1 }
       )
 
-      # 100円クーポンの枚数入力が無効化され、送信ボディからキーごと欠落した状況
+      # 100円クーポンの入力だけが無効化され、coupon の中からその1件だけが欠落した状況。
+      # 弁当の数量は元のままなので、減枚を見落とすと変更なしと判定されてしまう
       form = RefundForm.new(
         sale: sale,
         location: @location,
@@ -304,7 +305,7 @@ module Refunds
         { catalog: @catalog_salad, quantity: 1 }
       ])
 
-      # サラダの数量入力が送信ボディからキーごと欠落した状況
+      # corrected の中からサラダの1件だけが欠落した状況
       form = RefundForm.new(
         sale: sale,
         location: @location,
