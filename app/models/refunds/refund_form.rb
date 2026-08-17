@@ -224,7 +224,7 @@ module Refunds
     end
 
     def build_full_refund_discount_details
-      sale.sale_discounts.includes(:discount).map do |sd|
+      sale.sale_discounts.eager_load(:discount).map do |sd|
         {
           discount_id: sd.discount_id,
           discount_name: sd.discount.name,
