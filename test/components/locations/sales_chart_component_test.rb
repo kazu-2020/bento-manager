@@ -5,22 +5,27 @@ require "test_helper"
 class Locations::SalesChartComponentTest < ViewComponent::TestCase
   include SaleTestHelper
 
-  fixtures :locations, :employees, :catalogs, :catalog_prices
+  fixtures :employees, :catalogs, :catalog_prices
 
-  test "販売データがある場合はグラフ要素がレンダリングされる" do
-    location = locations(:city_hall)
-    sale = create_sale(location:, customer_type: :staff, sale_datetime: 3.days.ago)
+  setup do
+    # 集計対象を自分が作ったデータだけに限定する
+    @location = Location.create!(name: "グラフテスト販売先", status: :active)
+  end
+
+  test "販売データは販売日の職員系列に反映される" do
+    sale_date = 3.days.ago
+    sale = create_sale(location: @location, customer_type: :staff, sale_datetime: sale_date)
     create_sale_item(sale:, quantity: 2)
 
-    result = render_inline(Locations::SalesChart::Component.new(location:))
+    component = Locations::SalesChart::Component.new(location: @location)
+    result = render_inline(component)
 
     assert_predicate result.css("[id^='chart-']"), :present?
+    assert_equal 2, component.chart_data[0][:data][sale_date.to_date.strftime("%-m/%-d")]
   end
 
   test "chart_data に職員・市民の2系列と直近1ヶ月分の全日データが含まれる" do
-    location = locations(:city_hall)
-
-    component = Locations::SalesChart::Component.new(location:)
+    component = Locations::SalesChart::Component.new(location: @location)
     render_inline(component)
     data = component.chart_data
 
