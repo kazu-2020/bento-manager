@@ -146,8 +146,16 @@ module Refunds
       changed_from_original?(corrected_quantities, original_item_quantities)
     end
 
+    # available_discounts に無い discount は枚数入力そのものが描画されず、送信されようが
+    # ない。届かないことが「0 枚に減った」を意味しないので、比較の母集合を描画されうる
+    # キーに揃える。販売後に有効期限が切れたクーポンがこれに当たる
     def coupons_changed?
-      changed_from_original?(coupon_quantities, original_discount_quantities)
+      submittable_discount_ids = available_discounts.map(&:id)
+
+      changed_from_original?(
+        coupon_quantities,
+        original_discount_quantities.slice(*submittable_discount_ids)
+      )
     end
 
     # quantities_from が「届かなかったキーは 0」で読む以上、比較もその規則に従う。

@@ -299,6 +299,32 @@ module Refunds
       assert_predicate form, :has_any_changes?
     end
 
+    test "販売後に有効期限が切れたクーポンは、画面に描画されないので変更として数えない" do
+      discount = discounts(:fifty_yen_discount)
+      sale = create_sale(
+        [ { catalog: @catalog_bento_a, quantity: 2 } ],
+        discount_quantities: { discount.id => 1 }
+      )
+
+      # 有効期限が切れると available_discounts から外れ、枚数入力そのものが描画されない。
+      # 送信されようがないのだから、届かないことを「0枚に減った」と読んではいけない
+      discount.update!(valid_until: 1.day.ago.to_date)
+
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "2" }
+          }
+        }
+      )
+
+      assert_not form.has_any_changes?
+      assert_equal 0, form.preview_adjustment_amount
+    end
+
     test "元の販売にあった商品が送信されなければ、その商品が減ったものとして変更ありと判定される" do
       sale = create_sale([
         { catalog: @catalog_bento_a, quantity: 1 },
