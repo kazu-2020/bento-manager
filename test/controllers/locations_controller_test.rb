@@ -104,6 +104,16 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "モーダルの閉じるボタンはスクリーンリーダーに読み上げられる名前を持つ" do
+    login_as_employee(@employee)
+    get new_location_path, as: :turbo_stream
+
+    close_label = I18n.t("helpers.link.close")
+
+    assert_includes response.body, %(aria-label="#{close_label}")
+    assert_includes response.body, %(<span class="sr-only">#{close_label}</span>)
+  end
+
   test "employee can create location" do
     login_as_employee(@employee)
     assert_difference("Location.count") do

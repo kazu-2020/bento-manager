@@ -223,6 +223,7 @@ ja:
     link:
       new: "新規登録"
       cancel: "キャンセル"
+      close: "閉じる"
 
   employees:
     index:

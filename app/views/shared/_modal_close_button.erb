@@ -1,0 +1,7 @@
+<%# turbo-frame の外（モーダルの殻）に置くこと。中に入れるとフレーム差し替えで消え、
+    キャンセルの form= が宙に浮く %>
+<form method="dialog" id="<%= modal_close_form_id %>">
+  <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" aria-label="<%= t("helpers.link.close") %>">
+    <%= icon "close" %>
+  </button>
+</form>

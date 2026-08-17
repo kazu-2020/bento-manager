@@ -6,7 +6,7 @@
   <%= helpers.icon icon_name, size: :md, extra_class: "shrink-0" %>
   <span><%= message %></span>
   <% if dismissible %>
-    <button type="button" class="btn btn-ghost btn-xs btn-circle" aria-label="閉じる" data-action="toast#dismiss">
+    <button type="button" class="btn btn-ghost btn-xs btn-circle" aria-label="<%= t("helpers.link.close") %>" data-action="toast#dismiss">
       <%= helpers.icon"close", size: :sm %>
     </button>
   <% end %>
