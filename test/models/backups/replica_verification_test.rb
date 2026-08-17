@@ -9,6 +9,7 @@ class Backups::ReplicaVerificationTest < ActiveSupport::TestCase
   setup do
     @dir = Dir.mktmpdir("replica-verification-test")
     @replica_path = File.join(@dir, "restored.sqlite3")
+    align_production_ids
   end
 
   teardown do
