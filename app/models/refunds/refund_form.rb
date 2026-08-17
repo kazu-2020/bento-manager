@@ -119,7 +119,7 @@ module Refunds
     def quantities_from(submitted, key)
       return yield if submitted.nil?
 
-      (submitted[key] || {}).transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
+      GhostForms::Quantities.from(submitted[key])
     end
 
     def default_corrected_quantities
