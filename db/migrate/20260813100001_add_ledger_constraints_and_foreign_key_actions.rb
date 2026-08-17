@@ -9,8 +9,12 @@ class AddLedgerConstraintsAndForeignKeyActions < ActiveRecord::Migration[8.1]
   # alter_table をトランザクション外で呼んだ場合だけ。マイグレーションは既定で
   # 外側に DDL トランザクションを張るため、8.1.3.1 でも消える（実測で確認）。
   #
-  # 引き換えにマイグレーション全体の原子性は失われるが、
-  # 個々の alter_table は内部で自前のトランザクションを張るので途中状態は生まれない。
+  # SQLite は CHECK 制約の追加も外部キーの変更も ALTER TABLE で実現できないため、
+  # Rails は 1 操作ごとに再作成（一時テーブルへコピー → 元をドロップ → 元の名前で復元）を行う。
+  #
+  # 引き換えにマイグレーション全体の原子性は失われる。個々の alter_table は内部で
+  # 自前のトランザクションを張るので途中状態のテーブルは生まれないが、N 番目の操作が
+  # 失敗しても N-1 番目までは適用されたまま残り、schema_migrations にも記録されない。
   # データ起因の失敗は reject_violating_rows! が事前に弾く。
   disable_ddl_transaction!
 
@@ -22,11 +26,6 @@ class AddLedgerConstraintsAndForeignKeyActions < ActiveRecord::Migration[8.1]
   #
   # refunds.amount には制約を追加しない。このカラムは金額ではなく符号付きの差額であり、
   # Sales::Refunder が「正=返金、負=追加徴収、0=等価交換」として扱う。
-  #
-  # NOTE: SQLite は CHECK 制約の追加も外部キーの変更も ALTER TABLE で実現できないため、
-  #       Rails は 1 操作ごとにテーブル再作成（一時テーブルへコピー → 元をドロップ →
-  #       元の名前で復元）を行う。全体は 1 トランザクション内で実行され、
-  #       失敗時は丸ごとロールバックされる。
 
   # 制約種別 => 演算子。制約名の接尾辞は種別名をそのまま使う。
   KINDS = { positive: ">", non_negative: ">=" }.freeze

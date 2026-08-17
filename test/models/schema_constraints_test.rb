@@ -31,9 +31,10 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
   test "販売明細の数量・単価・小計にゼロ以下は保存できない" do
     item = sale_items(:completed_sale_bento_a)
 
+    # いずれも制約は「> 0」なので、境界のゼロで検証する（-1 だけでは「>= 0」への誤変更を見逃す）
     assert_db_rejects item, quantity: 0
     assert_db_rejects item, unit_price: 0
-    assert_db_rejects item, line_total: -1
+    assert_db_rejects item, line_total: 0
   end
 
   test "販売の小計と合計はゼロを許すが負の金額は保存できない" do
