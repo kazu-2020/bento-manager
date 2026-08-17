@@ -34,12 +34,7 @@ module Refunds
         { catalog: @catalog_salad, quantity: 1 }
       ])
 
-      form = RefundForm.new(
-        sale: sale,
-        location: @location,
-        inventories: @inventories,
-        submitted: {}
-      )
+      form = RefundForm.new(sale: sale, location: @location, inventories: @inventories)
 
       # 元の販売の数量で初期化
       assert_equal 2, form.corrected_quantities[@catalog_bento_a.id]
@@ -170,12 +165,7 @@ module Refunds
     test "何も変更しないとバリデーションエラーになる" do
       sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
-      form = RefundForm.new(
-        sale: sale,
-        location: @location,
-        inventories: @inventories,
-        submitted: {}
-      )
+      form = RefundForm.new(sale: sale, location: @location, inventories: @inventories)
 
       assert_not form.valid?
       assert_includes form.errors[:base], "商品数量またはクーポン枚数を変更してください"
@@ -229,14 +219,33 @@ module Refunds
         discount_quantities: { discount.id => 2 }
       )
 
+      form = RefundForm.new(sale: sale, location: @location, inventories: @inventories)
+
+      assert_equal 2, form.coupon_quantities[discount.id]
+    end
+
+    test "弁当が0個でクーポンの枚数入力が無効化されると、枚数は送られず0枚として扱われる" do
+      discount = discounts(:fifty_yen_discount)
+      sale = create_sale(
+        [ { catalog: @catalog_bento_a, quantity: 2 } ],
+        discount_quantities: { discount.id => 1 }
+      )
+
+      # 弁当が0個だとクーポンは1枚も適用できないため、画面は枚数の入力を無効化する。
+      # 無効化された input はブラウザが送信しないので、coupon のキーごと届かない。
       form = RefundForm.new(
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {}
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "0" }
+          }
+        }
       )
 
-      assert_equal 2, form.coupon_quantities[discount.id]
+      assert_empty form.coupon_quantities
+      assert_empty form.discount_quantities_for_refunder
     end
 
     test "クーポン枚数を変更するとhas_any_changes?がtrueになる" do
@@ -294,12 +303,7 @@ module Refunds
     test "corrected_itemsが全商品（元の販売+在庫）を含む" do
       sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
-      form = RefundForm.new(
-        sale: sale,
-        location: @location,
-        inventories: @inventories,
-        submitted: {}
-      )
+      form = RefundForm.new(sale: sale, location: @location, inventories: @inventories)
 
       items = form.corrected_items
 
@@ -351,12 +355,7 @@ module Refunds
     test "tab_itemsが弁当タブを含む" do
       sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
-      form = RefundForm.new(
-        sale: sale,
-        location: @location,
-        inventories: @inventories,
-        submitted: {}
-      )
+      form = RefundForm.new(sale: sale, location: @location, inventories: @inventories)
 
       tab_keys = form.tab_items.map { |t| t[:key] }
 
