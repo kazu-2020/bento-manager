@@ -76,6 +76,7 @@ ja:
           attributes:
             base:
               no_items_selected: "商品数量またはクーポン枚数を変更してください"
+              unreadable_quantities: "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください"
         sales/cart_form:
           attributes:
             base:

@@ -168,6 +168,28 @@ module Pos
         assert_not_predicate @sale.reload, :voided?
       end
 
+      test "修正後の数量が1件も読めない送信は、確定せずに差し戻される" do
+        login_as_employee(@employee)
+
+        # 修正カートの中身が1件も読めないなら、それは「全て0」ではなく壊れた送信。
+        # 0として通すと修正後の販売が作られないまま元の販売が取り消され、全額返金になる
+        assert_no_difference [ "Refund.count", "Sale.count" ] do
+          post pos_location_refunds_path(@location),
+               params: {
+                 sale_id: @sale.id,
+                 refund: {
+                   corrected: "ハッシュではなく文字列",
+                   coupon: { @fifty_yen.id.to_s => { quantity: "0" } }
+                 }
+               }
+        end
+
+        assert_response :unprocessable_entity
+        assert_not_predicate @sale.reload, :voided?
+        assert_equal "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください",
+                     flash[:alert]
+      end
+
       test "取消済みの販売に差額精算を送信しても処理されない" do
         login_as_employee(@employee)
         voided_sale = sales(:voided_sale)

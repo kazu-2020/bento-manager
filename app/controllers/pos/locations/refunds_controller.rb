@@ -18,7 +18,9 @@ module Pos
         @form = build_form(submitted_params(:refund, form: ::Refunds::RefundForm))
 
         unless @form.valid?
-          flash.now[:alert] = t(".missing_requirements")
+          # 差し戻す理由はフォームが持っている。壊れた送信と「変更なし」では
+          # 案内すべき内容が違うため、固定文ではなく実際のエラーを出す
+          flash.now[:alert] = @form.errors.full_messages.first || t(".missing_requirements")
           return render :new, status: :unprocessable_entity
         end
 

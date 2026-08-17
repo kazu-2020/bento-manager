@@ -11,6 +11,7 @@ module Refunds
     attr_reader :sale, :location, :corrected_quantities, :coupon_quantities, :inventories
 
     validate :at_least_one_change
+    validate :corrected_quantities_readable
 
     # submitted は未送信（nil）と送信済み（Hash）を区別する。初回描画では元の販売から
     # 初期値を作るため、「まだ何も送られていない」と「送られたが空だった」を
@@ -161,6 +162,14 @@ module Refunds
 
     def at_least_one_change
       errors.add(:base, :no_items_selected) unless has_any_changes?
+    end
+
+    # 修正カートが1件も読めないのは「全て0」ではなく壊れた送信。全て0の確定は
+    # 数量を0として明示的に送ってくる。ここを通すと corrected_items_for_refunder が
+    # 空になり、修正後の販売が作られないまま元の販売が取り消されて全額返金になる。
+    # 初回描画では元の販売の商品が必ず入るため、この検証には掛からない。
+    def corrected_quantities_readable
+      errors.add(:base, :unreadable_quantities) if corrected_quantities.empty?
     end
 
     def catalog_lookup
