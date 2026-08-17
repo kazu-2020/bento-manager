@@ -15,7 +15,7 @@
               class="btn btn-circle btn-outline btn-sm"
               aria-label="<%= t('.decrement') %>"
               data-action="quantity-stepper#decrement"
-              <%= "disabled" if sold_out? %>>
+              <% if sold_out? %>disabled<% end %>>
         <%= helpers.icon "minus", extra_class: "h-4 w-4" %>
       </button>
 
@@ -35,7 +35,7 @@
               class="btn btn-circle btn-outline btn-sm"
               aria-label="<%= t('.increment') %>"
               data-action="quantity-stepper#increment"
-              <%= "disabled" if sold_out? %>>
+              <% if sold_out? %>disabled<% end %>>
         <%= helpers.icon "plus", extra_class: "h-4 w-4" %>
       </button>
 

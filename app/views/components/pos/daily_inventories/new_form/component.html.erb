@@ -48,7 +48,7 @@
           <%# タブパネル（スクロール領域） %>
           <main class="flex-1 overflow-y-auto px-3 py-2 pb-56 lg:pb-24">
             <% tab_items.each_with_index do |tab, i| %>
-              <div data-tabs-target="panel" <%= "hidden" unless i == 0 %>>
+              <div data-tabs-target="panel" <% if i != 0 %>hidden<% end %>>
                 <div class="space-y-1">
                   <% items_for_tab(tab[:key]).each do |item| %>
                     <%= render_item_card(item) %>
