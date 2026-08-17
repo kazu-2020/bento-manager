@@ -3,6 +3,8 @@
 require "test_helper"
 
 class DiscountsControllerTest < ActionDispatch::IntegrationTest
+  include ModalCancelButtonHelper
+
   fixtures :employees, :discounts, :coupons
 
   setup do
@@ -34,6 +36,21 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     get new_discount_path, as: :turbo_stream
 
     assert_response :success
+  end
+
+  # キャンセルが割引登録フォームの送信ボタンになると tree order 上いちばん先頭なので
+  # default button を奪い、割引名欄で Enter を押したときに「登録」ではなく「閉じる」が起きる
+  test "割引登録モーダルのキャンセルは割引登録フォームを送信しない" do
+    login_as_employee(@employee)
+    get new_discount_path, as: :turbo_stream
+
+    assert_response :success
+    assert_modal_cancel_uses_close_form(response.body, form_selector: "form#new_discount")
+    assert_close_form_survives_frame_replacement(
+      response.body,
+      frame_id: Discounts::NewForm::Component::MODAL_FRAME_ID,
+      close_form_id: ModalStreamHelper::MODAL_CLOSE_FORM_ID
+    )
   end
 
   test "admin can create discount" do

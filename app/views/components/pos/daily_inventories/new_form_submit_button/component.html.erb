@@ -1,7 +1,7 @@
 <div id="submit-button">
   <button type="submit"
           class="btn btn-neutral w-full gap-2"
-          <%= "disabled" if disabled? %>>
+          <% if disabled? %>disabled<% end %>>
     <span class="text-xl">🍱</span>
     <span><%= t(".submit_label") %></span>
     <span><%= selected_count %></span>

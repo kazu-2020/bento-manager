@@ -4,6 +4,8 @@ require "test_helper"
 
 module Catalogs
   class DiscontinuationsControllerTest < ActionDispatch::IntegrationTest
+    include ModalCancelButtonHelper
+
     fixtures :employees, :catalogs
 
     setup do
@@ -19,6 +21,25 @@ module Catalogs
     # ============================================================
     # Admin認証時のテスト
     # ============================================================
+
+    # キャンセルが販売終了フォームの送信ボタンになると tree order 上いちばん先頭なので
+    # default button を奪う。理由欄は textarea なので暗黙送信は起きないが、
+    # 5 箇所のモーダルで閉じ方を揃えておく
+    test "販売終了モーダルのキャンセルは販売終了フォームを送信しない" do
+      login_as_employee(@employee)
+      get new_catalog_discontinuation_path(@catalog), as: :turbo_stream
+
+      assert_response :success
+      assert_modal_cancel_uses_close_form(
+        response.body,
+        form_selector: "form[action='#{catalog_discontinuation_path(@catalog)}']"
+      )
+      assert_close_form_survives_frame_replacement(
+        response.body,
+        frame_id: Catalogs::DiscontinueForm::Component::MODAL_FRAME_ID,
+        close_form_id: ModalStreamHelper::MODAL_CLOSE_FORM_ID
+      )
+    end
 
     test "admin can access new (discontinue confirmation modal)" do
       login_as_employee(@employee)

@@ -73,7 +73,8 @@
   <% end %>
 
   <div class="modal-action mt-6">
-    <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+    <%# キャンセルの所有者は閉じるフォーム（ModalStreamHelper 参照）。form= を外すと default button を奪う %>
+    <button type="submit" form="<%= helpers.modal_close_form_id %>" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
     <%= f.submit t(".submit"), class: "btn btn-neutral" %>
   </div>
 <% end %>

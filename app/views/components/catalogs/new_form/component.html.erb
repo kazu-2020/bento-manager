@@ -9,19 +9,18 @@
         <%= component "catalogs/side_menu_fields", creator: creator %>
       <% end %>
     </div>
-
-    <div class="modal-action mt-6">
-      <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
-      <%= form.submit t("catalogs.new.submit"), class: "btn btn-neutral" %>
-    </div>
   <% else %>
     <div>
       <p class="text-base-content/70 mb-4"><%= t("catalogs.new.select_category") %></p>
       <%= component "catalogs/category_selector", selected: nil %>
     </div>
-
-    <div class="modal-action mt-6">
-      <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
-    </div>
   <% end %>
+
+  <div class="modal-action mt-6">
+    <%# キャンセルの所有者は閉じるフォーム（ModalStreamHelper 参照）。form= を外すと default button を奪う %>
+    <button type="submit" form="<%= helpers.modal_close_form_id %>" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+    <% if category_selected? %>
+      <%= form.submit t("catalogs.new.submit"), class: "btn btn-neutral" %>
+    <% end %>
+  </div>
 <% end %>

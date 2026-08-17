@@ -34,7 +34,7 @@
         <%# タブパネル（スクロール領域） %>
         <main class="flex-1 overflow-y-auto px-3 py-2">
           <% tab_items.each_with_index do |tab, i| %>
-            <div data-tabs-target="panel" <%= "hidden" unless i == 0 %>>
+            <div data-tabs-target="panel" <% if i != 0 %>hidden<% end %>>
               <% case tab[:key] %>
               <% when :bento %>
                 <div class="space-y-1">
