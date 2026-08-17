@@ -45,6 +45,102 @@ module Refunds
       assert_not form.has_any_changes?
     end
 
+    # === 数量ハッシュの母集合テスト ===
+
+    test "送信されなかった商品は0枚として読め、集計にも影響しない" do
+      sale = create_sale([
+        { catalog: @catalog_bento_a, quantity: 2 },
+        { catalog: @catalog_salad, quantity: 1 }
+      ])
+
+      # サラダの1件が欠落した送信。読み手が || 0 を書かなくても0が読めなければならない
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "1" }
+          }
+        }
+      )
+
+      # 元の販売にあった商品も、在庫にだけある商品も、届かなければ0
+      assert_equal 1, form.corrected_quantities[@catalog_bento_a.id]
+      assert_equal 0, form.corrected_quantities[@catalog_salad.id]
+      assert_equal 0, form.corrected_quantities[@catalog_bento_b.id]
+      # 0で埋めたキーが集計に混ざらない
+      assert_not form.all_items_zero?
+      assert_equal 1, form.total_corrected_bento_quantity
+    end
+
+    test "クーポンは画面に描画されるものだけが読め、送信されなければ0枚になる" do
+      fifty_yen = discounts(:fifty_yen_discount)
+      hundred_yen = discounts(:hundred_yen_discount)
+      sale = create_sale(
+        [ { catalog: @catalog_bento_a, quantity: 2 } ],
+        discount_quantities: { fifty_yen.id => 1, hundred_yen.id => 1 }
+      )
+
+      # 有効期限が切れると available_discounts から外れ、枚数入力そのものが描画されない
+      hundred_yen.update!(valid_until: 1.day.ago.to_date)
+
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "2" }
+          }
+        }
+      )
+
+      assert_equal 0, form.coupon_quantities[fifty_yen.id]
+      assert_not_includes form.coupon_quantities.keys, hundred_yen.id
+    end
+
+    test "画面に無い商品が送信されても修正カートには入らない" do
+      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      # 元の販売にも当日の在庫にも無い商品。数量入力そのものが描画されないので、
+      # 届いたとしても画面の操作ではありえない
+      unlisted = Catalog.create!(name: "画面に無い弁当", kana: "ガメンニナイベントウ", category: :bento)
+
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {
+          "corrected" => {
+            @catalog_bento_a.id.to_s => { "quantity" => "1" },
+            unlisted.id.to_s => { "quantity" => "5" }
+          }
+        }
+      )
+
+      assert_not_includes form.corrected_quantities.keys, unlisted.id
+      assert_not form.has_any_changes?
+    end
+
+    test "correctedが1件も届かない送信は、全て0ではなく壊れた送信として弾かれる" do
+      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+
+      # 数量が母集合の分だけ埋まっても、送信そのものが壊れていたことは見分けられなければ
+      # ならない。ここを通すと corrected_items_for_refunder が空になり、修正後の販売が
+      # 作られないまま元の販売が取り消されて全額返金になる
+      form = RefundForm.new(
+        sale: sale,
+        location: @location,
+        inventories: @inventories,
+        submitted: {}
+      )
+
+      assert_predicate form, :all_items_zero?
+      assert_not form.valid?
+      assert_includes form.errors[:base],
+                      "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください"
+    end
+
     # === corrected パラメータのパーステスト ===
 
     test "correctedパラメータが正しくパースされる" do
@@ -244,7 +340,7 @@ module Refunds
         }
       )
 
-      assert_empty form.coupon_quantities
+      assert_equal 0, form.coupon_quantities[discount.id]
       assert_empty form.discount_quantities_for_refunder
     end
 

@@ -35,7 +35,7 @@ module Pos
         end
 
         def current_quantity
-          form.coupon_quantities[discount.id] || 0
+          form.coupon_quantities[discount.id]
         end
 
         def max_quantity
