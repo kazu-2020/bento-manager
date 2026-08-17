@@ -18,11 +18,6 @@ files:
   exclude:
     - 'public/**/*'
 
-  # # Additional patterns beyond the defaults (**.html, **.rhtml, **.html.erb, etc.)
-  # include:
-  #   - '**/*.xml.erb'
-  #   - 'custom/**/*.html'
-
 linter:
   enabled: true
 

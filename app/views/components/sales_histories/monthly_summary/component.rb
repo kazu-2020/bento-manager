@@ -22,6 +22,8 @@ module SalesHistories
       end
 
       def best_day_label
+        return nil unless best_day
+
         best_day[:date].strftime("%-m/%-d")
       end
     end
