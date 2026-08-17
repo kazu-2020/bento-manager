@@ -3,6 +3,8 @@
 require "test_helper"
 
 class CatalogsControllerTest < ActionDispatch::IntegrationTest
+  include ModalCancelButtonHelper
+
   fixtures :employees, :catalogs
 
   setup do
@@ -31,6 +33,28 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     get catalog_path(@catalog)
 
     assert_response :success
+  end
+
+  # キャンセルが商品登録フォームの送信ボタンになると tree order 上いちばん先頭なので
+  # default button を奪い、商品名欄で Enter を押したときに「登録」ではなく「閉じる」が起きる
+  test "商品登録モーダルのキャンセルは商品登録フォームを送信しない" do
+    login_as_employee(@employee)
+
+    get new_catalog_path(category: "bento"), as: :turbo_stream
+
+    assert_response :success
+    assert_modal_cancel_uses_close_form(response.body, form_selector: "form#new_catalog")
+    assert_close_form_survives_frame_replacement(
+      response.body,
+      frame_id: Catalogs::NewForm::Component::MODAL_FRAME_ID,
+      close_form_id: ModalStreamHelper::MODAL_CLOSE_FORM_ID
+    )
+
+    # カテゴリ未選択の分岐には送信ボタンが無いが、キャンセルの閉じ方は揃える
+    get new_catalog_path, as: :turbo_stream
+
+    assert_response :success
+    assert_modal_cancel_uses_close_form(response.body, form_selector: "form#new_catalog", submit_buttons: 0)
   end
 
   test "admin can access new" do

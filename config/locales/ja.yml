@@ -76,6 +76,7 @@ ja:
           attributes:
             base:
               no_items_selected: "商品数量またはクーポン枚数を変更してください"
+              unreadable_quantities: "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください"
         sales/cart_form:
           attributes:
             base:
@@ -223,6 +224,7 @@ ja:
     link:
       new: "新規登録"
       cancel: "キャンセル"
+      close: "閉じる"
 
   employees:
     index:
@@ -364,7 +366,6 @@ ja:
           success_refund: "返金処理が完了しました（返金額: %{amount}）"
           success_additional_charge: "追加請求が完了しました（追加請求額: %{amount}）"
           success_even_exchange: "交換処理が完了しました（差額なし）"
-          missing_requirements: "商品数量またはクーポン枚数を変更してください"
           already_voided: "この販売は既に取消済みです"
 
   discounts:
