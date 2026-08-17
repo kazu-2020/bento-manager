@@ -26,6 +26,11 @@ module ModalCancelButtonHelper
 
     assert cancel, "キャンセルボタンが form= で別フォームに紐付いていること"
 
+    # ダイアログ内の method=dialog フォームならどれでも閉じるので、これを見ないと
+    # モーダル固有のフォームを指していても素通りする。閉じるフォームは 1 つに集約する
+    assert_equal ModalStreamHelper::MODAL_CLOSE_FORM_ID, cancel["form"],
+                 "キャンセルは共有の閉じるフォームを参照すること"
+
     # 紐付け先は同じ <dialog> の中で探す。ダイアログの外にあるフォームを参照しても閉じない
     dialog = main_form.ancestors.find { |node| node.name == "dialog" }
 
