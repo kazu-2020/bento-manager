@@ -397,6 +397,29 @@ module Refunds
       assert_equal 1, form.total_corrected_bento_quantity
     end
 
+    test "変更有無を何度判定してもクーポン枚数の取得は1回で済む" do
+      discount = discounts(:fifty_yen_discount)
+      sale = create_sale(
+        [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        discount_quantities: { discount.id => 1 }
+      )
+
+      # 1リクエスト中に画面の各パーツから has_any_changes? が繰り返し呼ばれる。
+      # クエリキャッシュを切り、フォーム自身が取得を1回に抑えていることを検証する
+      ActiveRecord::Base.uncached do
+        assert_queries_match(/FROM ["`]sale_discounts["`]/, count: 1) do
+          # sale_discounts が未ロードの Sale（コントローラーが渡すのと同じ状態）から始める
+          form = RefundForm.new(
+            sale: Sale.find(sale.id),
+            location: @location,
+            inventories: @inventories
+          )
+
+          3.times { form.has_any_changes? }
+        end
+      end
+    end
+
     test "discount_quantities_for_refunderがクーポン数量を正しく返す" do
       discount = discounts(:fifty_yen_discount)
       sale = create_sale(
