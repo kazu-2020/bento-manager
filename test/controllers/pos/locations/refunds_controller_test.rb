@@ -96,7 +96,7 @@ module Pos
         end
 
         assert_redirected_to pos_location_sales_history_index_path(@location)
-        assert_match "差額精算が完了しました", flash[:notice]
+        assert_match "追加請求が完了しました", flash[:notice]
 
         # 弁当A(550) + サラダ(セット価格150) - クーポン50 = 650円
         # 差額: 500 - 650 = -150（追加徴収）

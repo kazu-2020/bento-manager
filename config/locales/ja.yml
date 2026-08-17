@@ -97,7 +97,7 @@ ja:
       additional_order: "追加発注"
       discount: "割引"
       coupon: "クーポン"
-      refund: "返金処理"
+      refund: "差額精算"
       backups/heartbeat: "リストア訓練のハートビート"
     attributes:
       backups/heartbeat:
@@ -172,9 +172,9 @@ ja:
       refund:
         original_sale: "元の販売"
         corrected_sale: "修正後の販売"
-        employee: "返金処理担当者"
-        refund_datetime: "返金日時"
-        amount: "返金額"
+        employee: "差額精算の担当者"
+        refund_datetime: "差額精算日時"
+        amount: "差額"
       coupon:
         amount_per_unit: "1枚あたりの割引額"
 
@@ -362,7 +362,7 @@ ja:
             voided_count: "取消件数"
       refunds:
         new:
-          title: "返品処理"
+          title: "差額精算"
           original_sale: "元の販売内容"
           select_items: "返品する商品を選択"
           preview: "返金プレビュー"
@@ -374,7 +374,7 @@ ja:
           no_remaining_items: "全商品を返品"
         create:
           success_refund: "返金処理が完了しました（返金額: %{amount}）"
-          success_additional_charge: "差額精算が完了しました（追加請求額: %{amount}）"
+          success_additional_charge: "追加請求が完了しました（追加請求額: %{amount}）"
           success_even_exchange: "交換処理が完了しました（差額なし）"
           missing_requirements: "商品数量またはクーポン枚数を変更してください"
           already_voided: "この販売は既に取消済みです"
