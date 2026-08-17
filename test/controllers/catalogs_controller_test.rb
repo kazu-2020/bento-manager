@@ -44,6 +44,11 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_modal_cancel_uses_close_form(response.body, form_selector: "form#new_catalog")
+    assert_close_form_survives_frame_replacement(
+      response.body,
+      frame_id: Catalogs::NewForm::Component::MODAL_FRAME_ID,
+      close_form_id: ModalStreamHelper::MODAL_CLOSE_FORM_ID
+    )
 
     # カテゴリ未選択の分岐には送信ボタンが無いが、キャンセルの閉じ方は揃える
     get new_catalog_path, as: :turbo_stream

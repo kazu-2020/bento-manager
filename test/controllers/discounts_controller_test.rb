@@ -46,6 +46,11 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_modal_cancel_uses_close_form(response.body, form_selector: "form#new_discount")
+    assert_close_form_survives_frame_replacement(
+      response.body,
+      frame_id: Discounts::NewForm::Component::MODAL_FRAME_ID,
+      close_form_id: ModalStreamHelper::MODAL_CLOSE_FORM_ID
+    )
   end
 
   test "admin can create discount" do

@@ -34,6 +34,11 @@ module Catalogs
         response.body,
         form_selector: "form[action='#{catalog_discontinuation_path(@catalog)}']"
       )
+      assert_close_form_survives_frame_replacement(
+        response.body,
+        frame_id: Catalogs::DiscontinueForm::Component::MODAL_FRAME_ID,
+        close_form_id: ModalStreamHelper::MODAL_CLOSE_FORM_ID
+      )
     end
 
     test "admin can access new (discontinue confirmation modal)" do
