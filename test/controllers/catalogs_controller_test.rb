@@ -3,6 +3,8 @@
 require "test_helper"
 
 class CatalogsControllerTest < ActionDispatch::IntegrationTest
+  include ModalCancelButtonHelper
+
   fixtures :employees, :catalogs
 
   setup do
@@ -44,7 +46,7 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   end
 
   # カテゴリ未選択の分岐には送信ボタンが無いが、キャンセルの閉じ方は他と揃える
-  test "カテゴリ未選択の商品登録モーダルにも送信ボタンは無い" do
+  test "カテゴリ未選択の商品登録モーダルのキャンセルも商品登録フォームを送信しない" do
     login_as_employee(@employee)
     get new_catalog_path, as: :turbo_stream
 

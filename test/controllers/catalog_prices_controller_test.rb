@@ -3,6 +3,8 @@
 require "test_helper"
 
 class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
+  include ModalCancelButtonHelper
+
   fixtures :employees, :catalogs, :catalog_prices
 
   setup do
@@ -27,6 +29,31 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
       response.body,
       form_selector: "form[action='#{catalog_catalog_price_path(@catalog, :regular)}']"
     )
+  end
+
+  # 価格更新に失敗すると update はフレームだけを差し替える。閉じるフォームがそのフレームの
+  # 中にあると差し替えで消え、再描画されたキャンセルの form= が宙に浮いて効かなくなる
+  test "価格更新に失敗してフレームだけ差し替えてもキャンセルの紐付け先は残る" do
+    login_as_employee(@employee)
+    get edit_catalog_catalog_price_path(@catalog, :regular), as: :turbo_stream
+
+    assert_response :success
+    assert_close_form_survives_frame_replacement(
+      response.body,
+      frame_id: Catalogs::PriceForm::Component::MODAL_FRAME_ID,
+      close_form_id: Catalogs::PriceForm::Component::MODAL_CLOSE_FORM_ID
+    )
+
+    patch catalog_catalog_price_path(@catalog, :regular), params: {
+      catalog_price: { price: 0 }
+    }, as: :turbo_stream
+
+    assert_response :unprocessable_entity
+    cancel = Nokogiri::HTML5.fragment(response.body)
+                            .css("button[form='#{Catalogs::PriceForm::Component::MODAL_CLOSE_FORM_ID}']")
+                            .first
+
+    assert cancel, "再描画されたフォームのキャンセルも同じ閉じるフォームを参照していること"
   end
 
   test "admin can access edit for existing price" do

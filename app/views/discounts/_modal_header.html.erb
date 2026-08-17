@@ -3,7 +3,7 @@
 </h3>
 
 <%# キャンセルボタンも form= でこのフォームに紐付けて閉じる %>
-<form method="dialog" id="<%= close_form_id %>">
+<form method="dialog" id="<%= new_form.close_form_id %>">
   <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 modal-close-button" aria-label="<%= t('helpers.link.close', default: '閉じる') %>">
     <%= icon "close" %>
   </button>

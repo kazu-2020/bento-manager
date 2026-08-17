@@ -22,8 +22,7 @@
 
     <%# アクションボタン %>
     <div class="modal-action">
-      <%# form= でダイアログを閉じるフォームに所有者を移す。ここで form= を外すとこのフォームの
-          送信ボタンになり、tree order 上いちばん先頭 = default button を奪う %>
+      <%# キャンセルの所有者は閉じるフォーム。form= を外すとメインフォームの default button を奪い、Enter が「閉じる」に化ける %>
       <button type="submit" form="<%= close_form_id %>" class="btn btn-ghost">
         <%= t("helpers.link.cancel") %>
       </button>

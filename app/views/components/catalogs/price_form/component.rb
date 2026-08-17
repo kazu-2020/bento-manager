@@ -8,19 +8,20 @@ module Catalogs
       # 閉じるフォームはフレームの外にあるので、フレームだけ差し替える再描画でも DOM に残る
       MODAL_CLOSE_FORM_ID = "catalog_price_modal_close"
 
-      # close_form_id は必須。省略を許すと、閉じるフォームの無い場所で描画されたときに
-      # キャンセルが何も起きないボタンになって無言で壊れる
-      def initialize(catalog:, catalog_price:, kind:, close_form_id:)
+      def initialize(catalog:, catalog_price:, kind:)
         @catalog = catalog
         @catalog_price = catalog_price
         @kind = kind.to_s
-        @close_form_id = close_form_id
       end
 
-      attr_reader :catalog, :catalog_price, :kind, :close_form_id
+      attr_reader :catalog, :catalog_price, :kind
 
       def frame_id
         MODAL_FRAME_ID
+      end
+
+      def close_form_id
+        MODAL_CLOSE_FORM_ID
       end
 
       def form_url

@@ -7,17 +7,18 @@ module Catalogs
       # キャンセルボタンの所有者にする <form method="dialog"> の id
       MODAL_CLOSE_FORM_ID = "catalog_discontinue_modal_close"
 
-      # close_form_id は必須。省略を許すと、閉じるフォームの無い場所で描画されたときに
-      # キャンセルが何も起きないボタンになって無言で壊れる
-      def initialize(catalog:, close_form_id:)
+      def initialize(catalog:)
         @catalog = catalog
-        @close_form_id = close_form_id
       end
 
-      attr_reader :catalog, :close_form_id
+      attr_reader :catalog
 
       def frame_id
         MODAL_FRAME_ID
+      end
+
+      def close_form_id
+        MODAL_CLOSE_FORM_ID
       end
 
       def form_url

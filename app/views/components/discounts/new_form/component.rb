@@ -8,14 +8,15 @@ module Discounts
       # キャンセルボタンの所有者にする <form method="dialog"> の id
       MODAL_CLOSE_FORM_ID = "discount_new_modal_close"
 
-      # close_form_id は必須。省略を許すと、閉じるフォームの無い場所で描画されたときに
-      # キャンセルが何も起きないボタンになって無言で壊れる
-      def initialize(discount:, close_form_id:)
+      def initialize(discount:)
         @discount = discount
-        @close_form_id = close_form_id
       end
 
-      attr_reader :discount, :close_form_id
+      attr_reader :discount
+
+      def close_form_id
+        MODAL_CLOSE_FORM_ID
+      end
 
       def modal_title
         I18n.t("discounts.new.title")

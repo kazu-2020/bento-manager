@@ -4,6 +4,8 @@ require "test_helper"
 
 module Catalogs
   class DiscontinuationsControllerTest < ActionDispatch::IntegrationTest
+    include ModalCancelButtonHelper
+
     fixtures :employees, :catalogs
 
     setup do

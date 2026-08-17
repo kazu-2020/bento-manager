@@ -3,6 +3,8 @@
 require "test_helper"
 
 class DiscountsControllerTest < ActionDispatch::IntegrationTest
+  include ModalCancelButtonHelper
+
   fixtures :employees, :discounts, :coupons
 
   setup do

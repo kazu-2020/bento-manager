@@ -3,6 +3,8 @@
 require "test_helper"
 
 class LocationsControllerTest < ActionDispatch::IntegrationTest
+  include ModalCancelButtonHelper
+
   fixtures :employees, :locations
 
   setup do

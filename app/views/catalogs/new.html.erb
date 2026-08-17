@@ -1,7 +1,6 @@
-<% close_form_id = Catalogs::NewForm::Component::MODAL_CLOSE_FORM_ID %>
-<% new_form = Catalogs::NewForm::Component.new(creator: @creator, selected_category: @selected_category, close_form_id: close_form_id) %>
+<% new_form = Catalogs::NewForm::Component.new(creator: @creator, selected_category: @selected_category) %>
 
 <turbo-frame id="<%= Catalogs::NewForm::Component::MODAL_FRAME_ID %>">
-  <%= render "modal_header", new_form: new_form, close_form_id: close_form_id %>
+  <%= render "modal_header", new_form: new_form %>
   <%= render new_form %>
 </turbo-frame>
