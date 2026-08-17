@@ -9,7 +9,7 @@ module ModalCancelButtonHelper
   # @param form_selector [String] メインフォームを指す CSS セレクタ
   # @param submit_buttons [Integer] メインフォームが持つべき送信ボタンの数
   def assert_modal_cancel_uses_close_form(html, form_selector:, submit_buttons: 1)
-    main_form = Nokogiri::HTML5.fragment(html).css(form_selector).first
+    main_form = Nokogiri::HTML5.fragment(html).at_css(form_selector)
 
     assert main_form, "メインフォームが描画されていること (#{form_selector})"
 
@@ -22,16 +22,16 @@ module ModalCancelButtonHelper
                  "メインフォームの送信ボタンは #{submit_buttons} 個だけにする" \
                  "（キャンセルが混ざると Enter が「閉じる」に化ける）"
 
-    cancel = main_form.css("button[form]").first
+    cancel = main_form.at_css("button[form]")
 
     assert cancel, "キャンセルボタンが form= で別フォームに紐付いていること"
 
     # 紐付け先は同じ <dialog> の中で探す。ダイアログの外にあるフォームを参照しても閉じない
-    dialog = main_form.ancestors("dialog").first
+    dialog = main_form.ancestors.find { |node| node.name == "dialog" }
 
     assert dialog, "メインフォームが <dialog> の中に描画されていること"
 
-    close_form = dialog.css("form##{cancel['form']}").first
+    close_form = dialog.at_css("form##{cancel['form']}")
 
     assert close_form, "紐付け先のフォームが同じダイアログ内にあること"
     assert_equal "dialog", close_form["method"], "紐付け先は method=dialog でなければ閉じない"
@@ -43,13 +43,21 @@ module ModalCancelButtonHelper
   def assert_close_form_survives_frame_replacement(html, frame_id:, close_form_id:)
     fragment = Nokogiri::HTML5.fragment(html)
 
-    assert_predicate fragment.css("form##{close_form_id}"), :any?, "閉じるフォームが描画されていること"
+    assert fragment.at_css("form##{close_form_id}"), "閉じるフォームが描画されていること"
 
-    frame = fragment.css("turbo-frame##{frame_id}").first
+    frame = fragment.at_css("turbo-frame##{frame_id}")
 
     assert frame, "ターボフレームが描画されていること (#{frame_id})"
     assert_empty frame.css("form##{close_form_id}"),
                  "閉じるフォームをフレームの中に置くと、フレームだけ差し替えたときに消えて" \
                  "キャンセルの form= が宙に浮く"
+  end
+
+  # フレームだけ差し替えたレスポンス（<dialog> も閉じるフォームも含まれない）向け。
+  # 再描画されたキャンセルが、DOM に残っている閉じるフォームを指し続けていることを見る。
+  def assert_cancel_bound_to_close_form(html, close_form_id:)
+    cancel = Nokogiri::HTML5.fragment(html).at_css("button[form='#{close_form_id}']")
+
+    assert cancel, "再描画されたキャンセルも form=#{close_form_id} を指していること"
   end
 end

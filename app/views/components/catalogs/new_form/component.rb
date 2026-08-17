@@ -6,8 +6,6 @@ module Catalogs
       FORM_ID = "new_catalog"
       MODAL_FRAME_ID = "catalog_new_modal"
       FORM_FIELDS_FRAME_ID = "catalog_form_fields"
-      # キャンセルボタンの所有者にする <form method="dialog"> の id
-      MODAL_CLOSE_FORM_ID = "catalog_new_modal_close"
 
       def initialize(creator: nil, selected_category: nil)
         @creator = creator
@@ -15,10 +13,6 @@ module Catalogs
       end
 
       attr_reader :creator, :selected_category
-
-      def close_form_id
-        MODAL_CLOSE_FORM_ID
-      end
 
       def category_selected?
         selected_category.present?

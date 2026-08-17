@@ -4,9 +4,6 @@ module Catalogs
   module PriceForm
     class Component < Application::Component
       MODAL_FRAME_ID = "catalog_price_form_modal_frame"
-      # キャンセルボタンの所有者にする <form method="dialog"> の id。
-      # 閉じるフォームはフレームの外にあるので、フレームだけ差し替える再描画でも DOM に残る
-      MODAL_CLOSE_FORM_ID = "catalog_price_modal_close"
 
       def initialize(catalog:, catalog_price:, kind:)
         @catalog = catalog
@@ -18,10 +15,6 @@ module Catalogs
 
       def frame_id
         MODAL_FRAME_ID
-      end
-
-      def close_form_id
-        MODAL_CLOSE_FORM_ID
       end
 
       def form_url

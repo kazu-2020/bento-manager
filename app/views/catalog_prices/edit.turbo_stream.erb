@@ -7,9 +7,8 @@
         <%= price_form.modal_title %>
       </h3>
 
-      <%# キャンセルボタンも form= でこのフォームに紐付けて閉じる。
-          turbo-frame の外に置くこと。中に入れるとフレーム差し替えで消える %>
-      <form method="dialog" id="<%= price_form.close_form_id %>">
+      <%# turbo-frame の外に置くこと。中に入れると更新失敗時のフレーム差し替えで消える %>
+      <form method="dialog" id="<%= modal_close_form_id %>">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 modal-close-button">
           <%= icon "close" %>
         </button>

@@ -39,15 +39,13 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   # default button を奪い、商品名欄で Enter を押したときに「登録」ではなく「閉じる」が起きる
   test "商品登録モーダルのキャンセルは商品登録フォームを送信しない" do
     login_as_employee(@employee)
+
     get new_catalog_path(category: "bento"), as: :turbo_stream
 
     assert_response :success
     assert_modal_cancel_uses_close_form(response.body, form_selector: "form#new_catalog")
-  end
 
-  # カテゴリ未選択の分岐には送信ボタンが無いが、キャンセルの閉じ方は他と揃える
-  test "カテゴリ未選択の商品登録モーダルのキャンセルも商品登録フォームを送信しない" do
-    login_as_employee(@employee)
+    # カテゴリ未選択の分岐には送信ボタンが無いが、キャンセルの閉じ方は揃える
     get new_catalog_path, as: :turbo_stream
 
     assert_response :success
