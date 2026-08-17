@@ -62,6 +62,7 @@ ja:
           attributes:
             base:
               save_failed: "保存に失敗しました。もう一度お試しください。"
+              no_items_selected: "登録する商品を選択してください"
         daily_inventories/correction_form:
           attributes:
             base:
@@ -226,31 +227,11 @@ ja:
       cancel: "キャンセル"
       close: "閉じる"
 
-  employees:
-    index:
-      title: "従業員一覧"
-    show:
-      title: "従業員詳細"
-    new:
-      title: "従業員登録"
-    edit:
-      title: "従業員編集"
-    create:
-      success: "従業員を登録しました。"
-    update:
-      success: "従業員情報を更新しました。"
-    destroy:
-      success: "従業員を削除しました。"
-
   locations:
     index:
       title: "販売先一覧"
-    show:
-      title: "販売先詳細"
     new:
       title: "販売先登録"
-    edit:
-      title: "販売先編集"
     create:
       success: "販売先を登録しました。"
     update:
@@ -272,8 +253,6 @@ ja:
       invalid_category: "無効な商品カテゴリです"
     index:
       title: "商品カタログ一覧"
-    show:
-      title: "商品カタログ詳細"
     new:
       title: "商品カタログ登録"
       bento_title: "弁当を登録"
@@ -297,8 +276,6 @@ ja:
           description: "定番の弁当メニュー"
         side_menu:
           description: "サイドメニュー、オプション商品"
-    edit:
-      title: "商品カタログ編集"
     create:
       success: "商品カタログを登録しました。"
     update:
@@ -306,7 +283,6 @@ ja:
     discontinuations:
       modal_title: "販売停止の確認"
       success: "商品カタログを提供終了にしました。"
-      failure: "商品カタログの提供終了に失敗しました。"
       already_discontinued: "この商品カタログは既に提供終了です。"
       default_reason: "管理者による提供終了"
 
@@ -319,9 +295,6 @@ ja:
           title: "在庫登録"
         create:
           success: "%{count}種類の商品を登録しました"
-        new_form:
-          submit_label: "販売開始"
-          submit_unit: "種類"
         corrections:
           new:
             title: "在庫修正"
@@ -343,24 +316,9 @@ ja:
       sales_history:
         index:
           title: "販売履歴"
-          empty: "本日の販売履歴はありません"
-          daily_summary:
-            title: "本日の売上"
-            total_sales: "販売件数"
-            total_amount: "売上合計"
-            voided_count: "取消件数"
       refunds:
         new:
           title: "差額精算"
-          original_sale: "元の販売内容"
-          select_items: "返品する商品を選択"
-          preview: "返金プレビュー"
-          corrected_sale: "修正後の販売内容"
-          refund_amount: "返金額"
-          full_refund: "全額返金"
-          submit: "返金を確定"
-          back: "戻る"
-          no_remaining_items: "全商品を返品"
         create:
           success_refund: "返金処理が完了しました（返金額: %{amount}）"
           success_additional_charge: "追加請求が完了しました（追加請求額: %{amount}）"
@@ -370,12 +328,8 @@ ja:
   discounts:
     index:
       title: "割引クーポン"
-    show:
-      title: "割引クーポン詳細"
     new:
       title: "割引クーポン登録"
-    edit:
-      title: "割引クーポン編集"
     create:
       success: "割引クーポンを作成しました。"
     update:
