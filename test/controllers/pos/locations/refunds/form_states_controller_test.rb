@@ -65,7 +65,7 @@ module Pos
           end
         end
 
-        test "構造が壊れた返品内容を送られても画面は通常どおり再描画される" do
+        test "構造が壊れた返品内容を送られると、元の販売の数量に戻さず全て0で再描画される" do
           login_as_employee(@employee)
 
           post pos_location_refunds_form_state_path(@location, sale_id: @sale.id),
@@ -77,7 +77,11 @@ module Pos
                },
                as: :turbo_stream
 
-          assert_turbo_stream action: "replace", target: "ghost-form"
+          # 元の販売の数量に戻すと、壊れた送信が「変更なし」に見えてしまう
+          assert_turbo_stream action: "replace", target: "ghost-form" do
+            assert_select "input[name=?][value=?]",
+                          "ghost_refund[corrected][#{@bento_a.id}][quantity]", "0"
+          end
         end
 
         # ============================================================

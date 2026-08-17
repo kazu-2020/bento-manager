@@ -38,6 +38,19 @@ module Pos
         assert_response :success
       end
 
+      test "差額精算の画面を開くと、修正カートには元の販売の数量とクーポン枚数が入る" do
+        login_as_employee(@employee)
+        get new_pos_location_refund_path(@location, sale_id: @sale.id)
+
+        assert_response :success
+        # 初回描画は未送信。ここを送信済みとして扱うと「キーの欠落 = 0」の規則が
+        # 初回描画にも及び、画面を開いた瞬間に全額返金の見た目になる
+        assert_select "input[name=?][value=?]",
+                      "ghost_refund[corrected][#{@bento_a.id}][quantity]", "1"
+        assert_select "input[name=?][value=?]",
+                      "ghost_refund[coupon][#{@fifty_yen.id}][quantity]", "1"
+      end
+
       test "new returns 404 for inactive location" do
         login_as_employee(@employee)
         get new_pos_location_refund_path(locations(:prefectural_office),
@@ -118,6 +131,25 @@ module Pos
 
         # 弁当B(500円) - クーポンなし = 500円。元の会計と同額
         assert_equal 0, Refund.last.amount
+      end
+
+      test "弁当を0個にすると、修正後の販売にクーポンは適用されない" do
+        login_as_employee(@employee)
+
+        # 弁当が0個だとクーポンの枚数は入力できないため、送信ボディにクーポンは含まれない
+        assert_difference "Refund.count", 1 do
+          post_refund(corrected: { @bento_a => 0, @salad => 1 })
+        end
+
+        assert_redirected_to pos_location_sales_history_index_path(@location)
+
+        corrected_sale = Refund.last.corrected_sale
+
+        # サラダ単品は250円。弁当がないためセット価格150円にもならず、クーポンも適用できない
+        assert_equal 250, corrected_sale.final_amount
+        assert_empty corrected_sale.sale_discounts
+        # 差額: 元の販売500円 - 修正後250円 = 250円の返金
+        assert_equal 250, Refund.last.amount
       end
 
       # ============================================================

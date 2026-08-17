@@ -12,12 +12,17 @@ module Refunds
 
     validate :at_least_one_change
 
-    def initialize(sale:, location:, inventories: [], submitted: {})
+    # submitted は未送信（nil）と送信済み（Hash）を区別する。初回描画では元の販売から
+    # 初期値を作るため、「まだ何も送られていない」と「送られたが空だった」を
+    # 見分けなければならない。中身が空かどうかで分岐すると、数量の入力が
+    # 無効化されてキーごと送信されなかったときに元の販売の値が復活する。
+    # 在庫訂正のフォームも同じ区別を要し、そちらはコントローラーで分けている。
+    def initialize(sale:, location:, inventories: [], submitted: nil)
       @sale = sale
       @location = location
       @inventories = inventories
-      @corrected_quantities = build_corrected_quantities(submitted)
-      @coupon_quantities = build_coupon_quantities(submitted)
+      @corrected_quantities = quantities_from(submitted, "corrected") { default_corrected_quantities }
+      @coupon_quantities = quantities_from(submitted, "coupon") { original_discount_quantities }
     end
 
     def corrected_items
@@ -108,25 +113,12 @@ module Refunds
 
     private
 
-    def build_corrected_quantities(submitted)
-      corrected_data = submitted["corrected"] || {}
+    # 送信されていれば、届いたキーだけを読む。届かなかったキーは 0 を意味する。
+    # 未送信（初回描画）のときだけ、ブロックが返す初期値を使う
+    def quantities_from(submitted, key)
+      return yield if submitted.nil?
 
-      if corrected_data.empty?
-        # 初期値: 元の販売の商品数量 + 在庫にある未購入商品は0
-        default_corrected_quantities
-      else
-        corrected_data.transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
-      end
-    end
-
-    def build_coupon_quantities(submitted)
-      coupon_data = submitted["coupon"] || {}
-
-      if coupon_data.empty?
-        original_discount_quantities
-      else
-        coupon_data.transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
-      end
+      (submitted[key] || {}).transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
     end
 
     def default_corrected_quantities
