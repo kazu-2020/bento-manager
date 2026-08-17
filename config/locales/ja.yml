@@ -272,7 +272,6 @@ ja:
       invalid_category: "無効な商品カテゴリです"
     index:
       title: "商品カタログ一覧"
-      empty_message: "商品カタログがまだ登録されていません"
     show:
       title: "商品カタログ詳細"
     new:
