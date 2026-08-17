@@ -120,6 +120,18 @@ jobs:
       - name: Install JavaScript dependencies
         run: npm ci
 
+      # stale な .herb.yml でも herb-lint は exit 0 を返し、新ルールが
+      # skipped (version) のまま CI が緑で通ってしまう。Dependabot による
+      # linter の bump がここで赤くなるよう、両者の一致を突き合わせる。
+      - name: Check .herb.yml version matches the installed linter
+        run: |
+          configured=$(grep -E '^version:' .herb.yml | awk '{print $2}' | tr -d '"'"'"'')
+          installed=$(node -p "require('@herb-tools/linter/package.json').version")
+          if [ "$configured" != "$installed" ]; then
+            echo "::error::.herb.yml version ($configured) != @herb-tools/linter ($installed). Run 'npm run herb:lint -- --upgrade' and review the newly enabled rules."
+            exit 1
+          fi
+
       - name: Lint ERB templates
         run: npm run herb:lint
 

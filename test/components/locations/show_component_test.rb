@@ -5,7 +5,7 @@ require "test_helper"
 class Locations::ShowComponentTest < ViewComponent::TestCase
   include SaleTestHelper
 
-  fixtures :locations, :employees, :catalogs, :catalog_prices
+  fixtures :employees
 
   def setup
     @active_location = Location.new(
@@ -98,14 +98,17 @@ class Locations::ShowComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "更新日時"
   end
 
+  # 販売履歴の有無は実 DB を引くため、他テストクラスの sales が混ざらない専用の販売先を使う
   def test_renders_empty_state_when_no_sales_history
-    result = render_inline(Locations::Show::Component.new(location: @active_location))
+    location = Location.create!(name: "販売履歴なし販売先", status: :active)
+
+    result = render_inline(Locations::Show::Component.new(location:))
 
     assert_includes result.to_html, "販売履歴はありません"
   end
 
   def test_renders_chart_when_sales_history_exists
-    location = locations(:city_hall)
+    location = Location.create!(name: "販売履歴あり販売先", status: :active)
     create_sale(location:, customer_type: :staff, sale_datetime: 3.days.ago)
 
     result = render_inline(Locations::Show::Component.new(location:))
