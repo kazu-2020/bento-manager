@@ -14,11 +14,10 @@
   </div>
 
   <div class="modal-action mt-6">
-    <%# type="button" は必須。submit にすると default button を奪い、Enter が「閉じる」になる %>
-    <button type="button"
-            data-controller="dialog-close"
-            data-action="click->dialog-close#close"
-            class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+    <%# form= でダイアログを閉じるフォームに所有者を移す。ここで close_form_id を外すと
+        このフォームの送信ボタンになり、tree order 上いちばん先頭 = default button を奪って
+        名前欄の Enter が「作成」ではなく「閉じる」に化ける %>
+    <button type="submit" form="<%= close_form_id %>" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
     <%= form.submit class: "btn btn-neutral" %>
   </div>
 <% end %>

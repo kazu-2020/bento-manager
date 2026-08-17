@@ -16,6 +16,19 @@ class CatalogPricesControllerTest < ActionDispatch::IntegrationTest
   # Admin認証時のテスト
   # ============================================================
 
+  # キャンセルが価格フォームの送信ボタンになると tree order 上いちばん先頭なので
+  # default button を奪い、価格欄で Enter を押したときに「更新」ではなく「閉じる」が起きる
+  test "価格編集モーダルのキャンセルは価格フォームを送信しない" do
+    login_as_employee(@employee)
+    get edit_catalog_catalog_price_path(@catalog, :regular), as: :turbo_stream
+
+    assert_response :success
+    assert_modal_cancel_uses_close_form(
+      response.body,
+      form_selector: "form[action='#{catalog_catalog_price_path(@catalog, :regular)}']"
+    )
+  end
+
   test "admin can access edit for existing price" do
     login_as_employee(@employee)
     get edit_catalog_catalog_price_path(@catalog, :regular), as: :turbo_stream

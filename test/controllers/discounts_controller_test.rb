@@ -36,6 +36,16 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # キャンセルが割引登録フォームの送信ボタンになると tree order 上いちばん先頭なので
+  # default button を奪い、割引名欄で Enter を押したときに「登録」ではなく「閉じる」が起きる
+  test "割引登録モーダルのキャンセルは割引登録フォームを送信しない" do
+    login_as_employee(@employee)
+    get new_discount_path, as: :turbo_stream
+
+    assert_response :success
+    assert_modal_cancel_uses_close_form(response.body, form_selector: "form#new_discount")
+  end
+
   test "admin can create discount" do
     login_as_employee(@employee)
     assert_difference("Discount.count") do

@@ -6,13 +6,18 @@ module Catalogs
       FORM_ID = "new_catalog"
       MODAL_FRAME_ID = "catalog_new_modal"
       FORM_FIELDS_FRAME_ID = "catalog_form_fields"
+      # キャンセルボタンの所有者にする <form method="dialog"> の id
+      MODAL_CLOSE_FORM_ID = "catalog_new_modal_close"
 
-      def initialize(creator: nil, selected_category: nil)
+      # close_form_id は必須。省略を許すと、閉じるフォームの無い場所で描画されたときに
+      # キャンセルが何も起きないボタンになって無言で壊れる
+      def initialize(close_form_id:, creator: nil, selected_category: nil)
+        @close_form_id = close_form_id
         @creator = creator
         @selected_category = selected_category
       end
 
-      attr_reader :creator, :selected_category
+      attr_reader :close_form_id, :creator, :selected_category
 
       def category_selected?
         selected_category.present?

@@ -28,7 +28,10 @@
     </div>
 
     <div class="modal-action">
-      <button type="submit" formmethod="dialog" formnovalidate class="btn btn-ghost">
+      <%# form= でダイアログを閉じるフォームに所有者を移す。ここで form= を外すとこのフォームの
+          送信ボタンになり、tree order 上いちばん先頭 = default button を奪って
+          価格欄の Enter が「更新」ではなく「閉じる」に化ける %>
+      <button type="submit" form="<%= close_form_id %>" class="btn btn-ghost">
         <%= t("helpers.link.cancel") %>
       </button>
       <%= f.submit t(".submit"), class: "btn btn-neutral" %>

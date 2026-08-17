@@ -36,19 +36,14 @@ class LocationsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  # 送信ボタンにすると tree order 上これが default button になり、
-  # 名前欄で Enter を押したときに「作成」ではなく「閉じる」が起きる
-  test "販売先登録モーダルのキャンセルはフォームを送信しない" do
+  # キャンセルが販売先フォームの送信ボタンになると tree order 上いちばん先頭なので
+  # default button を奪い、名前欄で Enter を押したときに「作成」ではなく「閉じる」が起きる
+  test "販売先登録モーダルのキャンセルは販売先フォームを送信しない" do
     login_as_employee(@employee)
     get new_location_path, as: :turbo_stream
 
     assert_response :success
-
-    cancel = Nokogiri::HTML5.fragment(response.body).css("button[data-controller='dialog-close']").first
-
-    assert cancel, "キャンセルボタンが描画されていること"
-    assert_equal "button", cancel["type"], "type=submit にすると Enter キーが「閉じる」に化ける"
-    assert_nil cancel["formmethod"], "formmethod で閉じると送信ボタンになってしまう"
+    assert_modal_cancel_uses_close_form(response.body, form_selector: "form[action='#{locations_path}']")
   end
 
   test "admin can create location" do

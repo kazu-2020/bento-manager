@@ -1,4 +1,4 @@
-<% price_form = Catalogs::PriceForm::Component.new(catalog: @catalog, catalog_price: @catalog_price, kind: @kind) %>
+<% price_form = Catalogs::PriceForm::Component.new(catalog: @catalog, catalog_price: @catalog_price, kind: @kind, close_form_id: Catalogs::PriceForm::Component::MODAL_CLOSE_FORM_ID) %>
 
 <%= modal_stream_show do %>
   <dialog class="modal">
@@ -7,7 +7,8 @@
         <%= price_form.modal_title %>
       </h3>
 
-      <form method="dialog">
+      <%# キャンセルボタンも form= でこのフォームに紐付けて閉じる %>
+      <form method="dialog" id="<%= Catalogs::PriceForm::Component::MODAL_CLOSE_FORM_ID %>">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 modal-close-button">
           <%= icon "close" %>
         </button>

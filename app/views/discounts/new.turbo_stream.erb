@@ -1,10 +1,11 @@
-<% new_form = Discounts::NewForm::Component.new(discount: @discount) %>
+<% close_form_id = Discounts::NewForm::Component::MODAL_CLOSE_FORM_ID %>
+<% new_form = Discounts::NewForm::Component.new(discount: @discount, close_form_id: close_form_id) %>
 
 <%= modal_stream_show do %>
   <dialog class="modal">
     <div class="modal-box max-w-lg">
       <turbo-frame id="<%= Discounts::NewForm::Component::MODAL_FRAME_ID %>">
-        <%= render partial: "modal_header", formats: [:html], locals: { new_form: new_form } %>
+        <%= render partial: "modal_header", formats: [:html], locals: { new_form: new_form, close_form_id: close_form_id } %>
         <%= render new_form %>
       </turbo-frame>
     </div>

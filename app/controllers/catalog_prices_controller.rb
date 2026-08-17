@@ -27,7 +27,8 @@ class CatalogPricesController < ApplicationController
       Catalogs::PriceForm::Component.new(
         catalog: @catalog,
         catalog_price: e.record,
-        kind: @kind
+        kind: @kind,
+        close_form_id: Catalogs::PriceForm::Component::MODAL_CLOSE_FORM_ID
       )
     ), status: :unprocessable_entity
   end

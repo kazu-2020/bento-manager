@@ -1,4 +1,4 @@
-<% discontinue_form = Catalogs::DiscontinueForm::Component.new(catalog: @catalog) %>
+<% discontinue_form = Catalogs::DiscontinueForm::Component.new(catalog: @catalog, close_form_id: Catalogs::DiscontinueForm::Component::MODAL_CLOSE_FORM_ID) %>
 
 <%= modal_stream_show do %>
   <dialog class="modal">
@@ -7,7 +7,8 @@
         <%= discontinue_form.modal_title %>
       </h3>
 
-      <form method="dialog">
+      <%# キャンセルボタンも form= でこのフォームに紐付けて閉じる %>
+      <form method="dialog" id="<%= Catalogs::DiscontinueForm::Component::MODAL_CLOSE_FORM_ID %>">
         <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 modal-close-button">
           <%= icon "close" %>
         </button>
