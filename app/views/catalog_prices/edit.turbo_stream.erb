@@ -7,18 +7,11 @@
         <%= price_form.modal_title %>
       </h3>
 
-      <%# turbo-frame の外に置くこと。中に入れると更新失敗時のフレーム差し替えで消える %>
-      <form method="dialog" id="<%= modal_close_form_id %>">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
-          <%= icon "close" %>
-        </button>
-      </form>
+      <%= render "shared/modal_close_button" %>
 
       <%= render price_form %>
     </div>
 
-    <form method="dialog" class="modal-backdrop">
-      <button><span class="sr-only">close</span></button>
-    </form>
+    <%= render "shared/modal_backdrop" %>
   </dialog>
 <% end %>
