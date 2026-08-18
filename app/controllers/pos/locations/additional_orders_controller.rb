@@ -46,7 +46,7 @@ module Pos
 
       def set_additional_orders
         @additional_orders = @location.additional_orders
-                                      .where(order_at: Date.current.all_day)
+                                      .ordered_on(Date.current)
                                       .eager_load(:catalog)
                                       .order(order_at: :desc)
       end

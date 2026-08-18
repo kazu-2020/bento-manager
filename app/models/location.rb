@@ -17,7 +17,7 @@ class Location < ApplicationRecord
   end
 
   def sales_started_today?
-    DailyInventory.sales_started?(location: self)
+    Sale.started?(location: self)
   end
 
   def daily_sales_quantity(period: 1.month)

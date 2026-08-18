@@ -150,4 +150,21 @@ class CatalogTest < ActiveSupport::TestCase
     assert_equal initial_count, Catalog.count, "レコード数は変わらないべき"
     assert_predicate catalog, :persisted?, "レコードは削除されていないべき"
   end
+  test "提供終了した商品でも当日在庫があれば在庫訂正の対象に含まれる" do
+    location = Location.create!(name: "母集合テスト販売先", status: :active)
+    stocked = Catalog.create!(name: "積載済み終了弁当", kana: "セキサイズミシュウリョウベントウ", category: :bento)
+    unstocked = Catalog.create!(name: "未積載終了弁当", kana: "ミセキサイシュウリョウベントウ", category: :bento)
+    DailyInventory.create!(
+      location: location, catalog: stocked,
+      inventory_date: Date.current, stock: 3, reserved_stock: 0
+    )
+    [ stocked, unstocked ].each do |catalog|
+      CatalogDiscontinuation.create!(catalog: catalog, discontinued_at: Time.current, reason: "提供終了")
+    end
+
+    catalogs = Catalog.available_or_stocked_at(location)
+
+    assert_includes catalogs, stocked
+    assert_not_includes catalogs, unstocked
+  end
 end

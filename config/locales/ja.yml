@@ -71,7 +71,7 @@ ja:
           attributes:
             base:
               save_failed: "保存に失敗しました。もう一度お試しください。"
-              sales_already_started: "販売が開始されているため、在庫の再登録はできません。"
+              sales_already_started: "販売が開始されているため、在庫の訂正はできません。"
               no_items_selected: "登録する商品を選択してください"
         additional_orders/order_form:
           attributes:
@@ -300,9 +300,9 @@ ja:
           success: "%{count}種類の商品を登録しました"
         corrections:
           new:
-            title: "在庫修正"
+            title: "在庫訂正"
           create:
-            success: "%{count}種類の商品を再登録しました"
+            success: "%{count}種類の商品を訂正しました"
       sales:
         new:
           title: "レジ"
