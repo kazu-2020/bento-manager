@@ -16,7 +16,7 @@ module GhostForms
       submission = Submission.filter(nil, form: CART_FORM)
 
       assert_predicate submission, :absent?
-      assert_not submission.unreadable?
+      assert_not submission.unreadable?([])
       assert_empty submission.values
     end
 
@@ -24,14 +24,14 @@ module GhostForms
       submission = Submission.absent
 
       assert_predicate submission, :absent?
-      assert_not submission.unreadable?
+      assert_not submission.unreadable?([])
     end
 
     test "送信されて中身が残れば、未送信でも読めなくもない" do
       submission = filter({ "12" => { "quantity" => "3" }, "customer_type" => "citizen" })
 
       assert_not submission.absent?
-      assert_not submission.unreadable?
+      assert_not submission.unreadable?([])
       assert_equal "3", submission["12"]["quantity"]
     end
 
@@ -41,12 +41,12 @@ module GhostForms
       submission = filter({ "abc" => { "quantity" => "1" } })
 
       assert_not submission.absent?
-      assert_predicate submission, :unreadable?
+      assert submission.unreadable?([])
       assert_empty submission.values
     end
 
     test "未送信は読めない送信として扱わない" do
-      assert_not Submission.absent.unreadable?
+      assert_not Submission.absent.unreadable?([])
       assert_not Submission.absent.unreadable?(%w[corrected])
     end
 
@@ -60,7 +60,7 @@ module GhostForms
 
       # 最上位は空ではないが、corrected が無い以上「修正後の数量」は読めていない
       assert_not submission.values.empty?
-      assert_not submission.unreadable?
+      assert_not submission.unreadable?([])
       assert submission.unreadable?(%w[corrected])
     end
 

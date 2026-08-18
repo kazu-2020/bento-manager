@@ -2,6 +2,8 @@ require "test_helper"
 
 module Refunds
   class RefundFormTest < ActiveSupport::TestCase
+    include GhostFormSubmissionHelper
+
     fixtures :locations, :employees, :catalogs, :catalog_prices, :catalog_pricing_rules,
              :daily_inventories, :coupons, :discounts
 
@@ -26,8 +28,8 @@ module Refunds
       )
     end
 
-    def submission(raw)
-      ::GhostForms::Submission.filter(raw, form: RefundForm)
+    def submission_form
+      RefundForm
     end
 
     # === 初期値テスト ===

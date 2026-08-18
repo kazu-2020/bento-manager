@@ -4,6 +4,8 @@ require "test_helper"
 
 module DailyInventories
   class CorrectionFormTest < ActiveSupport::TestCase
+    include GhostFormSubmissionHelper
+
     fixtures :catalogs
 
     setup do
@@ -16,8 +18,8 @@ module DailyInventories
       )
     end
 
-    def submission(raw)
-      ::GhostForms::Submission.filter(raw, form: CorrectionForm)
+    def submission_form
+      CorrectionForm
     end
 
     def build(items:, submitted:)
@@ -43,7 +45,7 @@ module DailyInventories
       )
 
       assert_not form.valid?
-      assert_includes form.errors.details[:base].pluck(:error), :unreadable_submission
+      assert form.errors.added?(:base, :unreadable_submission)
     end
 
     test "読める送信は通常どおり検証される" do
@@ -58,8 +60,8 @@ module DailyInventories
       form = build(items: ItemBuilder.from_params(@catalogs, submitted.values), submitted: submitted)
 
       assert_not form.valid?
-      assert_includes form.errors.details[:base].pluck(:error), :no_items_selected
-      assert_not_includes form.errors.details[:base].pluck(:error), :unreadable_submission
+      assert form.errors.added?(:base, :no_items_selected)
+      assert_not form.errors.added?(:base, :unreadable_submission)
     end
   end
 end

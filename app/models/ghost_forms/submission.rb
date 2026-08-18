@@ -20,6 +20,9 @@ module GhostForms
   class Submission
     attr_reader :values
 
+    # 生成は absent / filter のみ。absent と values が食い違う組み合わせを作らせない
+    private_class_method :new
+
     class << self
       # 未送信。初回描画（new アクション）で使う
       def absent
@@ -46,8 +49,9 @@ module GhostForms
     end
 
     # 送信はあったが、必要な中身がフィルタ後に残らなかった。
-    # required_keys が空なら最上位全体を、指定があればそのキーの中身を見る
-    def unreadable?(required_keys = [])
+    # required_keys が空なら最上位全体を、指定があればそのキーの中身を見る。
+    # 何が必須かはフォームが決めるので、既定値は置かない（SubmissionReadable が渡す）
+    def unreadable?(required_keys)
       return false if absent?
       return values.empty? if required_keys.empty?
 

@@ -5,6 +5,8 @@ require "minitest/mock"
 
 module AdditionalOrders
   class OrderFormTest < ActiveSupport::TestCase
+    include GhostFormSubmissionHelper
+
     fixtures :locations, :catalogs, :daily_inventories, :employees
 
     setup do
@@ -16,9 +18,8 @@ module AdditionalOrders
                             .to_h { |inv| [ inv.catalog_id, inv.available_stock ] }
     end
 
-
-    def submission(raw)
-      ::GhostForms::Submission.filter(raw, form: OrderForm)
+    def submission_form
+      OrderForm
     end
 
     test "全弁当カタログからフォーム項目を構築し入力数量で絞り込める" do

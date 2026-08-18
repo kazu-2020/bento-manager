@@ -99,11 +99,16 @@ SUBMITTED_PARAMS_SHAPE = {
 | 状態 | 判定 | 意味 |
 | --- | --- | --- |
 | 未送信 | `submitted.absent?` | 初回描画。元の販売や既存在庫から初期値を作る |
-| 送信されたが読めない | `submitted.unreadable?` | 壊れた送信。差し戻す |
+| 送信されたが読めない | `submitted.unreadable?(必須キー)` | 壊れた送信。差し戻す |
 | 送信あり | 上記以外 | `submitted.values` を読む |
+
+**何が必須かはフォームが決める**。既定は最上位全体で、一部のキーだけが必須なフォームは
+`required_submitted_keys` を上書きする。返品は `corrected` さえ届けば `coupon` は空でよいので、
+引数なしの `unreadable?` は成り立たない（`unreadable?` に既定値を置いていないのはこのため）。
 
 差し戻しはフォームが担う。[`GhostForms::SubmissionReadable`](app/models/ghost_forms/submission_readable.rb)
 を include し、`@submitted` に `Submission` を代入すれば `:unreadable_submission` が付く。
+判定を呼ぶのは concern だけで、フォームやコントローラーが `unreadable?` を直接叩くことはない。
 同じフォームは確定用と Ghost Form 用の 2 つのコントローラーから組み立てられるため（ルール 3）、
 コントローラーに置くと片方が素通しになる。
 
@@ -111,12 +116,16 @@ SUBMITTED_PARAMS_SHAPE = {
 class RefundForm
   include ::GhostForms::SubmissionReadable
 
-  # 送信されたなら必ず中身があるはずの最上位キー。宣言しなければ最上位全体を見る
-  requires_submitted :corrected
-
   def initialize(sale:, submitted: ::GhostForms::Submission.absent)
     @submitted = submitted
     @corrected_quantities = submitted.absent? ? default_quantities : read(submitted["corrected"])
+  end
+
+  private
+
+  # 送信されたなら必ず中身があるはずの最上位キー。上書きしなければ最上位全体を見る
+  def required_submitted_keys
+    %w[corrected]
   end
 end
 ```
@@ -125,8 +134,12 @@ end
 数量ハッシュは母集合の分だけ必ず埋まるので、そちらで空判定をしてはいけない。
 
 コントローラーが `absent?` を見てよいのは初期値の作り分けだけで、拒否の判断に使ってはいけない。
-`config/locales/ja.yml` の各フォームに `unreadable_submission` を必ず足すこと
-（テストの `raise_on_missing_translations` では検出できない）。
+文言は `ja.activemodel.errors.messages.unreadable_submission` に 1 つだけ置いてあり、
+新しいフォームが include しても翻訳の追加は要らない。
+
+なお在庫系のフォームは、items をコントローラーが組み立てて `items:` と `submitted:` の両方を
+受け取る形が残っている。`AdditionalOrders::OrderForm` のように submitted だけを受けて
+フォーム内で組み立てる形に寄せる余地がある。
 
 ### 6. Turbo Stream で Ghost Form 自身も差し替える
 

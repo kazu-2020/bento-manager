@@ -44,9 +44,8 @@ module Pos
           @existing_inventories ||= @location.today_inventories.index_by(&:catalog_id)
         end
 
-        # 初期値をどこから作るかだけを分ける。「送信されたのに中身が残らなかった」
-        # 送信の差し戻しはフォーム（GhostForms::SubmissionReadable）が担うので、
-        # ここで拒否の判断はしない
+        # 初期値をどこから作るかだけを分ける。壊れた送信の差し戻しは
+        # GhostForms::SubmissionReadable が担うので、ここで拒否の判断はしない
         def build_form(submitted = ::GhostForms::Submission.absent)
           items = if submitted.absent?
             ::DailyInventories::ItemBuilder.from_inventories(@catalogs, existing_inventories)

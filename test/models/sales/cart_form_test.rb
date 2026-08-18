@@ -4,6 +4,8 @@ require "test_helper"
 
 module Sales
   class CartFormTest < ActiveSupport::TestCase
+    include GhostFormSubmissionHelper
+
     fixtures :locations, :catalogs, :catalog_prices, :catalog_pricing_rules, :daily_inventories, :discounts, :coupons
 
     setup do
@@ -14,9 +16,8 @@ module Sales
       @salad = catalogs(:salad)
     end
 
-
-    def submission(raw)
-      ::GhostForms::Submission.filter(raw, form: CartForm)
+    def submission_form
+      CartForm
     end
 
     test "カートを構築し商品の数量・顧客種別・クーポンを入力できる" do

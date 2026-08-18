@@ -16,8 +16,7 @@ module DailyInventories
 
     validate :at_least_one_item_selected
 
-    # items は submitted から組み立てる。submitted 自体も受け取るのは、
-    # 「送信されたのに中身が残らなかった」送信を SubmissionReadable が差し戻すため
+    # submitted 自体も受け取るのは、壊れた送信を SubmissionReadable が差し戻すため
     def initialize(location:, items:, search_query: nil, submitted: ::GhostForms::Submission.absent)
       @location = location
       @search_query = search_query&.strip.presence

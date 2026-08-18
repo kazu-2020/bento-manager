@@ -10,28 +10,19 @@ module Refunds
     # submitted のどの位置に何が来るかの宣言（GhostForms::ParamsFilter が使う）
     SUBMITTED_PARAMS_SHAPE = { collection_keys: %w[corrected coupon] }.freeze
 
-    # 修正カートが 1 件も届かないのは「全て 0」ではなく壊れた送信。全て 0 の確定は
-    # 数量を 0 として明示的に送ってくる。ここを通すと corrected_items_for_refunder が
-    # 空になり、修正後の販売が作られないまま元の販売が取り消されて全額返金になる。
-    # corrected_quantities は母集合の分だけ必ず埋まる（ルール 6）ので空かどうかでは
-    # 見分けられない。Submission は密化前の届いたままのハッシュを見る
-    requires_submitted :corrected
-
     attr_reader :sale, :location, :corrected_quantities, :coupon_quantities, :inventories
 
     validate :at_least_one_change
 
-    # submitted は GhostForms::Submission。初回描画では元の販売から初期値を作るため、
-    # 「まだ何も送られていない」と「送られたが中身が残らなかった」を見分けなければ
-    # ならない。中身が空かどうかで分岐すると、数量の入力が無効化されてキーごと
-    # 送信されなかったときに元の販売の値が復活する
+    # submitted は GhostForms::Submission。初回描画は元の販売から初期値を作るので、
+    # 未送信と壊れた送信を見分ける必要がある（理由は GhostForms::Submission）
     def initialize(sale:, location:, inventories: [], submitted: ::GhostForms::Submission.absent)
       @sale = sale
       @location = location
       @inventories = inventories
       @submitted = submitted
-      @corrected_quantities = build_corrected_quantities(submitted_quantities("corrected"))
-      @coupon_quantities = build_coupon_quantities(submitted_quantities("coupon"))
+      @corrected_quantities = build_corrected_quantities
+      @coupon_quantities = build_coupon_quantities
     end
 
     def corrected_items
@@ -121,11 +112,8 @@ module Refunds
 
     private
 
-    # 送信されていれば届いたキーだけを Hash にし、未送信（初回描画）なら nil を返す。
-    # 疎なまま外へ出さず、build_* が母集合に対して埋め直す
+    # 届いたキーだけの疎なハッシュ。そのまま外へ出さず、build_* が母集合に対して埋め直す
     def submitted_quantities(key)
-      return nil if submitted.absent?
-
       GhostForms::Quantities.from(submitted[key])
     end
 
@@ -137,19 +125,19 @@ module Refunds
 
     # 母集合は「元の販売の商品 + 当日の在庫」で、画面が数量入力を描画する範囲そのもの。
     # 未送信の初回描画では初期値がそのまま現在値なので、同じハッシュを共有する
-    def build_corrected_quantities(submitted)
-      return original_corrected_quantities if submitted.nil?
+    def build_corrected_quantities
+      return original_corrected_quantities if submitted.absent?
 
-      dense_quantities(catalog_lookup.keys, submitted)
+      dense_quantities(catalog_lookup.keys, submitted_quantities("corrected"))
     end
 
     # 母集合は available_discounts。有効期限切れなどで描画されないクーポンは枚数入力が
     # 出ず送信されようがないので、母集合に入れてはいけない。入れると「届かない」を
     # 「0枚に減った」と読んでしまう
-    def build_coupon_quantities(submitted)
-      return original_coupon_quantities if submitted.nil?
+    def build_coupon_quantities
+      return original_coupon_quantities if submitted.absent?
 
-      dense_quantities(submittable_discount_ids, submitted)
+      dense_quantities(submittable_discount_ids, submitted_quantities("coupon"))
     end
 
     def submittable_discount_ids
@@ -171,6 +159,15 @@ module Refunds
 
     def original_discount_quantities
       @original_discount_quantities ||= sale.sale_discounts.pluck(:discount_id, :quantity).to_h
+    end
+
+    # corrected が 1 件も届かないのは「全て 0」ではなく壊れた送信。全て 0 の確定は
+    # 数量を 0 として明示的に送ってくる。ここを通すと corrected_items_for_refunder が
+    # 空になり、修正後の販売が作られないまま元の販売が取り消されて全額返金になる。
+    # corrected_quantities は母集合の分だけ必ず埋まる（ルール 7）ので空では見分けられず、
+    # Submission が見る密化前のハッシュで判定する
+    def required_submitted_keys
+      %w[corrected]
     end
 
     # 数量が 1 件も読めないなら「変更されたか」は判定しようがないので、
