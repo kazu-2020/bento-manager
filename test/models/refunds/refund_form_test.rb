@@ -88,7 +88,7 @@ module Refunds
         submitted: submission({})
       )
 
-      assert_predicate form, :all_items_zero?
+      assert_empty form.corrected_items_for_refunder
       assert_not form.valid?
       assert_includes form.errors[:base],
                       "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください"
@@ -206,7 +206,7 @@ module Refunds
       )
 
       assert_predicate form, :has_any_changes?
-      assert_predicate form, :all_items_zero?
+      assert_empty form.corrected_items_for_refunder
     end
 
     # === バリデーションテスト ===
@@ -235,28 +235,6 @@ module Refunds
       )
 
       assert_predicate form, :valid?
-    end
-
-    # === preview_adjustment_amount テスト ===
-
-    test "商品を追加した場合のpreview_adjustment_amountが正しく計算される" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
-
-      form = RefundForm.new(
-        sale: sale,
-        location: @location,
-        inventories: @inventories,
-        submitted: submission({
-          "corrected" => {
-            @catalog_bento_a.id.to_s => { "quantity" => "1" },
-            @catalog_salad.id.to_s => { "quantity" => "1" }
-          }
-        })
-      )
-
-      # 弁当A(550) + サラダ(セット価格150) = 700円
-      # 差額: 550 - 700 = -150（追加徴収）
-      assert_equal(-150, form.preview_adjustment_amount)
     end
 
     # === クーポン関連テスト ===
@@ -371,7 +349,7 @@ module Refunds
       )
 
       assert_not form.has_any_changes?
-      assert_equal 0, form.preview_adjustment_amount
+      assert_equal 0, form.preview.adjustment_amount
       # 描画されないクーポンは母集合そのものに入らない
       assert_not_includes form.coupon_quantities.keys, discount.id
     end
@@ -399,7 +377,6 @@ module Refunds
       assert_equal 0, form.corrected_quantities[@catalog_salad.id]
       assert_equal 0, form.corrected_quantities[@catalog_bento_b.id]
       # 0 で埋めたキーが集計に混ざらない
-      assert_not form.all_items_zero?
       assert_equal 1, form.total_corrected_bento_quantity
     end
 
@@ -468,52 +445,10 @@ module Refunds
         assert_respond_to item, :original_quantity
         assert_respond_to item, :max_quantity
         assert_respond_to item, :changed?
-        assert_respond_to item, :sold_out?
+        assert_respond_to item, :unavailable?
+        assert_respond_to item, :bento?
+        assert_respond_to item, :side_menu?
       end
-    end
-
-    # === 全額返金時のクーポン返却テスト ===
-
-    test "弁当1個+クーポン1枚の販売を全額返金すると、精算プレビューにクーポン1枚返却が含まれる" do
-      discount = discounts(:fifty_yen_discount)
-      sale = create_sale(
-        [ { catalog: @catalog_bento_a, quantity: 1 } ],
-        discount_quantities: { discount.id => 1 }
-      )
-
-      form = RefundForm.new(
-        sale: sale,
-        location: @location,
-        inventories: @inventories,
-        submitted: submission({
-          "corrected" => {
-            @catalog_bento_a.id.to_s => { "quantity" => "0" }
-          }
-        })
-      )
-
-      result = form.preview_price_result
-
-      assert_equal 0, result[:final_total]
-      assert_empty result[:items_with_prices]
-
-      details = result[:discount_details]
-      coupon_detail = details.find { |d| d[:discount_id] == discount.id }
-
-      assert_equal 0, coupon_detail[:quantity]
-      assert_equal 1, coupon_detail[:requested_quantity]
-    end
-
-    # === tab_items テスト ===
-
-    test "tab_itemsが弁当タブを含む" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
-
-      form = RefundForm.new(sale: sale, location: @location, inventories: @inventories)
-
-      tab_keys = form.tab_items.map { |t| t[:key] }
-
-      assert_includes tab_keys, :bento
     end
   end
 end

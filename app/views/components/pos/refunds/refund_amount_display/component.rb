@@ -10,11 +10,11 @@ module Pos
 
         attr_reader :form
 
-        delegate :has_any_changes?, :preview_adjustment_amount, :adjustment_type,
-                 :preview_price_result, to: :form
+        delegate :has_any_changes?, :preview, to: :form
+        delegate :adjustment_type, :discount_details, to: :preview
 
         def formatted_amount
-          helpers.number_to_currency(preview_adjustment_amount.abs)
+          helpers.number_to_currency(preview.adjustment_amount.abs)
         end
 
         def card_class
@@ -31,10 +31,6 @@ module Pos
           when :additional_charge then ".amount_additional_charge"
           else ".amount_even_exchange"
           end
-        end
-
-        def discount_details
-          @discount_details ||= preview_price_result&.dig(:discount_details) || []
         end
 
         def returned_coupons
