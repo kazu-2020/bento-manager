@@ -4,13 +4,14 @@ module Pos
   module DailyInventories
     module NewForm
       class Component < Application::Component
-        def initialize(location:, form:, back_url: nil)
+        def initialize(location:, form:, back_url: nil, additional_order_quantities: {})
           @location = location
           @form = form
           @back_url = back_url
+          @additional_order_quantities = additional_order_quantities
         end
 
-        attr_reader :location, :form
+        attr_reader :location, :form, :additional_order_quantities
 
         delegate :items, :bento_items, :side_menu_items, :valid?, :selected_count,
                  :form_with_options, :form_state_options, :search_query, to: :form
@@ -25,6 +26,17 @@ module Pos
 
         def today_date
           I18n.l(Date.current, format: :long)
+        end
+
+        def has_additional_orders?
+          additional_order_quantities.any?
+        end
+
+        # 「日替わり弁当A +5個、サラダ +2個」
+        def additional_orders_summary
+          additional_order_quantities
+            .map { |catalog, quantity| t(".additional_order_item", name: catalog.name, quantity: quantity) }
+            .join("、")
         end
 
         def has_items?

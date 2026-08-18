@@ -8,3 +8,6 @@ ja:
   side_menu_section_title: サイドメニュー
   bento_tab_label: 弁当
   side_menu_tab_label: サイド
+  additional_orders_title: 本日の追加発注
+  additional_order_item: "%{name} +%{quantity}個"
+  additional_orders_note: 下の数量は追加発注を含んだ現在の在庫です。訂正すると、入力した数量がそのまま在庫になります。

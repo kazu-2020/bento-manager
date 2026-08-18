@@ -6,6 +6,8 @@ module Pos
   module Locations
     module DailyInventories
       class CorrectionsControllerTest < ActionDispatch::IntegrationTest
+        include SaleTestHelper
+
         fixtures :employees, :locations, :catalogs, :catalog_discontinuations
 
         setup do
@@ -34,7 +36,7 @@ module Pos
           assert_match 'value="5"', response.body
         end
 
-        test "在庫を再登録するとレコードが削除→再作成される" do
+        test "在庫を訂正するとレコードが削除→再作成される" do
           login_as_employee(@employee)
           DailyInventory.create!(
             location: @location, catalog: @bento_a,
@@ -55,16 +57,15 @@ module Pos
           recreated = DailyInventory.find_by(location: @location, catalog: @bento_a, inventory_date: Date.current)
 
           assert_equal 20, recreated.stock
-          assert_equal 0, recreated.lock_version
         end
 
-        test "販売開始後の再登録はエラーメッセージを表示する" do
+        test "販売開始後の訂正はエラーメッセージを表示する" do
           login_as_employee(@employee)
-          inventory = DailyInventory.create!(
+          DailyInventory.create!(
             location: @location, catalog: @bento_a,
             inventory_date: Date.current, stock: 10, reserved_stock: 0
           )
-          inventory.decrement_stock!(1)
+          start_sale
 
           post pos_location_daily_inventories_correction_path(@location),
                params: {
@@ -77,7 +78,52 @@ module Pos
           assert_match "販売が開始されているため", response.body
         end
 
-        test "不正なパラメータだけの再登録は既存の在庫を作り直さずエラーになる" do
+        test "販売開始後は修正ページを開かず販売ページへリダイレクトされる" do
+          login_as_employee(@employee)
+          DailyInventory.create!(
+            location: @location, catalog: @bento_a,
+            inventory_date: Date.current, stock: 10, reserved_stock: 0
+          )
+          start_sale
+
+          get new_pos_location_daily_inventories_correction_path(@location)
+
+          assert_redirected_to new_pos_location_sale_path(@location)
+        end
+
+        test "追加発注をしただけなら訂正ページを開け、追加発注込みの在庫と内訳が表示される" do
+          login_as_employee(@employee)
+          DailyInventory.create!(
+            location: @location, catalog: @bento_a,
+            inventory_date: Date.current, stock: 20, reserved_stock: 0
+          )
+          AdditionalOrder.create_with_inventory!(
+            location: @location, catalog_id: @bento_a.id,
+            quantity: 5, order_at: Time.current
+          )
+
+          get new_pos_location_daily_inventories_correction_path(@location)
+
+          assert_response :success
+          assert_match 'value="25"', response.body
+          assert_match "本日の追加発注", response.body
+          assert_match "#{@bento_a.name} +5個", response.body
+        end
+
+        test "追加発注がなければ内訳は表示されない" do
+          login_as_employee(@employee)
+          DailyInventory.create!(
+            location: @location, catalog: @bento_a,
+            inventory_date: Date.current, stock: 10, reserved_stock: 0
+          )
+
+          get new_pos_location_daily_inventories_correction_path(@location)
+
+          assert_response :success
+          assert_no_match "本日の追加発注", response.body
+        end
+
+        test "不正なパラメータだけの訂正は既存の在庫を作り直さずエラーになる" do
           login_as_employee(@employee)
           existing = DailyInventory.create!(
             location: @location, catalog: @bento_a,
@@ -98,6 +144,12 @@ module Pos
           get new_pos_location_daily_inventories_correction_path(@location)
 
           assert_redirected_to new_pos_location_daily_inventory_path(@location)
+        end
+
+        private
+
+        def start_sale
+          create_sale(location: @location, customer_type: :staff, sale_datetime: Time.current)
         end
       end
     end

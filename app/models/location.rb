@@ -17,7 +17,26 @@ class Location < ApplicationRecord
   end
 
   def sales_started_today?
-    DailyInventory.sales_started?(location: self)
+    Sale.started?(location: self)
+  end
+
+  # 当日の追加発注の商品別合計
+  #
+  # 在庫訂正フォームが並べる商品と母集合を揃えるため、販売可能な商品に絞る。
+  #
+  # @return [Hash{Catalog => Integer}] 商品ごとの追加発注個数（表示順）
+  def today_additional_order_quantities
+    quantities = additional_orders
+                   .where(order_at: Date.current.all_day)
+                   .group(:catalog_id)
+                   .sum(:quantity)
+
+    return {} if quantities.empty?
+
+    Catalog.available
+           .where(id: quantities.keys)
+           .category_order
+           .index_with { |catalog| quantities[catalog.id] }
   end
 
   def daily_sales_quantity(period: 1.month)
