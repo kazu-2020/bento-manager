@@ -482,7 +482,7 @@ module Sales
 
     # === 差額精算の連鎖の出典 ===
 
-    test "元の販売と修正後の販売は refunds の 1 行だけで双方向に辿れる" do
+    test "差額精算の記録から、元の販売と修正後の販売を双方向に辿れる" do
       sale = Sales::Recorder.new.record(
         { location: @location, customer_type: :staff, employee: @employee },
         [ { catalog: @catalog_bento_a, quantity: 2 } ]
@@ -501,28 +501,34 @@ module Sales
       # 修正後の販売 → 元の販売
       assert_equal sale, Refund.find_by(corrected_sale: corrected_sale).original_sale
 
-      # 修正後の販売はまだ精算されていないので、こちら側に Refund はない
+      # 修正後の販売はまだ精算されていないので、そちらを元の販売とする記録は無い
       assert_nil corrected_sale.refund
     end
 
-    test "差額精算を連鎖させても Refund は販売ごとに 1 件ずつ増える" do
+    test "差額精算を続けても、1 つの販売が元の販売になるのは一度だけ" do
       sale = Sales::Recorder.new.record(
         { location: @location, customer_type: :staff, employee: @employee },
         [ { catalog: @catalog_bento_a, quantity: 3 } ]
       )
 
-      first = Sales::Refunder.new.process(
-        sale: sale,
-        corrected_items: [ { catalog: @catalog_bento_a, quantity: 2 } ],
-        employee: @employee
-      )
-      second = Sales::Refunder.new.process(
-        sale: first[:corrected_sale],
-        corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
-        employee: @employee
-      )
+      first = assert_difference "Refund.count", 1 do
+        Sales::Refunder.new.process(
+          sale: sale,
+          corrected_items: [ { catalog: @catalog_bento_a, quantity: 2 } ],
+          employee: @employee
+        )
+      end
 
-      # 2 件の Refund は別々の販売に付く。同じ販売に 2 件付くことはない
+      # 修正後の販売をさらに精算する。記録が増えるのは別の販売に対してであって、
+      # 元の販売に 2 件目が付くわけではない
+      second = assert_difference "Refund.count", 1 do
+        Sales::Refunder.new.process(
+          sale: first[:corrected_sale],
+          corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
+          employee: @employee
+        )
+      end
+
       assert_equal first[:refund], sale.reload.refund
       assert_equal second[:refund], first[:corrected_sale].reload.refund
       assert_equal sale, first[:refund].original_sale
