@@ -117,10 +117,12 @@ class CatalogTest < ActiveSupport::TestCase
 
   test "価格の読み込み済みかどうかで、取得できる価格は変わらない" do
     catalog = catalogs(:salad)
-    CatalogPrice.create!(
+    ended = CatalogPrice.create!(
       catalog: catalog, kind: :regular, price: 200,
-      effective_from: 1.year.ago, effective_until: 1.month.ago
+      effective_from: 1.year.ago, effective_until: 7.months.ago
     )
+    # 保存で丸められた後の値を使う。Ruby 側の精度のままだと境界ちょうどにならない
+    ended_at = ended.reload.effective_until
 
     # 日付ちょうどの境界は SQL 側が文字列比較になり、Ruby 側と食い違いやすい
     boundary = Date.new(2026, 3, 10)
@@ -129,10 +131,13 @@ class CatalogTest < ActiveSupport::TestCase
       effective_from: boundary.to_time(:utc), effective_until: nil
     )
 
+    # 有効期間の両端そのもの（ended_at / boundary）を含める。両端 inclusive かどうかは
+    # 2 経路で食い違いやすく、境界ちょうどのデータが無いと素通りする
     base_times = [
       Time.current, 2.weeks.ago, 6.months.ago, 2.years.ago,
       Date.current, 6.months.ago.to_date, 2.weeks.ago.to_datetime,
-      boundary, boundary - 1, boundary + 1
+      boundary, boundary - 1, boundary + 1,
+      ended_at, ended_at - 1.second, ended_at + 1.second
     ]
     preloaded = Catalog.preload(:prices).find(catalog.id)
 

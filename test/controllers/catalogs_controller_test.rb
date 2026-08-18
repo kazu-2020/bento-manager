@@ -4,7 +4,6 @@ require "test_helper"
 
 class CatalogsControllerTest < ActionDispatch::IntegrationTest
   include ModalCancelButtonHelper
-  include QueryCountHelper
 
   fixtures :employees, :catalogs, :catalog_prices
 

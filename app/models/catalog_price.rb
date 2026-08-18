@@ -37,7 +37,9 @@ class CatalogPrice < ApplicationRecord
   # @param at [Time, Date] 基準日時
   # @return [CatalogPrice, nil]
   def self.pick_by_kind(prices, kind:, at: Time.current)
-    kind = kind_name(kind)
+    # where(kind:) は整数・シンボル・文字列のどれでも引ける。属性と同じ文字列に
+    # 揃えるのは enum の型自身の仕事なので、対応表を持たずに cast へ委ねる
+    kind = type_for_attribute(:kind).cast(kind)
 
     prices.select { |price| price.kind == kind && price.effective_at?(at) }
           .max_by(&:effective_from)
@@ -48,9 +50,8 @@ class CatalogPrice < ApplicationRecord
   # @param at [Time, Date] 基準日時
   # @return [Boolean]
   def effective_at?(at)
-    at = self.class.boundary_time(at)
-
-    effective_from <= at && (effective_until.nil? || at <= effective_until)
+    # effective_until が nil なら終端なしの Range になり、開始端だけで判定される
+    (effective_from..effective_until).cover?(self.class.boundary_time(at))
   end
 
   # 有効期間の境界に使う日時を決める
@@ -67,14 +68,6 @@ class CatalogPrice < ApplicationRecord
   # @return [Time, Date]
   def self.boundary_time(at)
     at.instance_of?(Date) ? at.to_time(:utc) : at
-  end
-
-  # enum の値（整数・シンボル・文字列）を kind 属性と同じ文字列に揃える
-  #
-  # @param kind [String, Symbol, Integer]
-  # @return [String]
-  def self.kind_name(kind)
-    kinds.key(kind) || kind.to_s
   end
 
   # 新しい価格を作成し、既存の有効な価格があれば終了させる
