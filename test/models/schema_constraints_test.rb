@@ -97,6 +97,31 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
   end
 
   # ============================================================
+  # 一意インデックス
+  # ============================================================
+
+  test "同じ販売を元の販売とする差額精算は2件保存できない" do
+    original = sales(:completed_sale)
+    Refund.create!(
+      original_sale: original,
+      employee: employees(:owner_employee),
+      refund_datetime: Time.current,
+      amount: 500
+    )
+
+    # 差額精算は元の販売を取り消すため、同じ販売が 2 度精算されることはない。
+    # Sale#void! のガードを迂回した経路でも 2 件目が入らないことを DB で担保する
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      Refund.create!(
+        original_sale: original,
+        employee: employees(:owner_employee),
+        refund_datetime: Time.current,
+        amount: 300
+      )
+    end
+  end
+
+  # ============================================================
   # 外部キーの削除時挙動
   # ============================================================
 
@@ -128,16 +153,23 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
     assert_raises(ActiveRecord::StatementInvalid) { Location.where(id: location.id).delete_all }
   end
 
-  test "訂正元として参照されている販売は物理削除できない" do
+  test "差額精算から参照されている販売は元の販売も修正後の販売も物理削除できない" do
     original = sales(:completed_sale)
-    create_sale(
+    corrected = create_sale(
       location: locations(:city_hall),
       customer_type: :staff,
-      sale_datetime: Time.current,
-      corrected_from_sale: original
+      sale_datetime: Time.current
+    )
+    Refund.create!(
+      original_sale: original,
+      corrected_sale: corrected,
+      employee: employees(:owner_employee),
+      refund_datetime: Time.current,
+      amount: 50
     )
 
     assert_raises(ActiveRecord::StatementInvalid) { Sale.where(id: original.id).delete_all }
+    assert_raises(ActiveRecord::StatementInvalid) { Sale.where(id: corrected.id).delete_all }
   end
 
   private

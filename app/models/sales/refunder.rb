@@ -87,8 +87,7 @@ module Sales
         {
           location: original_sale.location,
           customer_type: original_sale.customer_type,
-          employee: employee,
-          corrected_from_sale_id: original_sale.id
+          employee: employee
         },
         corrected_items,
         discount_quantities: effective_discount_quantities

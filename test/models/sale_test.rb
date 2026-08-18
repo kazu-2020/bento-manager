@@ -31,12 +31,10 @@ class SaleTest < ActiveSupport::TestCase
     must belong_to(:location)
     must belong_to(:employee).optional
     must belong_to(:voided_by_employee).class_name("Employee").optional
-    must belong_to(:corrected_from_sale).class_name("Sale").optional
-    must have_one(:correction_sale).class_name("Sale")
     must have_many(:items).class_name("SaleItem").dependent(:destroy)
     must have_many(:sale_discounts).dependent(:destroy)
     must have_many(:discounts).through(:sale_discounts)
-    must have_many(:refunds).dependent(:restrict_with_error)
+    must have_one(:refund).with_foreign_key("original_sale_id").dependent(:restrict_with_error)
   end
 
   test "取り消し時は取消日時と取消担当者が必須になる" do
