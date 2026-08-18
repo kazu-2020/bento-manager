@@ -76,7 +76,7 @@ module Pos
         assert_response :not_found
       end
 
-      test "取消済みの販売を返品しようとすると販売履歴に戻される" do
+      test "取消済みの販売の差額精算画面を開くと販売履歴に戻される" do
         login_as_employee(@employee)
         get new_pos_location_refund_path(@location, sale_id: sales(:voided_sale).id)
 
@@ -249,15 +249,17 @@ module Pos
                      flash[:alert]
       end
 
-      test "取消済みの販売に差額精算を送信しても処理されない" do
+      test "取消済みの販売に差額精算を送信しても処理されず販売履歴に戻される" do
         login_as_employee(@employee)
         voided_sale = sales(:voided_sale)
 
-        assert_no_difference "Refund.count" do
+        # 422 で差し戻しても、何を送っても二度と通らない修正カートが残るだけ。
+        # 当日以外の販売と同じ「もう触れない販売」として扱う
+        assert_no_difference [ "Refund.count", "Sale.count" ] do
           post_refund(sale: voided_sale, corrected: { @bento_a => 0 })
         end
 
-        assert_response :unprocessable_entity
+        assert_redirected_to pos_location_sales_history_index_path(@location)
         assert_equal "この販売は既に取消済みです", flash[:alert]
       end
 
