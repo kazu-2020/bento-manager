@@ -8,7 +8,7 @@
 
 POS は複数端末から同時に打たれる。同じ販売先で会計と差額精算が重なれば、当日在庫の増減と販売の取消が並行して走る。データベースは SQLite 1 本で、Puma のスレッドと Kamal のコンテナが同じファイルを触る。
 
-#244 で、確定済みの販売を取り消す `Sale#void!` が**メモリ上の `voided?` を見てから更新していた**ため、同じ販売を読み込んだ 2 つのリクエストがどちらもガードを通過し、在庫の二重復元と `Refund` の二重作成を許すことが分かった。
+Issue #244 で、確定済みの販売を取り消す `Sale#void!` が**メモリ上の `voided?` を見てから更新していた**ため、同じ販売を読み込んだ 2 つのリクエストがどちらもガードを通過し、在庫の二重復元と `Refund` の二重作成を許すことが分かった。
 
 修正にあたって手段が 2 つ出た。トランザクション内で reload してから判定する（`with_lock`）か、`completed` のときだけ更新する条件付き UPDATE を撃って更新件数で判定するか。前者は「SQLite では `FOR UPDATE` が無視されるので `with_lock` は行ロックにならない」という事実があるため、一見すると頼りない。後者はデータベースの挙動に依存しない。
 
@@ -45,7 +45,15 @@ PostgreSQL に移せば `with_lock` は本物の `FOR UPDATE` になる。**移�
 
 `daily_inventories` の `lock_version` は残す。`ActiveRecord::StaleObjectError` を捕まえる rescue やリトライは書かない。
 
-**理由**: 決定 1 が守られている限り `StaleObjectError` は**到達不能**である。`daily_inventories` への書き込みは `decrement_stock!` / `increment_stock!` と新規作成しかなく、前者 2 つは `with_lock` の reload で `lock_version` が常に最新に揃う。到達しない例外の rescue は死んだ枝になり、読み手に「ここは競合し得る」という誤った緊張感を与える。
+**理由**: 決定 1 が守られている限り `StaleObjectError` は**到達不能**である。`daily_inventories` への書き込みは 3 経路しかない。
+
+1. 既存行の数量更新 — `decrement_stock!` / `increment_stock!`
+2. 新規作成 — `bulk_create`、`AdditionalOrder.create_with_inventory!` の `find_or_create_by!`
+3. 在庫訂正による当日分の一括削除と再作成 — `bulk_recreate`（`delete_by` + `bulk_create`）
+
+楽観ロックが問題になりうるのは 1 だけで、そこは `with_lock` の reload で `lock_version` が常に最新に揃う。到達しない例外の rescue は死んだ枝になり、読み手に「ここは競合し得る」という誤った緊張感を与える。
+
+**3 との競合について**: `bulk_recreate` は当日分を消して作り直すので行の id が変わるが、これも `StaleObjectError` にはならない。販売と差額精算はどちらも在庫を `find_by!` でトランザクション内から引き直すため、消えた行のオブジェクトを掴んだまま更新する経路が無い。加えて `bulk_recreate` は `Sale.started?` が真なら何もせずに戻り、その判定も決定 1 と同じくトランザクション内で行われる。**仮に in-memory の `DailyInventory` をトランザクションを跨いで持ち回れば、`with_lock` の reload は `RecordNotFound` を投げる**（`StaleObjectError` ではない）。持ち回らないことが前提である。
 
 残す理由は、**`with_lock` を外した瞬間に落ちる検知器として働く**ため。#244 の指摘（`with_lock` は SQLite では行ロックにならない）は正しく、それを理由に `with_lock` を外す変更は将来ありうる。`test/models/daily_inventory_test.rb` の「別の端末が先に当日在庫を更新していても後続の在庫増減は取りこぼされない」は、`with_lock` を外すと実際に `StaleObjectError` で落ちる。**コメントではなくテストが不変条件を支えている。**
 
@@ -77,7 +85,7 @@ PostgreSQL に移せば `with_lock` は本物の `FOR UPDATE` になる。**移�
 ## 影響
 
 - `with_lock` の `reload` はアソシエーションキャッシュを捨てる。差額精算 1 回あたりのクエリは 14 → 17 に増える（コントローラが `preload(items: :catalog)` したものを引き直すため）。SQLite ローカルで 1ms 未満であり、機構を 1 つに保つ対価として受け入れる
-- **競合した後発のリクエストは `BEGIN` で待つ。** `config/database.yml` の `timeout: 5000` を超えると `SQLite3::BusyException` が上がり、Rails はこれを `ActiveRecord::StatementTimeout` に変換する。アプリ内に rescue が無いため現状は 500 になる。**直列化を選んだことの裏返しであり、この方針を採る以上は待ちきれない場合の出方を決める必要がある。** [#338](https://github.com/kazu-2020/bento-manager/issues/338) で追跡する
+- **競合した後発のリクエストは `BEGIN` で待つ。** `config/database.yml` の `timeout: 5000` を超えると `SQLite3::BusyException` が上がり、Rails はこれを `ActiveRecord::StatementTimeout` に変換する。アプリ内に rescue が無いため現状は 500 になる。**待たされた側は `AlreadyVoidedError` の親切なメッセージに到達する前に落ちる。** 差額精算は在庫復元と `Refund` 作成までトランザクションを保持するため、先行の処理が長いほどこの窓は広がる。**直列化を選んだことの裏返しであり、この方針を採る以上は待ちきれない場合の出方（再試行するのか、画面に何を出すのか、監視するのか）を決める必要がある。** [#338](https://github.com/kazu-2020/bento-manager/issues/338) で追跡する
 - 決定 1 と 2 の根拠は `app/models/sale.rb` と `app/models/daily_inventory.rb` のコメントからこの ADR を参照している。前提が変わったときに直す場所は、この 3 つ
 
 ## 参照
