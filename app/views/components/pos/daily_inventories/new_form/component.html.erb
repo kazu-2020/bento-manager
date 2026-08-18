@@ -16,6 +16,20 @@
       </div>
     </header>
 
+    <%# 追加発注バナー（当日の追加発注がある場合のみ表示） %>
+    <% if has_additional_orders? %>
+      <div class="shrink-0 px-4 pt-2">
+        <div class="alert alert-info alert-soft items-start">
+          <%= helpers.icon "truck", extra_class: "shrink-0" %>
+          <div class="text-sm">
+            <p class="font-medium"><%= t(".additional_orders_title") %></p>
+            <p><%= additional_orders_summary %></p>
+            <p class="text-xs mt-1"><%= t(".additional_orders_note") %></p>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <%# Original Form (本来の処理を行うフォーム) %>
     <%= form_with **form_with_options,
                   data: { ghost_form_target: "originalForm" } do |f| %>

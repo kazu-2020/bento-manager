@@ -72,4 +72,18 @@ class LocationTest < ActiveSupport::TestCase
 
     assert_not location.has_today_inventory?
   end
+
+  test "追加発注しかない販売先は販売未開始と判定される" do
+    location = Location.create!(name: "追加発注のみ販売先", status: :active)
+    DailyInventory.create!(
+      location: location, catalog: catalogs(:daily_bento_a),
+      inventory_date: Date.current, stock: 20, reserved_stock: 0
+    )
+    AdditionalOrder.create_with_inventory!(
+      location: location, catalog_id: catalogs(:daily_bento_a).id,
+      quantity: 5, order_at: Time.current
+    )
+
+    assert_not_predicate location, :sales_started_today?
+  end
 end

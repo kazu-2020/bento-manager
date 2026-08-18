@@ -28,7 +28,7 @@ module Pos
           end
 
           def set_catalogs
-            @catalogs = Catalog.available.category_order
+            @catalogs = Catalog.available_or_stocked_at(@location).category_order
           end
 
           def build_form(submitted)

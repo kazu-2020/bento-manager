@@ -114,6 +114,55 @@ class SaleTest < ActiveSupport::TestCase
     end
   end
 
+  test "当日に確定した販売があれば販売開始済みと判定される" do
+    location = Location.create!(name: "販売開始判定テスト", status: :active)
+    create_sale(location: location, customer_type: :staff, sale_datetime: Time.current)
+
+    assert Sale.started?(location: location)
+  end
+
+  test "当日の販売が取消済みだけでも販売開始済みと判定される" do
+    location = Location.create!(name: "全額返金後判定テスト", status: :active)
+    create_sale(
+      location: location, customer_type: :staff, sale_datetime: Time.current,
+      status: :voided, voided_at: Time.current, voided_by_employee: employees(:owner_employee)
+    )
+
+    assert Sale.started?(location: location)
+  end
+
+  test "当日の販売がなければ販売未開始と判定される" do
+    location = Location.create!(name: "販売未開始判定テスト", status: :active)
+
+    assert_not Sale.started?(location: location)
+  end
+
+  test "別の販売先の販売では販売開始済みと判定されない" do
+    location = Location.create!(name: "他販売先判定テスト", status: :active)
+    other_location = Location.create!(name: "他販売先判定テスト2", status: :active)
+    create_sale(location: other_location, customer_type: :staff, sale_datetime: Time.current)
+
+    assert_not Sale.started?(location: location)
+  end
+
+  test "前日の販売では当日の販売開始済みと判定されない" do
+    location = Location.create!(name: "前日販売判定テスト", status: :active)
+    create_sale(location: location, customer_type: :staff, sale_datetime: 1.day.ago)
+
+    assert_not Sale.started?(location: location)
+    assert Sale.started?(location: location, date: Date.current - 1.day)
+  end
+
+  test "深夜近くの販売でも当日の販売開始済みと判定される" do
+    location = Location.create!(name: "深夜判定テスト", status: :active)
+
+    travel_to Time.zone.parse("2026-08-18 23:30:00") do
+      create_sale(location: location, customer_type: :staff, sale_datetime: Time.current)
+
+      assert Sale.started?(location: location)
+    end
+  end
+
   test "差額精算できるのは、当日の販売のうちまだ取り消されていないものだけ" do
     today_sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: Time.current)
     yesterday_sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: 1.day.ago)

@@ -19,6 +19,16 @@ class Catalog < ApplicationRecord
   # 販売可能な商品（提供終了記録がない）を取得
   scope :available, -> { where.missing(:discontinuation) }
 
+  # 販売可能な商品に、その日の当日在庫がある商品を加えたもの
+  #
+  # 提供終了になっても当日在庫があればレジで売れる（販売画面は available で
+  # 絞っていない）。売れる商品を在庫訂正の母集合から外すと、車に積んでいる数を
+  # 直す手段が無いまま売れてしまうため、訂正では available より広いこちらを使う。
+  scope :available_or_stocked_at, ->(location, date: Date.current) {
+    where(id: Catalog.available.select(:id))
+      .or(where(id: DailyInventory.where(location: location, inventory_date: date).select(:catalog_id)))
+  }
+
   # 表示順序: 販売中を先、販売停止を後に表示（同じ状態内ではふりがな順）
   scope :display_order, -> {
     left_outer_joins(:discontinuation)

@@ -1,7 +1,9 @@
 require "test_helper"
 
 class DailyInventoryTest < ActiveSupport::TestCase
-  fixtures :locations, :catalogs, :daily_inventories
+  include SaleTestHelper
+
+  fixtures :locations, :catalogs, :daily_inventories, :employees
 
   test "validations" do
     @subject = DailyInventory.new(
@@ -105,29 +107,8 @@ class DailyInventoryTest < ActiveSupport::TestCase
     end
   end
 
-  test "在庫操作が未発生の場合は販売未開始と判定される" do
-    location = Location.create!(name: "販売開始判定テスト", status: :active)
-    DailyInventory.create!(
-      location: location, catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current, stock: 10, reserved_stock: 0
-    )
-
-    assert_not DailyInventory.sales_started?(location: location)
-  end
-
-  test "在庫操作が発生済みの場合は販売開始済みと判定される" do
-    location = Location.create!(name: "販売開始済み判定テスト", status: :active)
-    inventory = DailyInventory.create!(
-      location: location, catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current, stock: 10, reserved_stock: 0
-    )
-    inventory.decrement_stock!(1)
-
-    assert DailyInventory.sales_started?(location: location)
-  end
-
   test "登録済みの在庫を削除してから再作成できる" do
-    location = Location.create!(name: "再登録テスト", status: :active)
+    location = Location.create!(name: "在庫訂正テスト", status: :active)
     DailyInventory.create!(
       location: location, catalog: catalogs(:daily_bento_a),
       inventory_date: Date.current, stock: 10, reserved_stock: 0
@@ -150,13 +131,13 @@ class DailyInventoryTest < ActiveSupport::TestCase
     assert_equal 20, recreated.find_by(catalog: catalogs(:daily_bento_a)).stock
   end
 
-  test "販売が開始された在庫は再登録できない" do
-    location = Location.create!(name: "販売開始後再登録テスト", status: :active)
-    inventory = DailyInventory.create!(
+  test "販売が開始された在庫は訂正できない" do
+    location = Location.create!(name: "販売開始後訂正テスト", status: :active)
+    DailyInventory.create!(
       location: location, catalog: catalogs(:daily_bento_a),
       inventory_date: Date.current, stock: 10, reserved_stock: 0
     )
-    inventory.decrement_stock!(1)
+    create_sale(location: location, customer_type: :staff, sale_datetime: Time.current)
 
     items = [
       DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 20)
@@ -169,7 +150,78 @@ class DailyInventoryTest < ActiveSupport::TestCase
     end
   end
 
-  test "再登録で商品の追加・削除ができる" do
+  test "全額返金で販売が取消済みだけになっても在庫は訂正できない" do
+    location = Location.create!(name: "全額返金後訂正テスト", status: :active)
+    DailyInventory.create!(
+      location: location, catalog: catalogs(:daily_bento_a),
+      inventory_date: Date.current, stock: 10, reserved_stock: 0
+    )
+    create_sale(
+      location: location, customer_type: :staff, sale_datetime: Time.current,
+      status: :voided, voided_at: Time.current, voided_by_employee: employees(:owner_employee)
+    )
+
+    items = [
+      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 20)
+    ]
+
+    result = DailyInventory.bulk_recreate(location: location, items: items)
+
+    assert_equal :sales_already_started, result
+  end
+
+  test "追加発注をしただけなら在庫を訂正でき、訂正した個数がそのまま在庫になる" do
+    location = Location.create!(name: "追加発注後訂正テスト", status: :active)
+    DailyInventory.create!(
+      location: location, catalog: catalogs(:daily_bento_a),
+      inventory_date: Date.current, stock: 20, reserved_stock: 0
+    )
+    AdditionalOrder.create_with_inventory!(
+      location: location, catalog_id: catalogs(:daily_bento_a).id,
+      quantity: 5, order_at: Time.current
+    )
+
+    items = [
+      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 30)
+    ]
+
+    assert_equal 1, DailyInventory.bulk_recreate(location: location, items: items)
+
+    corrected = DailyInventory.find_by(
+      location: location, catalog: catalogs(:daily_bento_a), inventory_date: Date.current
+    )
+
+    assert_equal 30, corrected.stock
+  end
+
+  test "追加発注のある商品を選択から外すと当日在庫から消え、発注の記録だけが残る" do
+    location = Location.create!(name: "追加発注商品除外テスト", status: :active)
+    DailyInventory.create!(
+      location: location, catalog: catalogs(:daily_bento_a),
+      inventory_date: Date.current, stock: 20, reserved_stock: 0
+    )
+    DailyInventory.create!(
+      location: location, catalog: catalogs(:daily_bento_b),
+      inventory_date: Date.current, stock: 5, reserved_stock: 0
+    )
+    AdditionalOrder.create_with_inventory!(
+      location: location, catalog_id: catalogs(:daily_bento_a).id,
+      quantity: 5, order_at: Time.current
+    )
+
+    items = [
+      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_b).id, stock: 5)
+    ]
+
+    DailyInventory.bulk_recreate(location: location, items: items)
+
+    assert_nil DailyInventory.find_by(
+      location: location, catalog: catalogs(:daily_bento_a), inventory_date: Date.current
+    )
+    assert_equal 1, AdditionalOrder.where(location: location).count
+  end
+
+  test "在庫訂正で商品の追加・削除ができる" do
     location = Location.create!(name: "商品変更テスト", status: :active)
     DailyInventory.create!(
       location: location, catalog: catalogs(:daily_bento_a),
@@ -197,8 +249,8 @@ class DailyInventoryTest < ActiveSupport::TestCase
     assert_equal 15, remaining.find_by(catalog: catalogs(:salad)).stock
   end
 
-  test "再登録後も lock_version は 0 で再度修正できる" do
-    location = Location.create!(name: "lock_versionテスト", status: :active)
+  test "訂正後も販売が開始されていなければ再度訂正できる" do
+    location = Location.create!(name: "連続訂正テスト", status: :active)
     DailyInventory.create!(
       location: location, catalog: catalogs(:daily_bento_a),
       inventory_date: Date.current, stock: 10, reserved_stock: 0
@@ -210,10 +262,17 @@ class DailyInventoryTest < ActiveSupport::TestCase
 
     DailyInventory.bulk_recreate(location: location, items: items)
 
-    recreated = DailyInventory.find_by(location: location, catalog: catalogs(:daily_bento_a), inventory_date: Date.current)
+    second_items = [
+      DailyInventories::InventoryItem.new(catalog_id: catalogs(:daily_bento_a).id, stock: 25)
+    ]
 
-    assert_equal 0, recreated.lock_version
-    assert_not DailyInventory.sales_started?(location: location)
+    assert_equal 1, DailyInventory.bulk_recreate(location: location, items: second_items)
+
+    corrected = DailyInventory.find_by(
+      location: location, catalog: catalogs(:daily_bento_a), inventory_date: Date.current
+    )
+
+    assert_equal 25, corrected.stock
   end
 
   test "一括登録で1件でも不正なデータがあれば全件登録されない" do

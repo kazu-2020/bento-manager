@@ -25,6 +25,18 @@ class Sale < ApplicationRecord
   validates :voided_at,          presence: true, if: :voided?
   validates :voided_by_employee, presence: true, if: :voided?
 
+  # 販売開始済みかどうかを判定する
+  #
+  # 販売開始とは、その販売先でその日の最初の販売が確定した時点を指す。
+  # 取消済みの販売も対象に含める。返品や差額精算で販売開始の事実は取り消されない。
+  #
+  # @param location [Location] 販売先
+  # @param date [Date] 判定対象の日付
+  # @return [Boolean] 販売開始済みなら true
+  def self.started?(location:, date: Date.current)
+    at_location(location).where(sale_datetime: date.all_day).exists?
+  end
+
   # 在庫の復元は元の販売日、修正カートの母集合と修正後の販売の減算は当日を
   # 基準にする。この 2 つの基準日がずれるため、当日の販売にしか行えない
   #
