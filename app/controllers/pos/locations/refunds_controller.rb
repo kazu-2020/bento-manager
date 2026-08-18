@@ -37,9 +37,9 @@ module Pos
         end
 
         redirect_to pos_location_sales_history_index_path(@location), notice: notice
-      # ガードを通ってから Refunder が断る隙間がある。同じ販売の同時確定は
-      # 先に精算した側が void! を通し、日付が変わる瞬間の送信は別々に読んだ時計が
-      # 食い違う。どちらもガードと同じリダイレクトへ寄せる
+      # ガードは set_sale が読んだ時点の値しか見ていない。二重確定は先に精算した
+      # 側が行を書き換え、日付が変わる瞬間の送信は Refunder と別々に時計を読む。
+      # どちらもガードをすり抜けてここへ来るため、同じリダイレクトへ寄せる
       rescue Sale::AlreadyVoidedError
         redirect_to_sales_history("pos.locations.refunds.already_voided")
       rescue Sale::NotTodaysSaleError
