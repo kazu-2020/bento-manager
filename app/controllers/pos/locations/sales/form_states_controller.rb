@@ -28,6 +28,7 @@ module Pos
           @inventories = @location
                             .today_inventories
                             .eager_load(:catalog)
+                            .preload(catalog: :prices)
                             .merge(Catalog.category_order)
         end
 

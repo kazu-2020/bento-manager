@@ -5,6 +5,8 @@ require "test_helper"
 module Pos
   module Locations
     class SalesHistoryControllerTest < ActionDispatch::IntegrationTest
+      include QueryCountHelper
+
       fixtures :employees, :locations, :catalogs, :catalog_prices,
                :sales, :sale_items, :coupons, :discounts, :sale_discounts
 
@@ -24,6 +26,38 @@ module Pos
         get pos_location_sales_history_index_path(@location)
 
         assert_redirected_to "/employee/login"
+      end
+
+      test "販売履歴は販売が増えても問い合わせ本数が増えない" do
+        another_sale = -> do
+          sale = Sale.create!(
+            location: @location,
+            sale_datetime: Time.current,
+            customer_type: :citizen,
+            total_amount: 600,
+            final_amount: 500,
+            employee: employees(:owner_employee),
+            status: :completed
+          )
+          SaleItem.create!(
+            sale: sale,
+            catalog: catalogs(:salad),
+            catalog_price: catalog_prices(:salad_regular),
+            quantity: 1,
+            unit_price: 250,
+            sold_at: sale.sale_datetime
+          )
+          SaleDiscount.create!(
+            sale: sale,
+            discount: discounts(:hundred_yen_discount),
+            discount_amount: 100,
+            quantity: 1
+          )
+        end
+
+        assert_queries_unaffected_by(another_sale, "担当者と割引の読み込みが販売ごとに走っている") do
+          get pos_location_sales_history_index_path(@location)
+        end
       end
 
       test "日次サマリーの売上合計はクーポン割引前の金額の合算になる" do

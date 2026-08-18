@@ -5,7 +5,7 @@ require "test_helper"
 class CatalogsControllerTest < ActionDispatch::IntegrationTest
   include ModalCancelButtonHelper
 
-  fixtures :employees, :catalogs
+  fixtures :employees, :catalogs, :catalog_prices
 
   setup do
     @employee = employees(:verified_employee)
@@ -20,6 +20,20 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
   # ============================================================
   # Admin認証時のテスト（アクセス可能）
   # ============================================================
+
+  test "商品一覧は並ぶ商品の数によらず価格の問い合わせを1回で済ませる" do
+    login_as_employee(@employee)
+
+    # カード 1 枚が通常価格とセット価格の 2 つを引くため、preload が効いていないと
+    # 商品 1 件につき 2 本ずつ増える
+    assert_operator Catalog.bento.count, :>=, 2, "1件では商品ごとに増えるかどうかを見分けられない"
+
+    assert_queries_match(/FROM ["`]catalog_prices["`]/, count: 1) do
+      get catalogs_path
+    end
+
+    assert_response :success
+  end
 
   test "admin can access index" do
     login_as_employee(@employee)

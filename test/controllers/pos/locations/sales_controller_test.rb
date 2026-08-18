@@ -46,6 +46,19 @@ module Pos
         assert_redirected_to new_pos_location_daily_inventory_path(location)
       end
 
+      test "販売画面は並ぶ商品の数によらず価格の問い合わせを1回で済ませる" do
+        login_as_employee(@employee)
+
+        # 商品カードごとに単価を引くため、preload が効いていないと在庫の数だけ問い合わせが増える
+        assert_operator @location.today_inventories.count, :>=, 2
+
+        assert_queries_match(/FROM ["`]catalog_prices["`]/, count: 1) do
+          get new_pos_location_sale_path(@location)
+        end
+
+        assert_response :success
+      end
+
       test "new returns 404 for inactive location" do
         login_as_employee(@employee)
         inactive_location = locations(:prefectural_office)
