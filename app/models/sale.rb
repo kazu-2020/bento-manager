@@ -5,12 +5,15 @@ class Sale < ApplicationRecord
   belongs_to :location
   belongs_to :employee, optional: true
   belongs_to :voided_by_employee, class_name: "Employee", optional: true
-  belongs_to :corrected_from_sale, class_name: "Sale", optional: true
-  has_one :correction_sale, class_name: "Sale", foreign_key: "corrected_from_sale_id"
   has_many :items, class_name: "SaleItem", dependent: :destroy
   has_many :sale_discounts, dependent: :destroy
   has_many :discounts, through: :sale_discounts
-  has_many :refunds, foreign_key: "original_sale_id", dependent: :restrict_with_error
+  # 差額精算は元の販売を無効化し、void! は取消済みなら例外を上げるため、1 つの販売が
+  # 元の販売になれるのは高々 1 回。「どの販売を、どの販売に置き換えたか」は出来事である
+  # Refund の属性であり、修正後の販売へは refund.corrected_sale から辿る。
+  # この一度きりを最終的に担保するのは refunds.original_sale_id の一意インデックスで、
+  # アプリ側のガードに委ねない理由は docs/adr/0003-sqlite-concurrency-control.md の決定 4 を参照
+  has_one :refund, foreign_key: "original_sale_id", dependent: :restrict_with_error
 
   enum :status,        { completed: 0, voided: 1 }, validate: true
   enum :customer_type, { staff: 0, citizen: 1 },    validate: true

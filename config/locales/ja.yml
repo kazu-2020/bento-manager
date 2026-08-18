@@ -147,7 +147,6 @@ ja:
         location: "販売先"
         employee: "担当"
         voided_by_employee: "取消担当者"
-        corrected_from_sale: "訂正元販売"
         sale_datetime: "販売日時"
         customer_type: "顧客種別"
         status: "ステータス"
