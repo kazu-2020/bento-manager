@@ -32,11 +32,13 @@ module Pos
           )
         end
 
+        # テンプレートが表示の有無判定と本文で 2 回参照するため、単価の取得は 1 回に抑える。
+        # 単価が無い商品では nil を返すので、値ではなく代入済みかどうかで判定する
         def unit_price_display
-          price = item.unit_price
-          return nil unless price
+          return @unit_price_display if defined?(@unit_price_display)
 
-          helpers.number_to_currency(price)
+          price = item.unit_price
+          @unit_price_display = price && helpers.number_to_currency(price)
         end
 
         def stock_badge_text
