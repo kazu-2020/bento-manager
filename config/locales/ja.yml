@@ -320,6 +320,7 @@ ja:
         index:
           title: "販売履歴"
       refunds:
+        not_todays_sale: "差額精算は当日の販売のみ行えます"
         new:
           title: "差額精算"
         create:

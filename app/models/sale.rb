@@ -1,5 +1,6 @@
 class Sale < ApplicationRecord
   class AlreadyVoidedError < StandardError; end
+  class NotTodaysSaleError < StandardError; end
 
   belongs_to :location
   belongs_to :employee, optional: true
@@ -34,6 +35,14 @@ class Sale < ApplicationRecord
   # @return [Boolean] 販売開始済みなら true
   def self.started?(location:, date: Date.current)
     at_location(location).where(sale_datetime: date.all_day).exists?
+  end
+
+  # 在庫の復元は元の販売日、修正カートの母集合と修正後の販売の減算は当日を
+  # 基準にする。この 2 つの基準日がずれるため、当日の販売にしか行えない
+  #
+  # @return [Boolean]
+  def sold_today?
+    sale_datetime.today?
   end
 
   # 販売を取り消す

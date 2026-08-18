@@ -8,6 +8,7 @@ module Pos
 
         before_action :set_location
         before_action :set_sale
+        before_action :redirect_unless_sold_today
         before_action :set_inventories
 
         def create

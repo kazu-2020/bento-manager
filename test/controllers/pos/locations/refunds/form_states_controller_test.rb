@@ -46,6 +46,16 @@ module Pos
           assert_response :not_found
         end
 
+        test "日付が変わった後の画面から送信しても、修正カートは描き直されず販売履歴に戻される" do
+          login_as_employee(@employee)
+          @sale.update!(sale_datetime: 1.day.ago)
+
+          post_form_state(corrected: { @bento_a => 0 })
+
+          assert_redirected_to pos_location_sales_history_index_path(@location)
+          assert_equal "差額精算は当日の販売のみ行えます", flash[:alert]
+        end
+
         # ============================================================
         # Turbo Stream レスポンステスト
         # ============================================================
