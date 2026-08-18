@@ -44,6 +44,9 @@ class CatalogPrice < ApplicationRecord
   private
 
   # effective_until が effective_from より後であることを検証
+  # effective_at も両端 inclusive なので同時刻のレコードはヒットする。それでも同時刻を
+  # 認めないのは、datetime の同一インスタンスが date の「1日」と違い、ユーザーが意図して
+  # 指定する有効期間の単位ではないため
   def valid_date_range
     return if effective_from.blank? || effective_until.blank?
 

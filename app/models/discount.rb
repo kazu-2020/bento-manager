@@ -30,13 +30,14 @@ class Discount < ApplicationRecord
 
   private
 
-  # 日付範囲の妥当性を検証
-  # valid_until が設定されている場合、valid_from より後である必要がある
+  # valid_until が valid_from 以降であることを検証
+  # valid_from / valid_until は date かつ active_at が両端 inclusive のため、
+  # 同日指定は「その1日だけ有効」という正当な設定として許可する
   def valid_date_range
     return if valid_from.blank? || valid_until.blank?
 
-    if valid_until <= valid_from
-      errors.add(:valid_until, "は有効開始日より後の日付を指定してください")
+    if valid_until < valid_from
+      errors.add(:valid_until, "は有効開始日以降の日付を指定してください")
     end
   end
 end

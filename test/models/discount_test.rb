@@ -22,18 +22,19 @@ class DiscountTest < ActiveSupport::TestCase
     must have_many(:sales).through(:sale_discounts)
   end
 
-  test "有効期間の終了日は開始日より後でなければならない" do
+  test "有効期間の終了日は開始日以降でなければならず、同じ日なら1日だけ有効な割引になる" do
     coupon = Coupon.create!(amount_per_unit: 50)
     today = Date.current
 
     before_start = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: 1.day.ago.to_date)
 
     assert_not before_start.valid?
-    assert_includes before_start.errors[:valid_until], "は有効開始日より後の日付を指定してください"
+    assert_includes before_start.errors[:valid_until], "は有効開始日以降の日付を指定してください"
 
-    same_day = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: today)
+    same_day = Discount.create!(discountable: coupon, name: "テスト", valid_from: today, valid_until: today)
 
-    assert_not same_day.valid?
+    assert_includes Discount.active_at(today), same_day
+    assert_not_includes Discount.active_at(today + 1), same_day
 
     after_start = Discount.new(discountable: coupon, name: "テスト", valid_from: today, valid_until: 1.day.from_now.to_date)
 
