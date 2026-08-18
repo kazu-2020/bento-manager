@@ -48,8 +48,14 @@ module Pos
           redirect_to new_pos_location_sale_path(@location) if @location.sales_started_today?
         end
 
+        # いまの在庫数に含まれているのは、当日在庫が作られた（登録または訂正された）
+        # 後の追加発注だけ。訂正後の当日在庫は宣言された個数そのものなので、それ以前の
+        # 発注まで出すと「この数量は追加発注を含んでいる」という偽の説明になる。
         def set_additional_order_quantities
-          @additional_order_quantities = AdditionalOrder.quantities_by_catalog_id(location: @location)
+          @additional_order_quantities = AdditionalOrder.quantities_by_catalog_id(
+            location: @location,
+            since: @location.today_inventories.minimum(:created_at)
+          )
         end
 
         def build_form(submitted = ::GhostForms::Submission.absent)

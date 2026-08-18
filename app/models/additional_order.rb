@@ -12,12 +12,13 @@ class AdditionalOrder < ApplicationRecord
   #
   # @param location [Location] 販売先
   # @param date [Date] 集計対象の日付
+  # @param since [Time, nil] 指定するとこの時刻以降の発注だけを数える
   # @return [Hash{Integer => Integer}] 商品 ID ごとの追加発注個数
-  def self.quantities_by_catalog_id(location:, date: Date.current)
-    where(location: location)
-      .ordered_on(date)
-      .group(:catalog_id)
-      .sum(:quantity)
+  def self.quantities_by_catalog_id(location:, date: Date.current, since: nil)
+    scope = where(location: location).ordered_on(date)
+    scope = scope.where(order_at: since..) if since
+
+    scope.group(:catalog_id).sum(:quantity)
   end
 
   # 追加発注を作成し、在庫を加算する

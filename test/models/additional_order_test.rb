@@ -101,6 +101,28 @@ class AdditionalOrderTest < ActiveSupport::TestCase
     assert_equal 2, quantities[catalogs(:salad).id]
   end
 
+  test "since を渡すとその時刻以降の追加発注だけを数える" do
+    location = Location.create!(name: "追加発注時刻絞り込み販売先", status: :active)
+    travel_to Time.zone.parse("2026-08-18 09:00:00") do
+      AdditionalOrder.create_with_inventory!(
+        location: location, catalog_id: catalogs(:daily_bento_a).id,
+        quantity: 5, order_at: Time.current
+      )
+    end
+    travel_to Time.zone.parse("2026-08-18 09:20:00") do
+      AdditionalOrder.create_with_inventory!(
+        location: location, catalog_id: catalogs(:daily_bento_a).id,
+        quantity: 2, order_at: Time.current
+      )
+
+      quantities = AdditionalOrder.quantities_by_catalog_id(
+        location: location, since: Time.zone.parse("2026-08-18 09:10:00")
+      )
+
+      assert_equal 2, quantities[catalogs(:daily_bento_a).id]
+    end
+  end
+
   test "別の日や別の販売先の追加発注は集計に含めない" do
     location = Location.create!(name: "追加発注集計対象販売先", status: :active)
     other_location = Location.create!(name: "追加発注集計対象外販売先", status: :active)

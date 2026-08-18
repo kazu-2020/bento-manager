@@ -119,6 +119,39 @@ module Pos
           assert_no_match(/#{discontinued.name}/, response.body)
         end
 
+        test "訂正したあとは、それ以前の追加発注を内訳に出さない" do
+          login_as_employee(@employee)
+
+          travel_to Time.zone.parse("2026-08-18 08:00:00") do
+            DailyInventory.create!(
+              location: @location, catalog: @bento_a,
+              inventory_date: Date.current, stock: 20, reserved_stock: 0
+            )
+          end
+
+          travel_to Time.zone.parse("2026-08-18 09:00:00") do
+            AdditionalOrder.create_with_inventory!(
+              location: @location, catalog_id: @bento_a.id,
+              quantity: 5, order_at: Time.current
+            )
+          end
+
+          travel_to Time.zone.parse("2026-08-18 09:10:00") do
+            post pos_location_daily_inventories_correction_path(@location),
+                 params: { inventory: { @bento_a.id.to_s => { selected: "1", stock: "20" } } }
+
+            assert_redirected_to new_pos_location_sale_path(@location)
+          end
+
+          travel_to Time.zone.parse("2026-08-18 09:20:00") do
+            get new_pos_location_daily_inventories_correction_path(@location)
+
+            assert_response :success
+            assert_match 'value="20"', response.body
+            assert_no_match(/本日の追加発注/, response.body)
+          end
+        end
+
         test "追加発注がなければ内訳は表示されない" do
           login_as_employee(@employee)
           DailyInventory.create!(
