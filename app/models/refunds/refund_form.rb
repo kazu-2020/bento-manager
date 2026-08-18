@@ -48,54 +48,26 @@ module Refunds
         coupon_quantities != original_coupon_quantities
     end
 
-    def all_items_zero?
-      corrected_quantities.values.all?(&:zero?)
-    end
-
-    def preview_price_result
-      return nil unless has_any_changes?
-
-      @preview_price_result ||= calculate_preview_prices
-    end
-
-    def preview_adjustment_amount
-      return 0 unless has_any_changes?
-
-      corrected_amount = preview_price_result[:final_total]
-      sale.final_amount - corrected_amount
-    end
-
-    def adjustment_type
-      amount = preview_adjustment_amount
-      if amount.positive?
-        :refund
-      elsif amount.negative?
-        :additional_charge
-      else
-        :even_exchange
-      end
+    # 修正後の金額と差額。3 つの状態は Preview の奥に畳んであるので、ここでは分岐しない
+    def preview
+      @preview ||= Preview.new(
+        sale: sale,
+        items: corrected_items_for_refunder,
+        discount_quantities: discount_quantities_for_refunder,
+        changed: has_any_changes?
+      )
     end
 
     def total_corrected_bento_quantity
       @total_corrected_bento_quantity ||= bento_corrected_items.sum(&:quantity)
     end
 
-    def tab_items
-      @tab_items ||= begin
-        items = []
-        items << { key: :bento, label: I18n.t("enums.catalog.category.bento") } if bento_corrected_items.any?
-        items << { key: :side_menu, label: I18n.t("enums.catalog.category.side_menu") } if side_menu_corrected_items.any?
-        items << { key: :coupon, label: I18n.t("enums.catalog.category.coupon") } if available_discounts.any?
-        items
-      end
-    end
-
     def bento_corrected_items
-      @bento_corrected_items ||= corrected_items.select { |item| item.category == "bento" }
+      @bento_corrected_items ||= corrected_items.select(&:bento?)
     end
 
     def side_menu_corrected_items
-      @side_menu_corrected_items ||= corrected_items.select { |item| item.category == "side_menu" }
+      @side_menu_corrected_items ||= corrected_items.select(&:side_menu?)
     end
 
     def available_discounts
@@ -184,40 +156,6 @@ module Refunds
       catalog_lookup[catalog_id]
     end
 
-    def calculate_preview_prices
-      items = corrected_items_for_refunder
-      if items.empty?
-        return {
-          final_total: 0,
-          items_with_prices: [],
-          discount_details: build_full_refund_discount_details,
-          total_discount_amount: 0
-        }
-      end
-
-      calculator = Sales::PriceCalculator.new(
-        items,
-        discount_quantities: discount_quantities_for_refunder
-      )
-      calculator.calculate
-    rescue Errors::MissingPriceError => e
-      Rails.logger.error "[RefundForm] MissingPriceError: #{e.message}"
-      { final_total: 0, items_with_prices: [], discount_details: build_full_refund_discount_details, total_discount_amount: 0 }
-    end
-
-    def build_full_refund_discount_details
-      sale.sale_discounts.eager_load(:discount).map do |sd|
-        {
-          discount_id: sd.discount_id,
-          discount_name: sd.discount.name,
-          discount_amount: 0,
-          quantity: 0,
-          requested_quantity: sd.quantity,
-          applicable: false
-        }
-      end
-    end
-
     def inventory_lookup
       @inventory_lookup ||= inventories.index_by(&:catalog_id)
     end
@@ -240,41 +178,6 @@ module Refunds
           max_quantity: max_quantity,
           inventory: inventory
         )
-      end
-    end
-
-    # 修正カート内のアイテムを表すクラス
-    class CorrectedItem
-      attr_reader :catalog, :quantity, :original_quantity, :max_quantity, :inventory
-
-      delegate :id, :name, :category, to: :catalog, prefix: true
-
-      def initialize(catalog:, quantity:, original_quantity:, max_quantity:, inventory: nil)
-        @catalog = catalog
-        @quantity = quantity
-        @original_quantity = original_quantity
-        @max_quantity = max_quantity
-        @inventory = inventory
-      end
-
-      def category
-        catalog_category
-      end
-
-      def changed?
-        quantity != original_quantity
-      end
-
-      def in_cart?
-        quantity > 0
-      end
-
-      def unit_price
-        catalog.price_by_kind(:regular)&.price
-      end
-
-      def sold_out?
-        max_quantity <= 0
       end
     end
   end

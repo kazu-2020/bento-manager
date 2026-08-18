@@ -15,9 +15,9 @@
       </div>
     </div>
 
-    <% if sold_out? %>
+    <% if unavailable? %>
       <div class="mt-1 text-center">
-        <span class="badge badge-soft badge-error"><%= t(".sold_out") %></span>
+        <span class="badge badge-soft badge-error"><%= t(".unavailable") %></span>
       </div>
     <% else %>
       <div class="mt-1">

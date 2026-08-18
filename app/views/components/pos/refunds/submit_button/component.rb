@@ -10,7 +10,9 @@ module Pos
 
         attr_reader :form
 
-        delegate :has_any_changes?, :adjustment_type, to: :form
+        delegate :has_any_changes?, to: :form
+        delegate :preview, to: :form, private: true
+        delegate :adjustment_type, to: :preview
 
         def disabled?
           !has_any_changes?

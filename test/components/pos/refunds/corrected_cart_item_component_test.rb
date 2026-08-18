@@ -30,7 +30,7 @@ class Pos::Refunds::CorrectedCartItemComponentTest < ViewComponent::TestCase
   private
 
   def component_for(catalog)
-    item = Refunds::RefundForm::CorrectedItem.new(
+    item = Refunds::CorrectedItem.new(
       catalog: catalog, quantity: 1, original_quantity: 1, max_quantity: 3
     )
     Pos::Refunds::CorrectedCartItem::Component.new(item: item)

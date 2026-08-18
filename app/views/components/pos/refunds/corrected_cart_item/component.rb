@@ -13,7 +13,7 @@ module Pos
         attr_reader :item
 
         delegate :catalog_id, :catalog_name, :quantity, :original_quantity,
-                 :max_quantity, :in_cart?, :changed?, :sold_out?, to: :item
+                 :max_quantity, :in_cart?, :changed?, :unavailable?, to: :item
 
         def dom_id
           "corrected-item-#{catalog_id}"
@@ -28,7 +28,7 @@ module Pos
             "card bg-base-100 border-2 transition-all duration-200",
             "border-accent bg-accent/10": changed?,
             "border-base-300": !changed?,
-            "opacity-50": sold_out?
+            "opacity-50": unavailable?
           )
         end
 
