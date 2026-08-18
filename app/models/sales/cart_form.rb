@@ -5,9 +5,11 @@ module Sales
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
+    include ::GhostForms::SubmissionReadable
+
     ITEM_TYPE = CartItemType.new
 
-    # submitted のどの位置に何が来るかの宣言（SubmittedParamsFilterable が使う）
+    # submitted のどの位置に何が来るかの宣言（GhostForms::ParamsFilter が使う）
     SUBMITTED_PARAMS_SHAPE = {
       scalar_keys: %w[customer_type],
       collection_keys: %w[coupon]
@@ -18,12 +20,13 @@ module Sales
     validate :at_least_one_item_in_cart
     validates :customer_type, presence: true
 
-    def initialize(location:, inventories:, discounts:, submitted: {})
+    def initialize(location:, inventories:, discounts:, submitted: ::GhostForms::Submission.absent)
       @location = location
       @discounts = discounts
-      @items = build_items(inventories, submitted)
+      @submitted = submitted
+      @items = build_items(inventories, submitted.values)
       @customer_type = submitted["customer_type"] || "staff"
-      @coupon_quantities = build_coupon_quantities(submitted)
+      @coupon_quantities = build_coupon_quantities(submitted.values)
     end
 
     def bento_items

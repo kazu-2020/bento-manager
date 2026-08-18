@@ -35,7 +35,7 @@ module Pos
           @discounts = Discount.preload(:discountable).active
         end
 
-        def build_form(submitted = {})
+        def build_form(submitted = ::GhostForms::Submission.absent)
           ::Sales::CartForm.new(
             location: @location,
             inventories: @inventories,

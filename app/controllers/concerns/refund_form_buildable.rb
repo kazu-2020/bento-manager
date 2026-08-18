@@ -23,7 +23,7 @@ module RefundFormBuildable
                       .merge(Catalog.category_order)
   end
 
-  def build_form(submitted = nil)
+  def build_form(submitted = ::GhostForms::Submission.absent)
     ::Refunds::RefundForm.new(
       sale: @sale,
       location: @location,

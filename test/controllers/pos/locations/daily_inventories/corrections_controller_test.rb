@@ -90,6 +90,8 @@ module Pos
           end
 
           assert_response :unprocessable_entity
+          # 返品と同じ「読み取れなかった」案内。「商品を選択してください」ではない
+          assert_match "送信された内容を読み取れませんでした", response.body
         end
 
         test "登録がない場合は新規登録ページにリダイレクトされる" do

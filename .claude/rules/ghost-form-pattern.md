@@ -87,7 +87,45 @@ SUBMITTED_PARAMS_SHAPE = {
 `SUBMITTED_PARAMS_SHAPE` の更新が必須で、忘れると値が捨てられる。
 検証できる構造と、そう決めた理由は [params_filter.rb](app/models/ghost_forms/params_filter.rb) に書いてある。
 
-### 5. Turbo Stream で Ghost Form 自身も差し替える
+### 5. 「未送信」「送信されたが読めない」「送信あり」を状態として扱う
+
+`submitted_params` は素のハッシュではなく [`GhostForms::Submission`](app/models/ghost_forms/submission.rb) を返す。
+フィルタ後の中身が空かどうかだけで分岐してはいけない。不正なパラメータだけの送信は
+フィルタで空に畳まれるため、「まだ何も送られていない」と見分けがつかなくなり、
+初期値の再構築や「全て 0」の確定に化ける。返品なら修正後の販売が作られないまま元の販売が
+取り消されて全額返金になり、在庫訂正なら拒否すべき要求が `bulk_recreate` で既存在庫を
+破壊的に作り直す。
+
+| 状態 | 判定 | 意味 |
+| --- | --- | --- |
+| 未送信 | `submitted.absent?` | 初回描画。元の販売や既存在庫から初期値を作る |
+| 送信されたが読めない | `submitted.unreadable?` | 壊れた送信。差し戻す |
+| 送信あり | 上記以外 | `submitted.values` を読む |
+
+差し戻しはフォームが担う。[`GhostForms::SubmissionReadable`](app/models/ghost_forms/submission_readable.rb)
+を include し、`@submitted` に `Submission` を代入すれば `:unreadable_submission` が付く。
+同じフォームは確定用と Ghost Form 用の 2 つのコントローラーから組み立てられるため（ルール 3）、
+コントローラーに置くと片方が素通しになる。
+
+```ruby
+class RefundForm
+  include ::GhostForms::SubmissionReadable
+
+  # 送信されたなら必ず中身があるはずの最上位キー。宣言しなければ最上位全体を見る
+  requires_submitted :corrected
+
+  def initialize(sale:, submitted: ::GhostForms::Submission.absent)
+    @submitted = submitted
+    @corrected_quantities = submitted.absent? ? default_quantities : read(submitted["corrected"])
+  end
+end
+```
+
+コントローラーが `absent?` を見てよいのは初期値の作り分けだけで、拒否の判断に使ってはいけない。
+`config/locales/ja.yml` の各フォームに `unreadable_submission` を必ず足すこと
+（テストの `raise_on_missing_translations` では検出できない）。
+
+### 6. Turbo Stream で Ghost Form 自身も差し替える
 
 再描画対象に Ghost Form を含めないと、hidden field が古い状態のまま残り、次の送信で以前の値を送ってしまう。
 

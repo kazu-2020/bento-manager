@@ -186,7 +186,7 @@ module Pos
 
         assert_response :unprocessable_entity
         assert_not_predicate @sale.reload, :voided?
-        assert_equal "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください",
+        assert_equal "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください",
                      flash[:alert]
       end
 
@@ -201,7 +201,7 @@ module Pos
         end
 
         assert_response :unprocessable_entity
-        assert_equal "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください",
+        assert_equal "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください",
                      flash[:alert]
       end
 

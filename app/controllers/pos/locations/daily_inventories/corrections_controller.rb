@@ -44,16 +44,18 @@ module Pos
           @existing_inventories ||= @location.today_inventories.index_by(&:catalog_id)
         end
 
-        # 送信の有無で分岐する。フィルタ後の中身で分岐すると、不正なパラメータだけの
-        # 送信が空に畳まれて既存在庫からの再構築に化け、拒否すべき要求が
-        # bulk_recreate による破壊的な書き込みを行ってしまう。
-        def build_form(submitted = nil)
-          items = if submitted.nil?
+        # 初期値をどこから作るかだけを分ける。「送信されたのに中身が残らなかった」
+        # 送信の差し戻しはフォーム（GhostForms::SubmissionReadable）が担うので、
+        # ここで拒否の判断はしない
+        def build_form(submitted = ::GhostForms::Submission.absent)
+          items = if submitted.absent?
             ::DailyInventories::ItemBuilder.from_inventories(@catalogs, existing_inventories)
           else
-            ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
+            ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted.values)
           end
-          ::DailyInventories::CorrectionForm.new(location: @location, items: items)
+          ::DailyInventories::CorrectionForm.new(
+            location: @location, items: items, submitted: submitted
+          )
         end
       end
     end

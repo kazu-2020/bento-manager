@@ -26,6 +26,10 @@ module Refunds
       )
     end
 
+    def submission(raw)
+      ::GhostForms::Submission.filter(raw, form: RefundForm)
+    end
+
     # === 初期値テスト ===
 
     test "初期表示時は元の販売の数量で初期化され、変更なしと判定される" do
@@ -54,12 +58,12 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "1" },
             @catalog_salad.id.to_s => { "quantity" => "1" }
           }
-        }
+        })
       )
 
       assert_equal 1, form.corrected_quantities[@catalog_bento_a.id]
@@ -78,13 +82,13 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "1" },
             @catalog_salad.id.to_s => { "quantity" => "0" },
             @catalog_bento_b.id.to_s => { "quantity" => "1" }
           }
-        }
+        })
       )
 
       corrected = form.corrected_items_for_refunder
@@ -114,12 +118,12 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "1" },
             @catalog_salad.id.to_s => { "quantity" => "1" }
           }
-        }
+        })
       )
 
       assert_predicate form, :has_any_changes?
@@ -132,11 +136,11 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "1" }
           }
-        }
+        })
       )
 
       assert_predicate form, :has_any_changes?
@@ -149,11 +153,11 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "0" }
           }
-        }
+        })
       )
 
       assert_predicate form, :has_any_changes?
@@ -178,11 +182,11 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "0" }
           }
-        }
+        })
       )
 
       assert_predicate form, :valid?
@@ -197,12 +201,12 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "1" },
             @catalog_salad.id.to_s => { "quantity" => "1" }
           }
-        }
+        })
       )
 
       # 弁当A(550) + サラダ(セット価格150) = 700円
@@ -237,11 +241,11 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "0" }
           }
-        }
+        })
       )
 
       assert_empty form.coupon_quantities
@@ -259,14 +263,14 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "2" }
           },
           "coupon" => {
             discount.id.to_s => { "quantity" => "1" }
           }
-        }
+        })
       )
 
       assert_predicate form, :has_any_changes?
@@ -286,14 +290,14 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "2" }
           },
           "coupon" => {
             fifty_yen.id.to_s => { "quantity" => "1" }
           }
-        }
+        })
       )
 
       assert_predicate form, :has_any_changes?
@@ -314,11 +318,11 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "2" }
           }
-        }
+        })
       )
 
       assert_not form.has_any_changes?
@@ -336,11 +340,11 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "1" }
           }
-        }
+        })
       )
 
       assert_predicate form, :has_any_changes?
@@ -357,14 +361,14 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "1" }
           },
           "coupon" => {
             discount.id.to_s => { "quantity" => "1" }
           }
-        }
+        })
       )
 
       result = form.discount_quantities_for_refunder
@@ -405,11 +409,11 @@ module Refunds
         sale: sale,
         location: @location,
         inventories: @inventories,
-        submitted: {
+        submitted: submission({
           "corrected" => {
             @catalog_bento_a.id.to_s => { "quantity" => "0" }
           }
-        }
+        })
       )
 
       result = form.preview_price_result

@@ -5,25 +5,31 @@ module Refunds
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
-    # submitted のどの位置に何が来るかの宣言（SubmittedParamsFilterable が使う）
+    include ::GhostForms::SubmissionReadable
+
+    # submitted のどの位置に何が来るかの宣言（GhostForms::ParamsFilter が使う）
     SUBMITTED_PARAMS_SHAPE = { collection_keys: %w[corrected coupon] }.freeze
+
+    # 修正カートが 1 件も読めないのは「全て 0」ではなく壊れた送信。全て 0 の確定は
+    # 数量を 0 として明示的に送ってくる。ここを通すと corrected_items_for_refunder が
+    # 空になり、修正後の販売が作られないまま元の販売が取り消されて全額返金になる
+    requires_submitted :corrected
 
     attr_reader :sale, :location, :corrected_quantities, :coupon_quantities, :inventories
 
     validate :at_least_one_change
-    validate :corrected_quantities_readable
 
-    # submitted は未送信（nil）と送信済み（Hash）を区別する。初回描画では元の販売から
-    # 初期値を作るため、「まだ何も送られていない」と「送られたが空だった」を
-    # 見分けなければならない。中身が空かどうかで分岐すると、数量の入力が
-    # 無効化されてキーごと送信されなかったときに元の販売の値が復活する。
-    # 在庫訂正のフォームも同じ区別を要し、そちらはコントローラーで分けている。
-    def initialize(sale:, location:, inventories: [], submitted: nil)
+    # submitted は GhostForms::Submission。初回描画では元の販売から初期値を作るため、
+    # 「まだ何も送られていない」と「送られたが中身が残らなかった」を見分けなければ
+    # ならない。中身が空かどうかで分岐すると、数量の入力が無効化されてキーごと
+    # 送信されなかったときに元の販売の値が復活する
+    def initialize(sale:, location:, inventories: [], submitted: ::GhostForms::Submission.absent)
       @sale = sale
       @location = location
       @inventories = inventories
-      @corrected_quantities = quantities_from(submitted, "corrected") { default_corrected_quantities }
-      @coupon_quantities = quantities_from(submitted, "coupon") { original_discount_quantities }
+      @submitted = submitted
+      @corrected_quantities = quantities_from("corrected") { default_corrected_quantities }
+      @coupon_quantities = quantities_from("coupon") { original_discount_quantities }
     end
 
     def corrected_items
@@ -116,8 +122,8 @@ module Refunds
 
     # 送信されていれば、届いたキーだけを読む。届かなかったキーは 0 を意味する。
     # 未送信（初回描画）のときだけ、ブロックが返す初期値を使う
-    def quantities_from(submitted, key)
-      return yield if submitted.nil?
+    def quantities_from(key)
+      return yield if submitted.absent?
 
       (submitted[key] || {}).transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
     end
@@ -167,20 +173,12 @@ module Refunds
       end
     end
 
-    # 数量が1件も読めないなら「変更されたか」は判定しようがないので、
-    # 読み取れなかったことだけを案内する（corrected_quantities_readable が担う）
+    # 数量が 1 件も読めないなら「変更されたか」は判定しようがないので、
+    # 読み取れなかったことだけを案内する（SubmissionReadable が担う）
     def at_least_one_change
       return if corrected_quantities.empty?
 
       errors.add(:base, :no_items_selected) unless has_any_changes?
-    end
-
-    # 修正カートが1件も読めないのは「全て0」ではなく壊れた送信。全て0の確定は
-    # 数量を0として明示的に送ってくる。ここを通すと corrected_items_for_refunder が
-    # 空になり、修正後の販売が作られないまま元の販売が取り消されて全額返金になる。
-    # 初回描画では元の販売の商品が必ず入るため、この検証には掛からない。
-    def corrected_quantities_readable
-      errors.add(:base, :unreadable_quantities) if corrected_quantities.empty?
     end
 
     def catalog_lookup
