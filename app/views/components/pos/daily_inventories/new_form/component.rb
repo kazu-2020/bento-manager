@@ -29,14 +29,22 @@ module Pos
         end
 
         def has_additional_orders?
-          additional_order_quantities.any?
+          additional_ordered_items.any?
         end
 
         # 「日替わり弁当A +5個、サラダ +2個」
         def additional_orders_summary
-          additional_order_quantities
-            .map { |catalog, quantity| t(".additional_order_item", name: catalog.name, quantity: quantity) }
+          additional_ordered_items
+            .map { |item, quantity| t(".additional_order_item", name: item.catalog_name, quantity: quantity) }
             .join("、")
+        end
+
+        # 追加発注のあった商品を、フォームに並ぶ順で返す
+        def additional_ordered_items
+          @additional_ordered_items ||= items.filter_map do |item|
+            quantity = additional_order_quantities[item.catalog_id]
+            [ item, quantity ] if quantity
+          end
         end
 
         def has_items?

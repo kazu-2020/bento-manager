@@ -9,7 +9,7 @@ module Pos
         before_action :set_location
         before_action :set_catalogs
         before_action :redirect_unless_correctable, only: :new
-        before_action :set_additional_order_quantities, only: :new
+        before_action :set_additional_order_quantities
 
         def new
           @form = build_form
@@ -22,7 +22,6 @@ module Pos
             redirect_to new_pos_location_sale_path(@location),
                         notice: t(".success", count: @form.registered_count)
           else
-            set_additional_order_quantities
             flash.now[:alert] = @form.errors.full_messages.first
             render :new, status: :unprocessable_entity
           end
@@ -50,7 +49,7 @@ module Pos
         end
 
         def set_additional_order_quantities
-          @additional_order_quantities = @location.today_additional_order_quantities
+          @additional_order_quantities = AdditionalOrder.quantities_by_catalog_id(location: @location)
         end
 
         def existing_inventories

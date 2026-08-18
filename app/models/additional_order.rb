@@ -3,8 +3,22 @@ class AdditionalOrder < ApplicationRecord
   belongs_to :catalog
   belongs_to :employee, optional: true
 
+  scope :ordered_on, ->(date) { where(order_at: date.all_day) }
+
   validates :order_at, presence: true
   validates :quantity, presence: true, numericality: { greater_than: 0 }
+
+  # 指定日の追加発注を商品別に合計する
+  #
+  # @param location [Location] 販売先
+  # @param date [Date] 集計対象の日付
+  # @return [Hash{Integer => Integer}] 商品 ID ごとの追加発注個数
+  def self.quantities_by_catalog_id(location:, date: Date.current)
+    where(location: location)
+      .ordered_on(date)
+      .group(:catalog_id)
+      .sum(:quantity)
+  end
 
   # 追加発注を作成し、在庫を加算する
   #

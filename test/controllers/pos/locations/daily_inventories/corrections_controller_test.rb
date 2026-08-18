@@ -101,6 +101,14 @@ module Pos
             location: @location, catalog_id: @bento_a.id,
             quantity: 5, order_at: Time.current
           )
+          discontinued = catalogs(:discontinued_bento)
+          AdditionalOrder.create_with_inventory!(
+            location: @location, catalog_id: discontinued.id,
+            quantity: 3, order_at: Time.current
+          )
+          CatalogDiscontinuation.create!(
+            catalog: discontinued, discontinued_at: Time.current, reason: "提供終了"
+          )
 
           get new_pos_location_daily_inventories_correction_path(@location)
 
@@ -108,6 +116,7 @@ module Pos
           assert_match 'value="25"', response.body
           assert_match "本日の追加発注", response.body
           assert_match "#{@bento_a.name} +5個", response.body
+          assert_no_match(/#{discontinued.name}/, response.body)
         end
 
         test "追加発注がなければ内訳は表示されない" do

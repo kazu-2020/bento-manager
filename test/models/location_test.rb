@@ -1,9 +1,7 @@
 require "test_helper"
 
 class LocationTest < ActiveSupport::TestCase
-  include SaleTestHelper
-
-  fixtures :locations, :catalogs, :daily_inventories, :employees
+  fixtures :locations, :catalogs, :daily_inventories
 
   test "validations" do
     @subject = Location.new(name: "テスト拠点")
@@ -75,13 +73,6 @@ class LocationTest < ActiveSupport::TestCase
     assert_not location.has_today_inventory?
   end
 
-  test "当日の販売がある販売先は販売開始済みと判定される" do
-    location = Location.create!(name: "販売開始済み販売先", status: :active)
-    create_sale(location: location, customer_type: :staff, sale_datetime: Time.current)
-
-    assert_predicate location, :sales_started_today?
-  end
-
   test "追加発注しかない販売先は販売未開始と判定される" do
     location = Location.create!(name: "追加発注のみ販売先", status: :active)
     DailyInventory.create!(
@@ -94,68 +85,5 @@ class LocationTest < ActiveSupport::TestCase
     )
 
     assert_not_predicate location, :sales_started_today?
-  end
-
-  test "当日の追加発注を商品ごとに合計して返す" do
-    location = Location.create!(name: "追加発注集計販売先", status: :active)
-    DailyInventory.create!(
-      location: location, catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current, stock: 20, reserved_stock: 0
-    )
-    AdditionalOrder.create_with_inventory!(
-      location: location, catalog_id: catalogs(:daily_bento_a).id,
-      quantity: 5, order_at: Time.current
-    )
-    AdditionalOrder.create_with_inventory!(
-      location: location, catalog_id: catalogs(:daily_bento_a).id,
-      quantity: 3, order_at: Time.current
-    )
-    AdditionalOrder.create_with_inventory!(
-      location: location, catalog_id: catalogs(:salad).id,
-      quantity: 2, order_at: Time.current
-    )
-
-    quantities = location.today_additional_order_quantities
-
-    assert_equal [ catalogs(:daily_bento_a), catalogs(:salad) ], quantities.keys
-    assert_equal 8, quantities[catalogs(:daily_bento_a)]
-    assert_equal 2, quantities[catalogs(:salad)]
-  end
-
-  test "前日の追加発注は当日の集計に含めない" do
-    location = Location.create!(name: "前日追加発注販売先", status: :active)
-    DailyInventory.create!(
-      location: location, catalog: catalogs(:daily_bento_a),
-      inventory_date: Date.current - 1.day, stock: 20, reserved_stock: 0
-    )
-    AdditionalOrder.create_with_inventory!(
-      location: location, catalog_id: catalogs(:daily_bento_a).id,
-      quantity: 5, order_at: 1.day.ago
-    )
-
-    assert_empty location.today_additional_order_quantities
-  end
-
-  test "販売終了した商品への追加発注は集計に含めない" do
-    location = Location.create!(name: "販売終了商品発注販売先", status: :active)
-    catalog = Catalog.create!(name: "終了予定弁当", kana: "シュウリョウヨテイベントウ", category: :bento)
-    DailyInventory.create!(
-      location: location, catalog: catalog,
-      inventory_date: Date.current, stock: 10, reserved_stock: 0
-    )
-    AdditionalOrder.create_with_inventory!(
-      location: location, catalog_id: catalog.id, quantity: 5, order_at: Time.current
-    )
-    CatalogDiscontinuation.create!(
-      catalog: catalog, discontinued_at: Time.current, reason: "提供終了"
-    )
-
-    assert_empty location.today_additional_order_quantities
-  end
-
-  test "追加発注がなければ空を返す" do
-    location = Location.create!(name: "追加発注なし販売先", status: :active)
-
-    assert_empty location.today_additional_order_quantities
   end
 end

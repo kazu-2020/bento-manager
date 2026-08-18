@@ -75,4 +75,46 @@ class AdditionalOrderTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test "指定日の追加発注を商品ごとに合計する" do
+    location = Location.create!(name: "追加発注集計販売先", status: :active)
+    DailyInventory.create!(
+      location: location, catalog: catalogs(:daily_bento_a),
+      inventory_date: Date.current, stock: 20, reserved_stock: 0
+    )
+    AdditionalOrder.create_with_inventory!(
+      location: location, catalog_id: catalogs(:daily_bento_a).id,
+      quantity: 5, order_at: Time.current
+    )
+    AdditionalOrder.create_with_inventory!(
+      location: location, catalog_id: catalogs(:daily_bento_a).id,
+      quantity: 3, order_at: Time.current
+    )
+    AdditionalOrder.create_with_inventory!(
+      location: location, catalog_id: catalogs(:salad).id,
+      quantity: 2, order_at: Time.current
+    )
+
+    quantities = AdditionalOrder.quantities_by_catalog_id(location: location)
+
+    assert_equal 8, quantities[catalogs(:daily_bento_a).id]
+    assert_equal 2, quantities[catalogs(:salad).id]
+  end
+
+  test "別の日や別の販売先の追加発注は集計に含めない" do
+    location = Location.create!(name: "追加発注集計対象販売先", status: :active)
+    other_location = Location.create!(name: "追加発注集計対象外販売先", status: :active)
+    AdditionalOrder.create_with_inventory!(
+      location: location, catalog_id: catalogs(:daily_bento_a).id,
+      quantity: 5, order_at: 1.day.ago
+    )
+    AdditionalOrder.create_with_inventory!(
+      location: other_location, catalog_id: catalogs(:daily_bento_a).id,
+      quantity: 7, order_at: Time.current
+    )
+
+    assert_empty AdditionalOrder.quantities_by_catalog_id(location: location)
+    assert_equal 5, AdditionalOrder.quantities_by_catalog_id(location: location, date: Date.current - 1.day)
+      .fetch(catalogs(:daily_bento_a).id)
+  end
 end
