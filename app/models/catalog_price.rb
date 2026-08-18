@@ -21,8 +21,10 @@ class CatalogPrice < ApplicationRecord
   scope :current, -> { effective_at(Time.current) }
   scope :by_kind, ->(kind) { where(kind: kind) }
 
+  # 同じ effective_from が並んだときの勝者を id で決める。第 2 ソートキーが無いと
+  # SQLite の走査順まかせになり、Ruby 側（pick_by_kind）と答えが割れうる
   def self.price_by_kind(kind:, at: Time.current)
-    by_kind(kind).effective_at(at).order(effective_from: :desc).first
+    by_kind(kind).effective_at(at).order(effective_from: :desc, id: :desc).first
   end
 
   # 読み込み済みの価格から price_by_kind と同じ 1 件を選ぶ
@@ -41,8 +43,11 @@ class CatalogPrice < ApplicationRecord
     # 揃えるのは enum の型自身の仕事なので、対応表を持たずに cast へ委ねる
     kind = type_for_attribute(:kind).cast(kind)
 
-    prices.select { |price| price.kind == kind && price.effective_at?(at) }
-          .max_by(&:effective_from)
+    # persisted? で未保存を落とす。読み込み済みの target には prices.build した行も
+    # 並ぶ（CatalogPricesController#edit や Catalogs::BaseCreator がそうする）が、
+    # SQL 版はそれを見ようがないので、拾うと preload の有無で答えが割れる
+    prices.select { |price| price.persisted? && price.kind == kind && price.effective_at?(at) }
+          .max_by { |price| [ price.effective_from, price.id ] }
   end
 
   # 指定日時に有効な価格か（effective_at スコープの Ruby 版、両端 inclusive）
@@ -50,6 +55,10 @@ class CatalogPrice < ApplicationRecord
   # @param at [Time, Date] 基準日時
   # @return [Boolean]
   def effective_at?(at)
+    # effective_from が無いうちは、いつの時点でも有効ではない。ここを Range に任せると
+    # (nil..nil) が全ての時刻を cover? してしまう
+    return false if effective_from.nil?
+
     # effective_until が nil なら終端なしの Range になり、開始端だけで判定される
     (effective_from..effective_until).cover?(self.class.boundary_time(at))
   end
@@ -57,9 +66,17 @@ class CatalogPrice < ApplicationRecord
   # 有効期間の境界に使う日時を決める
   #
   # Date をそのまま where に渡すと 'YYYY-MM-DD' として引用され、UTC で保存された
-  # datetime 文字列との文字列比較になる。両端の inclusive/exclusive が食い違ううえ、
-  # Ruby 側で同じ比較を書き起こせない。SQL と Ruby の 2 経路が同じ答えを返すために、
-  # 日付は SQL に渡す前に UTC 0 時へ寄せる（従来の文字列比較の境界と同じ位置）。
+  # datetime 文字列との文字列比較になる。この比較は開始端だけが exclusive になる
+  # （'2026-08-18 00:00:00.000000' は前方一致で長い分だけ大きく、'2026-08-18' 以下に
+  # ならない）。Ruby 側では書き起こせない非対称なので、日付は SQL に渡す前に UTC 0 時の
+  # Time へ寄せ、両端 inclusive の素直な日時比較に揃える。
+  #
+  # 境界の位置は変わらないが、UTC 0 時ちょうどに始まる価格の扱いだけは変わる。従来は
+  # その日から有効にならなかったものが、有効になる。Date を渡すのは
+  # Catalogs::PriceValidator 経由の呼び出し元（PricingRuleCreator#price_exists? など）。
+  #
+  # なお UTC 0 時（JST の 9 時）という境界そのものは、この文字列比較の副作用が
+  # そのまま残ったもの。JST の 0 時に直すかは価格の有効性が動く話なので別で扱う。
   #
   # DateTime は Date のサブクラスだが時刻を持ち、where でも完全な日時として引用される
   # ため触らない（instance_of? で日付だけを拾う）。

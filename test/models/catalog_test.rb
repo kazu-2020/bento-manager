@@ -115,6 +115,35 @@ class CatalogTest < ActiveSupport::TestCase
     end
   end
 
+  test "保存前の価格は、読み込み済みの一覧に並んでいても選ばれない" do
+    catalog = Catalog.preload(:prices).find(catalogs(:daily_bento_a).id)
+
+    # 価格編集の入口が空のレコードを組み立てると、読み込み済みの一覧に紛れ込む
+    # （CatalogPricesController#edit の `price_by_kind || prices.build` がこの形）
+    catalog.prices.build(kind: :bundle)
+    catalog.prices.build(kind: :regular, price: 9999, effective_from: Time.current)
+
+    assert_nil catalog.price_by_kind(:bundle), "保存前のレコードを掴んではいけない"
+    assert_not catalog.price_exists?(:bundle)
+    assert_equal 550, catalog.price_by_kind(:regular).price, "保存済みの価格が保存前に負けてはいけない"
+  end
+
+  test "適用開始日時が同じ価格が並んでも、読み込み済みかどうかで勝者が変わらない" do
+    catalog = Catalog.create!(name: "同時刻価格テスト", kana: "ドウジコクカカクテスト", category: :bento)
+    started_at = 1.day.ago
+    2.times do |i|
+      CatalogPrice.create!(
+        catalog: catalog, kind: :regular, price: 100 * (i + 1),
+        effective_from: started_at, effective_until: nil
+      )
+    end
+
+    unloaded = Catalog.find(catalog.id).price_by_kind(:regular)
+    loaded   = Catalog.preload(:prices).find(catalog.id).price_by_kind(:regular)
+
+    assert_equal unloaded.id, loaded.id
+  end
+
   test "価格の読み込み済みかどうかで、取得できる価格は変わらない" do
     catalog = catalogs(:salad)
     ended = CatalogPrice.create!(
