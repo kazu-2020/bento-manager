@@ -48,7 +48,13 @@ class DailyInventory < ApplicationRecord
     stock - reserved_stock
   end
 
-  # Task 6.4: 在庫減算（販売時）
+  # 在庫減算（販売時）
+  #
+  # 増減は必ず with_lock を通すこと（increment_stock! も同じ）。トランザクション
+  # 内で reload するため lock_version が常に最新に揃う。「SQLite では行ロックに
+  # ならないから」と外すと、楽観ロックが競合して StaleObjectError が POS 画面の
+  # 500 として表に出る。理由は docs/adr/0003-sqlite-concurrency-control.md を参照。
+  #
   # @param quantity [Integer] 減算する数量（正の整数）
   # @raise [ArgumentError] 数量が正の整数でない場合
   # @raise [InsufficientStockError] 在庫不足の場合
@@ -65,7 +71,10 @@ class DailyInventory < ApplicationRecord
     end
   end
 
-  # Task 6.4: 在庫加算（返品時、追加発注時）
+  # 在庫加算（差額精算での在庫復元時、追加発注時）
+  #
+  # with_lock の扱いは decrement_stock! の説明を参照
+  #
   # @param quantity [Integer] 加算する数量（正の整数）
   # @raise [ArgumentError] 数量が正の整数でない場合
   def increment_stock!(quantity)
