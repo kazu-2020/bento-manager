@@ -10,11 +10,12 @@ module Pos
 
         attr_reader :form
 
-        delegate :has_any_changes?, :preview_adjustment_amount, :adjustment_type,
-                 :preview_price_result, to: :form
+        delegate :has_any_changes?, to: :form
+        delegate :preview, to: :form, private: true
+        delegate :adjustment_type, :adjustment_amount, :discount_details, to: :preview
 
         def formatted_amount
-          helpers.number_to_currency(preview_adjustment_amount.abs)
+          helpers.number_to_currency(adjustment_amount.abs)
         end
 
         def card_class
@@ -33,12 +34,8 @@ module Pos
           end
         end
 
-        def discount_details
-          @discount_details ||= preview_price_result&.dig(:discount_details) || []
-        end
-
         def returned_coupons
-          discount_details
+          @returned_coupons ||= discount_details
             .select { |d| d[:requested_quantity].to_i > d[:quantity].to_i }
             .map do |d|
               {
