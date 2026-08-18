@@ -23,6 +23,47 @@ class CatalogPrice < ApplicationRecord
     by_kind(kind).effective_at(at).order(effective_from: :desc).first
   end
 
+  # 読み込み済みの価格から price_by_kind と同じ 1 件を選ぶ
+  #
+  # preload した prices に対して price_by_kind を呼ぶと関連が読み込み済みでも毎回
+  # クエリが飛ぶため、Ruby 側で同じ選択を行う入口を用意する。SQL 版と選択結果が
+  # ずれないよう、絞り込みは effective_at? に、優先順位は effective_from の降順に
+  # 揃えてある。
+  #
+  # @param prices [Enumerable<CatalogPrice>] 読み込み済みの価格
+  # @param kind [String, Symbol] 価格種別
+  # @param at [Time, Date] 基準日時
+  # @return [CatalogPrice, nil]
+  def self.pick_by_kind(prices, kind:, at: Time.current)
+    prices.select { |price| price.kind == kind.to_s && price.effective_at?(at) }
+          .max_by(&:effective_from)
+  end
+
+  # 指定日時に有効な価格か（effective_at スコープの Ruby 版、両端 inclusive）
+  #
+  # @param at [Time, Date] 基準日時
+  # @return [Boolean]
+  def effective_at?(at)
+    at = self.class.comparable_time(at)
+
+    effective_from <= at && (effective_until.nil? || at <= effective_until)
+  end
+
+  # 基準日時を SQL 版と同じ土俵に載せる
+  #
+  # Date を where に渡すと 'YYYY-MM-DD' として引用され、UTC で保存された datetime
+  # 文字列と文字列比較される。つまり境界は UTC の 0 時になる。Ruby 側で比較するとき
+  # も同じ境界にしないと、preload の有無で結果が変わってしまう。
+  #
+  # DateTime は Date のサブクラスだが時刻を持ち、where でも完全な日時として引用される
+  # ため、ここでは触らない（instance_of? で日付だけを拾う）。
+  #
+  # @param at [Time, Date]
+  # @return [Time, Date]
+  def self.comparable_time(at)
+    at.instance_of?(Date) ? at.to_time(:utc) : at
+  end
+
   # 新しい価格を作成し、既存の有効な価格があれば終了させる
   # @param catalog [Catalog] 対象カタログ
   # @param kind [String, Symbol] 価格種別

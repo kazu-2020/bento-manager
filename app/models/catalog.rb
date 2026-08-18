@@ -48,10 +48,16 @@ class Catalog < ApplicationRecord
                              message: "はカタカナで入力してください" }
 
   # 指定した種別の有効な価格を取得（存在しない場合は nil）
+  #
+  # prices が読み込み済みなら Ruby 側で選ぶ。preload しても毎回クエリが飛ぶと、
+  # 商品カード 1 枚ごとに価格を引く販売画面で N+1 になるため
+  #
   # @param kind [String, Symbol] 価格種別 ('regular' | 'bundle')
   # @param at [Time] 基準日時（デフォルト: 現在）
   # @return [CatalogPrice, nil]
   def price_by_kind(kind, at: Time.current)
+    return CatalogPrice.pick_by_kind(prices, kind: kind, at: at) if prices.loaded?
+
     prices.price_by_kind(kind: kind, at: at)
   end
 

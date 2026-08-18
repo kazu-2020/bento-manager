@@ -21,9 +21,12 @@ module RefundFormBuildable
     @location = Location.active.find(params[:location_id])
   end
 
+  # 修正カートの母集合は元の販売の商品を先に採るため（RefundForm#catalog_lookup）、
+  # 明細側の catalog にも価格を載せておく。在庫側の catalog にだけ載せても、
+  # 同じ商品を両方が持つときは明細側が勝って読み込み済みにならない
   def set_sale
     @sale = @location.sales
-                     .preload(items: :catalog)
+                     .preload(items: [ { catalog: :prices }, :catalog_price ])
                      .find(params[:sale_id])
   end
 
@@ -52,7 +55,8 @@ module RefundFormBuildable
   def set_inventories
     @inventories = @location
                       .today_inventories
-                      .eager_load(catalog: :prices)
+                      .eager_load(:catalog)
+                      .preload(catalog: :prices)
                       .merge(Catalog.category_order)
   end
 

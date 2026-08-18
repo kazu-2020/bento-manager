@@ -1,7 +1,7 @@
 require "test_helper"
 
 class CatalogTest < ActiveSupport::TestCase
-  fixtures :catalogs
+  fixtures :catalogs, :catalog_prices
 
   test "validations" do
     @subject = Catalog.new(name: "テスト弁当", kana: "テストベントウ", category: :bento)
@@ -96,6 +96,54 @@ class CatalogTest < ActiveSupport::TestCase
     catalog_without_prices = Catalog.create!(name: "価格なしテスト", kana: "カカクナシテスト", category: :bento)
 
     assert_nil catalog_without_prices.price_by_kind(:regular)
+  end
+
+  test "価格を読み込み済みの商品は、価格を引くのに追加の問い合わせをしない" do
+    catalog = Catalog.preload(:prices).find(catalogs(:salad).id)
+
+    assert_no_queries do
+      assert_equal 250, catalog.price_by_kind(:regular).price
+      assert_equal 150, catalog.price_by_kind(:bundle).price
+    end
+  end
+
+  test "価格を読み込み済みでも、有効期間外の価格は取得されない" do
+    catalog = catalogs(:daily_bento_b)
+    past_price = CatalogPrice.create!(
+      catalog: catalog, kind: :regular, price: 400,
+      effective_from: 3.days.ago, effective_until: 2.days.ago
+    )
+    catalog.prices.reload
+
+    assert_no_queries do
+      assert_equal 500, catalog.price_by_kind(:regular).price
+      assert_equal past_price, catalog.price_by_kind(:regular, at: 2.days.ago - 1.hour)
+    end
+  end
+
+  test "価格を読み込み済みで有効な価格がない商品は nil を返す" do
+    catalog = Catalog.preload(:prices).find(catalogs(:daily_bento_a).id)
+
+    assert_no_queries do
+      assert_nil catalog.price_by_kind(:bundle)
+      assert_not catalog.price_exists?(:bundle)
+    end
+  end
+
+  test "価格の読み込み済みかどうかで、取得できる価格は変わらない" do
+    catalog = catalogs(:salad)
+    CatalogPrice.create!(
+      catalog: catalog, kind: :regular, price: 200,
+      effective_from: 1.year.ago, effective_until: 1.month.ago
+    )
+
+    base_times = [ Time.current, 2.weeks.ago, 6.months.ago, 2.years.ago, Date.current, 6.months.ago.to_date, 2.weeks.ago.to_datetime ]
+    preloaded = Catalog.preload(:prices).find(catalog.id)
+
+    unloaded_results = base_times.index_with { |at| Catalog.find(catalog.id).price_by_kind(:regular, at: at)&.id }
+    loaded_results   = base_times.index_with { |at| preloaded.price_by_kind(:regular, at: at)&.id }
+
+    assert_equal unloaded_results, loaded_results
   end
 
   test "提供終了した商品は販売可能な一覧から除外される" do

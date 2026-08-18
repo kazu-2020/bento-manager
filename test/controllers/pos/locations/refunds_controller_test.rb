@@ -7,6 +7,7 @@ module Pos
     class RefundsControllerTest < ActionDispatch::IntegrationTest
       include RefundParamsHelper
       include SaleTestHelper
+      include QueryCountHelper
 
       fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules,
                :daily_inventories, :discounts, :coupons, :sales, :sale_items, :sale_discounts
@@ -30,6 +31,32 @@ module Pos
         get new_pos_location_refund_path(@location, sale_id: @sale.id)
 
         assert_redirected_to "/employee/login"
+      end
+
+      test "差額精算画面は元の販売の明細が増えても問い合わせ本数が増えない" do
+        login_as_employee(@employee)
+        request = -> { get new_pos_location_refund_path(@location, sale_id: @sale.id) }
+
+        assert_queries_unaffected_by("元の販売の明細ごとに価格の読み込みが走っている", request: request) do
+          SaleItem.create!(
+            sale: @sale,
+            catalog: @salad,
+            catalog_price: catalog_prices(:salad_bundle),
+            quantity: 1,
+            unit_price: 150,
+            line_total: 150,
+            sold_at: @sale.sale_datetime
+          )
+          SaleItem.create!(
+            sale: @sale,
+            catalog: @bento_b,
+            catalog_price: catalog_prices(:daily_bento_b_regular),
+            quantity: 1,
+            unit_price: 500,
+            line_total: 500,
+            sold_at: @sale.sale_datetime
+          )
+        end
       end
 
       test "employee can access new page" do

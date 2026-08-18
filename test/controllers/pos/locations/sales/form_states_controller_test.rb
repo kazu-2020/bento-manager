@@ -29,6 +29,18 @@ module Pos
         # Turbo Stream レスポンステスト
         # ============================================================
 
+        test "入力のたびの再描画でも価格の問い合わせは1回で済む" do
+          login_as_employee(@employee)
+
+          assert_queries_match(/FROM ["`]catalog_prices["`]/, count: 1) do
+            post pos_location_sales_form_state_path(@location),
+                 params: { ghost_cart: { @bento_a.id.to_s => { quantity: "1" } } },
+                 headers: { "Accept" => "text/vnd.turbo-stream.html" }
+          end
+
+          assert_response :success
+        end
+
         test "responds with turbo_stream format" do
           login_as_employee(@employee)
 
