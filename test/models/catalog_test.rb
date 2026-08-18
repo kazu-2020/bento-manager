@@ -128,20 +128,22 @@ class CatalogTest < ActiveSupport::TestCase
     assert_equal 550, catalog.price_by_kind(:regular).price, "保存済みの価格が保存前に負けてはいけない"
   end
 
-  test "適用開始日時が同じ価格が並んでも、読み込み済みかどうかで勝者が変わらない" do
+  # 2 経路が一致することだけを見ても、どちらも id 昇順で拾っている状態を通してしまう
+  # （SQLite はこの規模なら索引を使わず rowid 順に返し、max_by も最初の最大値を返す）。
+  # 「後から作った価格が勝つ」という決め方そのものを両経路に対して押さえる
+  test "適用開始日時が同じ価格が並んだら、後から作ったほうが勝つ" do
     catalog = Catalog.create!(name: "同時刻価格テスト", kana: "ドウジコクカカクテスト", category: :bento)
     started_at = 1.day.ago
-    2.times do |i|
+    prices = 2.times.map do |i|
       CatalogPrice.create!(
         catalog: catalog, kind: :regular, price: 100 * (i + 1),
         effective_from: started_at, effective_until: nil
       )
     end
+    latest = prices.max_by(&:id)
 
-    unloaded = Catalog.find(catalog.id).price_by_kind(:regular)
-    loaded   = Catalog.preload(:prices).find(catalog.id).price_by_kind(:regular)
-
-    assert_equal unloaded.id, loaded.id
+    assert_equal latest.id, Catalog.find(catalog.id).price_by_kind(:regular).id
+    assert_equal latest.id, Catalog.preload(:prices).find(catalog.id).price_by_kind(:regular).id
   end
 
   test "価格の読み込み済みかどうかで、取得できる価格は変わらない" do
