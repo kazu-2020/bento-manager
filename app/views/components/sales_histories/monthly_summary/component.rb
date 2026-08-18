@@ -3,6 +3,8 @@
 module SalesHistories
   module MonthlySummary
     class Component < Application::Component
+      NO_DATA = "-"
+
       def initialize(summary:)
         @summary = summary
       end
@@ -15,10 +17,16 @@ module SalesHistories
         summary[:best_day]
       end
 
-      def best_day_amount
-        return "-" unless best_day
+      def formatted_total_amount
+        helpers.number_to_currency(summary[:total_amount])
+      end
 
-        "¥#{number_with_delimiter(best_day[:amount])}"
+      def formatted_daily_average
+        helpers.number_to_currency(summary[:daily_average])
+      end
+
+      def formatted_best_day_amount
+        helpers.number_to_currency(best_day[:amount]) if best_day
       end
 
       def best_day_label

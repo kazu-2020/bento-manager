@@ -27,7 +27,7 @@
                   <td class="font-bold"><%= i + 1 %></td>
                   <td><%= entry[:catalog_name] %></td>
                   <td class="text-right font-bold"><%= entry[:quantity] %> 個</td>
-                  <td class="text-right text-base-content/60 text-xs">¥<%= number_with_delimiter(entry[:amount]) %></td>
+                  <td class="text-right text-base-content/60 text-xs"><%= helpers.number_to_currency(entry[:amount]) %></td>
                 </tr>
               <% end %>
             </tbody>
@@ -63,7 +63,7 @@
                   <td class="font-bold"><%= i + 1 %></td>
                   <td><%= entry[:catalog_name] %></td>
                   <td class="text-right font-bold"><%= entry[:quantity] %> 個</td>
-                  <td class="text-right text-base-content/60 text-xs">¥<%= number_with_delimiter(entry[:amount]) %></td>
+                  <td class="text-right text-base-content/60 text-xs"><%= helpers.number_to_currency(entry[:amount]) %></td>
                 </tr>
               <% end %>
             </tbody>
