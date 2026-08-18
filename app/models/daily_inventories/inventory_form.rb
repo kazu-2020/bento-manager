@@ -7,6 +7,7 @@ module DailyInventories
     include Rails.application.routes.url_helpers
 
     include ItemSelectable
+    include ::GhostForms::SubmissionReadable
 
     # submitted は全キーが商品 ID の group（GhostForms::ParamsFilter が使う）
     SUBMITTED_PARAMS_SHAPE = {}.freeze
@@ -15,10 +16,12 @@ module DailyInventories
 
     validate :at_least_one_item_selected
 
-    def initialize(location:, items:, search_query: nil)
+    # submitted 自体も受け取るのは、壊れた送信を SubmissionReadable が差し戻すため
+    def initialize(location:, items:, search_query: nil, submitted: ::GhostForms::Submission.absent)
       @location = location
       @search_query = search_query&.strip.presence
       @items = items
+      @submitted = submitted
       @created_count = 0
     end
 
@@ -52,6 +55,9 @@ module DailyInventories
     private
 
     def at_least_one_item_selected
+      # 読めない送信では「1 件も無い」のか「捨てられただけ」なのか判定しようがない
+      return if submitted_unreadable?
+
       errors.add(:base, :no_items_selected) unless selected_count.positive?
     end
   end

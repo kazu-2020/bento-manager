@@ -87,7 +87,66 @@ SUBMITTED_PARAMS_SHAPE = {
 `SUBMITTED_PARAMS_SHAPE` の更新が必須で、忘れると値が捨てられる。
 検証できる構造と、そう決めた理由は [params_filter.rb](app/models/ghost_forms/params_filter.rb) に書いてある。
 
-### 5. Turbo Stream で Ghost Form 自身も差し替える
+### 5. 「未送信」「送信されたが読めない」「送信あり」を状態として扱う
+
+`submitted_params` は素のハッシュではなく [`GhostForms::Submission`](app/models/ghost_forms/submission.rb) を返す。
+フィルタ後の中身が空かどうかだけで分岐してはいけない。不正なパラメータだけの送信は
+フィルタで空に畳まれるため、「まだ何も送られていない」と見分けがつかなくなり、
+初期値の再構築や「全て 0」の確定に化ける。返品なら修正後の販売が作られないまま元の販売が
+取り消されて全額返金になり、在庫訂正なら拒否すべき要求が `bulk_recreate` で既存在庫を
+破壊的に作り直す。
+
+| 状態 | 判定 | 意味 |
+| --- | --- | --- |
+| 未送信 | `submitted.absent?` | 初回描画。元の販売や既存在庫から初期値を作る |
+| 送信されたが読めない | `submitted.unreadable?(必須キー)` | 壊れた送信。差し戻す |
+| 送信あり | 上記以外 | `submitted.values` を読む |
+
+**何が必須かはフォームが決める**。既定は最上位全体で、一部のキーだけが必須なフォームは
+`required_submitted_keys` を上書きする。返品は `corrected` さえ届けば `coupon` は空でよいので、
+引数なしの `unreadable?` は成り立たない（`unreadable?` に既定値を置いていないのはこのため）。
+
+差し戻しはフォームが担う。[`GhostForms::SubmissionReadable`](app/models/ghost_forms/submission_readable.rb)
+を include し、`@submitted` に `Submission` を代入すれば `:unreadable_submission` が付く。
+判定を呼ぶのは concern だけで、フォームやコントローラーが `unreadable?` を直接叩くことはない。
+同じフォームは確定用と Ghost Form 用の 2 つのコントローラーから組み立てられるため（ルール 3）、
+コントローラーに置くと片方が素通しになる。
+
+```ruby
+class RefundForm
+  include ::GhostForms::SubmissionReadable
+
+  def initialize(sale:, submitted: ::GhostForms::Submission.absent)
+    @submitted = submitted
+    @corrected_quantities = submitted.absent? ? default_quantities : read(submitted["corrected"])
+  end
+
+  private
+
+  # 送信されたなら必ず中身があるはずの最上位キー。上書きしなければ最上位全体を見る
+  def required_submitted_keys
+    %w[corrected]
+  end
+end
+```
+
+`Submission` が見るのは密化前の、届いたままのハッシュである（ルール 7）。密にしたあとの
+数量ハッシュは母集合の分だけ必ず埋まるので、そちらで空判定をしてはいけない。
+
+**`absent` を作れるのはフォームの既定引数（＝`new` アクション）だけ**で、`submitted_params`
+経由で作られた submission は絶対に `absent` にならない。名前空間ごとキーが届かない POST も
+「未送信」ではなく壊れた送信として扱う。ここを畳むと在庫訂正が既存在庫からの再構築に化けて
+`bulk_recreate` が走る。
+
+コントローラーが `absent?` を見てよいのは初期値の作り分けだけで、拒否の判断に使ってはいけない。
+文言は `ja.activemodel.errors.messages.unreadable_submission` に 1 つだけ置いてあり、
+新しいフォームが include しても翻訳の追加は要らない。
+
+なお在庫系のフォームは、items をコントローラーが組み立てて `items:` と `submitted:` の両方を
+受け取る形が残っている。`AdditionalOrders::OrderForm` のように submitted だけを受けて
+フォーム内で組み立てる形に寄せる余地がある。
+
+### 6. Turbo Stream で Ghost Form 自身も差し替える
 
 再描画対象に Ghost Form を含めないと、hidden field が古い状態のまま残り、次の送信で以前の値を送ってしまう。
 
@@ -103,7 +162,7 @@ SUBMITTED_PARAMS_SHAPE = {
 <% end %>
 ```
 
-### 6. 数量ハッシュは母集合に対して密にする
+### 7. 数量ハッシュは母集合に対して密にする
 
 無効化された input はブラウザが送信しない。届かないキーは 0 を意味するが、疎なハッシュを
 そのまま公開すると、その規則を読み手が各自 `|| 0` で書き直すことになり、1 人でも書き忘れると
@@ -127,7 +186,7 @@ end
 
 なお「送信されたが中身が空」は壊れた送信であって「全て 0」ではない。密にしたハッシュは
 母集合の分だけ必ず埋まるため空かどうかでは見分けられない。埋める前の、届いたままの
-ハッシュで判定すること。
+ハッシュで判定すること（ルール 5 の `GhostForms::Submission` がこれを担う）。
 
 ## 理由
 

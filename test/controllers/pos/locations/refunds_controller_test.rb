@@ -186,7 +186,7 @@ module Pos
 
         assert_response :unprocessable_entity
         assert_not_predicate @sale.reload, :voided?
-        assert_equal "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください",
+        assert_equal "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください",
                      flash[:alert]
       end
 
@@ -201,7 +201,41 @@ module Pos
         end
 
         assert_response :unprocessable_entity
-        assert_equal "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください",
+        assert_equal "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください",
+                     flash[:alert]
+      end
+
+      test "refund キーの無い送信も、壊れた送信として差し戻される" do
+        login_as_employee(@employee)
+
+        # 名前空間ごと届かなかったのは「未送信」ではない。初回描画と同じに畳むと
+        # 元の販売から初期値が組み直され、直しようのない「変更してください」になる
+        assert_no_difference [ "Refund.count", "Sale.count" ] do
+          post pos_location_refunds_path(@location), params: { sale_id: @sale.id }
+        end
+
+        assert_response :unprocessable_entity
+        assert_not_predicate @sale.reload, :voided?
+        assert_equal "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください",
+                     flash[:alert]
+      end
+
+      # 葉が全滅した group を残すと `{"<id>" => {}}` が中身のある送信に見え、
+      # Quantities.from が {id => 0} に落として全額返金まで通ってしまう
+      test "数量の葉が全て捨てられた送信は、全て0ではなく壊れた送信として差し戻される" do
+        login_as_employee(@employee)
+
+        assert_no_difference [ "Refund.count", "Sale.count" ] do
+          post pos_location_refunds_path(@location),
+               params: {
+                 sale_id: @sale.id,
+                 refund: { corrected: { @bento_a.id.to_s => { quantity: { nested: "1" } } } }
+               }
+        end
+
+        assert_response :unprocessable_entity
+        assert_not_predicate @sale.reload, :voided?
+        assert_equal "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください",
                      flash[:alert]
       end
 

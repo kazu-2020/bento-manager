@@ -39,9 +39,11 @@ module Pos
         @catalogs = Catalog.available.category_order
       end
 
-      def build_form(submitted = {})
-        items = ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
-        ::DailyInventories::InventoryForm.new(location: @location, items: items)
+      def build_form(submitted = ::GhostForms::Submission.absent)
+        items = ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted.values)
+        ::DailyInventories::InventoryForm.new(
+          location: @location, items: items, submitted: submitted
+        )
       end
     end
   end
