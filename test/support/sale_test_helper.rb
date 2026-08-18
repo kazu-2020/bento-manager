@@ -1,5 +1,5 @@
 module SaleTestHelper
-  def create_sale(location:, customer_type:, sale_datetime:, status: :completed, voided_at: nil, voided_by_employee: nil)
+  def create_sale(location:, customer_type:, sale_datetime:, status: :completed, voided_at: nil, voided_by_employee: nil, corrected_from_sale: nil)
     Sale.create!(
       location:,
       customer_type:,
@@ -9,7 +9,8 @@ module SaleTestHelper
       final_amount: 550,
       employee: employees(:verified_employee),
       voided_at:,
-      voided_by_employee:
+      voided_by_employee:,
+      corrected_from_sale:
     )
   end
 

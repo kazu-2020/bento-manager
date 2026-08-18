@@ -72,6 +72,55 @@ t.integer :status, comment: "販売状態（0: active, 1: inactive）"
 t.integer :role, comment: "従業員種別（0: owner, 1: salesperson）"
 ```
 
+## テーブル再作成を伴う変更には disable_ddl_transaction! が必須
+
+SQLite は CHECK 制約の追加・外部キーの変更・カラムの型や照合順序の変更を `ALTER TABLE` で実現できない。Rails はこれらを**テーブル再作成**（一時テーブルへコピー → 元を `DROP TABLE` → 元の名前で復元）に展開する。
+
+このとき `DROP TABLE` の暗黙 DELETE が、子テーブルの `ON DELETE CASCADE` を発火させる。Rails は `disable_referential_integrity` で `PRAGMA foreign_keys = OFF` を発行して防ごうとするが、**この PRAGMA は SQLite ではトランザクション内で no-op** になる。マイグレーションは既定でトランザクションに包まれているため、防御が効かない。
+
+[rails/rails#55907](https://github.com/rails/rails/pull/55907) がこの問題を修正しているが、直っているのは `alter_table` を**トランザクション外**で呼んだ場合だけで、マイグレーション経由では Rails 8.1.3.1 でも消える。実測:
+
+| 条件 | 子テーブルの行 |
+| --- | --- |
+| 外側トランザクションなし（上流テストと同条件） | 残る |
+| 外側トランザクションあり（マイグレーションの既定） | **消える** |
+
+マイグレーション経路の修正は [rails/rails#57128](https://github.com/rails/rails/pull/57128) で提案されているが、2026-08 時点で **open のまま**。本番でのデータ消失報告が複数寄せられている既知の不具合であり、`ON DELETE SET NULL` では外部キー列の破損も起きる。この PR がマージされるまで `disable_ddl_transaction!` は外せない。
+
+```ruby
+# 必須: テーブル再作成を伴うマイグレーション
+class AddCheckConstraints < ActiveRecord::Migration[8.1]
+  disable_ddl_transaction!
+  # ...
+end
+```
+
+これを怠ると子テーブルが全件削除される。**例外も `PRAGMA foreign_key_check` の警告も出ない**ため、本番で気づく手段がない。
+
+対象となる操作（Rails 8.1.3.1 の `sqlite3_adapter.rb` で確認）:
+
+| 操作 | 再作成 |
+| --- | --- |
+| `add_check_constraint` / `remove_check_constraint` | する |
+| `add_foreign_key` / `remove_foreign_key` | する |
+| `change_column` / `change_column_default` / `change_column_null` | する |
+| `remove_column` / `remove_columns` | する |
+| `rename_column` | する |
+| `add_timestamps` | する |
+| `add_column` | **条件付き**（下記） |
+| `add_index` / `remove_index` | しない |
+| `rename_table` | しない |
+
+`add_column` が再作成するのは `invalid_alter_table_type?` が真になる場合、すなわち主キーの追加、**`null: false` を `default` なしで指定した場合**、`virtual` かつ `stored` の列を足す場合。`null: false` は日常的に書くので、実質「多くの `add_column` は再作成する」と考えたほうがよい。
+
+「カラムを 1 本足すだけ」「NOT NULL に変えるだけ」のような軽い変更でも子テーブルが全消えするため、**再作成しない操作だけで構成されていると確信できない限り `disable_ddl_transaction!` を付ける**。
+
+`disable_ddl_transaction!` を付けるとマイグレーション全体の原子性は失われるが、個々の再作成は内部で自前のトランザクションを張るため途中状態のテーブルは生まれない。データ起因で失敗しうる変更（CHECK 制約の追加など）は、実行前に違反行がないことを検査してから進めること。
+
+**`disable_referential_integrity` のブロックで囲んでも代用にならない。** 同メソッドは `defer_foreign_keys = ON` と `foreign_keys = OFF` を発行するが、トランザクション内では後者だけが無視される。前者が遅延させるのは制約違反の**判定**であって `ON DELETE CASCADE` の**アクション**は止まらないため、囲んでも子テーブルは消える（実測で確認）。逆に `disable_ddl_transaction!` を付けたあとは `alter_table` が内部で同メソッドを呼ぶので、明示的に囲む必要もない。
+
+テストでは検知できない。テスト DB は `schema.rb` から構築され、マイグレーションを一度も実行しないため。
+
 ## Migration Modification
 既存テーブル/カラムへのコメント追加:
 ```ruby
