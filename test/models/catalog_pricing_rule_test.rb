@@ -27,18 +27,19 @@ class CatalogPricingRuleTest < ActiveSupport::TestCase
     must belong_to(:target_catalog).class_name("Catalog")
   end
 
-  test "有効期間の終了日は開始日より後でなければならない" do
+  test "有効期間の終了日は開始日以降でなければならず、同じ日なら1日だけ有効なルールになる" do
     catalog = catalogs(:salad)
     today = Date.current
 
     before_start = CatalogPricingRule.new(target_catalog: catalog, price_kind: :bundle, trigger_category: :bento, max_per_trigger: 1, valid_from: today, valid_until: 1.day.ago.to_date)
 
     assert_not before_start.valid?
-    assert_includes before_start.errors[:valid_until], "は有効開始日より後の日付を指定してください"
+    assert_includes before_start.errors[:valid_until], "は有効開始日以降の日付を指定してください"
 
-    same_day = CatalogPricingRule.new(target_catalog: catalog, price_kind: :bundle, trigger_category: :bento, max_per_trigger: 1, valid_from: today, valid_until: today)
+    same_day = CatalogPricingRule.create!(target_catalog: catalog, price_kind: :bundle, trigger_category: :bento, max_per_trigger: 1, valid_from: today, valid_until: today)
 
-    assert_not same_day.valid?
+    assert_includes CatalogPricingRule.active_at(today), same_day
+    assert_not_includes CatalogPricingRule.active_at(today + 1), same_day
 
     after_start = CatalogPricingRule.new(target_catalog: catalog, price_kind: :bundle, trigger_category: :bento, max_per_trigger: 1, valid_from: today, valid_until: 1.day.from_now.to_date)
 

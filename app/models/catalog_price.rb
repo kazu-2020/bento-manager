@@ -44,6 +44,8 @@ class CatalogPrice < ApplicationRecord
   private
 
   # effective_until が effective_from より後であることを検証
+  # effective_from / effective_until は datetime のため、同時刻は有効期間ゼロを意味する。
+  # 同日を有効とする date 型の有効期間とは境界の意味が異なる
   def valid_date_range
     return if effective_from.blank? || effective_until.blank?
 
