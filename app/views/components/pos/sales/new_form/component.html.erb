@@ -8,7 +8,7 @@
                   class: "flex flex-col flex-1 min-h-0",
                   data: { ghost_form_target: "originalForm" } do |f| %>
       <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
-        <%# 在庫再登録バナー（販売未開始時のみ表示） %>
+        <%# 在庫訂正バナー（販売未開始時のみ表示） %>
         <% if re_registerable? %>
           <div class="shrink-0 px-3 pt-2">
             <div class="alert alert-info alert-soft">

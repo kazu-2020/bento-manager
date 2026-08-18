@@ -212,7 +212,7 @@ module Pos
 
         # inventory キーが丸ごと無い POST を「未送信」と読むと、既存在庫からの再構築に
         # 化けて bulk_recreate が走り、reserved_stock ごと作り直されてしまう
-        test "inventory キーの無い再登録は既存の在庫を作り直さずエラーになる" do
+        test "inventory キーの無い訂正は既存の在庫を作り直さずエラーになる" do
           login_as_employee(@employee)
           existing = DailyInventory.create!(
             location: @location, catalog: @bento_a,
