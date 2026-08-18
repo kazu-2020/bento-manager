@@ -52,8 +52,8 @@ class Sale < ApplicationRecord
   # 判定すると、同じ販売を読み込んだ 2 つのリクエストが並行して差額精算に
   # 入ったとき、どちらの `voided?` も false のままガードを通過し、在庫の
   # 二重復元と Refund の二重作成が起きる。
-  # SQLite でこの判定が直列化される理由は DailyInventory#decrement_stock! の
-  # 説明と同じ（BEGIN IMMEDIATE + トランザクション内の reload）。
+  # SQLite では with_lock は行ロックにならないが、それでもこの判定が直列化
+  # される理由は docs/adr/0003-sqlite-concurrency-control.md を参照。
   #
   # @param voided_by [Employee] 取消担当者
   # @return [Boolean] `true` if the record was updated.

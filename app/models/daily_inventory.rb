@@ -50,13 +50,10 @@ class DailyInventory < ApplicationRecord
 
   # 在庫減算（販売時）
   #
-  # 増減は必ず with_lock を通すこと（increment_stock! も同じ）。SQLite では
-  # `FOR UPDATE` が無視されるので with_lock は行ロックにならないが、
-  # トランザクション内で reload するため lock_version が常に最新に揃う。加えて
-  # sqlite3 アダプタは BEGIN IMMEDIATE で書き込みを直列化するので、reload から
-  # save! までの間に他の接続が書き込むこともない。
-  # 「SQLite では効かないから」と with_lock を外すと、楽観ロックが競合して
-  # StaleObjectError が POS 画面の 500 として表に出る。
+  # 増減は必ず with_lock を通すこと（increment_stock! も同じ）。トランザクション
+  # 内で reload するため lock_version が常に最新に揃う。「SQLite では行ロックに
+  # ならないから」と外すと、楽観ロックが競合して StaleObjectError が POS 画面の
+  # 500 として表に出る。理由は docs/adr/0003-sqlite-concurrency-control.md を参照。
   #
   # @param quantity [Integer] 減算する数量（正の整数）
   # @raise [ArgumentError] 数量が正の整数でない場合
