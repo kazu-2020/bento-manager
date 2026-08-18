@@ -2,7 +2,6 @@
 # amount: 差額（正=返金、負=追加徴収、0=等価交換）
 #
 # 1 つの販売が元の販売になれるのは高々 1 回（refunds.original_sale_id は一意）。
-# 元の販売を変えずに 2 件目を足すことはできない。
 partial_refund:
   original_sale: voided_sale
   employee: owner_employee

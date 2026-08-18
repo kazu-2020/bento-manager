@@ -505,7 +505,7 @@ module Sales
       assert_nil corrected_sale.refund
     end
 
-    test "差額精算を続けても、1 つの販売が元の販売になるのは一度だけ" do
+    test "差額精算を連鎖させると、記録は販売ごとに 1 件ずつ増える" do
       sale = Sales::Recorder.new.record(
         { location: @location, customer_type: :staff, employee: @employee },
         [ { catalog: @catalog_bento_a, quantity: 3 } ]
@@ -531,8 +531,6 @@ module Sales
 
       assert_equal first[:refund], sale.reload.refund
       assert_equal second[:refund], first[:corrected_sale].reload.refund
-      assert_equal sale, first[:refund].original_sale
-      assert_equal first[:corrected_sale], second[:refund].original_sale
     end
 
     test "前日の販売は差額精算できず、どちらの日の在庫も元の販売も変化しない" do

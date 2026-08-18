@@ -1,5 +1,5 @@
 class MoveCorrectionLinkToRefunds < ActiveRecord::Migration[8.1]
-  # remove_foreign_key と remove_column は SQLite ではテーブル再作成
+  # remove_column は SQLite ではテーブル再作成
   # （一時テーブルへコピー → 元を DROP TABLE → 元の名前で復元）に展開される。
   # DDL トランザクションを張ったまま再作成すると DROP TABLE sales の暗黙 DELETE が
   # sale_items / sale_discounts の ON DELETE CASCADE を発火させ、例外も
@@ -28,7 +28,9 @@ class MoveCorrectionLinkToRefunds < ActiveRecord::Migration[8.1]
       remove_index :refunds, :original_sale_id
       add_index :refunds, :original_sale_id, unique: true
 
-      remove_foreign_key :sales, :sales, column: :corrected_from_sale_id
+      # remove_foreign_key は要らない。SQLite アダプタの remove_column が
+      # 削除するカラムの外部キーも一緒に落とすため、先に呼ぶとテーブル再作成が
+      # 2 回走り、CASCADE で子テーブルが消える窓を無駄に 1 回増やすことになる
       remove_column :sales, :corrected_from_sale_id
     end
   end
@@ -49,7 +51,7 @@ class MoveCorrectionLinkToRefunds < ActiveRecord::Migration[8.1]
   # 一意インデックスは違反行があると張れない。エラーは重複した値を教えてくれないため、
   # 事前に全件を検査して、是正すべき行を名指しで報告する。
   def reject_duplicate_original_sales!
-    duplicates = select_all(<<~SQL.squish).rows
+    duplicates = select_rows(<<~SQL.squish)
       SELECT original_sale_id, COUNT(*) FROM refunds
       GROUP BY original_sale_id HAVING COUNT(*) > 1
     SQL
