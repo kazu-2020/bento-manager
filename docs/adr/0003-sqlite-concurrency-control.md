@@ -73,20 +73,23 @@ PostgreSQL に移せば `with_lock` は本物の `FOR UPDATE` になる。**移�
 
 決定 1 は次に依存している。**Rails を上げるときはここを確認する。**
 
-- sqlite3 アダプタが `BEGIN IMMEDIATE` を使うこと。activerecord 8.1 では `sqlite3_adapter.rb` が接続パラメータに `default_transaction_mode: :immediate` を**マージで上書きして固定**しており、`config/database.yml` からは変えられない。設定で外れる心配は無いが、アダプタ側の既定が変われば決定 1 の根拠の半分が消える
+- sqlite3 アダプタが `BEGIN IMMEDIATE` を使うこと。activerecord 8.1 では `sqlite3/database_statements.rb` の `begin_db_transaction` が `internal_begin_transaction(:immediate, nil)` と**モードをハードコード**しており、`config/database.yml` からは変えられない（`sqlite3_adapter.rb` が接続パラメータへマージしている `default_transaction_mode: :immediate` は sqlite3 gem 側の `db.transaction` 用で、Rails はこの経路を通らない）。設定で外れる心配は無いが、このハードコードが変われば決定 1 の根拠の半分が消える
+- `RealTransaction#materialize!` は `joinable?` が false のとき `BEGIN DEFERRED` を使う。アプリの `Model.transaction` は joinable なので IMMEDIATE 側だが、`joinable: false` を渡す経路を足すときはこの前提の外に出る
 - `lock!`（`with_lock` の実体）は、未保存の変更を持つレコードに対しては例外を投げる。`with_lock` に入る前に属性を書き換えてはいけない
+
+1 つ目は `test/integration/sqlite_transaction_mode_test.rb` が検知する。実際に `BEGIN` を発行させ、`BEGIN immediate TRANSACTION` が出ることを確かめている（`joinable: false` を渡すと `BEGIN deferred TRANSACTION` になることも確認済み）。**この前提だけはコメントではなくテストで支える。** ここが静かに外れると、決定 1 が守られているように見えたまま二重返金が再発し、他に気づく手段が無いため。
 
 ## 決定不要として閉じた論点
 
 - **共有 concern への抽出**: 「一度きりの状態遷移」は `Sale#void!` にしか無い。`CatalogDiscontinuation` は決定 4 のとおり一意インデックスで守られ、`AdditionalOrder` と `Refund` は append-only で遷移が存在しない。`Employee#status` は Rodauth の管轄。**一員しかいない抽象**になるため作らない
-- **`config/database.yml` への `default_transaction_mode` の明記**: 前提のとおりアダプタがマージで上書きするため、書いても効かない。効かない設定を「効いているつもりで」置くほうが有害
+- **`config/database.yml` への `default_transaction_mode` の明記**: 前提のとおり Rails は自前で `BEGIN <mode> TRANSACTION` を発行しており、このパラメータ（sqlite3 gem の `db.transaction` 用）を読まない。書いても効かない設定を「効いているつもりで」置くほうが有害
 - **`StaleObjectError` のリトライ**: 決定 2 のとおり到達不能
 
 ## 影響
 
 - `with_lock` の `reload` はアソシエーションキャッシュを捨てる。差額精算 1 回あたりのクエリは 14 → 17 に増える（コントローラが `preload(items: :catalog)` したものを引き直すため）。SQLite ローカルで 1ms 未満であり、機構を 1 つに保つ対価として受け入れる
 - **競合した後発のリクエストは `BEGIN` で待つ。** `config/database.yml` の `timeout: 5000` を超えると `SQLite3::BusyException` が上がり、Rails はこれを `ActiveRecord::StatementTimeout` に変換する。アプリ内に rescue が無いため現状は 500 になる。**待たされた側は `AlreadyVoidedError` の親切なメッセージに到達する前に落ちる。** 差額精算は在庫復元と `Refund` 作成までトランザクションを保持するため、先行の処理が長いほどこの窓は広がる。**直列化を選んだことの裏返しであり、この方針を採る以上は待ちきれない場合の出方（再試行するのか、画面に何を出すのか、監視するのか）を決める必要がある。** [#338](https://github.com/kazu-2020/bento-manager/issues/338) で追跡する
-- 決定 1 と 2 の根拠は `app/models/sale.rb` と `app/models/daily_inventory.rb` のコメントからこの ADR を参照している。前提が変わったときに直す場所は、この 3 つ
+- 決定 1 と 2 の根拠は `app/models/sale.rb` と `app/models/daily_inventory.rb` のコメントからこの ADR を参照している。前提が変わったときに直す場所は、この ADR と 2 つのモデル、そして `test/integration/sqlite_transaction_mode_test.rb` の 4 つ
 
 ## 参照
 
