@@ -27,5 +27,6 @@ class Location < ApplicationRecord
       .joins(:items)
       .group(Sale.jst_date_expression, :customer_type)
       .sum("sale_items.quantity")
+      .transform_keys { |date_str, customer_type| [ Date.parse(date_str), customer_type ] }
   end
 end
