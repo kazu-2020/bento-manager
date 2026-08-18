@@ -2,6 +2,8 @@ require "test_helper"
 
 module Refunds
   class PreviewTest < ActiveSupport::TestCase
+    include SaleRecordingHelper
+
     fixtures :locations, :employees, :catalogs, :catalog_prices, :catalog_pricing_rules,
              :daily_inventories, :coupons, :discounts
 
@@ -12,17 +14,8 @@ module Refunds
       @catalog_salad = catalogs(:salad)
     end
 
-    def create_sale(items, discount_quantities: {})
-      recorder = Sales::Recorder.new
-      recorder.record(
-        { location: @location, customer_type: :staff, employee: @employee },
-        items,
-        discount_quantities: discount_quantities
-      )
-    end
-
     test "修正カートに手が入っていない間は、修正後の金額も差額も0になる" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
       preview = Preview.new(
         sale: sale,
@@ -34,13 +27,12 @@ module Refunds
       assert_equal 0, preview.final_total
       assert_empty preview.items_with_prices
       assert_empty preview.discount_details
-      assert_equal 0, preview.total_discount_amount
       assert_equal 0, preview.adjustment_amount
       assert_equal :even_exchange, preview.adjustment_type
     end
 
     test "商品を足すと、差額は追加請求になる" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
       preview = Preview.new(
         sale: sale,
@@ -59,7 +51,7 @@ module Refunds
     end
 
     test "商品を減らすと、差額は返金になる" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 2 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 2 } ])
 
       preview = Preview.new(
         sale: sale,
@@ -77,7 +69,7 @@ module Refunds
     # 修正後の商品が無いときと同じ扱いに倒し、全額返金として見せる
     test "修正後の商品に価格が設定されていないと、修正後の金額は0になりクーポンは返却として並ぶ" do
       discount = discounts(:fifty_yen_discount)
-      sale = create_sale(
+      sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 1 } ],
         discount_quantities: { discount.id => 1 }
       )
@@ -100,7 +92,7 @@ module Refunds
 
     test "修正後の商品が無いと、修正後の金額は0になり元の販売のクーポンが返却として並ぶ" do
       discount = discounts(:fifty_yen_discount)
-      sale = create_sale(
+      sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 1 } ],
         discount_quantities: { discount.id => 1 }
       )

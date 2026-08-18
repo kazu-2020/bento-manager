@@ -8,13 +8,6 @@ module Refunds
   #   2. 修正後の商品が無い / 価格が引けない → 修正後は 0 円。元の販売のクーポンを「返却」として並べる
   #   3. 通常                          → Sales::PriceCalculator の結果
   class Preview
-    UNCHANGED_RESULT = {
-      final_total: 0,
-      items_with_prices: [].freeze,
-      discount_details: [].freeze,
-      total_discount_amount: 0
-    }.freeze
-
     # @param sale [Sale] 元の販売
     # @param items [Array<Hash>] 修正後の商品 [{ catalog:, quantity: }, ...]
     # @param discount_quantities [Hash{Integer => Integer}] 修正後のクーポン枚数
@@ -36,10 +29,6 @@ module Refunds
 
     def discount_details
       result[:discount_details]
-    end
-
-    def total_discount_amount
-      result[:total_discount_amount]
     end
 
     # 元の販売との差額。正なら返金、負なら追加請求
@@ -73,7 +62,7 @@ module Refunds
     end
 
     def build_result
-      return UNCHANGED_RESULT unless changed?
+      return empty_result unless changed?
       return full_refund_result if items.empty?
 
       calculated_result
@@ -89,12 +78,13 @@ module Refunds
     # 修正後の商品が無ければ修正後の販売は作られない。元の販売で使ったクーポンは
     # 1 枚も適用されないまま客の手元に戻るので、返却として並べる
     def full_refund_result
-      {
-        final_total: 0,
-        items_with_prices: [],
-        discount_details: returned_discount_details,
-        total_discount_amount: 0
-      }
+      empty_result.merge(discount_details: returned_discount_details)
+    end
+
+    # 0 円の形は自分で書かず、空のカートを計算させて得る。PriceCalculator が返す
+    # キーが増えても追随できる（Sales::CartForm も同じ手を使っている）
+    def empty_result
+      Sales::PriceCalculator.new([]).calculate
     end
 
     def returned_discount_details

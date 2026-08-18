@@ -3,6 +3,7 @@ require "test_helper"
 module Refunds
   class RefundFormTest < ActiveSupport::TestCase
     include GhostFormSubmissionHelper
+    include SaleRecordingHelper
 
     fixtures :locations, :employees, :catalogs, :catalog_prices, :catalog_pricing_rules,
              :daily_inventories, :coupons, :discounts
@@ -19,15 +20,6 @@ module Refunds
                         .merge(Catalog.category_order)
     end
 
-    def create_sale(items, discount_quantities: {})
-      recorder = Sales::Recorder.new
-      recorder.record(
-        { location: @location, customer_type: :staff, employee: @employee },
-        items,
-        discount_quantities: discount_quantities
-      )
-    end
-
     def submission_form
       RefundForm
     end
@@ -35,7 +27,7 @@ module Refunds
     # === 初期値テスト ===
 
     test "初期表示時は元の販売の数量で初期化され、変更なしと判定される" do
-      sale = create_sale([
+      sale = record_sale([
         { catalog: @catalog_bento_a, quantity: 2 },
         { catalog: @catalog_salad, quantity: 1 }
       ])
@@ -54,7 +46,7 @@ module Refunds
     # === 数量ハッシュの母集合テスト ===
 
     test "画面に無い商品が送信されても修正カートには入らない" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
       # 元の販売にも当日の在庫にも無い商品。数量入力そのものが描画されないので、
       # 届いたとしても画面の操作ではありえない
       unlisted = Catalog.create!(name: "画面に無い弁当", kana: "ガメンニナイベントウ", category: :bento)
@@ -76,7 +68,7 @@ module Refunds
     end
 
     test "correctedが1件も届かない送信は、全て0ではなく壊れた送信として弾かれる" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
       # 数量が母集合の分だけ埋まっても、送信そのものが壊れていたことは見分けられなければ
       # ならない。ここを通すと corrected_items_for_refunder が空になり、修正後の販売が
@@ -97,7 +89,7 @@ module Refunds
     # === corrected パラメータのパーステスト ===
 
     test "correctedパラメータが正しくパースされる" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 2 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 2 } ])
 
       form = RefundForm.new(
         sale: sale,
@@ -118,7 +110,7 @@ module Refunds
     # === corrected_items_for_refunder テスト ===
 
     test "corrected_items_for_refunderが修正後の数量で商品リストを返す" do
-      sale = create_sale([
+      sale = record_sale([
         { catalog: @catalog_bento_a, quantity: 2 },
         { catalog: @catalog_salad, quantity: 1 }
       ])
@@ -157,7 +149,7 @@ module Refunds
     # === has_any_changes? テスト ===
 
     test "商品数量を増やすとhas_any_changes?がtrueになる" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
       form = RefundForm.new(
         sale: sale,
@@ -175,7 +167,7 @@ module Refunds
     end
 
     test "商品数量を減らすとhas_any_changes?がtrueになる" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 2 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 2 } ])
 
       form = RefundForm.new(
         sale: sale,
@@ -192,7 +184,7 @@ module Refunds
     end
 
     test "全商品を0にするとhas_any_changes?がtrueになる" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
       form = RefundForm.new(
         sale: sale,
@@ -212,7 +204,7 @@ module Refunds
     # === バリデーションテスト ===
 
     test "何も変更しないとバリデーションエラーになる" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
       form = RefundForm.new(sale: sale, location: @location, inventories: @inventories)
 
@@ -221,7 +213,7 @@ module Refunds
     end
 
     test "数量を変更するとバリデーションが通る" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
       form = RefundForm.new(
         sale: sale,
@@ -241,7 +233,7 @@ module Refunds
 
     test "クーポン数量が初期値として元の販売から設定される" do
       discount = discounts(:fifty_yen_discount)
-      sale = create_sale(
+      sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 2 } ],
         discount_quantities: { discount.id => 2 }
       )
@@ -253,7 +245,7 @@ module Refunds
 
     test "弁当が0個でクーポンの枚数入力が無効化されると、枚数は送られず0枚として扱われる" do
       discount = discounts(:fifty_yen_discount)
-      sale = create_sale(
+      sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 2 } ],
         discount_quantities: { discount.id => 1 }
       )
@@ -277,7 +269,7 @@ module Refunds
 
     test "クーポン枚数を変更するとhas_any_changes?がtrueになる" do
       discount = discounts(:fifty_yen_discount)
-      sale = create_sale(
+      sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 2 } ],
         discount_quantities: { discount.id => 2 }
       )
@@ -302,7 +294,7 @@ module Refunds
     test "クーポンを2種類使った販売で、片方のクーポンが送信されなければ、その分が減ったものとして変更ありと判定される" do
       fifty_yen = discounts(:fifty_yen_discount)
       hundred_yen = discounts(:hundred_yen_discount)
-      sale = create_sale(
+      sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 2 } ],
         discount_quantities: { fifty_yen.id => 1, hundred_yen.id => 1 }
       )
@@ -328,7 +320,7 @@ module Refunds
 
     test "販売後に有効期限が切れたクーポンは、画面に描画されないので変更として数えない" do
       discount = discounts(:fifty_yen_discount)
-      sale = create_sale(
+      sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 2 } ],
         discount_quantities: { discount.id => 1 }
       )
@@ -355,7 +347,7 @@ module Refunds
     end
 
     test "元の販売にあった商品が送信されなければ、その商品が減ったものとして変更ありと判定される" do
-      sale = create_sale([
+      sale = record_sale([
         { catalog: @catalog_bento_a, quantity: 1 },
         { catalog: @catalog_salad, quantity: 1 }
       ])
@@ -382,7 +374,7 @@ module Refunds
 
     test "変更有無を何度判定してもクーポン枚数の取得は1回で済む" do
       discount = discounts(:fifty_yen_discount)
-      sale = create_sale(
+      sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 1 } ],
         discount_quantities: { discount.id => 1 }
       )
@@ -405,7 +397,7 @@ module Refunds
 
     test "discount_quantities_for_refunderがクーポン数量を正しく返す" do
       discount = discounts(:fifty_yen_discount)
-      sale = create_sale(
+      sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 2 } ],
         discount_quantities: { discount.id => 2 }
       )
@@ -432,7 +424,7 @@ module Refunds
     # === corrected_items テスト ===
 
     test "corrected_itemsが全商品（元の販売+在庫）を含む" do
-      sale = create_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
 
       form = RefundForm.new(sale: sale, location: @location, inventories: @inventories)
 

@@ -5,8 +5,8 @@ module Refunds
   class CorrectedItem
     attr_reader :catalog, :quantity, :original_quantity, :max_quantity, :inventory
 
-    delegate :id, :name, :category, to: :catalog, prefix: true
-    delegate :bento?, :side_menu?, to: :catalog
+    delegate :id, :name, to: :catalog, prefix: :catalog
+    delegate :category, :bento?, :side_menu?, to: :catalog
 
     def initialize(catalog:, quantity:, original_quantity:, max_quantity:, inventory: nil)
       @catalog = catalog
@@ -14,10 +14,6 @@ module Refunds
       @original_quantity = original_quantity
       @max_quantity = max_quantity
       @inventory = inventory
-    end
-
-    def category
-      catalog_category
     end
 
     def changed?
