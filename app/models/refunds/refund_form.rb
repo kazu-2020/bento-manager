@@ -5,19 +5,24 @@ module Refunds
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
-    # submitted のどの位置に何が来るかの宣言（SubmittedParamsFilterable が使う）
+    include ::GhostForms::SubmissionReadable
+
+    # submitted のどの位置に何が来るかの宣言（GhostForms::ParamsFilter が使う）
     SUBMITTED_PARAMS_SHAPE = { collection_keys: %w[corrected coupon] }.freeze
 
     attr_reader :sale, :location, :corrected_quantities, :coupon_quantities, :inventories
 
     validate :at_least_one_change
 
-    def initialize(sale:, location:, inventories: [], submitted: {})
+    # submitted は GhostForms::Submission。初回描画は元の販売から初期値を作るので、
+    # 未送信と壊れた送信を見分ける必要がある（理由は GhostForms::Submission）
+    def initialize(sale:, location:, inventories: [], submitted: ::GhostForms::Submission.absent)
       @sale = sale
       @location = location
       @inventories = inventories
-      @corrected_quantities = build_corrected_quantities(submitted)
-      @coupon_quantities = build_coupon_quantities(submitted)
+      @submitted = submitted
+      @corrected_quantities = build_corrected_quantities
+      @coupon_quantities = build_coupon_quantities
     end
 
     def corrected_items
@@ -37,8 +42,10 @@ module Refunds
       coupon_quantities.select { |_, qty| qty > 0 }
     end
 
+    # 現在値と初期値は同じ母集合で組まれているので、単純な突き合わせで足りる
     def has_any_changes?
-      quantities_changed? || coupons_changed?
+      corrected_quantities != original_corrected_quantities ||
+        coupon_quantities != original_coupon_quantities
     end
 
     def all_items_zero?
@@ -70,10 +77,7 @@ module Refunds
     end
 
     def total_corrected_bento_quantity
-      @total_corrected_bento_quantity ||= corrected_quantities.sum do |catalog_id, qty|
-        catalog = find_catalog(catalog_id)
-        catalog&.category == "bento" ? qty : 0
-      end
+      @total_corrected_bento_quantity ||= bento_corrected_items.sum(&:quantity)
     end
 
     def tab_items
@@ -108,66 +112,62 @@ module Refunds
 
     private
 
-    def build_corrected_quantities(submitted)
-      corrected_data = submitted["corrected"] || {}
-
-      if corrected_data.empty?
-        # 初期値: 元の販売の商品数量 + 在庫にある未購入商品は0
-        default_corrected_quantities
-      else
-        corrected_data.transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
-      end
+    # 届いたキーだけの疎なハッシュ。そのまま外へ出さず、build_* が母集合に対して埋め直す
+    def submitted_quantities(key)
+      GhostForms::Quantities.from(submitted[key])
     end
 
-    def build_coupon_quantities(submitted)
-      coupon_data = submitted["coupon"] || {}
+    # 母集合は「元の販売の商品 + 当日の在庫」で、画面が数量入力を描画する範囲そのもの。
+    # 未送信の初回描画では初期値がそのまま現在値なので、同じハッシュを共有する
+    def build_corrected_quantities
+      return original_corrected_quantities if submitted.absent?
 
-      if coupon_data.empty?
-        original_discount_quantities
-      else
-        coupon_data.transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
-      end
+      GhostForms::Quantities.dense(catalog_lookup.keys, submitted_quantities("corrected"))
     end
 
-    def default_corrected_quantities
-      quantities = {}
+    # 母集合は available_discounts。有効期限切れなどで描画されないクーポンは枚数入力が
+    # 出ず送信されようがないので、母集合に入れてはいけない。入れると「届かない」を
+    # 「0枚に減った」と読んでしまう
+    def build_coupon_quantities
+      return original_coupon_quantities if submitted.absent?
 
-      # 元の販売の商品数量
-      sale.items.group_by(&:catalog_id).each do |catalog_id, items|
-        quantities[catalog_id] = items.sum(&:quantity)
-      end
+      GhostForms::Quantities.dense(submittable_discount_ids, submitted_quantities("coupon"))
+    end
 
-      # 在庫にある未購入商品は0
-      inventories.each do |inventory|
-        quantities[inventory.catalog_id] ||= 0
-      end
+    def submittable_discount_ids
+      available_discounts.map(&:id)
+    end
 
-      quantities
+    def original_corrected_quantities
+      @original_corrected_quantities ||= GhostForms::Quantities.dense(catalog_lookup.keys, original_item_quantities)
+    end
+
+    def original_coupon_quantities
+      @original_coupon_quantities ||= GhostForms::Quantities.dense(submittable_discount_ids, original_discount_quantities)
+    end
+
+    def original_item_quantities
+      @original_item_quantities ||= sale.items.group_by(&:catalog_id)
+        .transform_values { |items| items.sum(&:quantity) }
     end
 
     def original_discount_quantities
-      sale.sale_discounts.pluck(:discount_id, :quantity).to_h
+      @original_discount_quantities ||= sale.sale_discounts.pluck(:discount_id, :quantity).to_h
     end
 
-    def quantities_changed?
-      original = sale.items.group_by(&:catalog_id).transform_values { |items| items.sum(&:quantity) }
-
-      corrected_quantities.any? do |catalog_id, qty|
-        original_qty = original[catalog_id] || 0
-        qty != original_qty
-      end
+    # corrected が 1 件も届かないのは「全て 0」ではなく壊れた送信。全て 0 の確定は
+    # 数量を 0 として明示的に送ってくる。ここを通すと corrected_items_for_refunder が
+    # 空になり、修正後の販売が作られないまま元の販売が取り消されて全額返金になる。
+    # corrected_quantities は母集合の分だけ必ず埋まる（ルール 7）ので空では見分けられず、
+    # Submission が見る密化前のハッシュで判定する
+    def required_submitted_keys
+      %w[corrected]
     end
 
-    def coupons_changed?
-      original = original_discount_quantities
-
-      coupon_quantities.any? do |discount_id, qty|
-        original_qty = original[discount_id] || 0
-        qty != original_qty
-      end
-    end
-
+    # 読めない送信では「変更されたか」を判定しようがない
     def at_least_one_change
+      return if submitted_unreadable?
+
       errors.add(:base, :no_items_selected) unless has_any_changes?
     end
 
@@ -206,7 +206,7 @@ module Refunds
     end
 
     def build_full_refund_discount_details
-      sale.sale_discounts.includes(:discount).map do |sd|
+      sale.sale_discounts.eager_load(:discount).map do |sd|
         {
           discount_id: sd.discount_id,
           discount_name: sd.discount.name,
@@ -223,20 +223,11 @@ module Refunds
     end
 
     def build_corrected_items
-      all_catalog_ids = (
-        sale.items.map(&:catalog_id) +
-        inventories.map(&:catalog_id)
-      ).uniq
-
-      original_quantities_by_catalog = sale.items.group_by(&:catalog_id)
-        .transform_values { |items| items.sum(&:quantity) }
-
-      all_catalog_ids.filter_map do |catalog_id|
-        catalog = find_catalog(catalog_id)
+      catalog_lookup.filter_map do |catalog_id, catalog|
         next unless catalog
 
-        quantity = corrected_quantities[catalog_id] || 0
-        original_qty = original_quantities_by_catalog[catalog_id] || 0
+        quantity = corrected_quantities[catalog_id]
+        original_qty = original_corrected_quantities[catalog_id]
         inventory = inventory_lookup[catalog_id]
         available_stock = inventory&.available_stock || 0
         # 在庫上限 = 元の数量 + 利用可能在庫（返品分の在庫は復元されるため）

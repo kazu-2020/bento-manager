@@ -25,6 +25,18 @@
 
 各ファイル種別の詳細なルールは `.claude/rules/` を参照（編集対象のパスに応じて自動で読み込まれる）。
 
+## 開発コマンドの実行
+
+`bin/rails` `bin/dev` などの shebang は `#!/usr/bin/env ruby` で、この環境では **macOS のシステム Ruby 2.6 を掴んで `Gemfile.lock` の bundler が見つからず落ちる**。`mise exec -- bin/rails` でも回避できない（`mise exec -- ruby -v` は 4.x を返すのに、shebang 経由では 2.6 になる）。mise の Ruby を PATH の先頭に置くこと。
+
+```bash
+export PATH="$(mise which ruby | xargs dirname):$PATH"
+```
+
+あわせて `LANG` が未設定だと Ruby のロケールが US-ASCII になり、日本語を含むファイルの読み込みで失敗する。`LANG=ja_JP.UTF-8` を設定する。
+
+`.claude/launch.json`（プレビュー用の dev サーバー設定）は、この 2 つを起動コマンドに含めてある。
+
 ## Agent skills
 
 ### Issue tracker

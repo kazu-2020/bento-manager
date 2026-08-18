@@ -1,5 +1,6 @@
 <% new_form = Catalogs::NewForm::Component.new(creator: @creator, selected_category: @selected_category) %>
 
+<%# フレームの中身だけを返す。閉じるフォームは殻にあり DOM に残るので、ここでは描かない %>
 <turbo-frame id="<%= Catalogs::NewForm::Component::MODAL_FRAME_ID %>">
   <%= render "modal_header", new_form: new_form %>
   <%= render new_form %>

@@ -7,17 +7,11 @@
         <%= price_form.modal_title %>
       </h3>
 
-      <form method="dialog">
-        <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2 modal-close-button">
-          <%= icon "close" %>
-        </button>
-      </form>
+      <%= render "shared/modal_close_button" %>
 
       <%= render price_form %>
     </div>
 
-    <form method="dialog" class="modal-backdrop">
-      <button><span class="sr-only">close</span></button>
-    </form>
+    <%= render "shared/modal_backdrop" %>
   </dialog>
 <% end %>

@@ -7,7 +7,7 @@
       <div class="grid grid-cols-2 gap-3 my-3">
         <div class="border border-base-300 rounded-lg p-3">
           <p class="text-xs text-base-content/60">売上</p>
-          <p class="text-xl font-bold">¥<%= number_with_delimiter(daily_total) %></p>
+          <p class="text-xl font-bold"><%= helpers.number_to_currency(daily_total) %></p>
         </div>
         <div class="border border-base-300 rounded-lg p-3">
           <p class="text-xs text-base-content/60">販売数</p>

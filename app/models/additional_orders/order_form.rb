@@ -5,6 +5,8 @@ module AdditionalOrders
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
+    include ::GhostForms::SubmissionReadable
+
     # submitted は全キーが商品 ID の group（GhostForms::ParamsFilter が使う）
     SUBMITTED_PARAMS_SHAPE = {}.freeze
 
@@ -12,12 +14,13 @@ module AdditionalOrders
 
     validate :at_least_one_item_has_quantity
 
-    def initialize(location:, catalogs:, stock_map: {}, search_query: nil, submitted: {})
+    def initialize(location:, catalogs:, stock_map: {}, search_query: nil, submitted: ::GhostForms::Submission.absent)
       @location = location
       @catalogs = catalogs
       @stock_map = stock_map
       @search_query = search_query&.strip.presence
-      @items = build_items(submitted)
+      @submitted = submitted
+      @items = build_items(submitted.values)
       @created_count = 0
     end
 
@@ -78,6 +81,9 @@ module AdditionalOrders
     private
 
     def at_least_one_item_has_quantity
+      # 読めない送信では「1 件も無い」のか「捨てられただけ」なのか判定しようがない
+      return if submitted_unreadable?
+
       errors.add(:base, :no_items_ordered) unless items_with_quantity.any?
     end
 

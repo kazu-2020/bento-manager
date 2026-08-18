@@ -53,6 +53,10 @@ ja:
 
   activemodel:
     errors:
+      # モデル別の宣言が無ければここへ落ちる。GhostForms::SubmissionReadable を
+      # include したフォームは、書き足さなくてもこの文言を引く
+      messages:
+        unreadable_submission: "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください"
       models:
         catalogs/pricing_rule_creator:
           attributes:
@@ -62,11 +66,12 @@ ja:
           attributes:
             base:
               save_failed: "保存に失敗しました。もう一度お試しください。"
+              no_items_selected: "登録する商品を選択してください"
         daily_inventories/correction_form:
           attributes:
             base:
               save_failed: "保存に失敗しました。もう一度お試しください。"
-              sales_already_started: "販売が開始されているため、在庫の再登録はできません。"
+              sales_already_started: "販売が開始されているため、在庫の訂正はできません。"
               no_items_selected: "登録する商品を選択してください"
         additional_orders/order_form:
           attributes:
@@ -97,7 +102,7 @@ ja:
       additional_order: "追加発注"
       discount: "割引"
       coupon: "クーポン"
-      refund: "返金処理"
+      refund: "差額精算"
       backups/heartbeat: "リストア訓練のハートビート"
     attributes:
       backups/heartbeat:
@@ -172,9 +177,9 @@ ja:
       refund:
         original_sale: "元の販売"
         corrected_sale: "修正後の販売"
-        employee: "返金処理担当者"
-        refund_datetime: "返金日時"
-        amount: "返金額"
+        employee: "差額精算の担当者"
+        refund_datetime: "差額精算日時"
+        amount: "差額"
       coupon:
         amount_per_unit: "1枚あたりの割引額"
 
@@ -220,47 +225,16 @@ ja:
     submit:
       update: "%{model}を更新"
       create: "%{model}を作成"
-    hint:
-      password_optional: "空欄の場合、パスワードは変更されません"
     link:
       new: "新規登録"
-      show: "詳細"
-      edit: "編集"
-      delete: "削除"
-      back: "戻る"
       cancel: "キャンセル"
-    confirm:
-      delete: "本当に削除しますか？"
-    filter:
-      all: "すべて"
-      active: "有効"
-      inactive: "無効"
-
-  employees:
-    index:
-      title: "従業員一覧"
-    show:
-      title: "従業員詳細"
-    new:
-      title: "従業員登録"
-    edit:
-      title: "従業員編集"
-    create:
-      success: "従業員を登録しました。"
-    update:
-      success: "従業員情報を更新しました。"
-    destroy:
-      success: "従業員を削除しました。"
+      close: "閉じる"
 
   locations:
     index:
       title: "販売先一覧"
-    show:
-      title: "販売先詳細"
     new:
       title: "販売先登録"
-    edit:
-      title: "販売先編集"
     create:
       success: "販売先を登録しました。"
     update:
@@ -282,9 +256,6 @@ ja:
       invalid_category: "無効な商品カテゴリです"
     index:
       title: "商品カタログ一覧"
-      empty_message: "商品カタログがまだ登録されていません"
-    show:
-      title: "商品カタログ詳細"
     new:
       title: "商品カタログ登録"
       bento_title: "弁当を登録"
@@ -308,8 +279,6 @@ ja:
           description: "定番の弁当メニュー"
         side_menu:
           description: "サイドメニュー、オプション商品"
-    edit:
-      title: "商品カタログ編集"
     create:
       success: "商品カタログを登録しました。"
     update:
@@ -317,7 +286,6 @@ ja:
     discontinuations:
       modal_title: "販売停止の確認"
       success: "商品カタログを提供終了にしました。"
-      failure: "商品カタログの提供終了に失敗しました。"
       already_discontinued: "この商品カタログは既に提供終了です。"
       default_reason: "管理者による提供終了"
 
@@ -330,14 +298,11 @@ ja:
           title: "在庫登録"
         create:
           success: "%{count}種類の商品を登録しました"
-        new_form:
-          submit_label: "販売開始"
-          submit_unit: "種類"
         corrections:
           new:
-            title: "在庫修正"
+            title: "在庫訂正"
           create:
-            success: "%{count}種類の商品を再登録しました"
+            success: "%{count}種類の商品を訂正しました"
       sales:
         new:
           title: "レジ"
@@ -354,40 +319,21 @@ ja:
       sales_history:
         index:
           title: "販売履歴"
-          empty: "本日の販売履歴はありません"
-          daily_summary:
-            title: "本日の売上"
-            total_sales: "販売件数"
-            total_amount: "売上合計"
-            voided_count: "取消件数"
       refunds:
+        not_todays_sale: "差額精算は当日の販売のみ行えます"
         new:
-          title: "返品処理"
-          original_sale: "元の販売内容"
-          select_items: "返品する商品を選択"
-          preview: "返金プレビュー"
-          corrected_sale: "修正後の販売内容"
-          refund_amount: "返金額"
-          full_refund: "全額返金"
-          submit: "返金を確定"
-          back: "戻る"
-          no_remaining_items: "全商品を返品"
+          title: "差額精算"
         create:
           success_refund: "返金処理が完了しました（返金額: %{amount}）"
-          success_additional_charge: "差額精算が完了しました（追加請求額: %{amount}）"
+          success_additional_charge: "追加請求が完了しました（追加請求額: %{amount}）"
           success_even_exchange: "交換処理が完了しました（差額なし）"
-          missing_requirements: "商品数量またはクーポン枚数を変更してください"
           already_voided: "この販売は既に取消済みです"
 
   discounts:
     index:
       title: "割引クーポン"
-    show:
-      title: "割引クーポン詳細"
     new:
       title: "割引クーポン登録"
-    edit:
-      title: "割引クーポン編集"
     create:
       success: "割引クーポンを作成しました。"
     update:

@@ -8,7 +8,7 @@
                   class: "flex flex-col flex-1 min-h-0",
                   data: { ghost_form_target: "originalForm" } do |f| %>
       <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
-        <%# 在庫再登録バナー（販売未開始時のみ表示） %>
+        <%# 在庫訂正バナー（販売未開始時のみ表示） %>
         <% if re_registerable? %>
           <div class="shrink-0 px-3 pt-2">
             <div class="alert alert-info alert-soft">
@@ -34,7 +34,7 @@
         <%# タブパネル（スクロール領域） %>
         <main class="flex-1 overflow-y-auto px-3 py-2">
           <% tab_items.each_with_index do |tab, i| %>
-            <div data-tabs-target="panel" <%= "hidden" unless i == 0 %>>
+            <div data-tabs-target="panel" <% if i != 0 %>hidden<% end %>>
               <% case tab[:key] %>
               <% when :bento %>
                 <div class="space-y-1">

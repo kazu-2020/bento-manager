@@ -10,7 +10,7 @@
             data-action="change->select-navigate#visit">
       <% locations.each do |loc| %>
         <option value="<%= location_path(loc.id) %>"
-                <%= "selected" if loc.id == location.id %>>
+                <% if loc.id == location.id %>selected<% end %>>
           <%= loc.name %>
         </option>
       <% end %>
