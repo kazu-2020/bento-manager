@@ -26,7 +26,7 @@ module Sales
       @submitted = submitted
       @items = build_items(inventories, submitted.values)
       @customer_type = submitted["customer_type"] || "staff"
-      @coupon_quantities = GhostForms::Quantities.from(submitted["coupon"])
+      @coupon_quantities = build_coupon_quantities(submitted["coupon"])
     end
 
     def bento_items
@@ -54,7 +54,7 @@ module Sales
     end
 
     def coupon_quantity(discount)
-      @coupon_quantities[discount.id] || 0
+      @coupon_quantities[discount.id]
     end
 
     def price_result
@@ -88,6 +88,12 @@ module Sales
 
     def at_least_one_item_in_cart
       errors.add(:base, :no_items_in_cart) unless has_items_in_cart?
+    end
+
+    # 母集合は discounts。画面が枚数入力を描画する範囲そのもので、ここに無い discount は
+    # 枚数入力が出ず送信されようがない
+    def build_coupon_quantities(node)
+      GhostForms::Quantities.dense(discounts.map(&:id), GhostForms::Quantities.from(node))
     end
 
     def calculate_prices

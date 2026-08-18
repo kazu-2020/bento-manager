@@ -168,11 +168,13 @@ end
 `available_discounts` から外れるので、母集合も `available_discounts` に揃える）。
 
 ```ruby
-# app/models/refunds/refund_form.rb
-def dense_quantities(ids, source)
+# app/models/ghost_forms/quantities.rb
+def self.dense(ids, source)
   ids.index_with { |id| source[id] || 0 }
 end
 ```
+
+母集合の決め方だけが各フォームの責務で、埋める処理そのものは共有する。
 
 密にすると現在値と初期値が同じキー集合になるので、変更判定はキーの和集合を走査せず
 `current != original` で足りる。

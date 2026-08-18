@@ -157,6 +157,45 @@ module Sales
       assert_equal "staff", default_type.customer_type
     end
 
+    test "クーポン枚数は描画される discounts の全キーを持ち送信漏れは0枚として読める" do
+      discount = discounts(:fifty_yen_discount)
+      others = @discounts.reject { |d| d.id == discount.id }
+
+      empty_form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts)
+
+      @discounts.each { |d| assert_equal 0, empty_form.coupon_quantity(d) }
+
+      partial_submitted = { "coupon" => { discount.id.to_s => { "quantity" => "1" } } }
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(partial_submitted))
+
+      assert_equal 1, form.coupon_quantity(discount)
+      others.each { |other| assert_equal 0, form.coupon_quantity(other) }
+    end
+
+    test "画面に無いクーポンが送信されても割引として扱わない" do
+      discount = discounts(:fifty_yen_discount)
+      submitted = { "coupon" => { discount.id.to_s => { "quantity" => "1" } } }
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: [], submitted: submission(submitted))
+
+      assert_empty form.discount_quantities_for_calculator
+    end
+
+    test "クーポンの枚数はカートに商品があるかの判定に影響しない" do
+      discount = discounts(:fifty_yen_discount)
+      coupon_only = { "coupon" => { discount.id.to_s => { "quantity" => "1" } } }
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(coupon_only))
+
+      assert_not form.has_items_in_cart?
+      assert_equal 0, form.total_bento_quantity
+      assert_not form.valid?
+
+      with_item = coupon_only.merge(@bento_a.id.to_s => { "quantity" => "1" }, "customer_type" => "staff")
+      form_with_item = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(with_item))
+
+      assert_predicate form_with_item, :has_items_in_cart?
+      assert_predicate form_with_item, :valid?
+    end
+
     test "form_with_options and form_state_options return correct URLs" do
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts)
 

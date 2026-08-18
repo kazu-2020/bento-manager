@@ -117,18 +117,12 @@ module Refunds
       GhostForms::Quantities.from(submitted[key])
     end
 
-    # 母集合のキーを 1 つ残らず埋める。「届かなかったキーは 0」をこの 1 箇所だけで
-    # 吸収するので、読み手は || 0 を書かずに添字アクセスしてよい
-    def dense_quantities(ids, source)
-      ids.index_with { |id| source[id] || 0 }
-    end
-
     # 母集合は「元の販売の商品 + 当日の在庫」で、画面が数量入力を描画する範囲そのもの。
     # 未送信の初回描画では初期値がそのまま現在値なので、同じハッシュを共有する
     def build_corrected_quantities
       return original_corrected_quantities if submitted.absent?
 
-      dense_quantities(catalog_lookup.keys, submitted_quantities("corrected"))
+      GhostForms::Quantities.dense(catalog_lookup.keys, submitted_quantities("corrected"))
     end
 
     # 母集合は available_discounts。有効期限切れなどで描画されないクーポンは枚数入力が
@@ -137,7 +131,7 @@ module Refunds
     def build_coupon_quantities
       return original_coupon_quantities if submitted.absent?
 
-      dense_quantities(submittable_discount_ids, submitted_quantities("coupon"))
+      GhostForms::Quantities.dense(submittable_discount_ids, submitted_quantities("coupon"))
     end
 
     def submittable_discount_ids
@@ -145,11 +139,11 @@ module Refunds
     end
 
     def original_corrected_quantities
-      @original_corrected_quantities ||= dense_quantities(catalog_lookup.keys, original_item_quantities)
+      @original_corrected_quantities ||= GhostForms::Quantities.dense(catalog_lookup.keys, original_item_quantities)
     end
 
     def original_coupon_quantities
-      @original_coupon_quantities ||= dense_quantities(submittable_discount_ids, original_discount_quantities)
+      @original_coupon_quantities ||= GhostForms::Quantities.dense(submittable_discount_ids, original_discount_quantities)
     end
 
     def original_item_quantities
