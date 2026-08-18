@@ -39,12 +39,15 @@ module GhostForms
 
       # group の集まり。ID 以外のキーと group 以外の値は破棄する
       def collection(node)
-        filter(node) { |name, value| group(value) if id?(name) && hash?(value) }
+        filter(node) { |name, value| group(value) if id?(name) && hash?(value) }.presence
       end
 
-      # ひとつの名前空間。scalar の葉だけを残す
+      # ひとつの名前空間。scalar の葉だけを残す。
+      # 葉が 1 つも残らなかった空の group は、キーごと捨てる。残すと
+      # `{"<id>" => {}}` が「中身のある送信」に見え、Quantities.from が
+      # `{id => 0}` に落として、送られてもいない「数量 0」を確定させてしまう
       def group(node)
-        filter(node) { |_name, value| value if scalar?(value) }
+        filter(node) { |_name, value| value if scalar?(value) }.presence
       end
 
       # 各キーをブロックに通し、値を返したものだけを残す

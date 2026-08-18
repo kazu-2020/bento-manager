@@ -12,12 +12,21 @@ module GhostForms
       Submission.filter(ActionController::Parameters.new(cart: raw)[:cart], form: form)
     end
 
-    test "パラメータが無ければ未送信" do
+    # 名前空間ごとキーが届かなかった POST は「未送信」ではなく壊れた送信。
+    # absent に倒すと在庫訂正が既存在庫からの再構築に化けて bulk_recreate が走る
+    test "パラメータが無くても、送信された以上は未送信にしない" do
       submission = Submission.filter(nil, form: CART_FORM)
 
-      assert_predicate submission, :absent?
-      assert_not submission.unreadable?([])
+      assert_not submission.absent?
+      assert submission.unreadable?([])
       assert_empty submission.values
+    end
+
+    test "葉が全滅した group しか無い送信は読めない送信" do
+      submission = filter({ "12" => { "quantity" => { "nested" => "1" } } })
+
+      assert_not submission.absent?
+      assert submission.unreadable?([])
     end
 
     test "absent は未送信を表す" do

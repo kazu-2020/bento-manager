@@ -94,6 +94,23 @@ module Pos
           assert_match "送信された内容を読み取れませんでした", response.body
         end
 
+        # inventory キーが丸ごと無い POST を「未送信」と読むと、既存在庫からの再構築に
+        # 化けて bulk_recreate が走り、reserved_stock ごと作り直されてしまう
+        test "inventory キーの無い再登録は既存の在庫を作り直さずエラーになる" do
+          login_as_employee(@employee)
+          existing = DailyInventory.create!(
+            location: @location, catalog: @bento_a,
+            inventory_date: Date.current, stock: 10, reserved_stock: 3
+          )
+
+          assert_no_changes -> { existing.reload.attributes } do
+            post pos_location_daily_inventories_correction_path(@location)
+          end
+
+          assert_response :unprocessable_entity
+          assert_match "送信された内容を読み取れませんでした", response.body
+        end
+
         test "登録がない場合は新規登録ページにリダイレクトされる" do
           login_as_employee(@employee)
 

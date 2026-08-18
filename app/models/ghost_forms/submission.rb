@@ -24,17 +24,24 @@ module GhostForms
     private_class_method :new
 
     class << self
-      # 未送信。初回描画（new アクション）で使う
+      # 未送信。初回描画（new アクション）で使う。
+      # 作れるのはフォームの既定引数からだけで、リクエストからは作れない
       def absent
         new(absent: true, values: {}.with_indifferent_access)
       end
 
       # 送信された生パラメータを、フォームが宣言した形状で検証して取り込む。
-      # 検証の中身は GhostForms::ParamsFilter を参照
+      # 検証の中身は GhostForms::ParamsFilter を参照。
+      #
+      # raw が nil でも absent にはしない。呼ばれるのは確定・Ghost Form どちらの
+      # POST からだけで、名前空間ごとキーが届かなかったのは「未送信」ではなく
+      # 壊れた送信だからである。ここを absent に倒すと、在庫訂正では既存在庫からの
+      # 再構築に化けて bulk_recreate が走り、返品では元の販売から初期値が組み直されて
+      # 「変更してください」という直しようのない案内になる
       def filter(raw, form:)
-        return absent if raw.nil?
+        values = raw.nil? ? {} : ParamsFilter.call(raw, **form::SUBMITTED_PARAMS_SHAPE)
 
-        new(absent: false, values: ParamsFilter.call(raw, **form::SUBMITTED_PARAMS_SHAPE))
+        new(absent: false, values: values.with_indifferent_access)
       end
     end
 

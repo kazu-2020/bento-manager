@@ -70,10 +70,24 @@ module GhostForms
       assert_equal({}, filtered)
     end
 
-    test "drops nesting deeper than the declared shape" do
+    # 空の group を残すと「中身のある送信」に見え、Quantities.from が {id => 0} に
+    # 落として、送られてもいない「数量 0」を確定させてしまう
+    test "drops a group whose leaves all fell out of the declared shape" do
       filtered = filter({ "12" => { "quantity" => { "nested" => "1" } } })
 
-      assert_equal({ "12" => {} }, filtered)
+      assert_equal({}, filtered)
+    end
+
+    test "drops a collection entry whose leaves all fell out of the declared shape" do
+      filtered = filter({ "coupon" => { "5" => { "quantity" => { "nested" => "1" } } } }, **CART_SHAPE)
+
+      assert_equal({}, filtered)
+    end
+
+    test "keeps a group that still has at least one readable leaf" do
+      filtered = filter({ "12" => { "quantity" => { "nested" => "1" }, "stock" => "3" } })
+
+      assert_equal({ "12" => { "stock" => "3" } }, filtered)
     end
 
     test "drops leaves that are not strings" do
