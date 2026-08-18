@@ -77,6 +77,11 @@ class CatalogPriceTest < ActiveSupport::TestCase
     assert_nil empty_catalog.prices.price_by_kind(kind: :regular)
   end
 
+  test "適用開始日時が未設定の価格は、どの時点でも有効ではない" do
+    assert_not CatalogPrice.new(kind: :regular, price: 500).effective_at?(Time.current)
+    assert_not CatalogPrice.new(kind: :regular, price: 500).effective_at?(Date.current)
+  end
+
   test "新しい価格を設定すると既存の価格が終了する" do
     catalog = catalogs(:daily_bento_a)
     old_price = catalog_prices(:daily_bento_a_regular)

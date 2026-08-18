@@ -11,10 +11,11 @@ completed_sale:
   employee: verified_employee
   status: 0
 
+# 「今日の、少し前」を表す。素の 1.hour.ago は 0 時台に走らせると前日に落ち、
+# sold_today? を見るテスト（Sales::Refunder は取消判定より先にここを見る）が
+# 日付をまたいだ瞬間だけ失敗する
 voided_sale:
   location: city_hall
-  # 「当日の取消済み販売」であることが差額精算のガードの前提。素の 1.hour.ago は
-  # JST 0 時台に走ると前日に落ち、sold_today? のガードが先に発火してしまう
   sale_datetime: <%= [ 1.hour.ago, Time.current.beginning_of_day ].max %>
   customer_type: 1
   total_amount: 1100

@@ -21,9 +21,13 @@ module RefundFormBuildable
     @location = Location.active.find(params[:location_id])
   end
 
+  # 明細側の catalog にも価格を載せる。修正カートの母集合は「元の販売の商品 + 当日の
+  # 在庫」なので、当日の在庫に無い商品を売っていた販売では、在庫側の catalog をいくら
+  # 揃えても明細の分の価格が読み込み済みにならない。加えて RefundForm#catalog_lookup
+  # は両方にある商品では明細側を採るため、在庫側だけでは取りこぼす
   def set_sale
     @sale = @location.sales
-                     .preload(items: :catalog)
+                     .preload(items: [ { catalog: :prices }, :catalog_price ])
                      .find(params[:sale_id])
   end
 
@@ -52,7 +56,8 @@ module RefundFormBuildable
   def set_inventories
     @inventories = @location
                       .today_inventories
-                      .eager_load(catalog: :prices)
+                      .eager_load(:catalog)
+                      .preload(catalog: :prices)
                       .merge(Catalog.category_order)
   end
 

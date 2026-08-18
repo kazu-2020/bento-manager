@@ -1,7 +1,7 @@
 require "test_helper"
 
 class CatalogTest < ActiveSupport::TestCase
-  fixtures :catalogs
+  fixtures :catalogs, :catalog_prices
 
   test "validations" do
     @subject = Catalog.new(name: "テスト弁当", kana: "テストベントウ", category: :bento)
@@ -96,6 +96,89 @@ class CatalogTest < ActiveSupport::TestCase
     catalog_without_prices = Catalog.create!(name: "価格なしテスト", kana: "カカクナシテスト", category: :bento)
 
     assert_nil catalog_without_prices.price_by_kind(:regular)
+  end
+
+  test "価格を読み込み済みの商品は、追加の問い合わせなしで種別ごとの有効な価格を引ける" do
+    catalog = catalogs(:salad)
+    past_price = CatalogPrice.create!(
+      catalog: catalog, kind: :regular, price: 200,
+      effective_from: 3.days.ago, effective_until: 2.days.ago
+    )
+    catalog.prices.reload
+
+    assert_no_queries do
+      assert_equal 250, catalog.price_by_kind(:regular).price
+      assert_equal 150, catalog.price_by_kind(:bundle).price
+      assert_equal past_price, catalog.price_by_kind(:regular, at: 2.days.ago - 1.hour), "有効期間で切り替わる"
+      assert_nil catalog.price_by_kind(:regular, at: 1.year.ago), "どの価格も有効でない時点では nil"
+      assert_not catalog.price_exists?(:regular, at: 1.year.ago)
+    end
+  end
+
+  test "保存前の価格は、読み込み済みの一覧に並んでいても選ばれない" do
+    catalog = Catalog.preload(:prices).find(catalogs(:daily_bento_a).id)
+
+    # 価格編集の入口が空のレコードを組み立てると、読み込み済みの一覧に紛れ込む
+    # （CatalogPricesController#edit の `price_by_kind || prices.build` がこの形）
+    catalog.prices.build(kind: :bundle)
+    catalog.prices.build(kind: :regular, price: 9999, effective_from: Time.current)
+
+    assert_nil catalog.price_by_kind(:bundle), "保存前のレコードを掴んではいけない"
+    assert_not catalog.price_exists?(:bundle)
+    assert_equal 550, catalog.price_by_kind(:regular).price, "保存済みの価格が保存前に負けてはいけない"
+  end
+
+  # 2 経路が一致することだけを見ても、どちらも id 昇順で拾っている状態を通してしまう
+  # （SQLite はこの規模なら索引を使わず rowid 順に返し、max_by も最初の最大値を返す）。
+  # 「後から作った価格が勝つ」という決め方そのものを両経路に対して押さえる
+  test "適用開始日時が同じ価格が並んだら、後から作ったほうが勝つ" do
+    catalog = Catalog.create!(name: "同時刻価格テスト", kana: "ドウジコクカカクテスト", category: :bento)
+    started_at = 1.day.ago
+    prices = 2.times.map do |i|
+      CatalogPrice.create!(
+        catalog: catalog, kind: :regular, price: 100 * (i + 1),
+        effective_from: started_at, effective_until: nil
+      )
+    end
+    latest = prices.max_by(&:id)
+
+    assert_equal latest.id, Catalog.find(catalog.id).price_by_kind(:regular).id
+    assert_equal latest.id, Catalog.preload(:prices).find(catalog.id).price_by_kind(:regular).id
+  end
+
+  test "価格の読み込み済みかどうかで、取得できる価格は変わらない" do
+    catalog = catalogs(:salad)
+    ended = CatalogPrice.create!(
+      catalog: catalog, kind: :regular, price: 200,
+      effective_from: 1.year.ago, effective_until: 7.months.ago
+    )
+    # 保存で丸められた後の値を使う。Ruby 側の精度のままだと境界ちょうどにならない
+    ended_at = ended.reload.effective_until
+
+    # 日付ちょうどの境界は SQL 側が文字列比較になり、Ruby 側と食い違いやすい
+    boundary = Date.new(2026, 3, 10)
+    CatalogPrice.create!(
+      catalog: catalog, kind: :bundle, price: 120,
+      effective_from: boundary.to_time(:utc), effective_until: nil
+    )
+
+    # 有効期間の両端そのもの（ended_at / boundary）を含める。両端 inclusive かどうかは
+    # 2 経路で食い違いやすく、境界ちょうどのデータが無いと素通りする
+    base_times = [
+      Time.current, 2.weeks.ago, 6.months.ago, 2.years.ago,
+      Date.current, 6.months.ago.to_date, 2.weeks.ago.to_datetime,
+      boundary, boundary - 1, boundary + 1,
+      ended_at, ended_at - 1.second, ended_at + 1.second
+    ]
+    preloaded = Catalog.preload(:prices).find(catalog.id)
+
+    # kind は呼び出し元によってシンボル・文字列・enum の整数のいずれも渡りうる
+    [ :regular, "regular", :bundle, CatalogPrice.kinds[:bundle] ].each do |kind|
+      unloaded = base_times.index_with { |at| Catalog.find(catalog.id).price_by_kind(kind, at: at)&.id }
+      loaded   = base_times.index_with { |at| preloaded.price_by_kind(kind, at: at)&.id }
+
+      assert_equal unloaded, loaded, "kind: #{kind.inspect} で preload の有無により結果が変わった"
+    end
   end
 
   test "提供終了した商品は販売可能な一覧から除外される" do
