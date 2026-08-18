@@ -46,6 +46,16 @@ module Pos
           assert_response :not_found
         end
 
+        test "先に精算された販売の画面から送信しても、修正カートは描き直されず販売履歴に戻される" do
+          login_as_employee(@employee)
+
+          # 画面を開いたまま別の端末で精算された状況
+          post_form_state(sale: sales(:voided_sale), corrected: { @bento_a => 0 })
+
+          assert_redirected_to pos_location_sales_history_index_path(@location)
+          assert_equal "この販売は既に取消済みです", flash[:alert]
+        end
+
         test "日付が変わった後の画面から送信しても、修正カートは描き直されず販売履歴に戻される" do
           login_as_employee(@employee)
           @sale.update!(sale_datetime: 1.day.ago)

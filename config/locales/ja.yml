@@ -320,6 +320,7 @@ ja:
         index:
           title: "販売履歴"
       refunds:
+        already_voided: "この販売は既に取消済みです"
         not_todays_sale: "差額精算は当日の販売のみ行えます"
         new:
           title: "差額精算"
@@ -327,7 +328,6 @@ ja:
           success_refund: "返金処理が完了しました（返金額: %{amount}）"
           success_additional_charge: "追加請求が完了しました（追加請求額: %{amount}）"
           success_even_exchange: "交換処理が完了しました（差額なし）"
-          already_voided: "この販売は既に取消済みです"
 
   discounts:
     index:

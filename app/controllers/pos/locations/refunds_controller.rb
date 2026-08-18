@@ -5,12 +5,6 @@ module Pos
     class RefundsController < ApplicationController
       include RefundFormBuildable
 
-      before_action :set_location
-      before_action :set_sale, only: [ :new, :create ]
-      before_action :redirect_if_voided, only: :new
-      before_action :redirect_unless_sold_today, only: [ :new, :create ]
-      before_action :set_inventories, only: [ :new, :create ]
-
       def new
         @form = build_form
       end
@@ -43,13 +37,13 @@ module Pos
         end
 
         redirect_to pos_location_sales_history_index_path(@location), notice: notice
-      rescue Sale::NotTodaysSaleError
-        # before_action と Refunder は別々に時計を読む。日付が変わる瞬間の送信は
-        # ガードをすり抜けてここに来るため、同じリダイレクトへ寄せる
-        redirect_to_sales_history("pos.locations.refunds.not_todays_sale")
+      # ガードを通ってから Refunder が断る隙間がある。同じ販売の同時確定は
+      # 先に精算した側が void! を通し、日付が変わる瞬間の送信は別々に読んだ時計が
+      # 食い違う。どちらもガードと同じリダイレクトへ寄せる
       rescue Sale::AlreadyVoidedError
-        flash.now[:alert] = t(".already_voided")
-        render :new, status: :unprocessable_entity
+        redirect_to_sales_history("pos.locations.refunds.already_voided")
+      rescue Sale::NotTodaysSaleError
+        redirect_to_sales_history("pos.locations.refunds.not_todays_sale")
       rescue ActiveRecord::RecordInvalid => e
         flash.now[:alert] = e.record.errors.full_messages.first
         render :new, status: :unprocessable_entity
