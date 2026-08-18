@@ -25,8 +25,8 @@ class Sale < ApplicationRecord
   validates :voided_at,          presence: true, if: :voided?
   validates :voided_by_employee, presence: true, if: :voided?
 
-  # 差額精算は在庫の復元も修正カートの母集合も当日の在庫を基準にするため、
-  # 当日の販売にしか行えない
+  # 在庫の復元は元の販売日、修正カートの母集合と修正後の販売の減算は当日を
+  # 基準にする。この 2 つの基準日がずれるため、当日の販売にしか行えない
   #
   # @return [Boolean]
   def sold_today?
