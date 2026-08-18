@@ -33,8 +33,14 @@ module GhostForms
 
     private
 
+    # 送信されたのに必要な中身が残らなかったか。判定しようのない他のバリデーションを
+    # 黙らせる（重ねて出すと本当の理由が埋もれる）ためにフォームからも参照する
+    def submitted_unreadable?
+      submitted.unreadable?(required_submitted_keys)
+    end
+
     def submitted_readable
-      errors.add(:base, :unreadable_submission) if submitted.unreadable?(required_submitted_keys)
+      errors.add(:base, :unreadable_submission) if submitted_unreadable?
     end
   end
 end

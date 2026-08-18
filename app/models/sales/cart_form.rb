@@ -26,7 +26,7 @@ module Sales
       @submitted = submitted
       @items = build_items(inventories, submitted.values)
       @customer_type = submitted["customer_type"] || "staff"
-      @coupon_quantities = build_coupon_quantities(submitted.values)
+      @coupon_quantities = GhostForms::Quantities.from(submitted["coupon"])
     end
 
     def bento_items
@@ -88,11 +88,6 @@ module Sales
 
     def at_least_one_item_in_cart
       errors.add(:base, :no_items_in_cart) unless has_items_in_cart?
-    end
-
-    def build_coupon_quantities(submitted)
-      coupon_data = submitted["coupon"] || {}
-      coupon_data.to_h.transform_keys(&:to_i).transform_values { |v| v["quantity"].to_i }
     end
 
     def calculate_prices
