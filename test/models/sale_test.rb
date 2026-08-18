@@ -114,16 +114,21 @@ class SaleTest < ActiveSupport::TestCase
     end
   end
 
-  test "差額精算できるのは販売日時が当日の販売だけ" do
+  test "差額精算できるのは、当日の販売のうちまだ取り消されていないものだけ" do
     today_sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: Time.current)
     yesterday_sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: 1.day.ago)
+    voided_today_sale = create_sale(
+      location: locations(:city_hall), customer_type: :staff, sale_datetime: Time.current,
+      status: :voided, voided_at: Time.current, voided_by_employee: employees(:verified_employee)
+    )
 
-    assert_predicate today_sale, :sold_today?
-    assert_not_predicate yesterday_sale, :sold_today?
+    assert_predicate today_sale, :refundable?
+    assert_not_predicate yesterday_sale, :refundable?
+    assert_not_predicate voided_today_sale, :refundable?
 
     # 日付が変われば、同じ販売が当日のものではなくなる
     travel_to(1.day.from_now) do
-      assert_not_predicate today_sale, :sold_today?
+      assert_not_predicate today_sale, :refundable?
     end
   end
 end
