@@ -59,9 +59,9 @@ module SalesHistories
         return nil unless amount
 
         if amount >= 10_000
-          "¥#{(amount / 1000.0).round(1)}k"
+          "#{helpers.number_to_currency(amount / 1000.0, precision: 1, delimiter: "")}k"
         else
-          "¥#{amount.to_s.reverse.gsub(/(\d{3})(?=\d)/, '\1,').reverse}"
+          helpers.number_to_currency(amount)
         end
       end
 
