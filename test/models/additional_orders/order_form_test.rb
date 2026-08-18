@@ -5,6 +5,8 @@ require "minitest/mock"
 
 module AdditionalOrders
   class OrderFormTest < ActiveSupport::TestCase
+    include GhostFormSubmissionHelper
+
     fixtures :locations, :catalogs, :daily_inventories, :employees
 
     setup do
@@ -14,6 +16,10 @@ module AdditionalOrders
       @stock_map = @location.today_inventories
                             .where(catalog_id: @catalogs.select(:id))
                             .to_h { |inv| [ inv.catalog_id, inv.available_stock ] }
+    end
+
+    def submission_form
+      OrderForm
     end
 
     test "全弁当カタログからフォーム項目を構築し入力数量で絞り込める" do
@@ -29,7 +35,7 @@ module AdditionalOrders
 
       bento_a = catalogs(:daily_bento_a)
       submitted = { bento_a.id.to_s => { quantity: "5" } }
-      form_with_input = OrderForm.new(location: @location, catalogs: @catalogs, stock_map: @stock_map, submitted: submitted)
+      form_with_input = OrderForm.new(location: @location, catalogs: @catalogs, stock_map: @stock_map, submitted: submission(submitted))
 
       assert_equal 1, form_with_input.items_with_quantity.count
       assert_equal bento_a.id, form_with_input.items_with_quantity.first.catalog_id
@@ -46,7 +52,7 @@ module AdditionalOrders
         bento_a.id.to_s => { quantity: "3" },
         bento_b.id.to_s => { quantity: "2" }
       }
-      form = OrderForm.new(location: @location, catalogs: @catalogs, stock_map: @stock_map, submitted: submitted)
+      form = OrderForm.new(location: @location, catalogs: @catalogs, stock_map: @stock_map, submitted: submission(submitted))
 
       assert_difference "AdditionalOrder.count", 2 do
         assert form.save(employee: @employee)
@@ -67,7 +73,7 @@ module AdditionalOrders
         location: @location,
         catalogs: @catalogs,
         stock_map: @stock_map,
-        submitted: { bento_a.id.to_s => { quantity: "3" } }
+        submitted: submission({ bento_a.id.to_s => { quantity: "3" } })
       )
 
       invalid_record = AdditionalOrder.new
@@ -122,7 +128,7 @@ module AdditionalOrders
       assert_not stock_map.key?(unlisted.id)
 
       submitted = { unlisted.id.to_s => { quantity: "3" } }
-      form = OrderForm.new(location: @location, catalogs: catalogs, stock_map: stock_map, submitted: submitted)
+      form = OrderForm.new(location: @location, catalogs: catalogs, stock_map: stock_map, submitted: submission(submitted))
 
       assert_difference [ "AdditionalOrder.count", "DailyInventory.count" ], 1 do
         assert form.save(employee: @employee)

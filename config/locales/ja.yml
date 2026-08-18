@@ -53,6 +53,10 @@ ja:
 
   activemodel:
     errors:
+      # モデル別の宣言が無ければここへ落ちる。GhostForms::SubmissionReadable を
+      # include したフォームは、書き足さなくてもこの文言を引く
+      messages:
+        unreadable_submission: "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください"
       models:
         catalogs/pricing_rule_creator:
           attributes:
@@ -77,7 +81,6 @@ ja:
           attributes:
             base:
               no_items_selected: "商品数量またはクーポン枚数を変更してください"
-              unreadable_quantities: "修正後の数量を読み取れませんでした。画面を再読み込みしてやり直してください"
         sales/cart_form:
           attributes:
             base:

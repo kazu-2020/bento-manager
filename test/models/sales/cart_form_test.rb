@@ -4,6 +4,8 @@ require "test_helper"
 
 module Sales
   class CartFormTest < ActiveSupport::TestCase
+    include GhostFormSubmissionHelper
+
     fixtures :locations, :catalogs, :catalog_prices, :catalog_pricing_rules, :daily_inventories, :discounts, :coupons
 
     setup do
@@ -12,6 +14,10 @@ module Sales
       @discounts = Discount.active
       @bento_a = catalogs(:daily_bento_a)
       @salad = catalogs(:salad)
+    end
+
+    def submission_form
+      CartForm
     end
 
     test "カートを構築し商品の数量・顧客種別・クーポンを入力できる" do
@@ -28,7 +34,7 @@ module Sales
         @bento_a.id.to_s => { "quantity" => "3" },
         "customer_type" => "staff"
       }
-      form_with_input = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
+      form_with_input = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(submitted))
       bento_item = form_with_input.items.find { |i| i.catalog_id == @bento_a.id }
 
       assert_equal 3, bento_item.quantity
@@ -38,7 +44,7 @@ module Sales
 
       discount = discounts(:fifty_yen_discount)
       coupon_submitted = { "coupon" => { discount.id.to_s => { "quantity" => "1" } } }
-      form_with_coupon = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: coupon_submitted)
+      form_with_coupon = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(coupon_submitted))
 
       assert_equal 1, form_with_coupon.coupon_quantity(discount)
     end
@@ -60,7 +66,7 @@ module Sales
         bento_b.id.to_s => { "quantity" => "3" },
         @salad.id.to_s => { "quantity" => "0" }
       }
-      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(submitted))
 
       assert_equal 2, form.cart_items.count
       assert_equal @bento_a.id, form.cart_items.find { |i| i.catalog_id == @bento_a.id }.catalog_id
@@ -76,7 +82,7 @@ module Sales
       assert_empty empty_result[:items_with_prices]
 
       submitted_single = { @bento_a.id.to_s => { "quantity" => "1" } }
-      form_single = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted_single)
+      form_single = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(submitted_single))
       single_result = form_single.price_result
 
       assert_equal 550, single_result[:subtotal]
@@ -86,7 +92,7 @@ module Sales
         @bento_a.id.to_s => { "quantity" => "1" },
         @salad.id.to_s => { "quantity" => "1" }
       }
-      form_bundle = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted_bundle)
+      form_bundle = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(submitted_bundle))
       bundle_result = form_bundle.price_result
 
       assert_equal 700, bundle_result[:subtotal]
@@ -97,12 +103,12 @@ module Sales
       discount = discounts(:fifty_yen_discount)
 
       coupon_submitted = { "coupon" => { discount.id.to_s => { "quantity" => "1" } } }
-      form_select = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: coupon_submitted)
+      form_select = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(coupon_submitted))
 
       assert_includes form_select.selected_discount_ids, discount.id
 
       zero_submitted = { "coupon" => { discount.id.to_s => { "quantity" => "0" } } }
-      form_zero = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: zero_submitted)
+      form_zero = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(zero_submitted))
 
       assert_not_includes form_zero.selected_discount_ids, discount.id
       assert_empty form_zero.discount_quantities_for_calculator
@@ -111,7 +117,7 @@ module Sales
         @bento_a.id.to_s => { "quantity" => "2" },
         "coupon" => { discount.id.to_s => { "quantity" => "1" } }
       }
-      form_with_discount = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: full_submitted)
+      form_with_discount = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(full_submitted))
       result = form_with_discount.price_result
 
       assert_equal 1100, result[:subtotal]
@@ -122,7 +128,7 @@ module Sales
         @bento_a.id.to_s => { "quantity" => "1" },
         "coupon" => { discount.id.to_s => { "quantity" => "1" } }
       }
-      form_single = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: single_submitted)
+      form_single = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(single_submitted))
       single_result = form_single.price_result
 
       assert_equal 550, single_result[:subtotal]
@@ -131,7 +137,7 @@ module Sales
     end
 
     test "商品未選択ではバリデーションエラーになり商品を選ぶと送信できる" do
-      empty_form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: { "customer_type" => "staff" })
+      empty_form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission({ "customer_type" => "staff" }))
 
       assert_not empty_form.valid?
       assert_predicate empty_form.errors[:base], :any?
@@ -140,12 +146,12 @@ module Sales
         @bento_a.id.to_s => { "quantity" => "1" },
         "customer_type" => "staff"
       }
-      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submitted)
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(submitted))
 
       assert_predicate form, :valid?
       assert_empty form.errors
 
-      default_type = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: { @bento_a.id.to_s => { "quantity" => "1" } })
+      default_type = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission({ @bento_a.id.to_s => { "quantity" => "1" } }))
 
       assert_predicate default_type, :valid?
       assert_equal "staff", default_type.customer_type
@@ -160,7 +166,7 @@ module Sales
       @discounts.each { |d| assert_equal 0, empty_form.coupon_quantity(d) }
 
       partial_submitted = { "coupon" => { discount.id.to_s => { "quantity" => "1" } } }
-      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: partial_submitted)
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(partial_submitted))
 
       assert_equal 1, form.coupon_quantity(discount)
       others.each { |other| assert_equal 0, form.coupon_quantity(other) }
@@ -169,7 +175,7 @@ module Sales
     test "画面に無いクーポンが送信されても割引として扱わない" do
       discount = discounts(:fifty_yen_discount)
       submitted = { "coupon" => { discount.id.to_s => { "quantity" => "1" } } }
-      form = CartForm.new(location: @location, inventories: @inventories, discounts: [], submitted: submitted)
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: [], submitted: submission(submitted))
 
       assert_empty form.discount_quantities_for_calculator
     end
@@ -177,14 +183,14 @@ module Sales
     test "クーポンの枚数はカートに商品があるかの判定に影響しない" do
       discount = discounts(:fifty_yen_discount)
       coupon_only = { "coupon" => { discount.id.to_s => { "quantity" => "1" } } }
-      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: coupon_only)
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(coupon_only))
 
       assert_not form.has_items_in_cart?
       assert_equal 0, form.total_bento_quantity
       assert_not form.valid?
 
       with_item = coupon_only.merge(@bento_a.id.to_s => { "quantity" => "1" }, "customer_type" => "staff")
-      form_with_item = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: with_item)
+      form_with_item = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts, submitted: submission(with_item))
 
       assert_predicate form_with_item, :has_items_in_cart?
       assert_predicate form_with_item, :valid?

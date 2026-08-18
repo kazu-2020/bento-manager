@@ -10,7 +10,7 @@ module AdditionalOrderFormBuildable
     @location = Location.active.find(params[:location_id])
   end
 
-  def build_form(submitted = {})
+  def build_form(submitted = ::GhostForms::Submission.absent)
     catalogs = Catalog.bento.available.order(:kana)
     stock_map = @location.today_inventories
                          .where(catalog_id: catalogs.select(:id))

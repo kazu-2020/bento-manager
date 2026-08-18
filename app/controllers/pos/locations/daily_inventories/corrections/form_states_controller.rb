@@ -31,10 +31,10 @@ module Pos
             @catalogs = Catalog.available.category_order
           end
 
-          def build_form(submitted = {})
-            items = ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
+          def build_form(submitted)
             ::DailyInventories::CorrectionForm.new(
-              location: @location, items: items, search_query: params[:search_query]
+              location: @location, catalogs: @catalogs,
+              search_query: params[:search_query], submitted: submitted
             )
           end
         end

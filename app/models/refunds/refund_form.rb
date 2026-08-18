@@ -5,27 +5,24 @@ module Refunds
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
-    # submitted のどの位置に何が来るかの宣言（SubmittedParamsFilterable が使う）
+    include ::GhostForms::SubmissionReadable
+
+    # submitted のどの位置に何が来るかの宣言（GhostForms::ParamsFilter が使う）
     SUBMITTED_PARAMS_SHAPE = { collection_keys: %w[corrected coupon] }.freeze
 
     attr_reader :sale, :location, :corrected_quantities, :coupon_quantities, :inventories
 
     validate :at_least_one_change
-    validate :corrected_quantities_readable
 
-    # submitted は未送信（nil）と送信済み（Hash）を区別する。初回描画では元の販売から
-    # 初期値を作るため、「まだ何も送られていない」と「送られたが空だった」を
-    # 見分けなければならない。中身が空かどうかで分岐すると、数量の入力が
-    # 無効化されてキーごと送信されなかったときに元の販売の値が復活する。
-    # 在庫訂正のフォームも同じ区別を要し、そちらはコントローラーで分けている。
-    def initialize(sale:, location:, inventories: [], submitted: nil)
+    # submitted は GhostForms::Submission。初回描画は元の販売から初期値を作るので、
+    # 未送信と壊れた送信を見分ける必要がある（理由は GhostForms::Submission）
+    def initialize(sale:, location:, inventories: [], submitted: ::GhostForms::Submission.absent)
       @sale = sale
       @location = location
       @inventories = inventories
-      submitted_corrected = submitted_quantities(submitted, "corrected")
-      @unreadable_submission = !submitted_corrected.nil? && submitted_corrected.empty?
-      @corrected_quantities = build_corrected_quantities(submitted_corrected)
-      @coupon_quantities = build_coupon_quantities(submitted_quantities(submitted, "coupon"))
+      @submitted = submitted
+      @corrected_quantities = build_corrected_quantities
+      @coupon_quantities = build_coupon_quantities
     end
 
     def corrected_items
@@ -115,29 +112,26 @@ module Refunds
 
     private
 
-    # 送信されていれば届いたキーだけを Hash にし、未送信（初回描画）なら nil を返す。
-    # 疎なまま外へ出さず、build_* が母集合に対して埋め直す
-    def submitted_quantities(submitted, key)
-      return nil if submitted.nil?
-
+    # 届いたキーだけの疎なハッシュ。そのまま外へ出さず、build_* が母集合に対して埋め直す
+    def submitted_quantities(key)
       GhostForms::Quantities.from(submitted[key])
     end
 
     # 母集合は「元の販売の商品 + 当日の在庫」で、画面が数量入力を描画する範囲そのもの。
     # 未送信の初回描画では初期値がそのまま現在値なので、同じハッシュを共有する
-    def build_corrected_quantities(submitted)
-      return original_corrected_quantities if submitted.nil?
+    def build_corrected_quantities
+      return original_corrected_quantities if submitted.absent?
 
-      GhostForms::Quantities.dense(catalog_lookup.keys, submitted)
+      GhostForms::Quantities.dense(catalog_lookup.keys, submitted_quantities("corrected"))
     end
 
     # 母集合は available_discounts。有効期限切れなどで描画されないクーポンは枚数入力が
     # 出ず送信されようがないので、母集合に入れてはいけない。入れると「届かない」を
     # 「0枚に減った」と読んでしまう
-    def build_coupon_quantities(submitted)
-      return original_coupon_quantities if submitted.nil?
+    def build_coupon_quantities
+      return original_coupon_quantities if submitted.absent?
 
-      GhostForms::Quantities.dense(submittable_discount_ids, submitted)
+      GhostForms::Quantities.dense(submittable_discount_ids, submitted_quantities("coupon"))
     end
 
     def submittable_discount_ids
@@ -161,26 +155,20 @@ module Refunds
       @original_discount_quantities ||= sale.sale_discounts.pluck(:discount_id, :quantity).to_h
     end
 
-    # 数量が1件も読めないなら「変更されたか」は判定しようがないので、
-    # 読み取れなかったことだけを案内する（corrected_quantities_readable が担う）
+    # corrected が 1 件も届かないのは「全て 0」ではなく壊れた送信。全て 0 の確定は
+    # 数量を 0 として明示的に送ってくる。ここを通すと corrected_items_for_refunder が
+    # 空になり、修正後の販売が作られないまま元の販売が取り消されて全額返金になる。
+    # corrected_quantities は母集合の分だけ必ず埋まる（ルール 7）ので空では見分けられず、
+    # Submission が見る密化前のハッシュで判定する
+    def required_submitted_keys
+      %w[corrected]
+    end
+
+    # 読めない送信では「変更されたか」を判定しようがない
     def at_least_one_change
-      return if unreadable_submission?
+      return if submitted_unreadable?
 
       errors.add(:base, :no_items_selected) unless has_any_changes?
-    end
-
-    # 修正カートが1件も届かないのは「全て0」ではなく壊れた送信。全て0の確定は
-    # 数量を0として明示的に送ってくる。ここを通すと corrected_items_for_refunder が
-    # 空になり、修正後の販売が作られないまま元の販売が取り消されて全額返金になる。
-    def corrected_quantities_readable
-      errors.add(:base, :unreadable_quantities) if unreadable_submission?
-    end
-
-    # corrected_quantities は母集合の分だけ必ず埋まるため、空かどうかでは壊れた送信を
-    # 見分けられない。埋める前の、届いたままのハッシュが空だったかどうかで判定する。
-    # 初回描画は送信そのものが無いので該当しない
-    def unreadable_submission?
-      @unreadable_submission
     end
 
     def catalog_lookup

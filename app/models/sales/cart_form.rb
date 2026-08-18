@@ -5,9 +5,11 @@ module Sales
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
+    include ::GhostForms::SubmissionReadable
+
     ITEM_TYPE = CartItemType.new
 
-    # submitted のどの位置に何が来るかの宣言（SubmittedParamsFilterable が使う）
+    # submitted のどの位置に何が来るかの宣言（GhostForms::ParamsFilter が使う）
     SUBMITTED_PARAMS_SHAPE = {
       scalar_keys: %w[customer_type],
       collection_keys: %w[coupon]
@@ -16,12 +18,14 @@ module Sales
     attr_reader :location, :items, :discounts, :customer_type
 
     validate :at_least_one_item_in_cart
-    validates :customer_type, presence: true
+    # 読めない送信では顧客区分も届いていない。案内は unreadable_submission に一本化する
+    validates :customer_type, presence: true, unless: :submitted_unreadable?
 
-    def initialize(location:, inventories:, discounts:, submitted: {})
+    def initialize(location:, inventories:, discounts:, submitted: ::GhostForms::Submission.absent)
       @location = location
       @discounts = discounts
-      @items = build_items(inventories, submitted)
+      @submitted = submitted
+      @items = build_items(inventories, submitted.values)
       @customer_type = submitted["customer_type"] || "staff"
       @coupon_quantities = build_coupon_quantities(submitted["coupon"])
     end
@@ -84,6 +88,9 @@ module Sales
     end
 
     def at_least_one_item_in_cart
+      # 読めない送信では「1 件も無い」のか「捨てられただけ」なのか判定しようがない
+      return if submitted_unreadable?
+
       errors.add(:base, :no_items_in_cart) unless has_items_in_cart?
     end
 

@@ -52,20 +52,10 @@ module Pos
           @additional_order_quantities = AdditionalOrder.quantities_by_catalog_id(location: @location)
         end
 
-        def existing_inventories
-          @existing_inventories ||= @location.today_inventories.index_by(&:catalog_id)
-        end
-
-        # 送信の有無で分岐する。フィルタ後の中身で分岐すると、不正なパラメータだけの
-        # 送信が空に畳まれて既存在庫からの再構築に化け、拒否すべき要求が
-        # bulk_recreate による破壊的な書き込みを行ってしまう。
-        def build_form(submitted = nil)
-          items = if submitted.nil?
-            ::DailyInventories::ItemBuilder.from_inventories(@catalogs, existing_inventories)
-          else
-            ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted)
-          end
-          ::DailyInventories::CorrectionForm.new(location: @location, items: items)
+        def build_form(submitted = ::GhostForms::Submission.absent)
+          ::DailyInventories::CorrectionForm.new(
+            location: @location, catalogs: @catalogs, submitted: submitted
+          )
         end
       end
     end
