@@ -87,6 +87,19 @@ class DailyInventoryTest < ActiveSupport::TestCase
     assert_raises(ArgumentError) { inventory.increment_stock!(-1) }
   end
 
+  test "別の端末が先に当日在庫を更新していても後続の在庫増減は取りこぼされない" do
+    inventory = daily_inventories(:city_hall_bento_a_today)
+    # 在庫画面を開いたまま、別端末の販売で lock_version が進んだ状態
+    stale_inventory = DailyInventory.find(inventory.id)
+    inventory.increment_stock!(5)
+
+    # 増減する式で stale_inventory を reload すると lock_version が最新に
+    # 揃ってしまい、古いまま減算するという前提が消える
+    assert_difference -> { inventory.reload.stock }, -3 do
+      stale_inventory.decrement_stock!(3)
+    end
+  end
+
   test "一括登録で当日の在庫を作成できる" do
     location = Location.create!(name: "一括作成テスト販売先", status: :active)
     items = [
