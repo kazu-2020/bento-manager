@@ -40,20 +40,9 @@ module Pos
           @catalogs = Catalog.available.category_order
         end
 
-        def existing_inventories
-          @existing_inventories ||= @location.today_inventories.index_by(&:catalog_id)
-        end
-
-        # 初期値をどこから作るかだけを分ける。壊れた送信の差し戻しは
-        # GhostForms::SubmissionReadable が担うので、ここで拒否の判断はしない
         def build_form(submitted = ::GhostForms::Submission.absent)
-          items = if submitted.absent?
-            ::DailyInventories::ItemBuilder.from_inventories(@catalogs, existing_inventories)
-          else
-            ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted.values)
-          end
           ::DailyInventories::CorrectionForm.new(
-            location: @location, items: items, submitted: submitted
+            location: @location, catalogs: @catalogs, submitted: submitted
           )
         end
       end

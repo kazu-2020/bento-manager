@@ -16,12 +16,13 @@ module DailyInventories
 
     validate :at_least_one_item_selected
 
-    # submitted 自体も受け取るのは、壊れた送信を SubmissionReadable が差し戻すため
-    def initialize(location:, items:, search_query: nil, submitted: ::GhostForms::Submission.absent)
+    # items は submitted から導出する。未送信なら submitted.values は空で、
+    # 母集合である catalogs のぶんだけ未選択の初期値が並ぶ（ルール 7）
+    def initialize(location:, catalogs:, search_query: nil, submitted: ::GhostForms::Submission.absent)
       @location = location
       @search_query = search_query&.strip.presence
-      @items = items
       @submitted = submitted
+      @items = ItemBuilder.from_params(catalogs, submitted.values)
       @created_count = 0
     end
 
