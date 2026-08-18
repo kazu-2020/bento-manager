@@ -224,6 +224,25 @@ module Sales
       end
     end
 
+    test "同じ販売に差額精算が二重に走っても在庫の復元と差額の記録は1回だけになる" do
+      recorder = Sales::Recorder.new
+      sale = recorder.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 } ]
+      )
+      # 先に差額精算へ入ったリクエストの裏で、同じ販売を読み込んだ別リクエスト
+      stale_sale = Sale.find(sale.id)
+
+      refunder = Sales::Refunder.new
+      refunder.process(sale: sale, corrected_items: [], employee: @employee)
+
+      assert_no_difference [ "Refund.count", "@inventory_bento_a.reload.stock" ] do
+        assert_raises Sale::AlreadyVoidedError do
+          refunder.process(sale: stale_sale, corrected_items: [], employee: @employee)
+        end
+      end
+    end
+
     # === 差額精算テスト ===
 
     test "弁当A(550円)を弁当B(500円)に交換すると差額50円が返金される" do

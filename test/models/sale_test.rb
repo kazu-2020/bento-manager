@@ -99,6 +99,8 @@ class SaleTest < ActiveSupport::TestCase
       final_amount: 950,
       status: :completed
     )
+    # 取消前に読み込まれ、別のリクエストが持ち続けている古いインスタンス
+    stale_sale = Sale.find(sale.id)
 
     freeze_time do
       sale.void!(voided_by: employees(:verified_employee))
@@ -112,6 +114,13 @@ class SaleTest < ActiveSupport::TestCase
     assert_raises(Sale::AlreadyVoidedError) do
       sale.void!(voided_by: employees(:verified_employee))
     end
+
+    # 古いインスタンスの voided? は false のままだが、取消の可否は DB で判定される
+    assert_raises(Sale::AlreadyVoidedError) do
+      stale_sale.void!(voided_by: employees(:owner_employee))
+    end
+
+    assert_equal employees(:verified_employee), sale.reload.voided_by_employee
   end
 
   test "当日に確定した販売があれば販売開始済みと判定される" do

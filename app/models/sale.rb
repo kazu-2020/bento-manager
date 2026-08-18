@@ -46,16 +46,27 @@ class Sale < ApplicationRecord
   end
 
   # 販売を取り消す
+  #
+  # 取消済みかどうかの判定は、必ずトランザクション内で reload してから行う
+  # （with_lock がそれを担う）。コントローラで読み込んだ sale をそのまま
+  # 判定すると、同じ販売を読み込んだ 2 つのリクエストが並行して差額精算に
+  # 入ったとき、どちらの `voided?` も false のままガードを通過し、在庫の
+  # 二重復元と Refund の二重作成が起きる。
+  # SQLite でこの判定が直列化される理由は DailyInventory#decrement_stock! の
+  # 説明と同じ（BEGIN IMMEDIATE + トランザクション内の reload）。
+  #
   # @param voided_by [Employee] 取消担当者
   # @return [Boolean] `true` if the record was updated.
   # @raise [AlreadyVoidedError] if the sale is already voided.
   def void!(voided_by:)
-    raise AlreadyVoidedError, "この販売は既に取り消されています" if voided?
+    with_lock do
+      raise AlreadyVoidedError, "この販売は既に取り消されています" if voided?
 
-    update!(
-      status: :voided,
-      voided_at: Time.current,
-      voided_by_employee: voided_by
-    )
+      update!(
+        status: :voided,
+        voided_at: Time.current,
+        voided_by_employee: voided_by
+      )
+    end
   end
 end
