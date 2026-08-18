@@ -46,7 +46,7 @@ module Pos
         assert_redirected_to new_pos_location_daily_inventory_path(location)
       end
 
-      test "販売画面は商品が何枚並んでも価格の問い合わせを1回で済ませる" do
+      test "販売画面は並ぶ商品の数によらず価格の問い合わせを1回で済ませる" do
         login_as_employee(@employee)
 
         # 商品カードごとに単価を引くため、preload が効いていないと在庫の数だけ問い合わせが増える

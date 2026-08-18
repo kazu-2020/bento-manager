@@ -35,9 +35,7 @@ module Pos
 
       test "差額精算画面は元の販売の明細が増えても問い合わせ本数が増えない" do
         login_as_employee(@employee)
-        request = -> { get new_pos_location_refund_path(@location, sale_id: @sale.id) }
-
-        assert_queries_unaffected_by("元の販売の明細ごとに価格の読み込みが走っている", request: request) do
+        more_items = -> do
           SaleItem.create!(
             sale: @sale,
             catalog: @salad,
@@ -56,6 +54,10 @@ module Pos
             line_total: 500,
             sold_at: @sale.sale_datetime
           )
+        end
+
+        assert_queries_unaffected_by(more_items, "元の販売の明細ごとに価格の読み込みが走っている") do
+          get new_pos_location_refund_path(@location, sale_id: @sale.id)
         end
       end
 

@@ -29,8 +29,11 @@ module Pos
         # Turbo Stream レスポンステスト
         # ============================================================
 
-        test "入力のたびの再描画でも価格の問い合わせは1回で済む" do
+        test "入力を受けた再描画でも、価格の問い合わせは商品の数によらず1回で済む" do
           login_as_employee(@employee)
+
+          # 入力のたびに POST が飛ぶ画面なので、カード 1 枚ごとの問い合わせがそのまま効いてくる
+          assert_operator @location.today_inventories.count, :>=, 2
 
           assert_queries_match(/FROM ["`]catalog_prices["`]/, count: 1) do
             post pos_location_sales_form_state_path(@location),

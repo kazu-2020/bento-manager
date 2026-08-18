@@ -10,10 +10,12 @@ class CatalogPrice < ApplicationRecord
 
   validate :valid_date_range
 
-  scope :effective_at, ->(date) {
-    where(effective_from: ..date)
+  scope :effective_at, ->(at) {
+    at = boundary_time(at)
+
+    where(effective_from: ..at)
       .merge(
-        where(effective_until: nil).or(where(effective_until: date..))
+        where(effective_until: nil).or(where(effective_until: at..))
       )
   }
   scope :current, -> { effective_at(Time.current) }
@@ -31,11 +33,13 @@ class CatalogPrice < ApplicationRecord
   # 揃えてある。
   #
   # @param prices [Enumerable<CatalogPrice>] 読み込み済みの価格
-  # @param kind [String, Symbol] 価格種別
+  # @param kind [String, Symbol, Integer] 価格種別
   # @param at [Time, Date] 基準日時
   # @return [CatalogPrice, nil]
   def self.pick_by_kind(prices, kind:, at: Time.current)
-    prices.select { |price| price.kind == kind.to_s && price.effective_at?(at) }
+    kind = kind_name(kind)
+
+    prices.select { |price| price.kind == kind && price.effective_at?(at) }
           .max_by(&:effective_from)
   end
 
@@ -44,24 +48,33 @@ class CatalogPrice < ApplicationRecord
   # @param at [Time, Date] 基準日時
   # @return [Boolean]
   def effective_at?(at)
-    at = self.class.comparable_time(at)
+    at = self.class.boundary_time(at)
 
     effective_from <= at && (effective_until.nil? || at <= effective_until)
   end
 
-  # 基準日時を SQL 版と同じ土俵に載せる
+  # 有効期間の境界に使う日時を決める
   #
-  # Date を where に渡すと 'YYYY-MM-DD' として引用され、UTC で保存された datetime
-  # 文字列と文字列比較される。つまり境界は UTC の 0 時になる。Ruby 側で比較するとき
-  # も同じ境界にしないと、preload の有無で結果が変わってしまう。
+  # Date をそのまま where に渡すと 'YYYY-MM-DD' として引用され、UTC で保存された
+  # datetime 文字列との文字列比較になる。両端の inclusive/exclusive が食い違ううえ、
+  # Ruby 側で同じ比較を書き起こせない。SQL と Ruby の 2 経路が同じ答えを返すために、
+  # 日付は SQL に渡す前に UTC 0 時へ寄せる（従来の文字列比較の境界と同じ位置）。
   #
   # DateTime は Date のサブクラスだが時刻を持ち、where でも完全な日時として引用される
-  # ため、ここでは触らない（instance_of? で日付だけを拾う）。
+  # ため触らない（instance_of? で日付だけを拾う）。
   #
   # @param at [Time, Date]
   # @return [Time, Date]
-  def self.comparable_time(at)
+  def self.boundary_time(at)
     at.instance_of?(Date) ? at.to_time(:utc) : at
+  end
+
+  # enum の値（整数・シンボル・文字列）を kind 属性と同じ文字列に揃える
+  #
+  # @param kind [String, Symbol, Integer]
+  # @return [String]
+  def self.kind_name(kind)
+    kinds.key(kind) || kind.to_s
   end
 
   # 新しい価格を作成し、既存の有効な価格があれば終了させる

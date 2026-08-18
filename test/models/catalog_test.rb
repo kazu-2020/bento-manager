@@ -98,35 +98,20 @@ class CatalogTest < ActiveSupport::TestCase
     assert_nil catalog_without_prices.price_by_kind(:regular)
   end
 
-  test "価格を読み込み済みの商品は、価格を引くのに追加の問い合わせをしない" do
-    catalog = Catalog.preload(:prices).find(catalogs(:salad).id)
-
-    assert_no_queries do
-      assert_equal 250, catalog.price_by_kind(:regular).price
-      assert_equal 150, catalog.price_by_kind(:bundle).price
-    end
-  end
-
-  test "価格を読み込み済みでも、有効期間外の価格は取得されない" do
-    catalog = catalogs(:daily_bento_b)
+  test "価格を読み込み済みの商品は、追加の問い合わせなしで種別ごとの有効な価格を引ける" do
+    catalog = catalogs(:salad)
     past_price = CatalogPrice.create!(
-      catalog: catalog, kind: :regular, price: 400,
+      catalog: catalog, kind: :regular, price: 200,
       effective_from: 3.days.ago, effective_until: 2.days.ago
     )
     catalog.prices.reload
 
     assert_no_queries do
-      assert_equal 500, catalog.price_by_kind(:regular).price
-      assert_equal past_price, catalog.price_by_kind(:regular, at: 2.days.ago - 1.hour)
-    end
-  end
-
-  test "価格を読み込み済みで有効な価格がない商品は nil を返す" do
-    catalog = Catalog.preload(:prices).find(catalogs(:daily_bento_a).id)
-
-    assert_no_queries do
-      assert_nil catalog.price_by_kind(:bundle)
-      assert_not catalog.price_exists?(:bundle)
+      assert_equal 250, catalog.price_by_kind(:regular).price
+      assert_equal 150, catalog.price_by_kind(:bundle).price
+      assert_equal past_price, catalog.price_by_kind(:regular, at: 2.days.ago - 1.hour), "有効期間で切り替わる"
+      assert_nil catalog.price_by_kind(:regular, at: 1.year.ago), "どの価格も有効でない時点では nil"
+      assert_not catalog.price_exists?(:regular, at: 1.year.ago)
     end
   end
 
@@ -137,13 +122,27 @@ class CatalogTest < ActiveSupport::TestCase
       effective_from: 1.year.ago, effective_until: 1.month.ago
     )
 
-    base_times = [ Time.current, 2.weeks.ago, 6.months.ago, 2.years.ago, Date.current, 6.months.ago.to_date, 2.weeks.ago.to_datetime ]
+    # 日付ちょうどの境界は SQL 側が文字列比較になり、Ruby 側と食い違いやすい
+    boundary = Date.new(2026, 3, 10)
+    CatalogPrice.create!(
+      catalog: catalog, kind: :bundle, price: 120,
+      effective_from: boundary.to_time(:utc), effective_until: nil
+    )
+
+    base_times = [
+      Time.current, 2.weeks.ago, 6.months.ago, 2.years.ago,
+      Date.current, 6.months.ago.to_date, 2.weeks.ago.to_datetime,
+      boundary, boundary - 1, boundary + 1
+    ]
     preloaded = Catalog.preload(:prices).find(catalog.id)
 
-    unloaded_results = base_times.index_with { |at| Catalog.find(catalog.id).price_by_kind(:regular, at: at)&.id }
-    loaded_results   = base_times.index_with { |at| preloaded.price_by_kind(:regular, at: at)&.id }
+    # kind は呼び出し元によってシンボル・文字列・enum の整数のいずれも渡りうる
+    [ :regular, "regular", :bundle, CatalogPrice.kinds[:bundle] ].each do |kind|
+      unloaded = base_times.index_with { |at| Catalog.find(catalog.id).price_by_kind(kind, at: at)&.id }
+      loaded   = base_times.index_with { |at| preloaded.price_by_kind(kind, at: at)&.id }
 
-    assert_equal unloaded_results, loaded_results
+      assert_equal unloaded, loaded, "kind: #{kind.inspect} で preload の有無により結果が変わった"
+    end
   end
 
   test "提供終了した商品は販売可能な一覧から除外される" do

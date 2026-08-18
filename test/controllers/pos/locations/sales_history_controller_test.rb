@@ -29,9 +29,7 @@ module Pos
       end
 
       test "販売履歴は販売が増えても問い合わせ本数が増えない" do
-        request = -> { get pos_location_sales_history_index_path(@location) }
-
-        assert_queries_unaffected_by("担当者と割引の読み込みが販売ごとに走っている", request: request) do
+        another_sale = -> do
           sale = Sale.create!(
             location: @location,
             sale_datetime: Time.current,
@@ -55,6 +53,10 @@ module Pos
             discount_amount: 100,
             quantity: 1
           )
+        end
+
+        assert_queries_unaffected_by(another_sale, "担当者と割引の読み込みが販売ごとに走っている") do
+          get pos_location_sales_history_index_path(@location)
         end
       end
 

@@ -27,15 +27,16 @@ module QueryCountHelper
     count
   end
 
-  # データを増やす前後で問い合わせ本数が変わらないことを検証する
+  # ブロックの問い合わせ本数が、change を実行しても変わらないことを検証する
   #
+  # @param change [#call] データを増やす手続き
   # @param message [String] 失敗時のメッセージ
-  # @yield データを増やす手続き。呼び出し前後で block（第2引数）が実行される
-  def assert_queries_unaffected_by(message = nil, request:, &grow)
-    request.call # 初回だけ走る問い合わせ（遅延読み込みの定数など）を先に済ませる
-    before = count_queries { request.call }
-    grow.call
-    after = count_queries { request.call }
+  # @yield 本数を測る対象（リクエストなど）。change の前後で 1 回ずつ実行される
+  def assert_queries_unaffected_by(change, message = nil)
+    yield # 初回だけ走る問い合わせ（遅延読み込みの定数など）を先に済ませる
+    before = count_queries { yield }
+    change.call
+    after = count_queries { yield }
 
     assert_equal before, after, message || "データが増えたぶんだけ問い合わせが増えている"
   end
