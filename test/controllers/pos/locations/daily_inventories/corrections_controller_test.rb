@@ -101,10 +101,24 @@ module Pos
             location: @location, catalog_id: @bento_a.id,
             quantity: 5, order_at: Time.current
           )
+          get new_pos_location_daily_inventories_correction_path(@location)
+
+          assert_response :success
+          assert_match 'value="25"', response.body
+          assert_match "本日の追加発注", response.body
+          assert_match "#{@bento_a.name} +5個", response.body
+        end
+
+        test "提供終了した商品でも当日在庫があれば訂正画面に出て、訂正しても在庫が残る" do
+          login_as_employee(@employee)
+          DailyInventory.create!(
+            location: @location, catalog: @bento_a,
+            inventory_date: Date.current, stock: 20, reserved_stock: 0
+          )
           discontinued = catalogs(:discontinued_bento)
-          AdditionalOrder.create_with_inventory!(
-            location: @location, catalog_id: discontinued.id,
-            quantity: 3, order_at: Time.current
+          DailyInventory.create!(
+            location: @location, catalog: discontinued,
+            inventory_date: Date.current, stock: 3, reserved_stock: 0
           )
           CatalogDiscontinuation.create!(
             catalog: discontinued, discontinued_at: Time.current, reason: "提供終了"
@@ -113,10 +127,24 @@ module Pos
           get new_pos_location_daily_inventories_correction_path(@location)
 
           assert_response :success
-          assert_match 'value="25"', response.body
-          assert_match "本日の追加発注", response.body
-          assert_match "#{@bento_a.name} +5個", response.body
-          assert_no_match(/#{discontinued.name}/, response.body)
+          assert_match(/#{discontinued.name}/, response.body)
+          assert_match 'value="3"', response.body
+
+          post pos_location_daily_inventories_correction_path(@location),
+               params: {
+                 inventory: {
+                   @bento_a.id.to_s => { selected: "1", stock: "20" },
+                   discontinued.id.to_s => { selected: "1", stock: "3" }
+                 }
+               }
+
+          assert_redirected_to new_pos_location_sale_path(@location)
+
+          remaining = DailyInventory.find_by(
+            location: @location, catalog: discontinued, inventory_date: Date.current
+          )
+
+          assert_equal 3, remaining.stock
         end
 
         test "訂正したあとは、それ以前の追加発注を内訳に出さない" do
