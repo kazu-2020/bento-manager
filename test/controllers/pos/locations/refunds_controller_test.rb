@@ -6,6 +6,7 @@ module Pos
   module Locations
     class RefundsControllerTest < ActionDispatch::IntegrationTest
       include RefundParamsHelper
+      include SaleTestHelper
 
       fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules,
                :daily_inventories, :discounts, :coupons, :sales, :sale_items, :sale_discounts
@@ -49,6 +50,15 @@ module Pos
                       "ghost_refund[corrected][#{@bento_a.id}][quantity]", "1"
         assert_select "input[name=?][value=?]",
                       "ghost_refund[coupon][#{@fifty_yen.id}][quantity]", "1"
+      end
+
+      test "前日の販売の差額精算画面を開くと販売履歴に戻される" do
+        login_as_employee(@employee)
+        @sale.update!(sale_datetime: 1.day.ago)
+        get new_pos_location_refund_path(@location, sale_id: @sale.id)
+
+        assert_redirected_to pos_location_sales_history_index_path(@location)
+        assert_equal "差額精算は当日の販売のみ行えます", flash[:alert]
       end
 
       test "new returns 404 for inactive location" do
@@ -251,6 +261,32 @@ module Pos
         assert_equal "この販売は既に取消済みです", flash[:alert]
       end
 
+      test "前日の販売に差額精算を送信しても処理されず販売履歴に戻される" do
+        login_as_employee(@employee)
+        @sale.update!(sale_datetime: 1.day.ago)
+
+        # 422 で差し戻すと、修正カートの母集合が当日在庫のため操作不能な画面になる
+        assert_no_difference [ "Refund.count", "Sale.count" ] do
+          post_refund(corrected: { @bento_a => 0 })
+        end
+
+        assert_redirected_to pos_location_sales_history_index_path(@location)
+        assert_equal "差額精算は当日の販売のみ行えます", flash[:alert]
+        assert_not_predicate @sale.reload, :voided?
+
+        # 当日の在庫が無い商品を含む販売も同じ扱い。在庫を引くより前に断らないと
+        # DailyInventory が見つからず 500 になる
+        untracked_sale = yesterdays_sale_without_todays_inventory
+
+        assert_no_difference [ "Refund.count", "Sale.count" ] do
+          post_refund(sale: untracked_sale, corrected: { catalogs(:miso_soup) => 0 })
+        end
+
+        assert_redirected_to pos_location_sales_history_index_path(@location)
+        assert_equal "差額精算は当日の販売のみ行えます", flash[:alert]
+        assert_not_predicate untracked_sale.reload, :voided?
+      end
+
       test "予約済み在庫を割り込む数量に交換すると差額精算全体が取り消される" do
         login_as_employee(@employee)
         # 弁当B: stock 5 / reserved 2 → 利用可能在庫 3
@@ -277,6 +313,22 @@ module Pos
       end
 
       private
+
+      # 当日の在庫が 1 件も無い商品を含む、前日の販売を作る
+      #
+      # 味噌汁は「価格未設定の商品」として他のテストが使っているため、
+      # fixture に価格を足さずここで用意する
+      #
+      # @return [Sale]
+      def yesterdays_sale_without_todays_inventory
+        miso_soup = catalogs(:miso_soup)
+        price = CatalogPrice.create!(catalog: miso_soup, kind: :regular, price: 200,
+                                     effective_from: 1.month.ago)
+        sale = create_sale(location: @location, customer_type: :staff, sale_datetime: 1.day.ago)
+        sale.items.create!(catalog: miso_soup, catalog_price: price, quantity: 1,
+                           unit_price: 200, sold_at: 1.day.ago)
+        sale
+      end
 
       # 差額精算の確定を送信する
       #

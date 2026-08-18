@@ -441,5 +441,28 @@ module Sales
       assert_predicate result[:refund_amount], :zero?
       assert_equal 0, result[:refund].amount
     end
+
+    test "前日の販売は差額精算できず、どちらの日の在庫も元の販売も変化しない" do
+      yesterday_inventory = daily_inventories(:city_hall_bento_a_yesterday)
+      sale = travel_to(1.day.ago) do
+        Sales::Recorder.new.record(
+          { location: @location, customer_type: :staff, employee: @employee },
+          [ { catalog: @catalog_bento_a, quantity: 1 } ]
+        )
+      end
+
+      refunder = Sales::Refunder.new
+
+      # 元の販売日の在庫は戻さず、当日の在庫も減らさない
+      assert_no_difference [ "Refund.count", "Sale.count" ] do
+        assert_no_changes -> { [ yesterday_inventory.reload.stock, @inventory_bento_a.reload.stock ] } do
+          assert_raises Sale::NotTodaysSaleError do
+            refunder.process(sale: sale, corrected_items: [], employee: @employee)
+          end
+        end
+      end
+
+      assert_not_predicate sale.reload, :voided?
+    end
   end
 end

@@ -7,8 +7,9 @@ module Pos
 
       before_action :set_location
       before_action :set_sale, only: [ :new, :create ]
-      before_action :set_inventories, only: [ :new, :create ]
       before_action :redirect_if_voided, only: :new
+      before_action :redirect_unless_sold_today, only: [ :new, :create ]
+      before_action :set_inventories, only: [ :new, :create ]
 
       def new
         @form = build_form
@@ -42,6 +43,10 @@ module Pos
         end
 
         redirect_to pos_location_sales_history_index_path(@location), notice: notice
+      rescue Sale::NotTodaysSaleError
+        # before_action と Refunder は別々に時計を読む。日付が変わる瞬間の送信は
+        # ガードをすり抜けてここに来るため、同じリダイレクトへ寄せる
+        redirect_to_sales_history("pos.locations.refunds.not_todays_sale")
       rescue Sale::AlreadyVoidedError
         flash.now[:alert] = t(".already_voided")
         render :new, status: :unprocessable_entity
@@ -51,13 +56,6 @@ module Pos
       end
 
       private
-
-      def redirect_if_voided
-        return unless @sale.voided?
-
-        redirect_to pos_location_sales_history_index_path(@location),
-                    alert: t("pos.locations.refunds.create.already_voided")
-      end
 
       def current_employee
         return nil unless rodauth(:employee).logged_in?

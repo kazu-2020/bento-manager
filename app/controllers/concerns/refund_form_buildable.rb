@@ -16,6 +16,27 @@ module RefundFormBuildable
                      .find(params[:sale_id])
   end
 
+  # 当日以外の販売は差額精算できない。送信も 422 で差し戻さずリダイレクトする。
+  # 修正カートの母集合は当日在庫なので、再描画しても操作不能な画面になるため
+  def redirect_unless_sold_today
+    return if @sale.sold_today?
+
+    redirect_to_sales_history("pos.locations.refunds.not_todays_sale")
+  end
+
+  def redirect_if_voided
+    return unless @sale.voided?
+
+    redirect_to_sales_history("pos.locations.refunds.create.already_voided")
+  end
+
+  # もう触れない販売を差し戻す先。理由は alert で伝える
+  #
+  # @param alert_key [String] 文言の i18n キー
+  def redirect_to_sales_history(alert_key)
+    redirect_to pos_location_sales_history_index_path(@location), alert: t(alert_key)
+  end
+
   def set_inventories
     @inventories = @location
                       .today_inventories

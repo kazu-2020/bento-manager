@@ -1,5 +1,6 @@
 class Sale < ApplicationRecord
   class AlreadyVoidedError < StandardError; end
+  class NotTodaysSaleError < StandardError; end
 
   belongs_to :location
   belongs_to :employee, optional: true
@@ -23,6 +24,14 @@ class Sale < ApplicationRecord
   validates :final_amount, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :voided_at,          presence: true, if: :voided?
   validates :voided_by_employee, presence: true, if: :voided?
+
+  # 差額精算は在庫の復元も修正カートの母集合も当日の在庫を基準にするため、
+  # 当日の販売にしか行えない
+  #
+  # @return [Boolean]
+  def sold_today?
+    sale_datetime.today?
+  end
 
   # 販売を取り消す
   # @param voided_by [Employee] 取消担当者

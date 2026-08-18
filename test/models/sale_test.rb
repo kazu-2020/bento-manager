@@ -1,6 +1,8 @@
 require "test_helper"
 
 class SaleTest < ActiveSupport::TestCase
+  include SaleTestHelper
+
   fixtures :locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items
 
   test "validations" do
@@ -109,6 +111,19 @@ class SaleTest < ActiveSupport::TestCase
 
     assert_raises(Sale::AlreadyVoidedError) do
       sale.void!(voided_by: employees(:verified_employee))
+    end
+  end
+
+  test "差額精算できるのは販売日時が当日の販売だけ" do
+    today_sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: Time.current)
+    yesterday_sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: 1.day.ago)
+
+    assert_predicate today_sale, :sold_today?
+    assert_not_predicate yesterday_sale, :sold_today?
+
+    # 日付が変われば、同じ販売が当日のものではなくなる
+    travel_to(1.day.from_now) do
+      assert_not_predicate today_sale, :sold_today?
     end
   end
 end

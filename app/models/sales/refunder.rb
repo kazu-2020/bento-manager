@@ -14,8 +14,14 @@ module Sales
     #   - :corrected_sale [Sale, nil] 作成された新規 Sale（全額返金の場合は nil）
     #   - :refund_amount [Integer] 差額（正=返金、負=追加徴収、0=等価交換）
     # @raise [Sale::AlreadyVoidedError] 既に voided の場合
+    # @raise [Sale::NotTodaysSaleError] 当日以外の販売の場合
     # @raise [ActiveRecord::RecordInvalid] バリデーションエラー時
     def process(sale:, corrected_items:, employee:, discount_quantities: nil)
+      # 在庫の復元は元の販売日、修正後の販売の在庫減算は当日を基準にする。
+      # 当日以外の販売を通すと両日の在庫と日別売上が同時にずれるため、
+      # 副作用を起こす前に断る（コントローラのガードとは別に、経路を問わず塞ぐ）
+      raise Sale::NotTodaysSaleError, "当日以外の販売は差額精算できません" unless sale.sold_today?
+
       Sale.transaction do
         sale.void!(voided_by: employee)
         restore_inventory(sale)
