@@ -153,7 +153,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_100000) do
     t.integer "original_sale_id", null: false
     t.datetime "refund_datetime", null: false
     t.datetime "updated_at", null: false
-    t.index [ "corrected_sale_id" ], name: "index_refunds_on_corrected_sale_id"
+    t.index [ "corrected_sale_id" ], name: "index_refunds_on_corrected_sale_id", unique: true
     t.index [ "employee_id" ], name: "index_refunds_on_employee_id"
     t.index [ "original_sale_id" ], name: "index_refunds_on_original_sale_id", unique: true
   end

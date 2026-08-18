@@ -121,6 +121,45 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
     end
   end
 
+  test "同じ販売を修正後の販売とする差額精算は2件保存できない" do
+    corrected = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: Time.current)
+
+    Refund.create!(
+      original_sale: sales(:completed_sale),
+      corrected_sale: corrected,
+      employee: employees(:owner_employee),
+      refund_datetime: Time.current,
+      amount: 50
+    )
+
+    # 修正後の販売は差額精算のたびに新しく作られるため、既存の販売が
+    # 修正後の販売になることはない。元の販売の側と違いアプリ層のガードが無い
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      Refund.create!(
+        original_sale: sales(:prefectural_office_sale),
+        corrected_sale: corrected,
+        employee: employees(:owner_employee),
+        refund_datetime: Time.current,
+        amount: 50
+      )
+    end
+  end
+
+  test "全額返金は修正後の販売を持たないので何件でも記録できる" do
+    # SQLite の一意インデックスは NULL の重複を許す。corrected_sale_id を一意にしても
+    # 全額返金（修正後の販売なし）が 2 件目から弾かれることはない
+    assert_difference "Refund.count", 2 do
+      [ sales(:completed_sale), sales(:prefectural_office_sale) ].each do |sale|
+        Refund.create!(
+          original_sale: sale,
+          employee: employees(:owner_employee),
+          refund_datetime: Time.current,
+          amount: 300
+        )
+      end
+    end
+  end
+
   # ============================================================
   # 外部キーの削除時挙動
   # ============================================================
