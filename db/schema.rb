@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_16_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_18_100000) do
   create_table "additional_orders", force: :cascade do |t|
     t.integer "catalog_id", null: false
     t.datetime "created_at", null: false
@@ -153,9 +153,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_130000) do
     t.integer "original_sale_id", null: false
     t.datetime "refund_datetime", null: false
     t.datetime "updated_at", null: false
-    t.index [ "corrected_sale_id" ], name: "index_refunds_on_corrected_sale_id"
+    t.index [ "corrected_sale_id" ], name: "index_refunds_on_corrected_sale_id", unique: true
     t.index [ "employee_id" ], name: "index_refunds_on_employee_id"
-    t.index [ "original_sale_id" ], name: "index_refunds_on_original_sale_id"
+    t.index [ "original_sale_id" ], name: "index_refunds_on_original_sale_id", unique: true
   end
 
   create_table "sale_discounts", force: :cascade do |t|
@@ -190,7 +190,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_130000) do
   end
 
   create_table "sales", force: :cascade do |t|
-    t.integer "corrected_from_sale_id"
     t.datetime "created_at", null: false
     t.integer "customer_type", null: false
     t.integer "employee_id"
@@ -202,7 +201,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_130000) do
     t.datetime "updated_at", null: false
     t.datetime "voided_at"
     t.integer "voided_by_employee_id"
-    t.index [ "corrected_from_sale_id" ], name: "index_sales_on_corrected_from_sale_id"
     t.index [ "employee_id" ], name: "index_sales_on_employee_id"
     t.index [ "location_id", "sale_datetime" ], name: "idx_sales_location_datetime"
     t.index [ "sale_datetime" ], name: "idx_sales_datetime"
@@ -234,5 +232,4 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_16_130000) do
   add_foreign_key "sales", "employees", column: "voided_by_employee_id", on_delete: :nullify
   add_foreign_key "sales", "employees", on_delete: :nullify
   add_foreign_key "sales", "locations", on_delete: :restrict
-  add_foreign_key "sales", "sales", column: "corrected_from_sale_id", on_delete: :restrict
 end

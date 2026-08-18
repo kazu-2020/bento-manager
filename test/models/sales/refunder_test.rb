@@ -74,7 +74,6 @@ module Sales
 
       assert_predicate corrected_sale, :present?
       assert_predicate corrected_sale, :completed?
-      assert_equal sale.id, corrected_sale.corrected_from_sale_id
       assert_equal 550, corrected_sale.final_amount
 
       assert_equal 550, result[:refund_amount]
@@ -479,6 +478,59 @@ module Sales
           end
         end
       end
+    end
+
+    # === 差額精算の連鎖の出典 ===
+
+    test "差額精算の記録から、元の販売と修正後の販売を双方向に辿れる" do
+      sale = Sales::Recorder.new.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 2 } ]
+      )
+
+      result = Sales::Refunder.new.process(
+        sale: sale,
+        corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
+        employee: @employee
+      )
+      corrected_sale = result[:corrected_sale]
+
+      # 元の販売 → 修正後の販売
+      assert_equal corrected_sale, sale.reload.refund.corrected_sale
+
+      # 修正後の販売 → 元の販売
+      assert_equal sale, Refund.find_by(corrected_sale: corrected_sale).original_sale
+
+      # 修正後の販売はまだ精算されていないので、そちらを元の販売とする記録は無い
+      assert_nil corrected_sale.refund
+    end
+
+    test "差額精算を連鎖させると、記録は販売ごとに 1 件ずつ増える" do
+      sale = Sales::Recorder.new.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 3 } ]
+      )
+
+      first = assert_difference "Refund.count", 1 do
+        Sales::Refunder.new.process(
+          sale: sale,
+          corrected_items: [ { catalog: @catalog_bento_a, quantity: 2 } ],
+          employee: @employee
+        )
+      end
+
+      # 修正後の販売をさらに精算する。記録が増えるのは別の販売に対してであって、
+      # 元の販売に 2 件目が付くわけではない
+      second = assert_difference "Refund.count", 1 do
+        Sales::Refunder.new.process(
+          sale: first[:corrected_sale],
+          corrected_items: [ { catalog: @catalog_bento_a, quantity: 1 } ],
+          employee: @employee
+        )
+      end
+
+      assert_equal first[:refund], sale.reload.refund
+      assert_equal second[:refund], first[:corrected_sale].reload.refund
     end
 
     test "前日の販売は差額精算できず、どちらの日の在庫も元の販売も変化しない" do
