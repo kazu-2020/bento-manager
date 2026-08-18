@@ -16,14 +16,17 @@ module DailyInventories
 
     validate :at_least_one_item_selected
 
-    # items の出どころは submitted と既存在庫の 2 通りある（submitted.absent? で決まる）。
-    # submitted 自体も受け取るのは、壊れた送信を SubmissionReadable が差し戻すため。
-    # 通すと bulk_recreate が既存在庫を破壊的に作り直す（理由は GhostForms::Submission）
-    def initialize(location:, items:, search_query: nil, submitted: ::GhostForms::Submission.absent)
+    # items の出どころは submitted と既存在庫の 2 通りあり、どちらから組むかは
+    # submitted.absent? だけで決まる。分岐も既存在庫の取得もフォームが持つ。
+    # コントローラーに置くと、送信ありなのに既存在庫から組んだ items という
+    # 状態が作れてしまい、通せば bulk_recreate が既存在庫を破壊的に作り直す
+    # （理由は GhostForms::Submission）
+    def initialize(location:, catalogs:, search_query: nil, submitted: ::GhostForms::Submission.absent)
       @location = location
+      @catalogs = catalogs
       @search_query = search_query&.strip.presence
-      @items = items
       @submitted = submitted
+      @items = build_items
       @registered_count = 0
     end
 
@@ -62,6 +65,14 @@ module DailyInventories
     end
 
     private
+
+    # 既存在庫を引くのは初回描画だけ。Ghost Form 経由の submitted は absent に
+    # ならないので、渡し込みにすると毎キーストロークで捨てるだけの問合せが走る
+    def build_items
+      return ItemBuilder.from_params(@catalogs, submitted.values) unless submitted.absent?
+
+      ItemBuilder.from_inventories(@catalogs, location.today_inventories.index_by(&:catalog_id))
+    end
 
     def at_least_one_item_selected
       # 読めない送信では「1 件も無い」のか「捨てられただけ」なのか判定しようがない

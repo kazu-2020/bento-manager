@@ -138,13 +138,11 @@ end
 「未送信」ではなく壊れた送信として扱う。ここを畳むと在庫訂正が既存在庫からの再構築に化けて
 `bulk_recreate` が走る。
 
-コントローラーが `absent?` を見てよいのは初期値の作り分けだけで、拒否の判断に使ってはいけない。
+`absent?` を見てよいのは初期値の作り分けだけで、拒否の判断に使ってはいけない。
+その作り分けもフォームが持つ。items の組み立てをコントローラーに置くと、
+送信ありなのに初期値から組んだ items という、あり得ないはずの状態が作れてしまう。
 文言は `ja.activemodel.errors.messages.unreadable_submission` に 1 つだけ置いてあり、
 新しいフォームが include しても翻訳の追加は要らない。
-
-なお在庫系のフォームは、items をコントローラーが組み立てて `items:` と `submitted:` の両方を
-受け取る形が残っている。`AdditionalOrders::OrderForm` のように submitted だけを受けて
-フォーム内で組み立てる形に寄せる余地がある。
 
 ### 6. Turbo Stream で Ghost Form 自身も差し替える
 

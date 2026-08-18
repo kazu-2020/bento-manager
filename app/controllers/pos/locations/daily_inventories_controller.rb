@@ -40,9 +40,8 @@ module Pos
       end
 
       def build_form(submitted = ::GhostForms::Submission.absent)
-        items = ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted.values)
         ::DailyInventories::InventoryForm.new(
-          location: @location, items: items, submitted: submitted
+          location: @location, catalogs: @catalogs, submitted: submitted
         )
       end
     end

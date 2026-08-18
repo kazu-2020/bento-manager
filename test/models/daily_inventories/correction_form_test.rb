@@ -22,44 +22,37 @@ module DailyInventories
       CorrectionForm
     end
 
-    def build(items:, submitted:)
-      CorrectionForm.new(location: @location, items: items, submitted: submitted)
+    def build(submitted: ::GhostForms::Submission.absent)
+      CorrectionForm.new(location: @location, catalogs: @catalogs, submitted: submitted)
     end
 
-    def items_from_existing_inventories
-      ItemBuilder.from_inventories(@catalogs, @location.today_inventories.index_by(&:catalog_id))
-    end
-
-    test "未送信の初回描画は、既存在庫からの初期値でも壊れた送信として扱わない" do
-      form = build(items: items_from_existing_inventories, submitted: ::GhostForms::Submission.absent)
+    test "未送信の初回描画は、既存在庫から初期値を組み、壊れた送信として扱わない" do
+      form = build
 
       assert_predicate form, :valid?
+      assert_equal [ 10 ], form.selected_items.map(&:stock)
     end
 
-    test "送信されたのに中身が残らなければ、items が既存在庫由来でも差し戻す" do
-      # コントローラーが初期値の分岐を誤り、既存在庫から items を組んでしまった形。
-      # これを通すと bulk_recreate が既存在庫を破壊的に作り直す
-      form = build(
-        items: items_from_existing_inventories,
-        submitted: submission({ "abc" => { "selected" => "1", "stock" => "1" } })
-      )
+    test "送信されたのに中身が残らなければ差し戻し、既存在庫からは組み直さない" do
+      # 通すと bulk_recreate が既存在庫を破壊的に作り直す
+      form = build(submitted: submission({ "abc" => { "selected" => "1", "stock" => "1" } }))
 
       assert_not form.valid?
       assert form.errors.added?(:base, :unreadable_submission)
       # 「選択してください」を重ねると、パラメータが捨てられたことが操作ミスに見える
       assert_not form.errors.added?(:base, :no_items_selected)
+      assert_empty form.selected_items
     end
 
     test "読める送信は通常どおり検証される" do
-      submitted = submission({ @bento_a.id.to_s => { "selected" => "1", "stock" => "20" } })
-      form = build(items: ItemBuilder.from_params(@catalogs, submitted.values), submitted: submitted)
+      form = build(submitted: submission({ @bento_a.id.to_s => { "selected" => "1", "stock" => "20" } }))
 
       assert_predicate form, :valid?
+      assert_equal [ 20 ], form.selected_items.map(&:stock)
     end
 
     test "読める送信で1件も選択されていなければ、壊れた送信ではなく未選択として案内する" do
-      submitted = submission({ @bento_a.id.to_s => { "selected" => "0", "stock" => "10" } })
-      form = build(items: ItemBuilder.from_params(@catalogs, submitted.values), submitted: submitted)
+      form = build(submitted: submission({ @bento_a.id.to_s => { "selected" => "0", "stock" => "10" } }))
 
       assert_not form.valid?
       assert form.errors.added?(:base, :no_items_selected)

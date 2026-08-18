@@ -32,9 +32,8 @@ module Pos
           end
 
           def build_form(submitted)
-            items = ::DailyInventories::ItemBuilder.from_params(@catalogs, submitted.values)
             ::DailyInventories::CorrectionForm.new(
-              location: @location, items: items,
+              location: @location, catalogs: @catalogs,
               search_query: params[:search_query], submitted: submitted
             )
           end

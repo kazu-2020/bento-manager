@@ -4,6 +4,8 @@ require "test_helper"
 
 module DailyInventories
   class InventoryFormTest < ActiveSupport::TestCase
+    include GhostFormSubmissionHelper
+
     fixtures :catalogs, :locations
 
     setup do
@@ -14,9 +16,19 @@ module DailyInventories
       @salad = catalogs(:salad)
     end
 
+    def submission_form
+      InventoryForm
+    end
+
+    def build(location: @location, search_query: nil, submitted: ::GhostForms::Submission.absent)
+      InventoryForm.new(
+        location: location, catalogs: @catalogs,
+        search_query: search_query, submitted: submitted
+      )
+    end
+
     test "商品一覧から在庫フォームを構築し選択した商品で絞り込める" do
-      items = ItemBuilder.from_params(@catalogs, {})
-      form = InventoryForm.new(location: @location, items: items)
+      form = build
 
       assert_equal @catalogs.count, form.items.count
       form.items.each do |item|
@@ -25,12 +37,10 @@ module DailyInventories
       end
       assert_not form.valid?
 
-      submitted = {
-        @bento_a.id.to_s => { selected: true, stock: 15 },
-        @bento_b.id.to_s => { selected: true, stock: 5 }
-      }
-      items_with_input = ItemBuilder.from_params(@catalogs, submitted)
-      form_with_input = InventoryForm.new(location: @location, items: items_with_input)
+      form_with_input = build(submitted: submission({
+        @bento_a.id.to_s => { "selected" => "1", "stock" => "15" },
+        @bento_b.id.to_s => { "selected" => "1", "stock" => "5" }
+      }))
 
       assert_predicate form_with_input, :valid?
       assert_equal 2, form_with_input.selected_count
@@ -38,8 +48,7 @@ module DailyInventories
     end
 
     test "商品をカテゴリごとに分類できる" do
-      items = ItemBuilder.from_params(@catalogs, {})
-      form = InventoryForm.new(location: @location, items: items)
+      form = build
 
       assert_predicate form.bento_items, :any?
       form.bento_items.each { |item| assert_equal "bento", item.category }
@@ -49,50 +58,46 @@ module DailyInventories
     end
 
     test "商品名で検索して表示を絞り込める" do
-      items = ItemBuilder.from_params(@catalogs, {})
-
-      form = InventoryForm.new(location: @location, items: items, search_query: @bento_a.name[0..2])
+      form = build(search_query: @bento_a.name[0..2])
       matching_item = form.items.find { |i| i.catalog_id == @bento_a.id }
 
       assert form.visible?(matching_item)
 
-      form_no_match = InventoryForm.new(location: @location, items: items, search_query: "存在しない商品名")
+      form_no_match = build(search_query: "存在しない商品名")
 
       assert_not form_no_match.visible?(form_no_match.items.first)
 
-      form_blank = InventoryForm.new(location: @location, items: items, search_query: "  弁当  ")
+      form_blank = build(search_query: "  弁当  ")
 
       assert_equal "弁当", form_blank.search_query
 
-      form_empty = InventoryForm.new(location: @location, items: items, search_query: "   ")
+      form_empty = build(search_query: "   ")
 
       assert_nil form_empty.search_query
     end
 
     test "在庫を保存でき失敗時はエラーを返す" do
       location = Location.create!(name: "save テスト販売先", status: :active)
-      submitted = {
-        @bento_a.id.to_s => { selected: true, stock: 10 },
-        @bento_b.id.to_s => { selected: true, stock: 5 }
-      }
-      items = ItemBuilder.from_params(@catalogs, submitted)
-      form = InventoryForm.new(location: location, items: items)
+      form = build(location: location, submitted: submission({
+        @bento_a.id.to_s => { "selected" => "1", "stock" => "10" },
+        @bento_b.id.to_s => { "selected" => "1", "stock" => "5" }
+      }))
 
       assert_difference "DailyInventory.count", 2 do
         assert form.save
       end
       assert_equal 2, form.created_count
 
-      empty_items = ItemBuilder.from_params(@catalogs, {})
-      empty_form = InventoryForm.new(location: location, items: empty_items)
+      empty_form = build(location: location)
 
       assert_not empty_form.save
       assert_equal 0, empty_form.created_count
 
       dup_location = Location.create!(name: "重複テスト販売先", status: :active)
       DailyInventory.create!(location: dup_location, catalog: @bento_a, inventory_date: Date.current, stock: 5, reserved_stock: 0)
-      dup_items = ItemBuilder.from_params(@catalogs, { @bento_a.id.to_s => { selected: true, stock: 15 } })
-      dup_form = InventoryForm.new(location: dup_location, items: dup_items)
+      dup_form = build(location: dup_location, submitted: submission({
+        @bento_a.id.to_s => { "selected" => "1", "stock" => "15" }
+      }))
 
       assert_not dup_form.save
       assert_includes dup_form.errors[:base], "保存に失敗しました。もう一度お試しください。"
