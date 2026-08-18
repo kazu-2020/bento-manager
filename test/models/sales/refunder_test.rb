@@ -461,6 +461,26 @@ module Sales
       assert_equal 0, result[:refund].amount
     end
 
+    test "取り消し前に読まれた販売を渡されても、返金も在庫の復元も一度きりで済む" do
+      sale = Sales::Recorder.new.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 } ]
+      )
+      # 画面を2つ開いて続けて確定を押すと、後の送信は取り消し前の行を読んだまま届く
+      stale_sale = Sale.find(sale.id)
+
+      Sales::Refunder.new.process(sale: sale, corrected_items: [], employee: @employee)
+
+      # メモリ上の status だけで判定すると素通りし、Refund が2件でき在庫も二度戻る
+      assert_no_difference "Refund.count" do
+        assert_no_changes -> { @inventory_bento_a.reload.stock } do
+          assert_raises Sale::AlreadyVoidedError do
+            Sales::Refunder.new.process(sale: stale_sale, corrected_items: [], employee: @employee)
+          end
+        end
+      end
+    end
+
     test "前日の販売は差額精算できず、どちらの日の在庫も元の販売も変化しない" do
       yesterday_inventory = daily_inventories(:city_hall_bento_a_yesterday)
       sale = travel_to(1.day.ago) do

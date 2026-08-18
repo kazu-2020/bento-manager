@@ -6,11 +6,6 @@ module Pos
       class FormStatesController < ApplicationController
         include RefundFormBuildable
 
-        before_action :set_location
-        before_action :set_sale
-        before_action :redirect_unless_sold_today
-        before_action :set_inventories
-
         def create
           @form = build_form(submitted_params(:ghost_refund, form: ::Refunds::RefundForm))
 

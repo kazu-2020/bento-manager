@@ -11,7 +11,7 @@ module Pos
 
         attr_reader :sale, :location
 
-        delegate :items, :voided?, :sale_discounts, to: :sale
+        delegate :items, :voided?, :refundable?, :sale_discounts, to: :sale
 
         def sale_time
           I18n.l(sale.sale_datetime, format: :short)
