@@ -46,6 +46,8 @@ module DailyInventories
 
       assert_not form.valid?
       assert form.errors.added?(:base, :unreadable_submission)
+      # 「選択してください」を重ねると、パラメータが捨てられたことが操作ミスに見える
+      assert_not form.errors.added?(:base, :no_items_selected)
     end
 
     test "読める送信は通常どおり検証される" do

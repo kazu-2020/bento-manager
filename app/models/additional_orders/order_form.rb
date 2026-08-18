@@ -81,6 +81,9 @@ module AdditionalOrders
     private
 
     def at_least_one_item_has_quantity
+      # 読めない送信では「1 件も無い」のか「捨てられただけ」なのか判定しようがない
+      return if submitted_unreadable?
+
       errors.add(:base, :no_items_ordered) unless items_with_quantity.any?
     end
 

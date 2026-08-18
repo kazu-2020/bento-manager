@@ -55,6 +55,9 @@ module DailyInventories
     private
 
     def at_least_one_item_selected
+      # 読めない送信では「1 件も無い」のか「捨てられただけ」なのか判定しようがない
+      return if submitted_unreadable?
+
       errors.add(:base, :no_items_selected) unless selected_count.positive?
     end
   end

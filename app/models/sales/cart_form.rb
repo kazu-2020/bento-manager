@@ -18,7 +18,8 @@ module Sales
     attr_reader :location, :items, :discounts, :customer_type
 
     validate :at_least_one_item_in_cart
-    validates :customer_type, presence: true
+    # 読めない送信では顧客区分も届いていない。案内は unreadable_submission に一本化する
+    validates :customer_type, presence: true, unless: :submitted_unreadable?
 
     def initialize(location:, inventories:, discounts:, submitted: ::GhostForms::Submission.absent)
       @location = location
@@ -87,6 +88,9 @@ module Sales
     end
 
     def at_least_one_item_in_cart
+      # 読めない送信では「1 件も無い」のか「捨てられただけ」なのか判定しようがない
+      return if submitted_unreadable?
+
       errors.add(:base, :no_items_in_cart) unless has_items_in_cart?
     end
 

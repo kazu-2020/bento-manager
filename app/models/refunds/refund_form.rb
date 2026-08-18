@@ -164,8 +164,7 @@ module Refunds
       %w[corrected]
     end
 
-    # 数量が 1 件も読めないなら「変更されたか」は判定しようがないので、
-    # 読み取れなかったことだけを案内する（SubmissionReadable が担う）
+    # 読めない送信では「変更されたか」を判定しようがない
     def at_least_one_change
       return if submitted_unreadable?
 
