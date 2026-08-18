@@ -45,6 +45,16 @@ class Sale < ApplicationRecord
     sale_datetime.today?
   end
 
+  # 差額精算の対象にできるか。当日でも取り消し済みの販売は二度は精算できない
+  #
+  # コントローラーと Sales::Refunder は断る理由ごとに案内も例外も変えるため
+  # sold_today? / voided? を個別に見る。こちらは理由を要らない画面のための述語
+  #
+  # @return [Boolean]
+  def refundable?
+    completed? && sold_today?
+  end
+
   # 販売を取り消す
   # @param voided_by [Employee] 取消担当者
   # @return [Boolean] `true` if the record was updated.

@@ -4,6 +4,17 @@ module RefundFormBuildable
   extend ActiveSupport::Concern
   include SubmittedParamsFilterable
 
+  # 差額精算の入口はこの並びで守る。確定用と Ghost Form の 2 つの入口が同じ
+  # フォームを組み立てるため（ghost-form-pattern.md ルール 3）、並べる責務を
+  # コントローラーに置くと片方だけ素通しになる
+  included do
+    before_action :set_location
+    before_action :set_sale
+    before_action :redirect_if_voided
+    before_action :redirect_unless_sold_today
+    before_action :set_inventories
+  end
+
   private
 
   def set_location
@@ -16,18 +27,19 @@ module RefundFormBuildable
                      .find(params[:sale_id])
   end
 
-  # 当日以外の販売は差額精算できない。送信も 422 で差し戻さずリダイレクトする。
-  # 修正カートの母集合は当日在庫なので、再描画しても操作不能な画面になるため
+  # もう触れない販売は、開こうとしても送信しても 422 で差し戻さずリダイレクトする。
+  # 修正カートの母集合は当日在庫と元の販売なので、再描画しても
+  # 何を送っても通らない画面が残るだけになる
+  def redirect_if_voided
+    return unless @sale.voided?
+
+    redirect_to_sales_history("pos.locations.refunds.already_voided")
+  end
+
   def redirect_unless_sold_today
     return if @sale.sold_today?
 
     redirect_to_sales_history("pos.locations.refunds.not_todays_sale")
-  end
-
-  def redirect_if_voided
-    return unless @sale.voided?
-
-    redirect_to_sales_history("pos.locations.refunds.create.already_voided")
   end
 
   # もう触れない販売を差し戻す先。理由は alert で伝える

@@ -22,7 +22,10 @@ module Sales
       # 副作用を起こす前に断る（コントローラのガードとは別に、経路を問わず塞ぐ）
       raise Sale::NotTodaysSaleError, "当日以外の販売は差額精算できません" unless sale.sold_today?
 
-      Sale.transaction do
+      # void! はメモリ上の status しか見ないため、取り消し前に読まれた Sale を
+      # 渡されると二重に通る（Refund が 2 件でき、在庫も二度戻る）。行を読み直して
+      # からトランザクションに入り、判定を渡されたインスタンスに委ねない
+      sale.with_lock do
         sale.void!(voided_by: employee)
         restore_inventory(sale)
 
