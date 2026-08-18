@@ -27,6 +27,7 @@ module Refunds
       assert_equal 0, preview.final_total
       assert_empty preview.items_with_prices
       assert_empty preview.discount_details
+      assert_empty preview.returned_discounts
       assert_equal 0, preview.adjustment_amount
       assert_equal :even_exchange, preview.adjustment_type
     end
@@ -84,10 +85,8 @@ module Refunds
 
       assert_equal 0, preview.final_total
       assert_empty preview.items_with_prices
-
-      returned = preview.discount_details.find { |d| d[:discount_id] == discount.id }
-
-      assert_equal 1, returned[:requested_quantity]
+      assert_equal [ { discount_id: discount.id, discount_name: discount.name, quantity: 1 } ],
+                   preview.returned_discounts
     end
 
     test "修正後の商品が無いと、修正後の金額は0になり元の販売のクーポンが返却として並ぶ" do
@@ -101,15 +100,60 @@ module Refunds
 
       assert_equal 0, preview.final_total
       assert_empty preview.items_with_prices
-
-      returned = preview.discount_details.find { |d| d[:discount_id] == discount.id }
-
-      assert_equal 0, returned[:quantity]
-      assert_equal 1, returned[:requested_quantity]
+      assert_equal [ { discount_id: discount.id, discount_name: discount.name, quantity: 1 } ],
+                   preview.returned_discounts
 
       # 元の販売はクーポン1枚を引いた 500 円。全額が返金になる
       assert_equal 500, preview.adjustment_amount
       assert_equal :refund, preview.adjustment_type
+    end
+
+    # 商品はそのままでクーポンだけ減らす経路。減った枚数は客の手元に戻す
+    test "クーポンを減らすと、減った分が返却するクーポンになる" do
+      discount = discounts(:fifty_yen_discount)
+      sale = record_sale(
+        [ { catalog: @catalog_bento_a, quantity: 2 } ],
+        discount_quantities: { discount.id => 2 }
+      )
+
+      reduced = preview_for(sale, discount_quantities: { discount.id => 1 })
+
+      assert_equal [ { discount_id: discount.id, discount_name: discount.name, quantity: 1 } ],
+                   reduced.returned_discounts
+      # 1100 - 50 = 1050。元の販売(1000円)との差額は追加請求 50 円
+      assert_equal(-50, reduced.adjustment_amount)
+      assert_equal :additional_charge, reduced.adjustment_type
+
+      # 0 枚のクーポンは PriceCalculator に渡らず、修正後の結果には痕跡が残らない。
+      # 元の販売と突き合わせないと返却が消える
+      assert_equal [ { discount_id: discount.id, discount_name: discount.name, quantity: 2 } ],
+                   preview_for(sale, discount_quantities: {}).returned_discounts
+    end
+
+    # 増やした分も、弁当の数を超えて要求した分も、元から客に渡っていない。
+    # 返却として案内すると渡していないクーポンを渡すことになる
+    test "クーポンを増やしても、弁当の数を超えて要求しても、返却するクーポンは出ない" do
+      discount = discounts(:fifty_yen_discount)
+      sale = record_sale(
+        [ { catalog: @catalog_bento_a, quantity: 2 } ],
+        discount_quantities: { discount.id => 1 }
+      )
+
+      assert_empty preview_for(sale, discount_quantities: { discount.id => 2 }).returned_discounts
+      # 弁当 2 個に 3 枚を要求しても、適用されるのは 2 枚まで
+      assert_empty preview_for(sale, discount_quantities: { discount.id => 3 }).returned_discounts
+    end
+
+    private
+
+    # 商品はそのままでクーポンの枚数だけを差し替えた Preview
+    def preview_for(sale, discount_quantities:)
+      Preview.new(
+        sale: sale,
+        items: [ { catalog: @catalog_bento_a, quantity: 2 } ],
+        discount_quantities: discount_quantities,
+        changed: true
+      )
     end
   end
 end

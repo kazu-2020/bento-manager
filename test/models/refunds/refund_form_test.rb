@@ -372,7 +372,7 @@ module Refunds
       assert_equal 1, form.total_corrected_bento_quantity
     end
 
-    test "変更有無を何度判定してもクーポン枚数の取得は1回で済む" do
+    test "変更有無を何度判定しても返却クーポンを出しても、クーポン枚数の取得は1回で済む" do
       discount = discounts(:fifty_yen_discount)
       sale = record_sale(
         [ { catalog: @catalog_bento_a, quantity: 1 } ],
@@ -387,10 +387,17 @@ module Refunds
           form = RefundForm.new(
             sale: Sale.find(sale.id),
             location: @location,
-            inventories: @inventories
+            inventories: @inventories,
+            submitted: submission({
+              "corrected" => { @catalog_bento_a.id.to_s => { "quantity" => "1" } },
+              "coupon" => {}
+            })
           )
 
           3.times { form.has_any_changes? }
+          # 返却クーポンも元の販売のクーポンを読む。ここで引き直すと、数量入力を
+          # 動かすたびの再描画ごとに問い合わせが増える
+          form.preview.returned_discounts
         end
       end
     end

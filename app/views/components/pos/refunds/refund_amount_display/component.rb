@@ -12,7 +12,7 @@ module Pos
 
         delegate :has_any_changes?, to: :form
         delegate :preview, to: :form, private: true
-        delegate :adjustment_type, :adjustment_amount, :discount_details, to: :preview
+        delegate :adjustment_type, :adjustment_amount, :returned_discounts, to: :preview
 
         def formatted_amount
           helpers.number_to_currency(adjustment_amount.abs)
@@ -34,19 +34,9 @@ module Pos
           end
         end
 
-        def returned_coupons
-          @returned_coupons ||= discount_details
-            .select { |d| d[:requested_quantity].to_i > d[:quantity].to_i }
-            .map do |d|
-              {
-                name: d[:discount_name],
-                quantity: d[:requested_quantity].to_i - d[:quantity].to_i
-              }
-            end
-        end
-
+        # 返却枚数の算出は Preview が元の販売と突き合わせて持つ
         def any_returned_coupons?
-          returned_coupons.any?
+          returned_discounts.any?
         end
       end
     end
