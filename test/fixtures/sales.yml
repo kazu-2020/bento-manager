@@ -13,7 +13,9 @@ completed_sale:
 
 voided_sale:
   location: city_hall
-  sale_datetime: <%= 1.hour.ago %>
+  # 「当日の取消済み販売」であることが差額精算のガードの前提。素の 1.hour.ago は
+  # JST 0 時台に走ると前日に落ち、sold_today? のガードが先に発火してしまう
+  sale_datetime: <%= [ 1.hour.ago, Time.current.beginning_of_day ].max %>
   customer_type: 1
   total_amount: 1100
   final_amount: 1000

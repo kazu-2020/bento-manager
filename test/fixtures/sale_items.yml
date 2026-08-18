@@ -17,7 +17,8 @@ voided_sale_bento_a:
   quantity: 2
   unit_price: 550
   line_total: 1100
-  sold_at: <%= 1.hour.ago %>
+  # 親の voided_sale.sale_datetime と同じ理由で当日に収める
+  sold_at: <%= [ 1.hour.ago, Time.current.beginning_of_day ].max %>
 
 # ============================================================
 # 分析テスト用データ
