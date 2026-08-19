@@ -5,16 +5,10 @@
   </div>
 
   <div class="flex flex-wrap items-center gap-3">
-    <select class="select select-bordered select-sm"
-            data-controller="select-navigate"
-            data-action="change->select-navigate#visit">
-      <% locations.each do |loc| %>
-        <option value="<%= location_path(loc.id) %>"
-                <% if loc.id == location.id %>selected<% end %>>
-          <%= loc.name %>
-        </option>
-      <% end %>
-    </select>
+    <%= component "locations/selector",
+          locations: locations,
+          selected: location,
+          path_builder: method(:switch_location_path) %>
 
     <div class="join">
       <% days_options.each do |days| %>

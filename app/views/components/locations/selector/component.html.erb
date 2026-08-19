@@ -1,0 +1,11 @@
+<select class="select select-bordered select-sm"
+        aria-label="<%= t(".aria_label") %>"
+        data-controller="select-navigate"
+        data-action="change->select-navigate#visit">
+  <% locations.each do |loc| %>
+    <option value="<%= path_builder.call(loc.id) %>"
+            <% if selected?(loc) %>selected<% end %>>
+      <%= loc.name %>
+    </option>
+  <% end %>
+</select>
