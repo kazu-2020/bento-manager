@@ -16,6 +16,21 @@ module SalesAnalyses
       assert_response :success
     end
 
+    test "PERIODS にない period を渡すと 30 日として扱われる" do
+      city_hall = locations(:city_hall)
+
+      get sales_analyses_summary_path(location_id: city_hall.id, period: 999)
+      fallback_body = response.body
+
+      get sales_analyses_summary_path(location_id: city_hall.id, period: 30)
+
+      assert_equal response.body, fallback_body
+
+      get sales_analyses_summary_path(location_id: city_hall.id, period: 7)
+
+      assert_not_equal response.body, fallback_body
+    end
+
     test "未認証ユーザーはリダイレクトされる" do
       reset!
       get sales_analyses_summary_path(location_id: locations(:city_hall).id)

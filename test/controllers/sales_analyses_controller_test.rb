@@ -21,6 +21,12 @@ class SalesAnalysesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "PERIODS にない period を渡すと 30 日として扱われる" do
+    get sales_analyses_path, params: { period: 999 }
+
+    assert_select "a.btn-primary", text: "過去30日"
+  end
+
   test "location_id パラメータを受け取る" do
     get sales_analyses_path, params: { location_id: locations(:city_hall).id }
 
