@@ -15,16 +15,16 @@ class SalesAnalysesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "period パラメータを受け取る" do
-    get sales_analyses_path, params: { period: 7 }
+  test "days パラメータを受け取る" do
+    get sales_analyses_path, params: { days: 7 }
 
     assert_response :success
   end
 
-  test "対応していない集計期間を指定すると過去30日として扱われる" do
-    get sales_analyses_path, params: { period: 999 }
+  test "対応していない集計日数を指定すると過去30日として扱われる" do
+    get sales_analyses_path, params: { days: 999 }
 
-    assert_select "turbo-frame#sales_analysis_summary[src*=?]", "period=30"
+    assert_select "turbo-frame#sales_analysis_summary[src*=?]", "days=30"
   end
 
   test "location_id パラメータを受け取る" do

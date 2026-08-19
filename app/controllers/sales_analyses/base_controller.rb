@@ -2,17 +2,14 @@
 
 module SalesAnalyses
   class BaseController < ApplicationController
-    include PeriodSanitizable
-
     private
 
     def build_summary
-      location = Location.find(params[:location_id])
-      period = sanitize_period
+      period = Sales::AnalysisPeriod.from_param(params[:days])
       Sales::AnalysisSummary.new(
-        location: location,
-        from: period.days.ago.beginning_of_day,
-        to: Time.current
+        location: Location.find(params[:location_id]),
+        from: period.from,
+        to: period.to
       )
     end
   end
