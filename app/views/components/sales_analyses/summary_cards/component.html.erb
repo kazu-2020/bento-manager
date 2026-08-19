@@ -21,7 +21,7 @@
     <%# 一般 %>
     <div class="card bg-base-100 shadow-sm">
       <div class="card-body p-4">
-        <p class="text-xs text-base-content/60"><%= t(".citizen_label") %></p>
+        <p class="text-xs text-base-content/60"><%= t("enums.sale.customer_type.citizen") %></p>
         <p class="text-3xl font-bold text-citizen"><%= data[:citizen][:quantity] %><span class="text-base font-normal"><%= t(".quantity_unit") %></span></p>
         <p class="text-xs text-base-content/50"><%= t(".ratio_caption", ratio: citizen_ratio, amount: helpers.number_to_currency(data[:citizen][:amount])) %></p>
       </div>

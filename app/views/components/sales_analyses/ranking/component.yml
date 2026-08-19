@@ -1,6 +1,6 @@
 ---
 ja:
-  title: "%{customer_type} 人気弁当 Top5"
+  title: "%{customer_type} 人気弁当 Top%{limit}"
   empty_message: データがありません
   catalog_header: 商品
   quantity_header: 販売数
