@@ -48,14 +48,6 @@ module Pos
         flash.now[:alert] = e.record.errors.full_messages.first
         render :new, status: :unprocessable_entity
       end
-
-      private
-
-      def current_employee
-        return nil unless rodauth(:employee).logged_in?
-
-        Employee.find_by(id: rodauth(:employee).session_value)
-      end
     end
   end
 end
