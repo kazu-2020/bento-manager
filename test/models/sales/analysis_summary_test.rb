@@ -27,14 +27,30 @@ module Sales
       assert_operator result[:citizen][:amount], :>, 0
     end
 
+    # 集計を検証するので対象は自分で作る（.claude/rules/testing.md §5）。加えて
+    # フィクスチャの日時は読み込み時刻、集計期間は実行時刻の Date.current で
+    # 決まるため、共有フィクスチャを数えると 0 時をまたいだ瞬間だけ窓が 1 日ずれる
     test "顧客タイプ別サマリーは取消済みの販売を含まない" do
-      result = @summary.summary_by_customer_type
+      location = Location.create!(name: "集計テスト販売先", status: :active)
+      summary = Sales::AnalysisSummary.new(location:, period: Sales::AnalysisPeriod.new(days: 7))
 
-      # 集計期間内（前日から 7 暦日）の市役所 completed staff sales の line_total 合計:
-      # staff_1(550), staff_2(500), staff_3(550+150), staff_4(550), staff_5(500)
-      # analysis_voided は voided なので除外、completed_sale は当日なので集計期間の外
-      # 金額 = 550+500+700+550+500 = 2800
-      assert_equal 2800, result[:staff][:amount]
+      create_sale_item(
+        sale: create_sale(location:, customer_type: :staff, sale_datetime: 3.days.ago),
+        quantity: 1
+      )
+      create_sale_item(
+        sale: create_sale(
+          location:,
+          customer_type: :staff,
+          sale_datetime: 3.days.ago,
+          status: :voided,
+          voided_at: 3.days.ago,
+          voided_by_employee: employees(:owner_employee)
+        ),
+        quantity: 1
+      )
+
+      assert_equal 550, summary.summary_by_customer_type[:staff][:amount]
     end
 
     # 当日の販売は差額精算で変わりうるため、混ぜると同じ期間の数字が見るたびに動く。
