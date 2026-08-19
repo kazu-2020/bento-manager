@@ -13,6 +13,13 @@ class SalesAnalyses::SummaryCardsComponentTest < ViewComponent::TestCase
     assert_equal [ "-¥500 相当", "50% ・ -¥500", "50% ・ ¥0" ], card_captions(result)
   end
 
+  test "サマリーは総販売数・関係者・一般の見出しと販売数の単位を表示する" do
+    result = render_cards(staff_amount: 800_000, citizen_amount: 434_567)
+
+    assert_equal [ "弁当の総販売数", "関係者（職員）", "一般" ], result.css(".card-body p:first-child").map(&:text)
+    assert_equal [ "20個", "10個", "10個" ], result.css(".card-body p:nth-child(2)").map(&:text)
+  end
+
   private
 
   def render_cards(staff_amount:, citizen_amount:)
