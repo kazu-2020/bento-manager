@@ -12,7 +12,7 @@ module Discounts
 
       attr_reader :discount
 
-      delegate :name, :valid_from, :valid_until, :status, :expired?, :upcoming?, to: :discount
+      delegate :name, :status, to: :discount
 
       def header_frame_id
         HEADER_FRAME_ID
