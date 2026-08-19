@@ -1,0 +1,10 @@
+<select class="select select-bordered select-sm"
+        data-controller="select-navigate"
+        data-action="change->select-navigate#visit">
+  <% locations.each do |loc| %>
+    <option value="<%= switch_location_path(loc) %>"
+            <% if selected?(loc) %>selected<% end %>>
+      <%= loc.name %>
+    </option>
+  <% end %>
+</select>

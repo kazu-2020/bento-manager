@@ -37,8 +37,8 @@ module SalesHistories
         helpers.sales_histories_path(location_id: location.id)
       end
 
-      def location_path(loc_id)
-        helpers.sales_histories_path(month: month.strftime("%Y-%m"), location_id: loc_id)
+      def switch_location_path_builder
+        ->(loc_id) { helpers.sales_histories_path(month: month.strftime("%Y-%m"), location_id: loc_id) }
       end
     end
   end
