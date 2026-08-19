@@ -1,75 +1,41 @@
 <%= helpers.turbo_frame_tag "sales_analysis_ranking" do %>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <%# 関係者 Top5 %>
-    <div class="card bg-base-100 shadow-sm">
-      <div class="card-body p-4">
-        <div class="flex items-center justify-between">
-          <h3 class="card-title text-base">関係者 人気弁当 Top5</h3>
-          <div class="rounded-lg bg-staff/10 p-2">
-            <%= helpers.icon :users, size: :md, extra_class: "text-staff" %>
+    <% customer_types.each do |customer_type| %>
+      <% entries = data[customer_type] %>
+      <div class="card bg-base-100 shadow-sm">
+        <div class="card-body p-4">
+          <div class="flex items-center justify-between">
+            <h3 class="card-title text-base"><%= title_for(customer_type) %></h3>
+            <div class="<%= icon_wrapper_class(customer_type) %>">
+              <%= helpers.icon :users, size: :md, extra_class: icon_class(customer_type) %>
+            </div>
           </div>
-        </div>
-        <% if data[:staff].empty? %>
-          <p class="text-sm text-base-content/50 py-4">データがありません</p>
-        <% else %>
-          <table class="table table-sm">
-            <thead>
-              <tr>
-                <th class="w-8"></th>
-                <th>商品</th>
-                <th class="text-right">販売数</th>
-                <th class="text-right">金額</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% data[:staff].each_with_index do |entry, i| %>
+          <% if entries.empty? %>
+            <p class="text-sm text-base-content/50 py-4"><%= t(".empty_message") %></p>
+          <% else %>
+            <table class="table table-sm">
+              <thead>
                 <tr>
-                  <td class="font-bold"><%= i + 1 %></td>
-                  <td><%= entry[:catalog_name] %></td>
-                  <td class="text-right font-bold"><%= entry[:quantity] %> 個</td>
-                  <td class="text-right text-base-content/60 text-xs"><%= helpers.number_to_currency(entry[:amount]) %></td>
+                  <th class="w-8"></th>
+                  <th><%= t(".catalog_header") %></th>
+                  <th class="text-right"><%= t(".quantity_header") %></th>
+                  <th class="text-right"><%= t(".amount_header") %></th>
                 </tr>
-              <% end %>
-            </tbody>
-          </table>
-        <% end %>
-      </div>
-    </div>
-
-    <%# 一般 Top5 %>
-    <div class="card bg-base-100 shadow-sm">
-      <div class="card-body p-4">
-        <div class="flex items-center justify-between">
-          <h3 class="card-title text-base">一般 人気弁当 Top5</h3>
-          <div class="rounded-lg bg-citizen/10 p-2">
-            <%= helpers.icon :users, size: :md, extra_class: "text-citizen" %>
-          </div>
+              </thead>
+              <tbody>
+                <% entries.each_with_index do |entry, i| %>
+                  <tr>
+                    <td class="font-bold"><%= i + 1 %></td>
+                    <td><%= entry[:catalog_name] %></td>
+                    <td class="text-right font-bold"><%= entry[:quantity] %> <%= t(".quantity_unit") %></td>
+                    <td class="text-right text-base-content/60 text-xs"><%= helpers.number_to_currency(entry[:amount]) %></td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          <% end %>
         </div>
-        <% if data[:citizen].empty? %>
-          <p class="text-sm text-base-content/50 py-4">データがありません</p>
-        <% else %>
-          <table class="table table-sm">
-            <thead>
-              <tr>
-                <th class="w-8"></th>
-                <th>商品</th>
-                <th class="text-right">販売数</th>
-                <th class="text-right">金額</th>
-              </tr>
-            </thead>
-            <tbody>
-              <% data[:citizen].each_with_index do |entry, i| %>
-                <tr>
-                  <td class="font-bold"><%= i + 1 %></td>
-                  <td><%= entry[:catalog_name] %></td>
-                  <td class="text-right font-bold"><%= entry[:quantity] %> 個</td>
-                  <td class="text-right text-base-content/60 text-xs"><%= helpers.number_to_currency(entry[:amount]) %></td>
-                </tr>
-              <% end %>
-            </tbody>
-          </table>
-        <% end %>
       </div>
-    </div>
+    <% end %>
   </div>
 <% end %>

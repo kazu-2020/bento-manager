@@ -1,0 +1,8 @@
+---
+ja:
+  total_label: 総販売数
+  staff_label: 関係者（職員）
+  citizen_label: 一般
+  quantity_unit: 個
+  total_amount_caption: "%{amount} 相当"
+  ratio_caption: "%{ratio}% ・ %{amount}"
