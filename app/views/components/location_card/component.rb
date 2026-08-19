@@ -20,10 +20,6 @@ module LocationCard
       location.inactive?
     end
 
-    def status_label
-      I18n.t("enums.location.status.#{location.status}")
-    end
-
     def card_classes
       helpers.class_names(
         BASE_CARD_CLASSES,

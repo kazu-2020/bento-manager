@@ -1,7 +1,0 @@
----
-ja:
-  title: ステータスインジケーター
-  description: 条件を満たすときだけ中央にバッジを重ねるラッパー
-en:
-  title: Status Indicator
-  description: Wrapper that overlays a centered badge only when flagged

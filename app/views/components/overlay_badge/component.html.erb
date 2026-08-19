@@ -1,9 +1,9 @@
 <%# バッジは装飾扱い。pointer-events-none で下のカードリンクへクリックを素通しする %>
-<% if flagged? %>
+<% if overlaid? %>
   <div class="indicator w-full">
-    <span class="indicator-item indicator-center indicator-middle badge badge-error badge-soft font-bold z-10 pointer-events-none">
-      <%= label %>
-    </span>
+    <div class="indicator-item indicator-center indicator-middle z-10 pointer-events-none">
+      <%= badge %>
+    </div>
     <%= content %>
   </div>
 <% else %>

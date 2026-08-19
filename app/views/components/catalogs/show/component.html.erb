@@ -11,7 +11,7 @@
   <div class="flex items-center gap-3">
     <%= helpers.icon category_icon, size: :lg, extra_class: "text-primary" %>
     <h1 class="text-2xl font-bold text-base-content"><%= name %></h1>
-    <%= component "catalog_status_badge", catalog: catalog %>
+    <%= component "catalogs/status_badge", catalog: catalog %>
   </div>
 
   <% unless discontinued? %>

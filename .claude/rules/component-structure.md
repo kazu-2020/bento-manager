@@ -60,6 +60,25 @@ app/views/components/
 | セクション表示 | `{resource}/{section_name}` | `locations/basic_info` |
 | セクション編集 | `{resource}/{section_name}_form` | `locations/basic_info_form` |
 | カード表示 | `{resource}/card` | `locations/card` |
+| 状態バッジ | `{resource}/status_badge` | `locations/status_badge` |
+| カード上の状態オーバーレイ | `overlay_badge` | — |
+
+状態を色付きバッジで見せるコンポーネントは、リソースごとに `{resource}/status_badge` を作る。
+状態の由来（enum カラムか、関連の有無からの導出か）と i18n の置き場所がリソースごとに違うため、
+1 つに統合せず名前空間で並べる。
+
+カードの上にバッジを重ねたい場合は `overlay_badge` を使う。これはリソースに依存せず、
+重ねる位置だけを担当し、バッジ本体は `badge` スロットで受け取る。
+ラベルを文字列で渡さないこと。渡すと `{resource}/status_badge` と同じ文言を二重に定義することになる。
+
+```erb
+<%= component "overlay_badge", overlaid: discontinued? do |overlay| %>
+  <% overlay.with_badge do %>
+    <%= component "catalogs/status_badge", catalog: catalog %>
+  <% end %>
+  <%# カード本体 %>
+<% end %>
+```
 
 ### モジュール構造
 

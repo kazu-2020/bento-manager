@@ -1,4 +1,7 @@
-<%= component "status_indicator", flagged: inactive?, label: status_label do %>
+<%= component "overlay_badge", overlaid: inactive? do |overlay| %>
+  <% overlay.with_badge do %>
+    <%= component "locations/status_badge", status: location.status %>
+  <% end %>
   <%= link_to show_path, class: card_classes do %>
     <div class="card-body p-4">
       <h2 class="card-title text-lg"><%= location.name %></h2>

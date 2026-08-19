@@ -248,9 +248,6 @@ ja:
       success: "価格を保存しました。"
 
   catalogs:
-    status:
-      available: "販売中"
-      discontinued: "提供終了"
     errors:
       invalid_category: "無効な商品カテゴリです"
     index:

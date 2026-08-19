@@ -1,0 +1,7 @@
+---
+ja:
+  title: オーバーレイバッジ
+  description: 条件を満たすときだけ、badge スロットで受け取ったバッジを中央に重ねるラッパー
+en:
+  title: Overlay Badge
+  description: Wrapper that centres the badge given in the badge slot over its content, only when overlaid
