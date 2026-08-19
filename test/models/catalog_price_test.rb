@@ -128,6 +128,19 @@ class CatalogPriceTest < ActiveSupport::TestCase
     end
   end
 
+  test "まだ始まっていない価格しか無いときは、その価格を今から有効にする" do
+    catalog = catalogs(:miso_soup)
+    CatalogPrice.create!(
+      catalog: catalog, kind: :regular, price: 700, effective_from: 1.week.from_now
+    )
+
+    CatalogPrice.create_with_history!(catalog: catalog, kind: :regular, price: 800)
+
+    # 開始時刻を未来に据え置くと、呼び出した直後なのにどの価格も現在有効でなくなる
+    assert_equal 800, catalog.reload.price_by_kind(:regular)&.price
+    assert_equal 1, catalog.prices.open_ended.by_kind(:regular).count
+  end
+
   test "終了時刻が未来の価格が挟まっていても、終了していない価格を閉じられる" do
     catalog = catalogs(:daily_bento_a)
     open_ended = catalog_prices(:daily_bento_a_regular)

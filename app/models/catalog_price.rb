@@ -107,11 +107,13 @@ class CatalogPrice < ApplicationRecord
     # 現在価格として返し、本当に終了していない古い行は開いたまま残る
     current_price = catalog.prices.open_ended.by_kind(kind).first
 
-    # 同じ時刻に始まった価格は有効だった期間が無い。終了時刻を入れると
-    # valid_date_range（effective_until <= effective_from を弾く）に掛かるので、
-    # 履歴を積まずに金額だけ差し替える。freeze_time 下の連続更新がこれに当たる
+    # まだ有効だった期間が無い価格は、履歴を積まずにその行を今から有効な形へ書き換える。
+    # 終了時刻を入れると valid_date_range（effective_until <= effective_from を弾く）に
+    # 掛かるうえ、開始時刻を未来に据え置くと「今から切り替える」という呼び出しの意図に
+    # 反してどの価格も現在有効でなくなる。freeze_time 下の連続更新（同時刻開始）と、
+    # 未来開始の行が残っている場合の両方がここに来る
     if current_price && current_price.effective_from >= now
-      current_price.update!(price: price)
+      current_price.update!(price: price, effective_from: now)
       return current_price
     end
 
