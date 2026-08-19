@@ -16,13 +16,16 @@ class DailyInventory < ApplicationRecord
 
   # 販売先・商品・日付に対応する在庫を取得する
   #
-  # 在庫が見つからないときに何を起こすかは在庫の関心事であって、記録・返金処理の
-  # 関心事ではない。取得をここに集約し、RecordNotFound の扱いを 1 箇所で決める。
+  # 在庫が見つからないときの扱いは在庫の関心事であって、記録・返金処理の関心事では
+  # ない。集約したので変えるときはここだけを触る。現状は find_by! の RecordNotFound
+  # を素通ししており、専用の例外に替えて POS の画面に返す話は #373 で扱う。
+  #
+  # 呼び出し側が ID を渡すのは関連の読み込みを避けるため（sale_item.catalog を経由
+  # すると明細ごとに 1 クエリ増える）。where は関連名キーに ID を渡しても解決する
   #
   # @param location [Location, Integer] 販売先（レコードまたは ID）
   # @param catalog [Catalog, Integer] 商品（レコードまたは ID）
   # @param date [Date] 在庫日
-  # @return [DailyInventory] 一致する在庫
   # @raise [ActiveRecord::RecordNotFound] 一致する在庫がない場合
   def self.find_for!(location:, catalog:, date:)
     find_by!(location: location, catalog: catalog, inventory_date: date)

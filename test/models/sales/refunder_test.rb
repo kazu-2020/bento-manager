@@ -567,7 +567,9 @@ module Sales
       # 販売で lock_version が上がっているため、読み直してから消す
       @inventory_salad.reload.destroy!
 
-      assert_no_difference [ "Refund.count", "Sale.count" ] do
+      # corrected_items が空なので Sale はそもそも増えない。Refund の有無と、
+      # 1 周目で戻した弁当Aの在庫が残らないことがロールバックの担保になる
+      assert_no_difference "Refund.count" do
         assert_no_changes -> { @inventory_bento_a.reload.stock } do
           assert_raises ActiveRecord::RecordNotFound do
             Sales::Refunder.new.process(sale: sale, corrected_items: [], employee: @employee)
