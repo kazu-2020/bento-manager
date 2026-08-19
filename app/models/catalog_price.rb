@@ -94,11 +94,16 @@ class CatalogPrice < ApplicationRecord
   # @return [CatalogPrice] 作成された新しい価格レコード
   # @raise [ActiveRecord::RecordInvalid] バリデーションエラー時
   def self.create_with_history!(catalog:, kind:, price:)
-    current_price = catalog.price_by_kind(kind)
-    new_price = new(catalog: catalog, kind: kind, price: price, effective_from: Time.current)
+    # 現在価格の判定・旧価格の終了・新価格の開始に同じ時刻を使う。Time.current を
+    # 評価し直すとその差分だけ旧価格と新価格の有効期間が重なり、現在価格が 2 件に見える。
+    # 旧価格を先に終了させるのも同じ理由で、順序を入れ替えると終了していない価格が
+    # 一瞬 2 件になり、商品・種別ごとに 1 件という DB の一意制約に弾かれる
+    now = Time.current
+    current_price = catalog.price_by_kind(kind, at: now)
+    new_price = new(catalog: catalog, kind: kind, price: price, effective_from: now)
 
     transaction do
-      current_price&.update!(effective_until: Time.current)
+      current_price&.update!(effective_until: now)
       new_price.save!
     end
 

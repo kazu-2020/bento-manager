@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_18_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_19_100000) do
   create_table "additional_orders", force: :cascade do |t|
     t.integer "catalog_id", null: false
     t.datetime "created_at", null: false
@@ -47,6 +47,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_18_100000) do
     t.integer "price", null: false
     t.datetime "updated_at", null: false
     t.index [ "catalog_id", "kind" ], name: "idx_catalog_prices_catalog_kind"
+    t.index [ "catalog_id", "kind" ], name: "idx_catalog_prices_open_ended_unique", unique: true, where: "effective_until IS NULL"
     t.index [ "effective_from" ], name: "index_catalog_prices_on_effective_from"
     t.check_constraint "price > 0", name: "chk_catalog_prices_price_positive"
   end

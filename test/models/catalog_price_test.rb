@@ -48,11 +48,13 @@ class CatalogPriceTest < ActiveSupport::TestCase
   end
 
   test "有効期間内の価格のみが取得される" do
-    catalog = catalogs(:daily_bento_a)
+    catalog = catalogs(:discontinued_bento)
 
     past_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 400, effective_from: 2.days.ago, effective_until: 1.day.ago)
     current_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 500, effective_from: 1.day.ago, effective_until: nil)
-    future_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 600, effective_from: 1.day.from_now, effective_until: nil)
+    # 終了時刻を入れるのは未来の価格のほう。現在の価格を終了させると
+    # 「終了なし＝現在有効」という effective_at の分岐が含まれる側で検証されなくなる
+    future_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 600, effective_from: 1.day.from_now, effective_until: 2.days.from_now)
 
     result = CatalogPrice.current
 
@@ -62,7 +64,7 @@ class CatalogPriceTest < ActiveSupport::TestCase
   end
 
   test "指定した種別と日時の有効な価格を取得できる" do
-    catalog = catalogs(:daily_bento_b)
+    catalog = catalogs(:miso_soup)
 
     past_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 500, effective_from: 1.week.ago, effective_until: 1.day.ago)
     current_regular = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 600, effective_from: 1.day.ago, effective_until: nil)
@@ -96,7 +98,9 @@ class CatalogPriceTest < ActiveSupport::TestCase
 
     old_price.reload
 
-    assert_not_nil old_price.effective_until
+    # Time.current を 2 度評価すると旧価格の終了が新価格の開始より後ろにずれ、
+    # その差分がどちらも有効な期間になる。保存で丸めた値どうしで突き合わせる
+    assert_equal new_price.reload.effective_from, old_price.effective_until
   end
 
   test "価格設定が不正な場合は既存の価格も変更されない" do
