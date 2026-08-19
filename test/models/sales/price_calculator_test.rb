@@ -217,51 +217,22 @@ module Sales
       assert_equal 900, result[:final_total]
     end
 
-    test "適用上限を超えるクーポンを併用すると登録順によらず割引額の大きいクーポンから適用される" do
-      cheap_discount = Discount.create!(
-        name: "先に登録した30円割引クーポン",
-        valid_from: 1.month.ago.to_date,
-        discountable: Coupon.new(amount_per_unit: 30)
-      )
-      expensive_discount = Discount.create!(
-        name: "後に登録した200円割引クーポン",
-        valid_from: 1.month.ago.to_date,
-        discountable: Coupon.new(amount_per_unit: 200)
-      )
-      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 1 } ]
-      discount_quantities = { cheap_discount.id => 1, expensive_discount.id => 1 }
+    test "クーポンが弁当の数を超えるときは割引額の大きい順、同額なら先に登録した順に適用される" do
+      cheap_discount = create_coupon_discount("先に登録した30円割引クーポン", amount_per_unit: 30)
+      first_discount = create_coupon_discount("次に登録した80円割引クーポン", amount_per_unit: 80)
+      second_discount = create_coupon_discount("最後に登録した80円割引クーポン", amount_per_unit: 80)
+      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 2 } ]
+      discount_quantities = { cheap_discount.id => 1, first_discount.id => 1, second_discount.id => 1 }
 
       result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
 
-      # 登録が先のクーポンほど id が小さい = DB の取得順では 30円割引が先に来る状況を作る
-      assert_operator cheap_discount.id, :<, expensive_discount.id
-      # 弁当1個に対してクーポンは最大1枚まで。200円割引が優先され30円割引は適用されない
-      assert_equal 200, result[:total_discount_amount]
-      assert_equal 350, result[:final_total]
-      assert_equal [ expensive_discount.id, cheap_discount.id ], result[:discount_details].map { |detail| detail[:discount_id] }
-      assert_equal [ 1, 0 ], result[:discount_details].map { |detail| detail[:quantity] }
-    end
-
-    test "同額のクーポンを併用して適用上限を超えたときは先に登録したクーポンから適用される" do
-      first_discount = Discount.create!(
-        name: "先に登録した80円割引クーポン",
-        valid_from: 1.month.ago.to_date,
-        discountable: Coupon.new(amount_per_unit: 80)
-      )
-      second_discount = Discount.create!(
-        name: "後に登録した80円割引クーポン",
-        valid_from: 1.month.ago.to_date,
-        discountable: Coupon.new(amount_per_unit: 80)
-      )
-      cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 1 } ]
-      discount_quantities = { first_discount.id => 1, second_discount.id => 1 }
-
-      result = Sales::PriceCalculator.new(cart_items, discount_quantities: discount_quantities).calculate
-
-      # 割引額が同じ場合は登録順（id 昇順）で切り詰め対象が決まる
-      assert_equal 80, result[:total_discount_amount]
-      assert_equal [ first_discount.id, second_discount.id ], result[:discount_details].map { |detail| detail[:discount_id] }
-      assert_equal [ 1, 0 ], result[:discount_details].map { |detail| detail[:quantity] }
+      # 弁当2個に対してクーポンは最大2枚まで。最も古い30円クーポンが id 順では先頭だが、
+      # 割引額の大きい80円クーポン2枚が優先され、同額同士は登録順で切り詰め対象が決まる
+      assert_equal 160, result[:total_discount_amount]
+      assert_equal 940, result[:final_total]
+      assert_equal [ first_discount.id, second_discount.id, cheap_discount.id ],
+        result[:discount_details].map { |detail| detail[:discount_id] }
+      assert_equal [ 1, 1, 0 ], result[:discount_details].map { |detail| detail[:quantity] }
     end
 
     test "弁当とサラダのセット購入(700円)に50円クーポンを併用すると最終650円になる" do
@@ -324,6 +295,17 @@ module Sales
 
       assert_includes catalog_names, "味噌汁"
       assert_includes catalog_names, "販売終了弁当"
+    end
+
+    private
+
+    # フィクスチャは id の順序を保証できないため、適用順のテストではレコードを作る
+    def create_coupon_discount(name, amount_per_unit:)
+      Discount.create!(
+        name: name,
+        valid_from: 1.month.ago.to_date,
+        discountable: Coupon.new(amount_per_unit: amount_per_unit)
+      )
     end
   end
 end

@@ -22,7 +22,7 @@ module Sales
     # @return [Hash] 計算結果
     #   - :items_with_prices [Array<Hash>] 価格情報を付加したアイテム
     #   - :subtotal [Integer] 小計（割引前）
-    #   - :discount_details [Array<Hash>] 割引詳細
+    #   - :discount_details [Array<Hash>] 割引詳細（適用順 = 1 枚あたりの割引額の降順、同額は id 昇順）
     #   - :total_discount_amount [Integer] 割引合計
     #   - :final_total [Integer] 最終金額（割引後）
     def calculate
@@ -106,16 +106,11 @@ module Sales
       }
     end
 
-    # 割引を適用順に並べ、1 枚あたりの割引額とともに返す
+    # 割引を適用順（1 枚あたりの割引額の降順、同額は id 昇順）に並べて返す
     #
-    # 適用上限で切り詰められる割引が出るため、順序を明示しないと合計割引額が
-    # DB の取得順に依存して変わる。1 枚あたりの割引額が大きい順に適用し、
-    # 同額の場合は id 昇順にして決定的な順序にする。
-    #
-    # NOTE: 「1 枚あたりの割引額が大きい順」で割引合計が最大になるのは、どの割引も
-    #       1 枚につき弁当 1 個分の枠を消費し、かつ 1 枚あたりの額が枚数に依存しない
-    #       （Coupon#calculate_discount が固定額を返す）ためである。枚数に比例しない
-    #       割引タイプを追加する場合はこの前提が崩れるので順序ロジックを見直すこと。
+    # NOTE: この順序で割引合計が最大になるのは、どの割引も 1 枚につき弁当 1 個分の枠を消費し、
+    #       1 枚あたりの額が枚数に依存しない（Coupon#calculate_discount が固定額を返す）ため。
+    #       枚数に比例する割引タイプを追加する場合はこの前提が崩れるので順序ロジックを見直すこと。
     #
     # @return [Array<Array(Discount, Integer)>] [割引, 1枚あたりの割引額] の配列
     def ordered_discounts_with_unit_amount
