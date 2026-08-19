@@ -29,6 +29,9 @@ module Locations
       # 遷移は選択と同時に起きる。CSP 下で動く唯一の手段なので配線ごと固定する（#248）
       assert_equal "select-navigate", select["data-controller"]
       assert_equal "change->select-navigate#visit", select["data-action"]
+
+      # 見出しもラベル要素も持たないので、読み上げの手がかりは aria-label だけ
+      assert_equal "販売先を切り替える", select["aria-label"]
     end
   end
 end
