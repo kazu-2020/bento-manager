@@ -21,10 +21,11 @@ class SalesAnalysesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
-  test "PERIODS にない period を渡すと 30 日として扱われる" do
+  test "対応していない集計期間を指定すると過去30日として扱われる" do
     get sales_analyses_path, params: { period: 999 }
 
     assert_select "a.btn-primary", text: "過去30日"
+    assert_select "turbo-frame#sales_analysis_summary[src*=?]", "period=30"
   end
 
   test "location_id パラメータを受け取る" do
