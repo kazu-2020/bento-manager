@@ -5,11 +5,9 @@ module SalesAnalyses
     private
 
     def build_summary
-      period = Sales::AnalysisPeriod.from_param(params[:days])
       Sales::AnalysisSummary.new(
         location: Location.find(params[:location_id]),
-        from: period.from,
-        to: period.to
+        period: Sales::AnalysisPeriod.from_param(params[:days])
       )
     end
   end
