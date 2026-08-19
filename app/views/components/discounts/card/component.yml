@@ -2,7 +2,3 @@
 ja:
   discount_amount: "割引額"
   no_end_date: "無期限"
-  status:
-    active: "有効"
-    expired: "期限切れ"
-    upcoming: "期間前"

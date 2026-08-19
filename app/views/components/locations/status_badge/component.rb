@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
-module Discounts
+module Locations
   module StatusBadge
     class Component < Application::Component
       VARIANTS = {
         active:   "badge-success badge-soft",
-        expired:  "badge-error badge-soft",
-        upcoming: "badge-warning badge-soft"
+        inactive: "badge-error badge-soft"
       }.freeze
 
       def initialize(status:)
@@ -18,7 +17,7 @@ module Discounts
       end
 
       def label
-        t(".#{status}")
+        I18n.t("enums.location.status.#{status}")
       end
 
       private

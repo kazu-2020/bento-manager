@@ -69,6 +69,11 @@ class Catalog < ApplicationRecord
     price_by_kind(kind, at: at).present?
   end
 
+  # 提供状態。status カラムは持たず、提供終了記録の有無から導出する
+  def status
+    discontinued? ? :discontinued : :available
+  end
+
   # 提供終了かどうかを判定
   def discontinued?
     discontinuation.present?

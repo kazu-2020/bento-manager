@@ -13,7 +13,7 @@ module Discounts
 
       attr_reader :discount
 
-      delegate :name, :valid_from, :valid_until, to: :discount
+      delegate :name, :valid_from, :valid_until, :expired?, to: :discount
 
       def show_path
         helpers.discount_path(discount)
@@ -43,12 +43,6 @@ module Discounts
         from = helpers.l(valid_from, format: :short)
         to = valid_until ? helpers.l(valid_until, format: :short) : t(".no_end_date")
         "#{from} 〜 #{to}"
-      end
-
-      private
-
-      def expired?
-        valid_until.present? && valid_until < Date.current
       end
     end
   end
