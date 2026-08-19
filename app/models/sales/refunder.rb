@@ -16,6 +16,7 @@ module Sales
     # @raise [Sale::AlreadyVoidedError] 既に voided の場合
     # @raise [Sale::NotTodaysSaleError] 当日以外の販売の場合
     # @raise [ActiveRecord::RecordInvalid] バリデーションエラー時
+    # @raise [ActiveRecord::RecordNotFound] 復元先の DailyInventory レコードが見つからない場合
     def process(sale:, corrected_items:, employee:, discount_quantities: nil)
       # 在庫の復元は元の販売日、修正後の販売の在庫減算は当日を基準にする。
       # 当日以外の販売を通すと両日の在庫と日別売上が同時にずれるため、
@@ -51,25 +52,21 @@ module Sales
 
     # 在庫を復元（元の Sale の全アイテム分）
     #
+    # 明細ごとに引き直すのは ADR-0003 決定 2 の前提。トランザクション内で引き直す
+    # から、bulk_recreate が当日分を作り直した後でも消えた行を掴んだまま更新する
+    # 経路が無い。まとめて 1 回で引けば明細 N 件につき N-1 本減るが、残り 2 本
+    # （with_lock の reload と UPDATE）は外せないので、削減幅に見合わない
+    #
     # @param sale [Sale] 元の販売レコード
     def restore_inventory(sale)
       sale.items.each do |sale_item|
-        inventory = find_inventory(sale, sale_item)
+        inventory = DailyInventory.find_for!(
+          location: sale.location_id,
+          catalog: sale_item.catalog_id,
+          date: sale_item.sold_at.to_date
+        )
         inventory.increment_stock!(sale_item.quantity)
       end
-    end
-
-    # 対応する DailyInventory を検索
-    #
-    # @param sale [Sale] 販売レコード
-    # @param sale_item [SaleItem] 販売明細
-    # @return [DailyInventory]
-    def find_inventory(sale, sale_item)
-      DailyInventory.find_by!(
-        location_id: sale.location_id,
-        catalog_id: sale_item.catalog_id,
-        inventory_date: sale_item.sold_at.to_date
-      )
     end
 
     # 修正後の商品で新規 Sale を作成

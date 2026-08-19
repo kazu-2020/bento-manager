@@ -555,5 +555,38 @@ module Sales
 
       assert_not_predicate sale.reload, :voided?
     end
+
+    # 在庫が見つからないときの扱いは記録側（Sales::Recorder）と揃っている必要がある。
+    # 記録側は recorder_test.rb の「在庫なし商品を含む販売では〜」で担保しており、
+    # 同じく在庫あり商品と在庫なし商品を混ぜて、途中まで戻した在庫が残らないことを見る
+    test "在庫の記録がない商品を含む販売は差額精算できず、同じ販売の他商品の在庫も戻らない" do
+      sale = Sales::Recorder.new.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 }, { catalog: @catalog_salad, quantity: 1 } ]
+      )
+
+      # restore_inventory は sale.items の順に在庫を戻す。その順の最後の 1 件を消せば、
+      # 明細の並びが何で決まっても「1 件戻した後に落ちる」経路を必ず通る。並びを
+      # 決め打ちにすると、order が付いた日に 1 周目で落ちて担保が無言で空振りする
+      restored, missing = sale.items.to_a
+      restored_inventory = DailyInventory.find_for!(
+        location: @location, catalog: restored.catalog_id, date: Date.current
+      )
+      DailyInventory.find_for!(
+        location: @location, catalog: missing.catalog_id, date: Date.current
+      ).destroy!
+
+      # corrected_items が空なので Sale はそもそも増えない。Refund の有無と、
+      # 先に戻した在庫が残らないことがロールバックの担保になる
+      assert_no_difference "Refund.count" do
+        assert_no_changes -> { restored_inventory.reload.stock } do
+          assert_raises ActiveRecord::RecordNotFound do
+            Sales::Refunder.new.process(sale: sale, corrected_items: [], employee: @employee)
+          end
+        end
+      end
+
+      assert_not_predicate sale.reload, :voided?
+    end
   end
 end

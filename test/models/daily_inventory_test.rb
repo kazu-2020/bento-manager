@@ -51,6 +51,20 @@ class DailyInventoryTest < ActiveSupport::TestCase
     assert_predicate exactly_zero, :valid?
   end
 
+  test "販売先・商品・日付を指定して在庫を取得でき、該当する在庫がなければ見つからないエラーになる" do
+    city_hall = locations(:city_hall)
+    bento_a = catalogs(:daily_bento_a)
+
+    assert_equal daily_inventories(:city_hall_bento_a_today),
+                 DailyInventory.find_for!(location: city_hall, catalog: bento_a, date: Date.current)
+    assert_equal daily_inventories(:city_hall_bento_a_yesterday),
+                 DailyInventory.find_for!(location: city_hall, catalog: bento_a, date: Date.current - 1.day)
+
+    assert_raises ActiveRecord::RecordNotFound do
+      DailyInventory.find_for!(location: city_hall, catalog: catalogs(:miso_soup), date: Date.current)
+    end
+  end
+
   test "在庫から販売数を減算できる" do
     inventory = daily_inventories(:city_hall_bento_a_today)
     initial_stock = inventory.stock
