@@ -1,5 +1,5 @@
 <div class="p-8 w-96">
-  <%= component "overlay_badge", overlaid: true do |overlay| %>
+  <%= component "overlay_badge", overlaid: overlaid do |overlay| %>
     <% overlay.with_badge do %>
       <%= component "locations/status_badge", status: :inactive %>
     <% end %>

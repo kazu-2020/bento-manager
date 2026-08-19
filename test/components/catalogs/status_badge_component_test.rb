@@ -4,28 +4,26 @@ require "test_helper"
 
 module Catalogs
   class StatusBadgeComponentTest < ViewComponent::TestCase
-    def test_renders_available_badge_for_a_live_catalog
-      result = render_inline(Catalogs::StatusBadge::Component.new(catalog: available_catalog))
+    fixtures :catalogs
 
-      assert_predicate result.css(".badge.badge-success.badge-soft"), :present?
-      assert_includes result.to_html, "販売中"
-    end
+    test "商品カタログの提供状態を色付きバッジで表示する" do
+      available = render_inline(Catalogs::StatusBadge::Component.new(catalog: catalogs(:daily_bento_a)))
 
-    def test_renders_discontinued_badge_for_a_discontinued_catalog
-      result = render_inline(Catalogs::StatusBadge::Component.new(catalog: discontinued_catalog))
+      assert_predicate available.css(".badge.badge-success.badge-soft"), :present?
+      assert_includes available.to_html, "販売中"
 
-      assert_predicate result.css(".badge.badge-error.badge-soft"), :present?
-      assert_includes result.to_html, "提供終了"
+      discontinued = render_inline(Catalogs::StatusBadge::Component.new(catalog: discontinued_catalog))
+
+      assert_predicate discontinued.css(".badge.badge-error.badge-soft"), :present?
+      assert_includes discontinued.to_html, "提供終了"
     end
 
     private
 
-    def available_catalog
-      Catalog.new(name: "日替わり弁当A", kana: "ヒガワリベントウエー", category: :bento)
-    end
-
     def discontinued_catalog
-      available_catalog.tap(&:build_discontinuation)
+      catalogs(:discontinued_bento).tap do |catalog|
+        catalog.create_discontinuation!(discontinued_at: Time.current, reason: "テスト用提供終了")
+      end
     end
   end
 end

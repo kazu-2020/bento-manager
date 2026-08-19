@@ -13,7 +13,7 @@ module Locations
       end
 
       def variant_class
-        VARIANTS.fetch(status, "badge-ghost")
+        VARIANTS.fetch(status)
       end
 
       def label
