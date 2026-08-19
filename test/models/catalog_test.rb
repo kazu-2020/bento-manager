@@ -143,10 +143,12 @@ class CatalogTest < ActiveSupport::TestCase
   test "適用開始日時が同じ価格が並んだら、後から作ったほうが勝つ" do
     catalog = Catalog.create!(name: "同時刻価格テスト", kana: "ドウジコクカカクテスト", category: :bento)
     started_at = 1.day.ago
+    # 終了していない価格は商品・種別ごとに 1 件しか置けないので、同着を作るには
+    # 両方に終了時刻を入れる。終了が未来にある間は現時点でどちらも有効なまま
     prices = 2.times.map do |i|
       CatalogPrice.create!(
         catalog: catalog, kind: :regular, price: 100 * (i + 1),
-        effective_from: started_at, effective_until: nil
+        effective_from: started_at, effective_until: 1.day.from_now
       )
     end
     latest = prices.max_by(&:id)
@@ -166,9 +168,11 @@ class CatalogTest < ActiveSupport::TestCase
 
     # 日付ちょうどの境界は SQL 側が文字列比較になり、Ruby 側と食い違いやすい
     boundary = Date.new(2026, 3, 10)
+    # 終了時刻は fixture の salad_bundle と終了していない価格が並ばないために置く。
+    # 未来に取ってあるので、以下のどの基準時刻から見ても有効なままである
     CatalogPrice.create!(
       catalog: catalog, kind: :bundle, price: 120,
-      effective_from: boundary.to_time(:utc), effective_until: nil
+      effective_from: boundary.to_time(:utc), effective_until: 1.year.from_now
     )
 
     # 有効期間の両端そのもの（ended_at / boundary）を含める。両端 inclusive かどうかは

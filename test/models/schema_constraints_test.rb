@@ -160,6 +160,31 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
     end
   end
 
+  test "同じ商品・種別で終了していない価格は2件保存できない" do
+    # 終了していない価格が 2 件並ぶと、どちらが現在価格かが id 任せになる。
+    # create_with_history! を通さない経路でも 2 件目が入らないことを DB で担保する
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      CatalogPrice.create!(
+        catalog: catalogs(:daily_bento_a), kind: :regular, price: 600,
+        effective_from: Time.current
+      )
+    end
+  end
+
+  test "終了した価格は同じ商品・種別で何件でも残せる" do
+    # 一意なのは終了していない価格だけ。値上げのたびに増える履歴まで縛ってはいけない
+    assert_difference "CatalogPrice.count", 2 do
+      CatalogPrice.create!(
+        catalog: catalogs(:daily_bento_a), kind: :regular, price: 500,
+        effective_from: 3.months.ago, effective_until: 2.months.ago
+      )
+      CatalogPrice.create!(
+        catalog: catalogs(:daily_bento_a), kind: :regular, price: 520,
+        effective_from: 2.months.ago, effective_until: 1.month.ago
+      )
+    end
+  end
+
   # ============================================================
   # 外部キーの削除時挙動
   # ============================================================
