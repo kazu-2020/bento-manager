@@ -22,8 +22,8 @@ class LocationDailySalesQuantityTest < ActiveSupport::TestCase
 
     result = @location.daily_sales_quantity
 
-    assert_equal 2, result[[ sale_date.to_date.to_s, "staff" ]]
-    assert_equal 3, result[[ sale_date.to_date.to_s, "citizen" ]]
+    assert_equal 2, result[[ sale_date.to_date, "staff" ]]
+    assert_equal 3, result[[ sale_date.to_date, "citizen" ]]
   end
 
   test "取り消された販売は集計に含まれない" do
@@ -38,7 +38,7 @@ class LocationDailySalesQuantityTest < ActiveSupport::TestCase
 
     result = @location.daily_sales_quantity
 
-    assert_equal 1, result[[ sale_date.to_date.to_s, "staff" ]]
+    assert_equal 1, result[[ sale_date.to_date, "staff" ]]
   end
 
   test "1ヶ月より前の販売は集計に含まれない" do
@@ -49,7 +49,7 @@ class LocationDailySalesQuantityTest < ActiveSupport::TestCase
 
     result = @location.daily_sales_quantity
 
-    assert_nil result[[ sale_date.to_date.to_s, "staff" ]]
+    assert_nil result[[ sale_date.to_date, "staff" ]]
   end
 
   test "販売データがない販売先は空のハッシュを返す" do

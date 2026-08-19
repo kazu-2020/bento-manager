@@ -47,7 +47,7 @@ module Locations
       end
 
       def series_for(date_range, raw, customer_type)
-        date_range.map { |d| [ d.strftime("%-m/%-d"), raw[[ d.to_s, customer_type ]] || 0 ] }.to_h
+        date_range.map { |d| [ d.strftime("%-m/%-d"), raw[[ d, customer_type ]] || 0 ] }.to_h
       end
     end
   end

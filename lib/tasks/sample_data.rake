@@ -144,7 +144,7 @@ namespace :sample_data do
 
     # --- サマリー出力 ---
     citizen_count = total_sales - staff_count
-    daily_totals = Sale.at_location(location).completed.group("DATE(sale_datetime)").sum(:final_amount)
+    daily_totals = Sale.at_location(location).completed.group(Sale.jst_date_expression).sum(:final_amount)
     best_day = daily_totals.max_by { |_, v| v }
     worst_day = daily_totals.min_by { |_, v| v }
 
