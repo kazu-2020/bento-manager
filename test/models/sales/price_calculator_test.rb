@@ -294,7 +294,7 @@ module Sales
       catalog_names = error.missing_prices.map { |mp| mp[:catalog_name] }
 
       assert_includes catalog_names, "味噌汁"
-      assert_includes catalog_names, "販売終了弁当"
+      assert_includes catalog_names, "提供終了済み弁当"
     end
 
     private

@@ -20,8 +20,8 @@ salad:
   description: "新鮮野菜のサラダ"
 
 discontinued_bento:
-  name: "販売終了弁当"
-  kana: "ハンバイシュウリョウベントウ"
+  name: "提供終了済み弁当"
+  kana: "テイキョウシュウリョウズミベントウ"
   category: 0
   description: "提供終了した弁当"
 

@@ -53,7 +53,7 @@ PostgreSQL に移せば `with_lock` は本物の `FOR UPDATE` になる。**移�
 
 楽観ロックが問題になりうるのは 1 だけで、そこは `with_lock` の reload で `lock_version` が常に最新に揃う。到達しない例外の rescue は死んだ枝になり、読み手に「ここは競合し得る」という誤った緊張感を与える。
 
-**3 との競合について**: `bulk_recreate` は当日分を消して作り直すので行の id が変わるが、これも `StaleObjectError` にはならない。販売と差額精算はどちらも在庫を `find_by!` でトランザクション内から引き直すため、消えた行のオブジェクトを掴んだまま更新する経路が無い。加えて `bulk_recreate` は `Sale.started?` が真なら何もせずに戻り、その判定も決定 1 と同じくトランザクション内で行われる。**仮に in-memory の `DailyInventory` をトランザクションを跨いで持ち回れば、`with_lock` の reload は `RecordNotFound` を投げる**（`StaleObjectError` ではない）。持ち回らないことが前提である。
+**3 との競合について**: `bulk_recreate` は当日分を消して作り直すので行の id が変わるが、これも `StaleObjectError` にはならない。販売と差額精算はどちらも在庫を `DailyInventory.find_for!` でトランザクション内から引き直すため、消えた行のオブジェクトを掴んだまま更新する経路が無い。加えて `bulk_recreate` は `Sale.started?` が真なら何もせずに戻り、その判定も決定 1 と同じくトランザクション内で行われる。**仮に in-memory の `DailyInventory` をトランザクションを跨いで持ち回れば、`with_lock` の reload は `RecordNotFound` を投げる**（`StaleObjectError` ではない）。持ち回らないことが前提である。
 
 残す理由は、**`with_lock` を外した瞬間に落ちる検知器として働く**ため。#244 の指摘（`with_lock` は SQLite では行ロックにならない）は正しく、それを理由に `with_lock` を外す変更は将来ありうる。`test/models/daily_inventory_test.rb` の「別の端末が先に当日在庫を更新していても後続の在庫増減は取りこぼされない」は、`with_lock` を外すと実際に `StaleObjectError` で落ちる。**コメントではなくテストが不変条件を支えている。**
 
@@ -89,7 +89,7 @@ PostgreSQL に移せば `with_lock` は本物の `FOR UPDATE` になる。**移�
 
 - `with_lock` の `reload` はアソシエーションキャッシュを捨てる。差額精算 1 回あたりのクエリは 14 → 17 に増える（コントローラが `preload(items: :catalog)` したものを引き直すため）。SQLite ローカルで 1ms 未満であり、機構を 1 つに保つ対価として受け入れる
 - **競合した後発のリクエストは `BEGIN` で待つ。** `config/database.yml` の `timeout: 5000` を超えると `SQLite3::BusyException` が上がり、Rails はこれを `ActiveRecord::StatementTimeout` に変換する。アプリ内に rescue が無いため現状は 500 になる。**待たされた側は `AlreadyVoidedError` の親切なメッセージに到達する前に落ちる。** 差額精算は在庫復元と `Refund` 作成までトランザクションを保持するため、先行の処理が長いほどこの窓は広がる。**直列化を選んだことの裏返しであり、この方針を採る以上は待ちきれない場合の出方（再試行するのか、画面に何を出すのか、監視するのか）を決める必要がある。** [#338](https://github.com/kazu-2020/bento-manager/issues/338) で追跡する
-- 決定 1 と 2 の根拠は `app/models/sale.rb` と `app/models/daily_inventory.rb` のコメントからこの ADR を参照している。前提が変わったときに直す場所は、この ADR と 2 つのモデル、そして `test/integration/sqlite_transaction_mode_test.rb` の 4 つ
+- 決定 1 と 2 の根拠は `app/models/sale.rb`、`app/models/daily_inventory.rb`、`app/models/sales/refunder.rb` のコメントからこの ADR を参照している。前提が変わったときに直す場所は、この ADR と 3 つのモデル、そして `test/integration/sqlite_transaction_mode_test.rb` の 5 つ
 
 ## 参照
 
