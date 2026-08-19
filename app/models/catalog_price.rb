@@ -20,6 +20,8 @@ class CatalogPrice < ApplicationRecord
   }
   scope :current, -> { effective_at(Time.current) }
   scope :by_kind, ->(kind) { where(kind: kind) }
+  # idx_catalog_prices_open_ended_unique と同じ述語。商品・種別ごとに高々 1 件
+  scope :open_ended, -> { where(effective_until: nil) }
 
   # 同じ effective_from が並んだときの勝者を id で決める。第 2 ソートキーが無いと
   # SQLite の走査順まかせになり、Ruby 側（pick_by_kind）と答えが割れうる
@@ -94,15 +96,30 @@ class CatalogPrice < ApplicationRecord
   # @return [CatalogPrice] 作成された新しい価格レコード
   # @raise [ActiveRecord::RecordInvalid] バリデーションエラー時
   def self.create_with_history!(catalog:, kind:, price:)
-    # 現在価格の判定・旧価格の終了・新価格の開始に同じ時刻を使う。Time.current を
-    # 評価し直すとその差分だけ旧価格と新価格の有効期間が重なり、現在価格が 2 件に見える。
-    # 旧価格を先に終了させるのも同じ理由で、順序を入れ替えると終了していない価格が
-    # 一瞬 2 件になり、商品・種別ごとに 1 件という DB の一意制約に弾かれる
+    # 旧価格の終了と新価格の開始に同じ時刻を使う。Time.current を評価し直すと
+    # その差分だけ両方が有効な期間ができる（両端 inclusive なので切替の一点では
+    # 依然どちらも有効で、勝者は price_by_kind の effective_from 降順が決める）
     now = Time.current
-    current_price = catalog.price_by_kind(kind, at: now)
+
+    # 閉じる相手は effective_at ではなく open_ended で選ぶ。一意制約が見ているのが
+    # 「終了していない価格」なので、述語がずれると閉じ損ねた行が残って insert が弾かれる。
+    # 例えば effective_until を未来に持つ行が間に挟まると、effective_at はそちらを
+    # 現在価格として返し、本当に終了していない古い行は開いたまま残る
+    current_price = catalog.prices.open_ended.by_kind(kind).first
+
+    # 同じ時刻に始まった価格は有効だった期間が無い。終了時刻を入れると
+    # valid_date_range（effective_until <= effective_from を弾く）に掛かるので、
+    # 履歴を積まずに金額だけ差し替える。freeze_time 下の連続更新がこれに当たる
+    if current_price && current_price.effective_from >= now
+      current_price.update!(price: price)
+      return current_price
+    end
+
     new_price = new(catalog: catalog, kind: kind, price: price, effective_from: now)
 
     transaction do
+      # 旧価格を先に終了させる。順序を入れ替えると終了していない価格が一瞬 2 件になり、
+      # 一意制約に弾かれる
       current_price&.update!(effective_until: now)
       new_price.save!
     end
