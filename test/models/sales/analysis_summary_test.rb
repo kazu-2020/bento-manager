@@ -2,14 +2,15 @@ require "test_helper"
 
 module Sales
   class AnalysisSummaryTest < ActiveSupport::TestCase
+    include SaleTestHelper
+
     fixtures :locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items
 
     setup do
       @location = locations(:city_hall)
       @summary = Sales::AnalysisSummary.new(
         location: @location,
-        from: 8.days.ago.beginning_of_day,
-        to: Time.current
+        period: Sales::AnalysisPeriod.new(days: 7)
       )
     end
 
@@ -29,11 +30,22 @@ module Sales
     test "顧客タイプ別サマリーは取消済みの販売を含まない" do
       result = @summary.summary_by_customer_type
 
-      # 期間内(8日前〜現在)の市役所 completed staff sales の line_total 合計:
-      # completed_sale(550), staff_1(550), staff_2(500), staff_3(550+150), staff_4(550), staff_5(500)
-      # analysis_voided は voided なので除外
-      # 金額 = 550+550+500+700+550+500 = 3350
-      assert_equal 3350, result[:staff][:amount]
+      # 集計期間内（前日から 7 暦日）の市役所 completed staff sales の line_total 合計:
+      # staff_1(550), staff_2(500), staff_3(550+150), staff_4(550), staff_5(500)
+      # analysis_voided は voided なので除外、completed_sale は当日なので集計期間の外
+      # 金額 = 550+500+700+550+500 = 2800
+      assert_equal 2800, result[:staff][:amount]
+    end
+
+    # 当日の販売は差額精算で変わりうるため、混ぜると同じ期間の数字が見るたびに動く。
+    # 集計期間が当日を除くだけでなく、売上分析そのものが当日を含んではならない
+    test "顧客タイプ別サマリーは当日の販売を含まない" do
+      before = @summary.summary_by_customer_type
+
+      today_sale = create_sale(location: @location, customer_type: :staff, sale_datetime: Time.current)
+      create_sale_item(sale: today_sale, quantity: 1)
+
+      assert_equal before, @summary.summary_by_customer_type
     end
 
     test "顧客タイプ別サマリーは他の出店先の販売を含まない" do
@@ -45,8 +57,7 @@ module Sales
 
       pref_summary = Sales::AnalysisSummary.new(
         location: locations(:prefectural_office),
-        from: 8.days.ago.beginning_of_day,
-        to: Time.current
+        period: Sales::AnalysisPeriod.new(days: 7)
       )
       pref_result = pref_summary.summary_by_customer_type
 
@@ -63,7 +74,7 @@ module Sales
       assert_operator result[:staff].length, :<=, 5
       assert_operator result[:citizen].length, :<=, 5
 
-      # 職員: 弁当A が最も多い（staff_1, staff_3, staff_4 + completed_sale = 4個）
+      # 職員: 弁当A が最も多い（staff_1, staff_3, staff_4 = 3個。弁当B は staff_2, staff_5 = 2個）
       top_staff = result[:staff].first
 
       assert_equal catalogs(:daily_bento_a).name, top_staff[:catalog_name]

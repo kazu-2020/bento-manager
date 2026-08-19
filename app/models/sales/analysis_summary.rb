@@ -3,10 +3,12 @@
 module Sales
   class AnalysisSummary
     include CustomerTypePivot
-    def initialize(location:, from:, to:)
+
+    # 当日を除くのは集計期間の都合ではなく売上分析そのものの性質である。
+    # from / to に分解した入口は、その性質を持たない期間を素通しさせる
+    def initialize(location:, period:)
       @location = location
-      @from = from
-      @to = to
+      @period = period
     end
 
     # 顧客タイプ別の集計
@@ -70,7 +72,9 @@ module Sales
 
     private
 
-    attr_reader :location, :from, :to
+    attr_reader :location, :period
+
+    delegate :from, :to, to: :period, private: true
 
     def default_summary
       {
