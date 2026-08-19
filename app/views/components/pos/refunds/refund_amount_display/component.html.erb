@@ -24,9 +24,9 @@
             </svg>
             <%= t(".returned_coupons_title") %>
           </div>
-          <% returned_coupons.each do |coupon| %>
+          <% returned_discounts.each do |coupon| %>
             <div class="flex justify-between text-sm font-medium">
-              <span><%= coupon[:name] %></span>
+              <span><%= coupon[:discount_name] %></span>
               <span>x<%= coupon[:quantity] %></span>
             </div>
           <% end %>

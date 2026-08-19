@@ -50,12 +50,6 @@ module Pos
                                       .eager_load(:catalog)
                                       .order(order_at: :desc)
       end
-
-      def current_employee
-        return nil unless rodauth(:employee).logged_in?
-
-        Employee.find_by(id: rodauth(:employee).session_value)
-      end
     end
   end
 end

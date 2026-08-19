@@ -14,7 +14,7 @@ module Sales
       @daily_totals ||= Sale.completed
         .at_location(location)
         .in_period(month_range.first, month_range.last)
-        .group(jst_date_expression)
+        .group(Sale.jst_date_expression)
         .sum(:total_amount)
         .transform_keys { |date_str| Date.parse(date_str) }
     end
@@ -61,12 +61,6 @@ module Sales
 
     def month_range
       month.beginning_of_month.beginning_of_day..month.end_of_month.end_of_day
-    end
-
-    # SQLite の DATE() は UTC ベース。JST オフセットを適用
-    def jst_date_expression
-      offset = Time.zone.now.formatted_offset
-      Arel.sql(Sale.sanitize_sql_array([ "DATE(sale_datetime, ?)", offset ]))
     end
   end
 end

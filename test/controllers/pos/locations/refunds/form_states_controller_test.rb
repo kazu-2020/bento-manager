@@ -7,6 +7,7 @@ module Pos
     module Refunds
       class FormStatesControllerTest < ActionDispatch::IntegrationTest
         include RefundParamsHelper
+        include QueryCountHelper
 
         fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules,
                  :daily_inventories, :discounts, :coupons, :sales, :sale_items, :sale_discounts
@@ -20,6 +21,26 @@ module Pos
           @bento_b = catalogs(:daily_bento_b)
           @salad = catalogs(:salad)
           @fifty_yen = discounts(:fifty_yen_discount)
+        end
+
+        # 返却クーポンの案内は元の販売のクーポンを 1 枚ずつ読む。数量入力を動かすたびに
+        # この経路が再描画されるため、クーポンごとに問い合わせが増える形になっていると
+        # 操作のたびに積み上がる。RefundFormBuildable#set_sale の preload がそれを防ぐ
+        test "修正カートの再描画は元の販売のクーポンが増えても問い合わせ本数が増えない" do
+          login_as_employee(@employee)
+          more_coupons = -> do
+            SaleDiscount.create!(
+              sale: @sale,
+              discount: discounts(:hundred_yen_discount),
+              discount_amount: 100,
+              quantity: 1
+            )
+          end
+
+          assert_queries_unaffected_by(more_coupons, "元の販売のクーポンごとに読み込みが走っている") do
+            # クーポンを 0 枚に減らした送信。返却クーポンの算出まで通す
+            post_form_state(corrected: { @bento_a => 1 }, coupon: {})
+          end
         end
 
         # ============================================================

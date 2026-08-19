@@ -28,6 +28,20 @@ class Sale < ApplicationRecord
   validates :voided_at,          presence: true, if: :voided?
   validates :voided_by_employee, presence: true, if: :voided?
 
+  # sale_datetime をアプリのタイムゾーン（JST）の日付に切り出す SQL 式
+  #
+  # SQLite の DATE() は UTC 基準で日付を返すため、そのまま日次集計に使うと
+  # 深夜帯（JST 0:00〜9:00）の販売が前日に寄る。オフセットは Time.zone から
+  # 取り、日付の境界を暦どおりに合わせる。
+  #
+  # 生の DATE() を書かずここを通す理由、および固定オフセットが日本国内限定の
+  # 前提に依るものであることは docs/adr/0004-datetime-storage-and-day-boundary.md を参照
+  #
+  # @return [Arel::Nodes::SqlLiteral]
+  def self.jst_date_expression
+    Arel.sql(sanitize_sql_array([ "DATE(sale_datetime, ?)", Time.zone.now.formatted_offset ]))
+  end
+
   # 販売開始済みかどうかを判定する
   #
   # 販売開始とは、その販売先でその日の最初の販売が確定した時点を指す。

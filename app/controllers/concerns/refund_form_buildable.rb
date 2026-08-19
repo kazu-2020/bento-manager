@@ -24,10 +24,13 @@ module RefundFormBuildable
   # 明細側の catalog にも価格を載せる。修正カートの母集合は「元の販売の商品 + 当日の
   # 在庫」なので、当日の在庫に無い商品を売っていた販売では、在庫側の catalog をいくら
   # 揃えても明細の分の価格が読み込み済みにならない。加えて RefundForm#catalog_lookup
-  # は両方にある商品では明細側を採るため、在庫側だけでは取りこぼす
+  # は両方にある商品では明細側を採るため、在庫側だけでは取りこぼす。
+  #
+  # クーポンは RefundForm（元の枚数）と Refunds::Preview（返却枚数）の両方が読む。
+  # ここで読んでおかないと、数量入力を動かすたびの再描画ごとに問い合わせが増える
   def set_sale
     @sale = @location.sales
-                     .preload(items: [ { catalog: :prices }, :catalog_price ])
+                     .preload(items: [ { catalog: :prices }, :catalog_price ], sale_discounts: :discount)
                      .find(params[:sale_id])
   end
 

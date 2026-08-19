@@ -5,8 +5,11 @@ module Refunds
   #
   # 3 つの状態を同じインターフェースの奥に畳む。呼び出し側はどれなのかを気にしなくてよい。
   #   1. 修正カートに手が入っていない  → すべて 0 と空配列（null object）
-  #   2. 修正後の商品が無い / 価格が引けない → 修正後は 0 円。元の販売のクーポンを「返却」として並べる
+  #   2. 修正後の商品が無い / 価格が引けない → 修正後は 0 円
   #   3. 通常                          → Sales::PriceCalculator の結果
+  #
+  # 客に返すクーポンの枚数だけは修正後の結果からは出せない。元の販売と突き合わせる
+  # returned_discounts が持つ。
   class Preview
     # @param sale [Sale] 元の販売
     # @param items [Array<Hash>] 修正後の商品 [{ catalog:, quantity: }, ...]
@@ -29,6 +32,17 @@ module Refunds
 
     def discount_details
       result[:discount_details]
+    end
+
+    # 客の手元に戻すクーポン。返却枚数 = 元の販売の枚数 - 修正後に適用された枚数。
+    #
+    # 母集合は元の販売のクーポンでなければならない。修正後の結果には「0 枚に減らした
+    # クーポン」が現れず（Sales::PriceCalculator に渡らない）、修正後の商品が無ければ
+    # そもそも 1 件も現れないため、そちらを母集合にすると返却が消える。
+    #
+    # @return [Array<Hash>] [{ discount_id:, discount_name:, quantity: }, ...]
+    def returned_discounts
+      @returned_discounts ||= build_returned_discounts
     end
 
     # 元の販売との差額。正なら返金、負なら追加請求
@@ -61,9 +75,10 @@ module Refunds
       @result ||= build_result
     end
 
+    # 修正後の商品が無ければ修正後の販売は作られない。価格が引けないときも同じ扱いに
+    # 倒す（根拠の無い差額を客に提示しないため）
     def build_result
-      return empty_result unless changed?
-      return full_refund_result if items.empty?
+      return empty_result if !changed? || items.empty?
 
       calculated_result
     end
@@ -72,13 +87,7 @@ module Refunds
       Sales::PriceCalculator.new(items, discount_quantities: discount_quantities).calculate
     rescue Errors::MissingPriceError => e
       Rails.logger.error "[Refunds::Preview] MissingPriceError: #{e.message}"
-      full_refund_result
-    end
-
-    # 修正後の商品が無ければ修正後の販売は作られない。元の販売で使ったクーポンは
-    # 1 枚も適用されないまま客の手元に戻るので、返却として並べる
-    def full_refund_result
-      empty_result.merge(discount_details: returned_discount_details)
+      empty_result
     end
 
     # 0 円の形は自分で書かず、空のカートを計算させて得る。PriceCalculator が返す
@@ -87,17 +96,28 @@ module Refunds
       Sales::PriceCalculator.new([]).calculate
     end
 
-    def returned_discount_details
-      sale.sale_discounts.eager_load(:discount).map do |sale_discount|
+    # sale_discounts はここで引き直さない。RefundForm も同じ関連を読むうえ、この画面は
+    # 数量入力を動かすたびに再描画されるため、関連を無視して Relation を作ると
+    # 1 操作ごとに問い合わせが増える。読み込みは RefundFormBuildable#set_sale が済ませる
+    def build_returned_discounts
+      return [] unless changed?
+
+      sale.sale_discounts.filter_map do |sale_discount|
+        # 要求した枚数ではなく適用された枚数を引く。弁当の数を超えて要求した分は元から
+        # 客に渡っていないので、返却には数えない
+        returned_quantity = sale_discount.quantity - applied_discount_quantities[sale_discount.discount_id].to_i
+        next unless returned_quantity.positive?
+
         {
           discount_id: sale_discount.discount_id,
           discount_name: sale_discount.discount.name,
-          discount_amount: 0,
-          quantity: 0,
-          requested_quantity: sale_discount.quantity,
-          applicable: false
+          quantity: returned_quantity
         }
       end
+    end
+
+    def applied_discount_quantities
+      @applied_discount_quantities ||= discount_details.to_h { |detail| [ detail[:discount_id], detail[:quantity] ] }
     end
   end
 end

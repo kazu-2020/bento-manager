@@ -68,12 +68,6 @@ module Pos
           submitted: submitted
         )
       end
-
-      def current_employee
-        return nil unless rodauth(:employee).logged_in?
-
-        Employee.find_by(id: rodauth(:employee).session_value)
-      end
     end
   end
 end
