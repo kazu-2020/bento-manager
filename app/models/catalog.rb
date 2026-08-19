@@ -29,7 +29,7 @@ class Catalog < ApplicationRecord
       .or(where(id: DailyInventory.where(location: location, inventory_date: date).select(:catalog_id)))
   }
 
-  # 表示順序: 販売中を先、販売停止を後に表示（同じ状態内ではふりがな順）
+  # 表示順序: 販売中を先、提供終了を後に表示（同じ状態内ではふりがな順）
   scope :display_order, -> {
     left_outer_joins(:discontinuation)
       .order(Arel.sql("catalog_discontinuations.id IS NOT NULL"))
