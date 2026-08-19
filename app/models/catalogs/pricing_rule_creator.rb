@@ -74,13 +74,7 @@ module Catalogs
     #
     # @return [Boolean] 今日時点で有効な場合は true
     def currently_active?
-      return false unless rule&.valid_from
-
-      today = Date.current
-      started = rule.valid_from <= today
-      not_ended = rule.valid_until.nil? || rule.valid_until >= today
-
-      started && not_ended
+      rule.present? && rule.active_at?(Date.current)
     end
 
     # 価格存在検証（ActiveModel::Validations のカスタムバリデーション）
