@@ -1,0 +1,5 @@
+---
+ja:
+  title: 顧客タイプ別 商品分析
+  period_label: "%{from} 〜 %{to}"
+  days_option: "過去%{days}日"
