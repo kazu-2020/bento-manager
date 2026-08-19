@@ -27,6 +27,14 @@ class SalesAnalysesControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#sales_analysis_summary[src*=?]", "days=30"
   end
 
+  # days[]=7 のように配列やハッシュで渡されても、正規化は既定値に落ちて 500 にしない
+  test "集計日数が数値以外の形で渡されても過去30日として扱われる" do
+    get sales_analyses_path, params: { days: [ "7" ] }
+
+    assert_response :success
+    assert_select "turbo-frame#sales_analysis_summary[src*=?]", "days=30"
+  end
+
   test "location_id パラメータを受け取る" do
     get sales_analyses_path, params: { location_id: locations(:city_hall).id }
 

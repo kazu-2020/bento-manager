@@ -9,9 +9,10 @@ module Sales
     ALLOWED_DAYS = [ 7, 30, 90 ].freeze
     DEFAULT_DAYS = 30
 
-    # URL パラメータの集計日数を正規化して集計期間を組み立てる
+    # URL パラメータの集計日数を正規化して集計期間を組み立てる。
+    # days[]=7 のように配列やハッシュで届くこともあるため、to_s を挟んで 0 に倒す
     def self.from_param(days)
-      days = days.to_i
+      days = days.to_s.to_i
       new(days: ALLOWED_DAYS.include?(days) ? days : DEFAULT_DAYS)
     end
 
