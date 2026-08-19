@@ -109,10 +109,10 @@ module Sales
     # @raise [ActiveRecord::RecordNotFound] 販売のロケーション、アイテムのカタログ、販売日に一致する DailyInventory がない場合
     # @raise [DailyInventory::InsufficientStockError] 在庫が減算に必要な数量を満たさない場合
     def decrement_inventory(sale, sale_item)
-      inventory = DailyInventory.find_by!(
-        location_id: sale.location_id,
-        catalog_id: sale_item.catalog_id,
-        inventory_date: sale_item.sold_at.to_date
+      inventory = DailyInventory.find_for!(
+        location: sale.location_id,
+        catalog: sale_item.catalog_id,
+        date: sale_item.sold_at.to_date
       )
       inventory.decrement_stock!(sale_item.quantity)
     end
