@@ -14,7 +14,7 @@ module SalesAnalyses
       attr_reader :location, :period, :locations
 
       def filter_params
-        { location_id: location.id, period: period }
+        { location_id: location.id, days: period.days }
       end
 
       def summary_src

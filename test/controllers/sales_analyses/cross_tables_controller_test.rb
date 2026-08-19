@@ -11,7 +11,7 @@ module SalesAnalyses
     end
 
     test "認証済みユーザーが cross_table にアクセスできる" do
-      get sales_analyses_cross_table_path(location_id: locations(:city_hall).id, period: 30)
+      get sales_analyses_cross_table_path(location_id: locations(:city_hall).id, days: 30)
 
       assert_response :success
     end
