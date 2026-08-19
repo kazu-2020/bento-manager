@@ -74,7 +74,7 @@ module Catalogs
     #
     # @return [Boolean] 今日時点で有効な場合は true
     def currently_active?
-      rule.present? && rule.active_at?(Date.current)
+      rule&.active_at?(Date.current)
     end
 
     # 価格存在検証（ActiveModel::Validations のカスタムバリデーション）
