@@ -230,6 +230,8 @@ ja:
       close: "閉じる"
 
   locations:
+    placeholder:
+      name: "例: 本庁舎1F売店"
     index:
       title: "販売先一覧"
     new:
