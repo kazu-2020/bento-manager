@@ -8,21 +8,21 @@ module Catalogs
         discontinued: "badge-error badge-soft"
       }.freeze
 
-      def initialize(catalog:)
-        @catalog = catalog
-      end
-
-      def status
-        catalog.discontinued? ? :discontinued : :available
+      def initialize(status:)
+        @status = status.to_sym
       end
 
       def variant_class
         VARIANTS.fetch(status)
       end
 
+      def label
+        t(".#{status}")
+      end
+
       private
 
-      attr_reader :catalog
+      attr_reader :status
     end
   end
 end

@@ -1,6 +1,8 @@
-<%= component "overlay_badge", overlaid: expired? do |overlay| %>
-  <% overlay.with_badge do %>
-    <%= component "discounts/status_badge", status: :expired %>
+<%= component "overlay_badge" do |overlay| %>
+  <% if expired? %>
+    <% overlay.with_badge do %>
+      <%= component "discounts/status_badge", status: discount.status %>
+    <% end %>
   <% end %>
   <%= link_to show_path, class: card_classes, data: { turbo_frame: "_top" } do %>
     <div class="card-body p-4 gap-3">
