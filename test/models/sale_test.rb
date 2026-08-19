@@ -170,6 +170,15 @@ class SaleTest < ActiveSupport::TestCase
     end
   end
 
+  test "日付をまたぐ深夜帯の販売も、その日の売上としてまとめて集計される" do
+    location = Location.create!(name: "JST日付境界テスト", status: :active)
+    # UTC 基準では 8/9 に落ちる 0:30 と、8/10 に残る 23:30。どちらも JST では 8/10
+    create_sale(location: location, customer_type: :staff, sale_datetime: Time.zone.local(2026, 8, 10, 0, 30))
+    create_sale(location: location, customer_type: :staff, sale_datetime: Time.zone.local(2026, 8, 10, 23, 30))
+
+    assert_equal({ "2026-08-10" => 2 }, Sale.at_location(location).group(Sale.jst_date_expression).count)
+  end
+
   test "差額精算できるのは、当日の販売のうちまだ取り消されていないものだけ" do
     today_sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: Time.current)
     yesterday_sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: 1.day.ago)

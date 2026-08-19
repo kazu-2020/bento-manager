@@ -21,15 +21,12 @@ class Location < ApplicationRecord
   end
 
   def daily_sales_quantity(period: 1.month)
-    date_expr = Arel.sql(
-      self.class.sanitize_sql_array([ "DATE(sale_datetime, ?)", Time.zone.now.formatted_offset ])
-    )
-
     sales
       .completed
       .where(sale_datetime: period.ago.beginning_of_day..)
       .joins(:items)
-      .group(date_expr, :customer_type)
+      .group(Sale.jst_date_expression, :customer_type)
       .sum("sale_items.quantity")
+      .transform_keys { |date_str, customer_type| [ Date.parse(date_str), customer_type ] }
   end
 end
