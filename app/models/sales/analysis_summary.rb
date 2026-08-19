@@ -15,12 +15,12 @@ module Sales
     # @return [Hash] { staff: { quantity:, amount: }, citizen: { quantity:, amount: } }
     def summary_by_customer_type
       rows = bento_sales
-             .group(:customer_type)
-             .pluck(
-               :customer_type,
-               Arel.sql("SUM(sale_items.quantity)"),
-               Arel.sql("SUM(sale_items.line_total)")
-             )
+        .group(:customer_type)
+        .pluck(
+          :customer_type,
+          Arel.sql("SUM(sale_items.quantity)"),
+          Arel.sql("SUM(sale_items.line_total)")
+        )
 
       rows.each_with_object(default_summary) do |(ct, qty, amount), hash|
         hash[ct.to_sym] = { quantity: qty.to_i, amount: amount.to_i }
@@ -67,13 +67,14 @@ module Sales
 
     # 売上分析が数える販売行。3 つの集計はこの母集合を共有する。
     # 集計ごとに条件を書くと、かつてサマリーだけがサイドメニューを含んで
-    # クロス集計表と合計が食い違ったように、また粒度が分かれる
+    # クロス集計表と合計が食い違ったように、また粒度が分かれる。
+    # 1 行は販売ではなく販売 × 弁当なので、件数を数える用途には使えない
     def bento_sales
       Sale.completed
           .at_location(location)
           .in_period(from, to)
           .joins(items: :catalog)
-          .where(catalogs: { category: :bento })
+          .merge(Catalog.bento)
     end
 
     def default_summary
