@@ -12,7 +12,7 @@ module Discounts
 
       attr_reader :discount
 
-      delegate :name, :valid_from, :valid_until, to: :discount
+      delegate :name, :valid_from, :valid_until, :expired?, to: :discount
 
       def frame_id
         FRAME_ID
@@ -40,12 +40,6 @@ module Discounts
 
       def updated_at_formatted
         helpers.l(discount.updated_at, format: :long) if discount.updated_at
-      end
-
-      private
-
-      def expired?
-        valid_until.present? && valid_until < Date.current
       end
     end
   end

@@ -1,0 +1,7 @@
+---
+ja:
+  title: 販売先ステータスバッジ
+  description: 販売先の取引状態（取引中/取引停止）を表示するバッジ
+en:
+  title: Location Status Badge
+  description: Badge displaying a location's trading status (active/inactive)

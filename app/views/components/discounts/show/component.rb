@@ -12,7 +12,7 @@ module Discounts
 
       attr_reader :discount
 
-      delegate :name, :valid_from, :valid_until, to: :discount
+      delegate :name, :status, to: :discount
 
       def header_frame_id
         HEADER_FRAME_ID
@@ -20,21 +20,6 @@ module Discounts
 
       def back_path
         helpers.discounts_path
-      end
-
-      def status
-        return :expired if expired?
-        return :upcoming if upcoming?
-
-        :active
-      end
-
-      def expired?
-        valid_until.present? && valid_until < Date.current
-      end
-
-      def upcoming?
-        valid_from > Date.current
       end
     end
   end

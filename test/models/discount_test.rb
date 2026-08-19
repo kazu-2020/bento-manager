@@ -14,6 +14,18 @@ class DiscountTest < ActiveSupport::TestCase
     must validate_presence_of(:valid_from)
   end
 
+  test "割引の状態は有効期間と当日の関係で期間前・有効・期限切れに分かれる" do
+    upcoming = Discount.new(name: "来週から", valid_from: Date.current + 1)
+    active_without_end = Discount.new(name: "無期限", valid_from: Date.current)
+    active_within_period = Discount.new(name: "期間中", valid_from: Date.current - 1, valid_until: Date.current)
+    expired = Discount.new(name: "終了済み", valid_from: Date.current - 2, valid_until: Date.current - 1)
+
+    assert_equal :upcoming, upcoming.status
+    assert_equal :active, active_without_end.status
+    assert_equal :active, active_within_period.status
+    assert_equal :expired, expired.status
+  end
+
   test "associations" do
     @subject = Discount.new
 

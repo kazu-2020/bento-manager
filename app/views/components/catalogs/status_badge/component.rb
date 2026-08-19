@@ -1,12 +1,11 @@
 # frozen_string_literal: true
 
-module Discounts
+module Catalogs
   module StatusBadge
     class Component < Application::Component
       VARIANTS = {
-        active:   "badge-success badge-soft",
-        expired:  "badge-error badge-soft",
-        upcoming: "badge-warning badge-soft"
+        available:    "badge-success badge-soft",
+        discontinued: "badge-error badge-soft"
       }.freeze
 
       def initialize(status:)

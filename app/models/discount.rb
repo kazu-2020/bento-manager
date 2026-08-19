@@ -17,4 +17,20 @@ class Discount < ApplicationRecord
 
     discountable.calculate_discount(sale_items)
   end
+
+  # 適用期間の状態。valid_from / valid_until と当日の関係から導出する
+  def status
+    return :expired if expired?
+    return :upcoming if upcoming?
+
+    :active
+  end
+
+  def expired?
+    valid_until.present? && valid_until < Date.current
+  end
+
+  def upcoming?
+    valid_from > Date.current
+  end
 end
