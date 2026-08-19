@@ -2,7 +2,7 @@
         data-controller="select-navigate"
         data-action="change->select-navigate#visit">
   <% locations.each do |loc| %>
-    <option value="<%= switch_location_path(loc) %>"
+    <option value="<%= path_builder.call(loc.id) %>"
             <% if selected?(loc) %>selected<% end %>>
       <%= loc.name %>
     </option>

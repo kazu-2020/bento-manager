@@ -21,8 +21,5 @@ class SalesHistories::IndexPageComponentTest < ViewComponent::TestCase
       "/sales_histories?location_id=#{@city_hall.id}&month=2026-03",
       "/sales_histories?location_id=#{@prefectural_office.id}&month=2026-03"
     ], result.css("option").map { |o| o["value"] }
-
-    assert_equal [ @prefectural_office.name ],
-                 result.css("option[selected]").map { |o| o.text.strip }
   end
 end

@@ -8,7 +8,7 @@
     <%= component "locations/selector",
           locations: locations,
           selected: location,
-          path_builder: switch_location_path_builder %>
+          path_builder: method(:switch_location_path) %>
 
     <div class="join">
       <% period_options.each do |p| %>

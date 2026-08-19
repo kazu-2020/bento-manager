@@ -27,8 +27,8 @@ module SalesAnalyses
         helpers.sales_analyses_path(period: p, location_id: location.id)
       end
 
-      def switch_location_path_builder
-        ->(loc_id) { helpers.sales_analyses_path(period: period, location_id: loc_id) }
+      def switch_location_path(loc_id)
+        helpers.sales_analyses_path(period: period, location_id: loc_id)
       end
 
       def period_label

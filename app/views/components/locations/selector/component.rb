@@ -4,7 +4,7 @@ module Locations
   module Selector
     class Component < Application::Component
       # path_builder: 販売先 ID を受け取り、現在の画面状態を保ったまま
-      # 販売先だけ差し替えた URL を返す lambda
+      # 販売先だけ差し替えた URL を返す callable
       def initialize(locations:, selected:, path_builder:)
         @locations = locations
         @selected = selected
@@ -14,10 +14,6 @@ module Locations
       private
 
       attr_reader :locations, :selected, :path_builder
-
-      def switch_location_path(loc)
-        path_builder.call(loc.id)
-      end
 
       def selected?(loc)
         loc.id == selected.id

@@ -12,7 +12,7 @@
       <%= component "locations/selector",
             locations: locations,
             selected: location,
-            path_builder: switch_location_path_builder %>
+            path_builder: method(:switch_location_path) %>
 
       <div class="flex items-center gap-2">
         <%= link_to "◀", prev_month_path, class: "btn btn-sm btn-ghost" %>
