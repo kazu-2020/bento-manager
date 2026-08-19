@@ -11,13 +11,13 @@ class SalesAnalyses::FilterBarComponentTest < ViewComponent::TestCase
   test "販売先を切り替えても、表示中の集計期間は保たれる" do
     result = render_inline(SalesAnalyses::FilterBar::Component.new(
       location: @prefectural_office,
-      period: 90,
+      period: Sales::AnalysisPeriod.new(days: 90),
       locations: [ @city_hall, @prefectural_office ]
     ))
 
     assert_equal [
-      "/sales_analyses?location_id=#{@city_hall.id}&period=90",
-      "/sales_analyses?location_id=#{@prefectural_office.id}&period=90"
+      "/sales_analyses?days=90&location_id=#{@city_hall.id}",
+      "/sales_analyses?days=90&location_id=#{@prefectural_office.id}"
     ], result.css("option").map { |o| o["value"] }
   end
 end

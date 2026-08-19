@@ -2,12 +2,11 @@
 
 class SalesAnalysesController < ApplicationController
   include LocationFindable
-  include PeriodSanitizable
 
   def index
     render SalesAnalyses::IndexPage::Component.new(
       location: find_location,
-      period: sanitize_period,
+      period: Sales::AnalysisPeriod.from_param(params[:days]),
       locations: Location.display_order
     )
   end

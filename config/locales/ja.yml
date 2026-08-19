@@ -230,6 +230,8 @@ ja:
       close: "閉じる"
 
   locations:
+    placeholder:
+      name: "例: 本庁舎1F売店"
     index:
       title: "販売先一覧"
     new:
@@ -280,7 +282,7 @@ ja:
     update:
       success: "商品カタログを更新しました。"
     discontinuations:
-      modal_title: "販売停止の確認"
+      modal_title: "提供終了の確認"
       success: "商品カタログを提供終了にしました。"
       already_discontinued: "この商品カタログは既に提供終了です。"
       default_reason: "管理者による提供終了"

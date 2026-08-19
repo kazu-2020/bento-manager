@@ -7,7 +7,7 @@
                         required: true,
                         autofocus: true,
                         class: "input input-bordered w-full #{location.errors.where(:name).any? ? 'input-error' : ''}",
-                        placeholder: "例: 本庁舎1F売店" %>
+                        placeholder: t("locations.placeholder.name") %>
     <% location.errors.where(:name).each do |error| %>
       <p class="text-sm text-error mt-1"><%= error.full_message %></p>
     <% end %>

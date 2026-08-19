@@ -11,8 +11,8 @@
           path_builder: method(:switch_location_path) %>
 
     <div class="join">
-      <% period_options.each do |p| %>
-        <%= link_to "過去#{p}日", period_path(p), class: period_class(p) %>
+      <% days_options.each do |days| %>
+        <%= link_to "過去#{days}日", days_path(days), class: days_class(days) %>
       <% end %>
     </div>
   </div>
