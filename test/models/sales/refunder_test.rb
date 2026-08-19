@@ -555,5 +555,27 @@ module Sales
 
       assert_not_predicate sale.reload, :voided?
     end
+
+    # 在庫が見つからないときの扱いは記録側（Sales::Recorder）と揃っている必要がある。
+    # 記録側は recorder_test.rb の「在庫なし商品を含む販売では〜」で担保しており、
+    # 同じく在庫あり商品と在庫なし商品を混ぜて、途中まで戻した在庫が残らないことを見る
+    test "在庫の記録がない商品を含む販売は差額精算できず、同じ販売の他商品の在庫も戻らない" do
+      sale = Sales::Recorder.new.record(
+        { location: @location, customer_type: :staff, employee: @employee },
+        [ { catalog: @catalog_bento_a, quantity: 1 }, { catalog: @catalog_salad, quantity: 1 } ]
+      )
+      # 販売で lock_version が上がっているため、読み直してから消す
+      @inventory_salad.reload.destroy!
+
+      assert_no_difference [ "Refund.count", "Sale.count" ] do
+        assert_no_changes -> { @inventory_bento_a.reload.stock } do
+          assert_raises ActiveRecord::RecordNotFound do
+            Sales::Refunder.new.process(sale: sale, corrected_items: [], employee: @employee)
+          end
+        end
+      end
+
+      assert_not_predicate sale.reload, :voided?
+    end
   end
 end

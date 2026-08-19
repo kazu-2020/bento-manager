@@ -14,6 +14,20 @@ class DailyInventory < ApplicationRecord
 
   validate :available_stock_must_be_non_negative
 
+  # 販売先・商品・日付に対応する在庫を取得する
+  #
+  # 在庫が見つからないときに何を起こすかは在庫の関心事であって、記録・返金処理の
+  # 関心事ではない。取得をここに集約し、RecordNotFound の扱いを 1 箇所で決める。
+  #
+  # @param location [Location, Integer] 販売先（レコードまたは ID）
+  # @param catalog [Catalog, Integer] 商品（レコードまたは ID）
+  # @param date [Date] 在庫日
+  # @return [DailyInventory] 一致する在庫
+  # @raise [ActiveRecord::RecordNotFound] 一致する在庫がない場合
+  def self.find_for!(location:, catalog:, date:)
+    find_by!(location: location, catalog: catalog, inventory_date: date)
+  end
+
   def self.bulk_recreate(location:, items:)
     transaction do
       return :sales_already_started if Sale.started?(location: location)
