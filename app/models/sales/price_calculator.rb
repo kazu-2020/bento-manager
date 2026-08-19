@@ -9,7 +9,7 @@ module Sales
     # @param calculation_time [Time] 計算基準時刻（デフォルト: 現在）
     #
     # @note cart_items について
-    #   - 各 category の quontitiy は 1 つにまとめられている前提
+    #   - 各 category の quantity は 1 つにまとめられている前提
     def initialize(cart_items, discount_quantities: {}, calculation_time: Time.current)
       @cart_items = cart_items
       @discount_quantities = discount_quantities
@@ -82,14 +82,12 @@ module Sales
       # 弁当の合計個数をクーポン適用上限として計算
       remaining_applicable_quantity = calculate_max_applicable_quantity
 
-      discount_details = Discount.active_at(calculation_time.to_date)
-        .where(id: discount_quantities.keys).map do |discount|
+      discount_details = ordered_discounts_with_unit_amount.map do |discount, unit_amount|
         requested_quantity = discount_quantities[discount.id]
         # 適用可能な枚数は、リクエスト数と残りの適用可能数の小さい方
         applicable_quantity = [ requested_quantity, remaining_applicable_quantity ].min
         remaining_applicable_quantity -= applicable_quantity
 
-        unit_amount = discount.calculate_discount(cart_items)
         total_amount = unit_amount * applicable_quantity
 
         {
@@ -106,6 +104,26 @@ module Sales
         discount_details: discount_details,
         total_discount_amount: discount_details.sum { |d| d[:discount_amount] }
       }
+    end
+
+    # 割引を適用順に並べ、1 枚あたりの割引額とともに返す
+    #
+    # 適用上限で切り詰められる割引が出るため、順序を明示しないと合計割引額が
+    # DB の取得順に依存して変わる。1 枚あたりの割引額が大きい順に適用し、
+    # 同額の場合は id 昇順にして決定的な順序にする。
+    #
+    # NOTE: 「1 枚あたりの割引額が大きい順」で割引合計が最大になるのは、どの割引も
+    #       1 枚につき弁当 1 個分の枠を消費し、かつ 1 枚あたりの額が枚数に依存しない
+    #       （Coupon#calculate_discount が固定額を返す）ためである。枚数に比例しない
+    #       割引タイプを追加する場合はこの前提が崩れるので順序ロジックを見直すこと。
+    #
+    # @return [Array<Array(Discount, Integer)>] [割引, 1枚あたりの割引額] の配列
+    def ordered_discounts_with_unit_amount
+      Discount.active_at(calculation_time.to_date)
+        .where(id: discount_quantities.keys)
+        .preload(:discountable)
+        .map { |discount| [ discount, discount.calculate_discount(cart_items) ] }
+        .sort_by { |discount, unit_amount| [ -unit_amount, discount.id ] }
     end
 
     # クーポン適用上限を計算（弁当の合計個数）
