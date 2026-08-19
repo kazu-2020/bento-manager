@@ -17,6 +17,15 @@ class CatalogTest < ActiveSupport::TestCase
     must define_enum_for(:category).with_values(bento: 0, side_menu: 1).validating
   end
 
+  test "商品カタログの提供状態は提供終了記録の有無で決まる" do
+    available = Catalog.create!(name: "提供中弁当", kana: "テイキョウチュウベントウ", category: :bento)
+    discontinued = Catalog.create!(name: "提供終了弁当", kana: "テイキョウシュウリョウベントウ", category: :bento)
+    discontinued.create_discontinuation!(discontinued_at: Time.current, reason: "終了")
+
+    assert_equal :available, available.status
+    assert_equal :discontinued, discontinued.status
+  end
+
   test "associations" do
     @subject = Catalog.new
 

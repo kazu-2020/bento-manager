@@ -33,12 +33,12 @@ ENV RAILS_ENV="production" \
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems and node modules
+# Install packages needed to build gems
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
 <<EOF bash -ex
   apt-get update -qq
-  apt-get install --no-install-recommends -y build-essential git libyaml-dev node-gyp pkg-config python-is-python3
+  apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config
 EOF
 
 # Install Litestream (ADR-0001 決定 5)
