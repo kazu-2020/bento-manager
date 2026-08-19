@@ -123,8 +123,9 @@ module Refunds
         .transform_values { |items| items.sum(&:quantity) }
     end
 
+    # pluck はロード済みでも必ず問い合わせるので使わない。同じ関連を Preview も読む
     def original_discount_quantities
-      @original_discount_quantities ||= sale.sale_discounts.pluck(:discount_id, :quantity).to_h
+      @original_discount_quantities ||= sale.sale_discounts.to_h { |sd| [ sd.discount_id, sd.quantity ] }
     end
 
     # corrected が 1 件も届かないのは「全て 0」ではなく壊れた送信。全て 0 の確定は
