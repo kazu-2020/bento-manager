@@ -564,13 +564,22 @@ module Sales
         { location: @location, customer_type: :staff, employee: @employee },
         [ { catalog: @catalog_bento_a, quantity: 1 }, { catalog: @catalog_salad, quantity: 1 } ]
       )
-      # 販売で lock_version が上がっているため、読み直してから消す
-      @inventory_salad.reload.destroy!
+
+      # restore_inventory は sale.items の順に在庫を戻す。その順の最後の 1 件を消せば、
+      # 明細の並びが何で決まっても「1 件戻した後に落ちる」経路を必ず通る。並びを
+      # 決め打ちにすると、order が付いた日に 1 周目で落ちて担保が無言で空振りする
+      restored, missing = sale.items.to_a
+      restored_inventory = DailyInventory.find_for!(
+        location: @location, catalog: restored.catalog_id, date: Date.current
+      )
+      DailyInventory.find_for!(
+        location: @location, catalog: missing.catalog_id, date: Date.current
+      ).destroy!
 
       # corrected_items が空なので Sale はそもそも増えない。Refund の有無と、
-      # 1 周目で戻した弁当Aの在庫が残らないことがロールバックの担保になる
+      # 先に戻した在庫が残らないことがロールバックの担保になる
       assert_no_difference "Refund.count" do
-        assert_no_changes -> { @inventory_bento_a.reload.stock } do
+        assert_no_changes -> { restored_inventory.reload.stock } do
           assert_raises ActiveRecord::RecordNotFound do
             Sales::Refunder.new.process(sale: sale, corrected_items: [], employee: @employee)
           end
