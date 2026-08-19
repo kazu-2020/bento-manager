@@ -201,7 +201,7 @@ class CatalogTest < ActiveSupport::TestCase
     CatalogDiscontinuation.create!(
       catalog: discontinued_catalog,
       discontinued_at: Time.current,
-      reason: "販売終了"
+      reason: "提供終了"
     )
 
     assert_predicate discontinued_catalog, :discontinued?
