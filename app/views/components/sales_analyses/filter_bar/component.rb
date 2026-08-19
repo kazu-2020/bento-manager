@@ -25,7 +25,7 @@ module SalesAnalyses
         helpers.sales_analyses_path(days: days, location_id: location.id)
       end
 
-      def location_path(loc_id)
+      def switch_location_path(loc_id)
         helpers.sales_analyses_path(days: period.days, location_id: loc_id)
       end
 
