@@ -383,7 +383,8 @@ module Refunds
       # クエリキャッシュを切り、フォーム自身が取得を1回に抑えていることを検証する
       ActiveRecord::Base.uncached do
         assert_queries_match(/FROM ["`]sale_discounts["`]/, count: 1) do
-          # sale_discounts が未ロードの Sale（コントローラーが渡すのと同じ状態）から始める
+          # 未ロードの Sale から始め、フォーム自身が何本読むかだけを見る。
+          # set_sale の preload が効いているかは form_states のコントローラーテストが見る
           form = RefundForm.new(
             sale: Sale.find(sale.id),
             location: @location,
