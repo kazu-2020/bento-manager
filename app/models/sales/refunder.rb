@@ -52,6 +52,11 @@ module Sales
 
     # 在庫を復元（元の Sale の全アイテム分）
     #
+    # 明細ごとに引き直すのは ADR-0003 決定 2 の前提。トランザクション内で引き直す
+    # から、bulk_recreate が当日分を作り直した後でも消えた行を掴んだまま更新する
+    # 経路が無い。まとめて 1 回で引けば明細 N 件につき N-1 本減るが、残り 2 本
+    # （with_lock の reload と UPDATE）は外せないので、削減幅に見合わない
+    #
     # @param sale [Sale] 元の販売レコード
     def restore_inventory(sale)
       sale.items.each do |sale_item|
