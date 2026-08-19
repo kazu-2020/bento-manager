@@ -12,7 +12,7 @@ module Pos
 
         attr_reader :form, :sale, :location
 
-        delegate :has_any_changes?, :form_with_options,
+        delegate :form_with_options,
                  :bento_corrected_items, :side_menu_corrected_items,
                  :available_discounts, to: :form
 
