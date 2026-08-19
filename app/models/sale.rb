@@ -34,6 +34,9 @@ class Sale < ApplicationRecord
   # 深夜帯（JST 0:00〜9:00）の販売が前日に寄る。オフセットは Time.zone から
   # 取り、日付の境界を暦どおりに合わせる。
   #
+  # 生の DATE() を書かずここを通す理由、および固定オフセットが日本国内限定の
+  # 前提に依るものであることは docs/adr/0004-datetime-storage-and-day-boundary.md を参照
+  #
   # @return [Arel::Nodes::SqlLiteral]
   def self.jst_date_expression
     Arel.sql(sanitize_sql_array([ "DATE(sale_datetime, ?)", Time.zone.now.formatted_offset ]))
