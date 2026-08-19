@@ -13,13 +13,13 @@ module SaleTestHelper
     )
   end
 
-  def create_sale_item(sale:, quantity:)
+  def create_sale_item(sale:, quantity:, catalog: catalogs(:daily_bento_a), catalog_price: catalog_prices(:daily_bento_a_regular), unit_price: 550)
     SaleItem.create!(
       sale:,
-      catalog: catalogs(:daily_bento_a),
-      catalog_price: catalog_prices(:daily_bento_a_regular),
+      catalog:,
+      catalog_price:,
       quantity:,
-      unit_price: 550,
+      unit_price:,
       sold_at: sale.sale_datetime
     )
   end

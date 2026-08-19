@@ -80,6 +80,25 @@ module Sales
       assert_not_equal staff_amount, pref_result[:staff][:amount]
     end
 
+    # サマリーカードの「総販売数」は、その下のクロス集計表と同じ母集合でなければ
+    # 数字が一致しない。サイドメニューを混ぜるとカードだけが多く出る
+    test "顧客タイプ別サマリーはサイドメニューを含まない" do
+      location = Location.create!(name: "サイドメニュー除外テスト販売先", status: :active)
+      summary = Sales::AnalysisSummary.new(location:, period: Sales::AnalysisPeriod.new(days: 7))
+      sale = create_sale(location:, customer_type: :staff, sale_datetime: 3.days.ago)
+
+      create_sale_item(sale:, quantity: 1)
+      create_sale_item(
+        sale:,
+        quantity: 2,
+        catalog: catalogs(:salad),
+        catalog_price: catalog_prices(:salad_regular),
+        unit_price: 250
+      )
+
+      assert_equal({ quantity: 1, amount: 550 }, summary.summary_by_customer_type[:staff])
+    end
+
     # --- ranking ---
 
     test "ランキングは顧客タイプ別に販売数量上位の商品を返す" do
