@@ -48,11 +48,13 @@ class CatalogPriceTest < ActiveSupport::TestCase
   end
 
   test "有効期間内の価格のみが取得される" do
-    catalog = catalogs(:daily_bento_a)
+    catalog = catalogs(:discontinued_bento)
 
     past_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 400, effective_from: 2.days.ago, effective_until: 1.day.ago)
     current_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 500, effective_from: 1.day.ago, effective_until: nil)
-    future_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 600, effective_from: 1.day.from_now, effective_until: nil)
+    # 終了時刻を入れるのは未来の価格のほう。現在の価格を終了させると
+    # 「終了なし＝現在有効」という effective_at の分岐が含まれる側で検証されなくなる
+    future_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 600, effective_from: 1.day.from_now, effective_until: 2.days.from_now)
 
     result = CatalogPrice.current
 
@@ -62,7 +64,7 @@ class CatalogPriceTest < ActiveSupport::TestCase
   end
 
   test "指定した種別と日時の有効な価格を取得できる" do
-    catalog = catalogs(:daily_bento_b)
+    catalog = catalogs(:miso_soup)
 
     past_price = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 500, effective_from: 1.week.ago, effective_until: 1.day.ago)
     current_regular = CatalogPrice.create!(catalog: catalog, kind: :regular, price: 600, effective_from: 1.day.ago, effective_until: nil)
@@ -95,8 +97,66 @@ class CatalogPriceTest < ActiveSupport::TestCase
     assert_nil new_price.effective_until
 
     old_price.reload
+    switched_at = new_price.reload.effective_from
 
-    assert_not_nil old_price.effective_until
+    # Time.current を 2 度評価すると旧価格の終了が新価格の開始より後ろにずれ、
+    # その差分がどちらも有効な期間になる。保存で丸めた値どうしで突き合わせる
+    assert_equal switched_at, old_price.effective_until
+
+    # ただし effective_at は両端 inclusive なので、切替の一点では依然 2 件とも有効。
+    # 重複が消えたのではなく 1 点に縮んだだけで、勝者は effective_from の降順が決める
+    assert_equal 2, catalog.prices.by_kind(:regular).effective_at(switched_at).count
+    assert_equal new_price, catalog.prices.price_by_kind(kind: :regular, at: switched_at)
+  end
+
+  test "同じ時刻に価格を続けて変えても履歴は積まれず金額だけ変わる" do
+    catalog = catalogs(:daily_bento_a)
+
+    # freeze_time 下では旧価格の effective_from と新価格の effective_from が同値になる。
+    # 終了時刻を入れると valid_date_range に掛かるので、行を積まずに上書きする
+    freeze_time do
+      first = CatalogPrice.create_with_history!(catalog: catalog, kind: :regular, price: 600)
+
+      assert_no_difference "CatalogPrice.count" do
+        second = CatalogPrice.create_with_history!(catalog: catalog, kind: :regular, price: 650)
+
+        assert_equal first.id, second.id
+      end
+
+      assert_equal 650, catalog.reload.price_by_kind(:regular).price
+      assert_equal 1, catalog.prices.open_ended.by_kind(:regular).count
+    end
+  end
+
+  test "まだ始まっていない価格しか無いときは、その価格を今から有効にする" do
+    catalog = catalogs(:miso_soup)
+    CatalogPrice.create!(
+      catalog: catalog, kind: :regular, price: 700, effective_from: 1.week.from_now
+    )
+
+    CatalogPrice.create_with_history!(catalog: catalog, kind: :regular, price: 800)
+
+    # 開始時刻を未来に据え置くと、呼び出した直後なのにどの価格も現在有効でなくなる
+    assert_equal 800, catalog.reload.price_by_kind(:regular)&.price
+    assert_equal 1, catalog.prices.open_ended.by_kind(:regular).count
+  end
+
+  test "終了時刻が未来の価格が挟まっていても、終了していない価格を閉じられる" do
+    catalog = catalogs(:daily_bento_a)
+    open_ended = catalog_prices(:daily_bento_a_regular)
+
+    # 現在有効な価格（effective_at の勝者）と終了していない価格がずれる形。
+    # 閉じる相手を effective_at で選ぶと、この行が閉じられず一意制約に弾かれる
+    CatalogPrice.create!(
+      catalog: catalog, kind: :regular, price: 700,
+      effective_from: 1.day.ago, effective_until: 1.month.from_now
+    )
+
+    new_price = CatalogPrice.create_with_history!(catalog: catalog, kind: :regular, price: 800)
+
+    assert_not_nil open_ended.reload.effective_until
+    assert_equal 1, catalog.prices.open_ended.by_kind(:regular).count
+    assert_equal new_price, catalog.prices.open_ended.by_kind(:regular).first
   end
 
   test "価格設定が不正な場合は既存の価格も変更されない" do
