@@ -1,4 +1,6 @@
 class CatalogPricingRule < ApplicationRecord
+  include ValidPeriod
+
   belongs_to :target_catalog, class_name: "Catalog", foreign_key: "target_catalog_id"
 
   enum :price_kind,       { regular: 0, bundle: 1 },  validate: true
@@ -7,17 +9,7 @@ class CatalogPricingRule < ApplicationRecord
   validates :price_kind,       presence: true
   validates :trigger_category, presence: true
   validates :max_per_trigger,  presence: true, numericality: { greater_than_or_equal_to: 0 }
-  validates :valid_from,       presence: true
 
-  validate :valid_date_range
-
-  scope :active_at, ->(date) {
-    where(valid_from: ..date)
-      .merge(
-        where(valid_until: nil).or(where(valid_until: date..))
-      )
-  }
-  scope :active, -> { active_at(Date.current) }
   scope :triggered_by, ->(category) { where(trigger_category: category) }
 
   # カート内に trigger_category があるかどうかを判定
@@ -33,17 +25,6 @@ class CatalogPricingRule < ApplicationRecord
   end
 
   private
-
-  # valid_until が valid_from 以降であることを検証
-  # valid_from / valid_until は date かつ active_at が両端 inclusive のため、
-  # 同日指定は「その1日だけ有効」という正当な設定として許可する
-  def valid_date_range
-    return if valid_from.blank? || valid_until.blank?
-
-    if valid_until < valid_from
-      errors.add(:valid_until, "は有効開始日以降の日付を指定してください")
-    end
-  end
 
   def count_trigger_items(cart_items)
     cart_items.sum do |item|
