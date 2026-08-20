@@ -43,6 +43,24 @@ module Pos
           end
         end
 
+        # クーポンカードは 1 枚ごとに discount.discountable を読む。有効なクーポンの
+        # 種類が増えるたびに coupons への問い合わせが増える形になっていると、
+        # 数量入力を動かすたびの再描画でその本数がまるごと乗る
+        test "修正カートの再描画は有効なクーポンの種類が増えても問い合わせ本数が増えない" do
+          login_as_employee(@employee)
+          more_discounts = -> do
+            Discount.create!(
+              discountable: Coupon.new(amount_per_unit: 80),
+              name: "80円割引クーポン",
+              valid_from: 1.month.ago.to_date
+            )
+          end
+
+          assert_queries_unaffected_by(more_discounts, "有効なクーポンごとに読み込みが走っている") do
+            post_form_state(corrected: { @bento_a => 1 }, coupon: {})
+          end
+        end
+
         # ============================================================
         # 認証・リソース解決
         # ============================================================

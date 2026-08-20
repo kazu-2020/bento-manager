@@ -71,7 +71,7 @@ module Refunds
     end
 
     def available_discounts
-      @available_discounts ||= Discount.active_at(Date.current)
+      @available_discounts ||= Discount.preload(:discountable).active_at(Date.current)
     end
 
     def form_with_options
