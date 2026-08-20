@@ -55,7 +55,12 @@ module Pos
           more_kinds = -> { stock_new_catalog(@location) }
 
           assert_queries_unaffected_by(more_kinds, "カートの商品ごとに価格ルールの読み込みが走っている") do
-            post_form_state_with_all_stocked_items
+            # 当日在庫のある商品をすべて 1 個ずつ入れた送信。商品を増やせばカートの種類も増える
+            quantities = stocked_catalogs(@location).to_h { |catalog| [ catalog.id.to_s, { quantity: "1" } ] }
+
+            post pos_location_sales_form_state_path(@location),
+                 params: { ghost_cart: quantities },
+                 headers: { "Accept" => "text/vnd.turbo-stream.html" }
           end
         end
 
@@ -217,17 +222,6 @@ module Pos
                headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
           assert_response :not_found
-        end
-
-        private
-
-        # 当日在庫のある商品をすべて 1 個ずつ入れた送信。商品を増やせばカートの種類も増える
-        def post_form_state_with_all_stocked_items
-          quantities = stocked_catalogs(@location).to_h { |catalog| [ catalog.id.to_s, { quantity: "1" } ] }
-
-          post pos_location_sales_form_state_path(@location),
-               params: { ghost_cart: quantities },
-               headers: { "Accept" => "text/vnd.turbo-stream.html" }
         end
       end
     end

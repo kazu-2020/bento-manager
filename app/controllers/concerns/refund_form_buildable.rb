@@ -21,19 +21,16 @@ module RefundFormBuildable
     @location = Location.active.find(params[:location_id])
   end
 
-  # 明細側の catalog にも価格と価格ルールを載せる。修正カートの母集合は「元の販売の商品 + 当日の
+  # 明細側の catalog にも PRICING_ASSOCIATIONS を載せる。修正カートの母集合は「元の販売の商品 + 当日の
   # 在庫」なので、当日の在庫に無い商品を売っていた販売では、在庫側の catalog をいくら
   # 揃えても明細の分の価格が読み込み済みにならない。加えて RefundForm#catalog_lookup
   # は両方にある商品では明細側を採るため、在庫側だけでは取りこぼす。
-  #
-  # 価格ルールは価格の再計算がカートの商品 1 種類ごとに引く。Catalog#active_pricing_rules_at
-  # の loaded? 分岐と揃って初めて 1 本に収まる（片方だけでは効かない）。
   #
   # クーポンは RefundForm（元の枚数）と Refunds::Preview（返却枚数）の両方が読む。
   # ここで読んでおかないと、数量入力を動かすたびの再描画ごとに問い合わせが増える
   def set_sale
     @sale = @location.sales
-                     .preload(items: [ { catalog: [ :prices, :pricing_rules ] }, :catalog_price ], sale_discounts: :discount)
+                     .preload(items: [ { catalog: Catalog::PRICING_ASSOCIATIONS }, :catalog_price ], sale_discounts: :discount)
                      .find(params[:sale_id])
   end
 
@@ -63,7 +60,7 @@ module RefundFormBuildable
     @inventories = @location
                       .today_inventories
                       .eager_load(:catalog)
-                      .preload(catalog: [ :prices, :pricing_rules ])
+                      .preload(catalog: Catalog::PRICING_ASSOCIATIONS)
                       .merge(Catalog.category_order)
   end
 

@@ -1,6 +1,13 @@
 class Catalog < ApplicationRecord
   KANA_FORMAT = /\A[\p{Katakana}ー]*\z/
 
+  # カートを描く経路が preload しておく関連
+  #
+  # price_by_kind と active_pricing_rules_at は、読み込み済みなら Ruby 側で選んで
+  # SQL を撃たない。裏返すと、この 2 つを読まずにカートを組み立てると商品 1 種類ごとに
+  # クエリが飛ぶ。片方だけ足しても抜けた方が N+1 のまま残るので、対で持つ
+  PRICING_ASSOCIATIONS = %i[prices pricing_rules].freeze
+
   # 関連レコードが存在する場合は削除を禁止（DB レベルでも ON DELETE RESTRICT）
   has_one  :discontinuation, class_name: "CatalogDiscontinuation", dependent: :restrict_with_error
   has_many :prices, class_name: "CatalogPrice", dependent: :restrict_with_error
@@ -89,10 +96,10 @@ class Catalog < ApplicationRecord
   # POS の経路が実質いつも当日であることに暗黙に依存する形にはできない
   #
   # @param date [Date] 基準日（デフォルト: 今日）
-  # @return [ActiveRecord::Relation<CatalogPricingRule>, Array<CatalogPricingRule>]
+  # @return [Array<CatalogPricingRule>]
   def active_pricing_rules_at(date = Date.current)
     return pricing_rules.select { |rule| rule.active_at?(date) } if pricing_rules.loaded?
 
-    pricing_rules.active_at(date)
+    pricing_rules.active_at(date).to_a
   end
 end

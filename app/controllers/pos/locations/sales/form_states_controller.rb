@@ -28,7 +28,7 @@ module Pos
           @inventories = @location
                             .today_inventories
                             .eager_load(:catalog)
-                            .preload(catalog: [ :prices, :pricing_rules ])
+                            .preload(catalog: Catalog::PRICING_ASSOCIATIONS)
                             .merge(Catalog.category_order)
         end
 
