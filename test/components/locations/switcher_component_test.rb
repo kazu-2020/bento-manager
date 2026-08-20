@@ -3,7 +3,7 @@
 require "test_helper"
 
 module Locations
-  class SelectorComponentTest < ViewComponent::TestCase
+  class SwitcherComponentTest < ViewComponent::TestCase
     def setup
       @city_hall = Location.new(id: 1, name: "市役所", status: :active)
       @prefectural_office = Location.new(id: 2, name: "県庁", status: :active)
@@ -11,7 +11,7 @@ module Locations
 
     test "販売先を選ぶと、選択中の販売先を差し替えた画面へ切り替わる" do
       result = render_inline(
-        Locations::Selector::Component.new(
+        Locations::Switcher::Component.new(
           locations: [ @city_hall, @prefectural_office ],
           selected: @prefectural_office,
           path_builder: ->(loc_id) { "/sales_histories?location_id=#{loc_id}" }
