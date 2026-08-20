@@ -48,7 +48,7 @@ module Pos
         # 数量入力を動かすたびの再描画でその本数がまるごと乗る
         test "修正カートの再描画は有効なクーポンの種類が増えても問い合わせ本数が増えない" do
           login_as_employee(@employee)
-          more_discounts = -> do
+          more_coupon_types = -> do
             Discount.create!(
               discountable: Coupon.new(amount_per_unit: 80),
               name: "80円割引クーポン",
@@ -56,7 +56,7 @@ module Pos
             )
           end
 
-          assert_queries_unaffected_by(more_discounts, "有効なクーポンごとに読み込みが走っている") do
+          assert_queries_unaffected_by(more_coupon_types, "有効なクーポンごとに読み込みが走っている") do
             post_form_state(corrected: { @bento_a => 1 }, coupon: {})
           end
         end
