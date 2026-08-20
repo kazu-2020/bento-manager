@@ -13,13 +13,15 @@ module SaleTestHelper
     )
   end
 
-  def create_sale_item(sale:, quantity:)
+  # 商品は catalog_price だけで決まる。商品と単価を別々に渡せると、
+  # サラダを弁当の単価で売った販売行が作れてしまう
+  def create_sale_item(sale:, quantity:, catalog_price: catalog_prices(:daily_bento_a_regular))
     SaleItem.create!(
       sale:,
-      catalog: catalogs(:daily_bento_a),
-      catalog_price: catalog_prices(:daily_bento_a_regular),
+      catalog: catalog_price.catalog,
+      catalog_price:,
       quantity:,
-      unit_price: 550,
+      unit_price: catalog_price.price,
       sold_at: sale.sale_datetime
     )
   end

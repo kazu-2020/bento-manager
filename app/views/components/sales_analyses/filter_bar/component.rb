@@ -30,7 +30,7 @@ module SalesAnalyses
       end
 
       def period_label
-        "#{helpers.l(period.first_date)} 〜 #{helpers.l(period.last_date)}"
+        t(".period_label", from: helpers.l(period.first_date), to: helpers.l(period.last_date))
       end
     end
   end

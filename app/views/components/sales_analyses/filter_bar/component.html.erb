@@ -1,18 +1,18 @@
 <div class="flex flex-wrap items-center justify-between gap-4">
   <div>
-    <h2 class="text-2xl font-bold">顧客タイプ別 商品分析</h2>
+    <h2 class="text-2xl font-bold"><%= t(".title") %></h2>
     <p class="text-sm text-base-content/60"><%= period_label %></p>
   </div>
 
   <div class="flex flex-wrap items-center gap-3">
-    <%= component "locations/selector",
+    <%= component "locations/switcher",
           locations: locations,
           selected: location,
           path_builder: method(:switch_location_path) %>
 
     <div class="join">
       <% days_options.each do |days| %>
-        <%= link_to "過去#{days}日", days_path(days), class: days_class(days) %>
+        <%= link_to t(".days_option", days: days), days_path(days), class: days_class(days) %>
       <% end %>
     </div>
   </div>

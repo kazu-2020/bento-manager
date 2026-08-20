@@ -20,4 +20,18 @@ class SalesAnalyses::FilterBarComponentTest < ViewComponent::TestCase
       "/sales_analyses?days=90&location_id=#{@prefectural_office.id}"
     ], result.css("option").map { |o| o["value"] }
   end
+
+  test "フィルターバーは見出しと集計期間、選べる集計日数のプリセットを表示する" do
+    period = Sales::AnalysisPeriod.new(days: 7)
+
+    result = render_inline(SalesAnalyses::FilterBar::Component.new(
+      location: @city_hall,
+      period: period,
+      locations: [ @city_hall ]
+    ))
+
+    assert_equal "顧客タイプ別 弁当分析", result.css("h2").text
+    assert_equal "#{I18n.l(period.first_date)} 〜 #{I18n.l(period.last_date)}", result.at_css("h2 + p").text
+    assert_equal [ "過去7日", "過去30日", "過去90日" ], result.css(".join a").map(&:text)
+  end
 end

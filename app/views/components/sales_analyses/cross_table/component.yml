@@ -1,0 +1,8 @@
+---
+ja:
+  title: 弁当 × 顧客タイプ クロス集計
+  empty_message: データがありません
+  catalog_header: 商品
+  total_header: 合計
+  composition_header: 構成比
+  staff_ratio_header: 関係者比率
