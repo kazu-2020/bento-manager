@@ -80,6 +80,27 @@ module Sales
       assert_not_equal staff_amount, pref_result[:staff][:amount]
     end
 
+    # --- 集計対象 ---
+
+    # 3 つの集計が違う母集合を数えると、サマリーの「総販売数」とクロス集計表の
+    # 合計が食い違う。#384 はサマリーだけがサイドメニューを含んでいた不具合
+    test "売上分析はサイドメニューを含まず、どの集計も同じ弁当の数を数える" do
+      location = Location.create!(name: "集計対象テスト販売先", status: :active)
+      summary = Sales::AnalysisSummary.new(location:, period: Sales::AnalysisPeriod.new(days: 7))
+      sale = create_sale(location:, customer_type: :staff, sale_datetime: 3.days.ago)
+
+      create_sale_item(sale:, quantity: 1)
+      create_sale_item(sale:, quantity: 2, catalog_price: catalog_prices(:salad_regular))
+
+      assert_equal({ quantity: 1, amount: 550 }, summary.summary_by_customer_type[:staff])
+      assert_equal [ catalogs(:daily_bento_a).name ], summary.ranking(limit: 10)[:staff].map { |e| e[:catalog_name] }
+      assert_equal [ catalogs(:daily_bento_a).name ], summary.cross_table.map { |r| r[:catalog_name] }
+      assert_equal(
+        summary.summary_by_customer_type.values.sum { |v| v[:quantity] },
+        summary.cross_table.sum { |r| r[:total_quantity] }
+      )
+    end
+
     # --- ranking ---
 
     test "ランキングは顧客タイプ別に販売数量上位の商品を返す" do
@@ -94,14 +115,6 @@ module Sales
       top_staff = result[:staff].first
 
       assert_equal catalogs(:daily_bento_a).name, top_staff[:catalog_name]
-    end
-
-    test "ランキングはサイドメニューを含まない" do
-      result = @summary.ranking(limit: 10)
-
-      all_names = result[:staff].map { |e| e[:catalog_name] } + result[:citizen].map { |e| e[:catalog_name] }
-
-      assert_not_includes all_names, catalogs(:salad).name
     end
 
     test "ランキングの各行は商品名・数量・金額を含む" do
@@ -126,14 +139,6 @@ module Sales
       assert_operator bento_a[:staff_quantity], :>, 0
       assert_operator bento_a[:citizen_quantity], :>, 0
       assert_equal bento_a[:staff_quantity] + bento_a[:citizen_quantity], bento_a[:total_quantity]
-    end
-
-    test "クロス集計はサイドメニューを含まない" do
-      result = @summary.cross_table
-
-      all_names = result.map { |r| r[:catalog_name] }
-
-      assert_not_includes all_names, catalogs(:salad).name
     end
 
     test "クロス集計は合計数量の降順でソートされる" do

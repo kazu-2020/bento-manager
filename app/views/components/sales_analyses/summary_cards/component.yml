@@ -1,7 +1,7 @@
 ---
 ja:
-  total_label: 総販売数
+  total_label: 弁当の総販売数
   staff_label: 関係者（職員）
   quantity_unit: 個
-  total_amount_caption: "%{amount} 相当"
-  ratio_caption: "%{ratio}% ・ %{amount}"
+  total_amount_caption: "弁当 %{amount} 相当"
+  ratio_caption: "%{ratio}% ・ 弁当 %{amount}"

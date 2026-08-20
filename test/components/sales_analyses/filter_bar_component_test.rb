@@ -30,7 +30,7 @@ class SalesAnalyses::FilterBarComponentTest < ViewComponent::TestCase
       locations: [ @city_hall ]
     ))
 
-    assert_equal "顧客タイプ別 商品分析", result.css("h2").text
+    assert_equal "顧客タイプ別 弁当分析", result.css("h2").text
     assert_equal "#{I18n.l(period.first_date)} 〜 #{I18n.l(period.last_date)}", result.at_css("h2 + p").text
     assert_equal [ "過去7日", "過去30日", "過去90日" ], result.css(".join a").map(&:text)
   end
