@@ -80,6 +80,25 @@ class CatalogTest < ActiveSupport::TestCase
     assert_not_includes active_rules, future_rule, "未来のルールは含まれるべきでない"
   end
 
+  test "価格ルールを読み込み済みの商品は、追加の問い合わせなしで指定日に有効なルールを引ける" do
+    catalog = Catalog.create!(name: "読み込み済みルールテスト", kana: "ヨミコミズミルールテスト", category: :side_menu)
+    past_rule = CatalogPricingRule.create!(
+      target_catalog: catalog, price_kind: :bundle, trigger_category: :bento,
+      max_per_trigger: 1, valid_from: 2.months.ago.to_date, valid_until: 1.month.ago.to_date
+    )
+    current_rule = CatalogPricingRule.create!(
+      target_catalog: catalog, price_kind: :bundle, trigger_category: :bento,
+      max_per_trigger: 1, valid_from: 1.week.ago.to_date, valid_until: nil
+    )
+    loaded = Catalog.preload(:pricing_rules).find(catalog.id)
+
+    assert_no_queries do
+      assert_equal [ current_rule ], loaded.active_pricing_rules_at(Date.current)
+      assert_equal [ past_rule ], loaded.active_pricing_rules_at(1.month.ago.to_date), "基準日を変えても選び直せる"
+      assert_empty loaded.active_pricing_rules_at(1.year.ago.to_date), "どのルールも有効でない日では空になる"
+    end
+  end
+
   test "指定した種類の現在有効な価格を取得できる" do
     catalog = Catalog.create!(name: "price_by_kind テスト", kana: "プライスバイカインドテスト", category: :side_menu)
 

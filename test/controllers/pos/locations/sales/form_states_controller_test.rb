@@ -6,6 +6,9 @@ module Pos
   module Locations
     module Sales
       class FormStatesControllerTest < ActionDispatch::IntegrationTest
+        include QueryCountHelper
+        include StockedCatalogHelper
+
         fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules, :daily_inventories, :discounts, :coupons
 
         setup do
@@ -42,6 +45,18 @@ module Pos
           end
 
           assert_response :success
+        end
+
+        # 価格の再計算はカートの商品 1 種類ごとに価格ルールを引く。数量を動かすたびに
+        # この経路が再描画されるため、種類ごとに問い合わせが増える形になっていると
+        # 操作のたびにその本数がまるごと乗る
+        test "入力を受けた再描画は、カートに入る商品の種類が増えても問い合わせ本数が増えない" do
+          login_as_employee(@employee)
+          more_kinds = -> { stock_new_catalog(@location) }
+
+          assert_queries_unaffected_by(more_kinds, "カートの商品ごとに価格ルールの読み込みが走っている") do
+            post_form_state_with_all_stocked_items
+          end
         end
 
         test "responds with turbo_stream format" do
@@ -202,6 +217,17 @@ module Pos
                headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
           assert_response :not_found
+        end
+
+        private
+
+        # 当日在庫のある商品をすべて 1 個ずつ入れた送信。商品を増やせばカートの種類も増える
+        def post_form_state_with_all_stocked_items
+          quantities = stocked_catalogs(@location).to_h { |catalog| [ catalog.id.to_s, { quantity: "1" } ] }
+
+          post pos_location_sales_form_state_path(@location),
+               params: { ghost_cart: quantities },
+               headers: { "Accept" => "text/vnd.turbo-stream.html" }
         end
       end
     end

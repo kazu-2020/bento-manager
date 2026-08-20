@@ -8,6 +8,7 @@ module Pos
       class FormStatesControllerTest < ActionDispatch::IntegrationTest
         include RefundParamsHelper
         include QueryCountHelper
+        include StockedCatalogHelper
 
         fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules,
                  :daily_inventories, :discounts, :coupons, :sales, :sale_items, :sale_discounts
@@ -58,6 +59,18 @@ module Pos
 
           assert_queries_unaffected_by(more_coupon_types, "有効なクーポンごとに読み込みが走っている") do
             post_form_state(corrected: { @bento_a => 1 }, coupon: {})
+          end
+        end
+
+        # 修正カートの再計算も、カートの商品 1 種類ごとに価格ルールを引く。販売側と同じ経路が
+        # 数量入力のたびに走るため、種類に比例して増える形だと操作のたびにその本数が乗る
+        test "修正カートの再描画は、カートに入る商品の種類が増えても問い合わせ本数が増えない" do
+          login_as_employee(@employee)
+          more_kinds = -> { stock_new_catalog(@location) }
+
+          assert_queries_unaffected_by(more_kinds, "修正カートの商品ごとに価格ルールの読み込みが走っている") do
+            # 当日在庫のある商品をすべて 1 個ずつ入れた送信。商品を増やせばカートの種類も増える
+            post_form_state(corrected: stocked_catalogs(@location).index_with { 1 }, coupon: {})
           end
         end
 

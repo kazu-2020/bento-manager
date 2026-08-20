@@ -80,9 +80,19 @@ class Catalog < ApplicationRecord
   end
 
   # 指定した日付で有効な価格ルールを取得
+  #
+  # pricing_rules が読み込み済みなら Ruby 側で選ぶ。price_by_kind と同じ理由で、
+  # preload しても毎回クエリが飛ぶと、カートの商品 1 種類ごとにルールを引く
+  # 販売・返品の再描画で N+1 になるため
+  #
+  # 当日固定の active_pricing_rules 関連には寄せない。任意の基準日を受ける API なので、
+  # POS の経路が実質いつも当日であることに暗黙に依存する形にはできない
+  #
   # @param date [Date] 基準日（デフォルト: 今日）
-  # @return [ActiveRecord::Relation<CatalogPricingRule>]
+  # @return [ActiveRecord::Relation<CatalogPricingRule>, Array<CatalogPricingRule>]
   def active_pricing_rules_at(date = Date.current)
+    return pricing_rules.select { |rule| rule.active_at?(date) } if pricing_rules.loaded?
+
     pricing_rules.active_at(date)
   end
 end
