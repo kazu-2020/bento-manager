@@ -27,7 +27,7 @@ module Sales
       end
     end
 
-    # 顧客タイプ別の商品ランキング
+    # 顧客タイプ別の弁当ランキング
     # @return [Hash] { staff: [{ catalog_name:, quantity:, amount: }, ...], citizen: [...] }
     def ranking(limit: 5)
       %i[staff citizen].each_with_object({}) do |type, hash|
@@ -45,7 +45,7 @@ module Sales
       end
     end
 
-    # 商品×顧客タイプのクロス集計
+    # 弁当×顧客タイプのクロス集計
     # @return [Array<Hash>] [{ catalog_name:, staff_quantity:, citizen_quantity:, total_quantity: }, ...]
     def cross_table
       rows = bento_sales
