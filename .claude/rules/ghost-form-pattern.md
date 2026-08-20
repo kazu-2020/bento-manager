@@ -41,6 +41,14 @@ cart[<catalog_id>][quantity]        → ghost_cart[<catalog_id>][quantity]
 refund[items][<id>][quantity]       → ghost_refund[items][<id>][quantity]
 ```
 
+対応関係はメインフォーム側（`product_card` / `coupon_card` / `submit_button`）と Ghost Form 側の
+**別々の ERB リテラル**で決まるため、片方をリネームしても例外は出ない。実 ERB をレンダリングして
+機械的に突き合わせる
+[`GhostFormCorrespondenceHelper`](test/support/ghost_form_correspondence_helper.rb) があるので、
+Ghost Form を持つ画面には `assert_ghost_inputs_correspond` を呼ぶテストを 1 本置くこと。
+現在の適用は販売画面のみ（[new_form_component_test.rb](test/components/pos/sales/new_form_component_test.rb)）で、
+差額精算・当日在庫・在庫訂正・追加発注は未適用。
+
 配線は Stimulus コントローラー2つの組み合わせで行う。
 
 ```erb

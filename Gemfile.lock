@@ -91,6 +91,15 @@ GEM
     bundler-audit (0.9.3)
       bundler (>= 1.2.0)
       thor (~> 1.0)
+    capybara (3.40.0)
+      addressable
+      matrix
+      mini_mime (>= 0.1.3)
+      nokogiri (~> 1.11)
+      rack (>= 1.6.0)
+      rack-test (>= 0.6.3)
+      regexp_parser (>= 1.5, < 3.0)
+      xpath (~> 3.2)
     chartkick (5.2.1)
     concurrent-ruby (1.3.8)
     connection_pool (3.0.2)
@@ -162,6 +171,7 @@ GEM
       net-pop
       net-smtp
     marcel (1.2.1)
+    matrix (0.4.3)
     mini_mime (1.1.5)
     minitest (6.0.6)
       drb (~> 2.0)
@@ -272,6 +282,7 @@ GEM
     regexp_parser (2.12.0)
     reline (0.7.0)
       io-console (~> 0.5)
+    rexml (3.4.4)
     roda (3.107.0)
       rack
     rodauth (2.45.0)
@@ -318,7 +329,14 @@ GEM
       rubocop-performance (>= 1.24)
       rubocop-rails (>= 2.30)
     ruby-progressbar (1.13.0)
+    rubyzip (3.5.0)
     securerandom (0.4.1)
+    selenium-webdriver (4.47.0)
+      base64 (~> 0.2)
+      logger (~> 1.4)
+      rexml (~> 3.2, >= 3.2.5)
+      rubyzip (>= 1.2.2, < 4.0)
+      websocket (~> 1.0)
     sentry-rails (6.7.0)
       railties (>= 5.2.0)
       sentry-ruby (~> 6.7.0)
@@ -399,10 +417,13 @@ GEM
       actionview (>= 8.0.0)
       bindex (>= 0.4.0)
       railties (>= 8.0.0)
+    websocket (1.2.11)
     websocket-driver (0.8.2)
       base64
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.5)
+    xpath (3.2.0)
+      nokogiri (~> 1.8)
     yard (0.9.44)
     zeitwerk (2.8.3)
 
@@ -423,6 +444,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   bundler-audit
+  capybara
   chartkick (~> 5.2)
   debug
   kamal
@@ -436,6 +458,7 @@ DEPENDENCIES
   rodauth-rails
   rubocop-minitest
   rubocop-rails-omakase
+  selenium-webdriver
   sentry-rails
   sentry-ruby
   sequel-activerecord_connection (~> 2.0)
