@@ -88,7 +88,8 @@ side_menu?  → 陳列（タブ分け）3 箇所 + show_bundle_price? 1 箇所
 ## 結果
 
 - **区分を増やすときに触る箇所**: `Catalog#category` の `enum` と `Catalog::DISPLAY_CATEGORIES`（後者は `Catalog.category_order` の絞り込みだけを支配する。**これを直しても画面は何も増えない**）、`CatalogPricingRule#trigger_category` の `enum`、`Catalogs::CreatorFactory` と `Catalogs::*Creator`、POS 販売画面 / 当日在庫登録 / 差額精算の `tab_items` と ERB の `case`、`Catalogs::CategorySelector::Component`、`ja.enums.catalog.category`。加えて、新しい区分がクーポン適用上限と売上分析に数えられるべきかの業務判断（既定は「弁当ではないので数えない」）。
-- **副菜が増えたとき**（味噌汁など）: 区分は増えないが `CONTEXT.md` の「サラダ」が区分名として成り立たなくなる。用語と `side_menu` の対応を見直す必要がある。
+- **画面の区分ラベルは「サイドメニュー」のまま据え置く**（`ja.enums.catalog.category.side_menu`）。母の言葉ではないが、母は区分を指す語を持たない（個々の商品を「サラダ」と呼ぶ）ため、区分名として置き換える先が無い。`CONTEXT.md` は「サラダ＝商品の名前」「サイドメニュー＝区分の名前」として両方を載せる。
+- **副菜が増えたとき**（味噌汁など）: 区分名が「サイドメニュー」であるため用語は破綻しない。見直しが要るのは、母が新しい副菜をどう呼ぶかと、それが弁当の特別扱い（クーポン・売上分析）に入るかの業務判断だけである。
 - `Catalog::DISPLAY_CATEGORIES` は `Catalog.categories.keys` から導いてはいけない。導くと 3 つ目の値が増えた瞬間に `category_order` の絞り込みが黙って広がる。閉じた集合はリテラルで持つことに意味がある。
 - 2 つの網は**並列**であって直列ではない。1 段目は `enum` の編集を、2 段目は「描画できない商品が母集合に居ること」を、それぞれ独立に検出する。片方を通す操作でもう片方が開いてはいけない。
 - 差額精算の `verify_displayable` は、区分が 2 つで閉じている限り一度も発火しない。発火したらそれは「上の一覧を直し切っていない」という意味である。
