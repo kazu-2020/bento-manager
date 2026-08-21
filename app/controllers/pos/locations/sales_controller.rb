@@ -57,7 +57,7 @@ module Pos
       end
 
       def set_discounts
-        @discounts = Discount.preload(:discountable).active
+        @discounts = Discount.active_with_discountable
       end
 
       def build_form(submitted = ::GhostForms::Submission.absent)

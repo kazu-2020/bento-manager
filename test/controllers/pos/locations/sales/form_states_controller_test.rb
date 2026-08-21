@@ -8,6 +8,7 @@ module Pos
       class FormStatesControllerTest < ActionDispatch::IntegrationTest
         include QueryCountHelper
         include StockedCatalogHelper
+        include ActiveCouponHelper
 
         fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules, :daily_inventories, :discounts, :coupons
 
@@ -45,6 +46,23 @@ module Pos
           end
 
           assert_response :success
+        end
+
+        # クーポンカードは 1 枚ごとに discount.discountable を読む。数量入力を動かすたびに
+        # この経路が再描画されるため、有効なクーポンの種類ごとに問い合わせが増える形に
+        # なっていると、操作のたびにその本数がまるごと乗る
+        test "入力を受けた再描画は有効なクーポンの種類が増えても問い合わせ本数が増えない" do
+          login_as_employee(@employee)
+          more_coupon_types = -> { create_active_coupon }
+
+          assert_queries_unaffected_by(more_coupon_types, "有効なクーポンごとに読み込みが走っている") do
+            post pos_location_sales_form_state_path(@location),
+                 params: { ghost_cart: { @bento_a.id.to_s => { quantity: "1" } } },
+                 headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+            # 経路が生きていることまで固定しないとガードが空振りする
+            assert_response :success
+          end
         end
 
         # 価格の再計算はカートの商品 1 種類ごとに価格ルールを引く。数量を動かすたびに
