@@ -116,7 +116,7 @@ module Sales
     def ordered_discounts_with_unit_amount
       Discount.active_at(calculation_time.to_date)
         .where(id: discount_quantities.keys)
-        .preload(:discountable)
+        .with_discountable
         .map { |discount| [ discount, discount.calculate_discount(cart_items) ] }
         .sort_by { |discount, unit_amount| [ -unit_amount, discount.id ] }
     end
