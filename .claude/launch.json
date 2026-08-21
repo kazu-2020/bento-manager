@@ -6,7 +6,7 @@
       "runtimeExecutable": "/bin/zsh",
       "runtimeArgs": [
         "-lc",
-        "export PATH=\"$(mise which ruby | xargs dirname):$PATH\"; export LANG=ja_JP.UTF-8; exec bin/dev"
+        "export PATH=\"$(mise which ruby | xargs dirname):$(mise which node | xargs dirname):$PATH\"; export LANG=ja_JP.UTF-8; exec bin/dev"
       ],
       "port": 3000
     }
