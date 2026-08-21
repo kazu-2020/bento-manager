@@ -71,6 +71,10 @@ module Pos
           assert_queries_unaffected_by(more_kinds, "修正カートの商品ごとに価格ルールの読み込みが走っている") do
             # 当日在庫のある商品をすべて 1 個ずつ入れた送信。商品を増やせばカートの種類も増える
             post_form_state(corrected: stocked_catalogs(@location).index_with { 1 }, coupon: {})
+
+            # 本数だけ比べると、redirect_if_voided などで打ち切られても前後で揃って通る。
+            # 経路が生きていることまで固定しないとガードが空振りする
+            assert_response :success
           end
         end
 

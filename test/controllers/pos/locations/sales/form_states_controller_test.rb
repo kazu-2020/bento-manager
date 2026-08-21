@@ -61,6 +61,10 @@ module Pos
             post pos_location_sales_form_state_path(@location),
                  params: { ghost_cart: quantities },
                  headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+            # 本数だけ比べると、リクエストが価格計算の手前で打ち切られても前後で揃って通る。
+            # 経路が生きていることまで固定しないとガードが空振りする
+            assert_response :success
           end
         end
 
