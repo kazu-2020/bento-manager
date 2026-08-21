@@ -38,10 +38,16 @@ module Pos
           # 入力のたびに POST が飛ぶ画面なので、カード 1 枚ごとの問い合わせがそのまま効いてくる
           assert_operator @location.today_inventories.count, :>=, 2
 
+          # クーポンカードは 1 枚ごとに discountable を読む。polymorphic なので
+          # eager_load できず preload に頼るしかなく、外れても例外は出ない
+          assert_operator Discount.active.count, :>=, 2
+
           assert_queries_match(/FROM ["`]catalog_prices["`]/, count: 1) do
-            post pos_location_sales_form_state_path(@location),
-                 params: { ghost_cart: { @bento_a.id.to_s => { quantity: "1" } } },
-                 headers: { "Accept" => "text/vnd.turbo-stream.html" }
+            assert_queries_match(/FROM ["`]coupons["`]/, count: 1) do
+              post pos_location_sales_form_state_path(@location),
+                   params: { ghost_cart: { @bento_a.id.to_s => { quantity: "1" } } },
+                   headers: { "Accept" => "text/vnd.turbo-stream.html" }
+            end
           end
 
           assert_response :success

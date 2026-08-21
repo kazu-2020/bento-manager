@@ -73,7 +73,12 @@ Ghost Form を持つ画面には `assert_ghost_inputs_correspond` を呼ぶテ�
 @form = build_form(submitted_params(:cart, form: ::Sales::CartForm))
 ```
 
-`build_form` / `set_*` は両コントローラーで共有するため concern に切り出す（例: [refund_form_buildable.rb](app/controllers/concerns/refund_form_buildable.rb)）。
+`build_form` / `set_*` は両コントローラーで共有するため concern に切り出す
+（[cart_form_buildable.rb](app/controllers/concerns/cart_form_buildable.rb) が最小の形。
+[refund_form_buildable.rb](app/controllers/concerns/refund_form_buildable.rb) はそこに
+販売の状態を見るガードが加わる）。現在の適用は販売・差額精算・追加発注の 3 画面で、
+当日在庫・在庫訂正は未適用（`build_form` が両コントローラーに重複したまま、
+`search_query` を渡すかどうかが片方だけ食い違っている）。
 
 ### 4. パラメータは SubmittedParamsFilterable 経由で取り出す
 
