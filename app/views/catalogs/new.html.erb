@@ -2,6 +2,6 @@
 
 <%# フレームの中身だけを返す。閉じるフォームは殻にあり DOM に残るので、ここでは描かない %>
 <turbo-frame id="<%= Catalogs::NewForm::Component::MODAL_FRAME_ID %>">
-  <%= render "modal_header", new_form: new_form %>
+  <%= render "shared/modal_title", title: new_form.modal_title %>
   <%= render new_form %>
 </turbo-frame>

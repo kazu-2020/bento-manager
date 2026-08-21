@@ -1,16 +1,10 @@
 <% new_form = Catalogs::NewForm::Component.new(creator: @creator, selected_category: @selected_category) %>
 
 <%= modal_stream_show do %>
-  <dialog class="modal">
-    <div class="modal-box max-w-lg">
-      <%= render "shared/modal_close_button" %>
-
-      <turbo-frame id="<%= Catalogs::NewForm::Component::MODAL_FRAME_ID %>">
-        <%= render "modal_header", new_form: new_form %>
-        <%= render new_form %>
-      </turbo-frame>
-    </div>
-
-    <%= render "shared/modal_backdrop" %>
-  </dialog>
+  <%# タイトルはカテゴリで変わり、カテゴリ選択がこのフレームをナビゲートして
+      catalogs/new.html.erb に差し替わる。見出しはフレームの中に置くこと %>
+  <turbo-frame id="<%= Catalogs::NewForm::Component::MODAL_FRAME_ID %>">
+    <%= render "shared/modal_title", title: new_form.modal_title %>
+    <%= render new_form %>
+  </turbo-frame>
 <% end %>

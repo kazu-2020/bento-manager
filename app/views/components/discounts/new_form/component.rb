@@ -4,7 +4,6 @@ module Discounts
   module NewForm
     class Component < Application::Component
       FORM_ID = "new_discount"
-      MODAL_FRAME_ID = "discount_new_modal"
 
       def initialize(discount:)
         @discount = discount
