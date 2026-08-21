@@ -71,6 +71,23 @@ class CatalogsControllerTest < ActionDispatch::IntegrationTest
     assert_modal_cancel_uses_close_form(response.body, form_selector: "form#new_catalog", submit_buttons: 0)
   end
 
+  # カテゴリ選択は turbo-frame をナビゲートするので、html のレスポンスに一致する frame が
+  # 無いとフォームが差し替わらない。frame を出すのは NewForm::Component 側で、外すと黙って壊れる
+  test "カテゴリ選択の遷移先は見出しとフォームを含む turbo-frame を返す" do
+    login_as_employee(@employee)
+
+    get new_catalog_path(category: "bento")
+
+    assert_response :success
+
+    frame = Nokogiri::HTML5.fragment(response.body)
+              .at_css("turbo-frame##{Catalogs::NewForm::Component::MODAL_FRAME_ID}")
+
+    assert frame, "フレームナビゲーションの遷移先に一致する turbo-frame があること"
+    assert frame.at_css("h3"), "見出しはフレームの中に置く（カテゴリで文言が変わる）"
+    assert frame.at_css("form#new_catalog"), "フォームもフレームの中にあること"
+  end
+
   test "admin can access new" do
     login_as_employee(@employee)
     get new_catalog_path, as: :turbo_stream

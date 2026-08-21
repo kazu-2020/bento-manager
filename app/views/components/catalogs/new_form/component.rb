@@ -14,6 +14,10 @@ module Catalogs
 
       attr_reader :creator, :selected_category
 
+      def frame_id
+        MODAL_FRAME_ID
+      end
+
       def category_selected?
         selected_category.present?
       end

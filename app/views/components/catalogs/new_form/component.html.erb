@@ -1,26 +1,32 @@
-<%= form_with url: helpers.catalogs_path, method: :post, id: Catalogs::NewForm::Component::FORM_ID, data: { turbo: true } do |form| %>
-  <% if category_selected? %>
-    <input type="hidden" name="catalog[category]" value="<%= selected_category %>">
+<%# タイトルはカテゴリで変わり、カテゴリ選択がこのフレームをナビゲートする。
+    見出しはフレームの中に置くこと（閉じるフォームは殻にあり DOM に残る） %>
+<%= helpers.turbo_frame_tag frame_id do %>
+  <%= render "shared/modal_title", title: modal_title %>
 
-    <div id="<%= Catalogs::NewForm::Component::FORM_FIELDS_FRAME_ID %>">
-      <% if bento_selected? %>
-        <%= component "catalogs/bento_fields", creator: creator %>
-      <% elsif side_menu_selected? %>
-        <%= component "catalogs/side_menu_fields", creator: creator %>
+  <%= form_with url: helpers.catalogs_path, method: :post, id: Catalogs::NewForm::Component::FORM_ID, data: { turbo: true } do |form| %>
+    <% if category_selected? %>
+      <input type="hidden" name="catalog[category]" value="<%= selected_category %>">
+
+      <div id="<%= Catalogs::NewForm::Component::FORM_FIELDS_FRAME_ID %>">
+        <% if bento_selected? %>
+          <%= component "catalogs/bento_fields", creator: creator %>
+        <% elsif side_menu_selected? %>
+          <%= component "catalogs/side_menu_fields", creator: creator %>
+        <% end %>
+      </div>
+    <% else %>
+      <div>
+        <p class="text-base-content/70 mb-4"><%= t("catalogs.new.select_category") %></p>
+        <%= component "catalogs/category_selector", selected: nil %>
+      </div>
+    <% end %>
+
+    <div class="modal-action mt-6">
+      <%# キャンセルの所有者は閉じるフォーム（ModalStreamHelper 参照）。form= を外すと default button を奪う %>
+      <button type="submit" form="<%= helpers.modal_close_form_id %>" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
+      <% if category_selected? %>
+        <%= form.submit t("catalogs.new.submit"), class: "btn btn-neutral" %>
       <% end %>
     </div>
-  <% else %>
-    <div>
-      <p class="text-base-content/70 mb-4"><%= t("catalogs.new.select_category") %></p>
-      <%= component "catalogs/category_selector", selected: nil %>
-    </div>
   <% end %>
-
-  <div class="modal-action mt-6">
-    <%# キャンセルの所有者は閉じるフォーム（ModalStreamHelper 参照）。form= を外すと default button を奪う %>
-    <button type="submit" form="<%= helpers.modal_close_form_id %>" class="btn btn-ghost"><%= t("helpers.link.cancel") %></button>
-    <% if category_selected? %>
-      <%= form.submit t("catalogs.new.submit"), class: "btn btn-neutral" %>
-    <% end %>
-  </div>
 <% end %>

@@ -1,17 +1,6 @@
 <% price_form = Catalogs::PriceForm::Component.new(catalog: @catalog, catalog_price: @catalog_price, kind: @kind) %>
 
 <%= modal_stream_show do %>
-  <dialog class="modal">
-    <div class="modal-box max-w-sm">
-      <h3 class="text-lg font-bold mb-4">
-        <%= price_form.modal_title %>
-      </h3>
-
-      <%= render "shared/modal_close_button" %>
-
-      <%= render price_form %>
-    </div>
-
-    <%= render "shared/modal_backdrop" %>
-  </dialog>
+  <%= render "shared/modal_title", title: price_form.modal_title %>
+  <%= render price_form %>
 <% end %>

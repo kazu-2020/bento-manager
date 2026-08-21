@@ -1,0 +1,17 @@
+<dialog class="modal">
+  <div class="modal-box">
+    <%# 閉じるフォームは turbo-frame の外（この殻）に置くこと。中に入れるとフレーム差し替えで消え、
+        キャンセルの form= が宙に浮く %>
+    <form method="dialog" id="<%= helpers.modal_close_form_id %>">
+      <button class="btn btn-sm btn-circle btn-ghost absolute right-2 top-2" aria-label="<%= t("helpers.link.close") %>">
+        <%= helpers.icon "close" %>
+      </button>
+    </form>
+
+    <%= content %>
+  </div>
+
+  <form method="dialog" class="modal-backdrop">
+    <button><span class="sr-only"><%= t("helpers.link.close") %></span></button>
+  </form>
+</dialog>
