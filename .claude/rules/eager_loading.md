@@ -21,7 +21,8 @@ ActiveRecord のアソシエーション読み込み戦略に関するルール�
 
 | アソシエーション | 使用メソッド | 理由 |
 | --- | --- | --- |
-| `belongs_to` | `eager_load` | 1:1関連はJOINしても行数が増えない |
+| `belongs_to` | `eager_load` | 1:1関連はJOINしても行数が増えない（※ポリモーフィックを除く） |
+| ポリモーフィックな `belongs_to` | `preload` | 参照先のテーブルが行ごとに変わり JOIN 先を決められない |
 | `has_one` | `eager_load` | 1:1関連はJOINしても行数が増えない |
 | `has_many` | `preload` | 1:N関連はJOINすると行数が増え非効率 |
 | `has_many :through` | `preload` | 1:N関連と同様 |
@@ -88,6 +89,26 @@ Catalog.includes(:discontinuation, :prices).find(params[:id])
 
 has_many に eager_load を使用すると、JOINにより行が重複し `DISTINCT` が必要になる。
 ページネーション時にスロークエリの原因となる。
+
+### ポリモーフィックな belongs_to は eager_load できない
+
+`belongs_to ... polymorphic: true` と、それを生成する `delegated_type` は、
+参照先のテーブルが行ごとに変わるため JOIN 先を 1 つに決められない。
+1:1関連であっても `eager_load` は `ActiveRecord::EagerLoadPolymorphicError` になるので、
+`preload` を使う。上の「`belongs_to` → `eager_load`」の唯一の例外。
+
+```ruby
+# Discount は delegated_type :discountable, types: %w[Coupon]
+
+# 正しい例
+Discount.preload(:discountable).active
+
+# 動作しない例（EagerLoadPolymorphicError）
+Discount.eager_load(:discountable)
+```
+
+JOIN しないので、後述の「WHERE句で関連テーブルを参照する場合」の逃げ道も使えない。
+絞り込みが必要なら `discountable_type` / `discountable_id` を直接条件に書く。
 
 ### preload + 大量レコードの問題
 

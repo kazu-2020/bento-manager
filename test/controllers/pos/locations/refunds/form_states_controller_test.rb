@@ -9,6 +9,7 @@ module Pos
         include RefundParamsHelper
         include QueryCountHelper
         include StockedCatalogHelper
+        include ActiveCouponHelper
 
         fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules,
                  :daily_inventories, :discounts, :coupons, :sales, :sale_items, :sale_discounts
@@ -49,16 +50,13 @@ module Pos
         # 数量入力を動かすたびの再描画でその本数がまるごと乗る
         test "修正カートの再描画は有効なクーポンの種類が増えても問い合わせ本数が増えない" do
           login_as_employee(@employee)
-          more_coupon_types = -> do
-            Discount.create!(
-              discountable: Coupon.new(amount_per_unit: 80),
-              name: "80円割引クーポン",
-              valid_from: 1.month.ago.to_date
-            )
-          end
+          more_coupon_types = -> { create_active_coupon }
 
           assert_queries_unaffected_by(more_coupon_types, "有効なクーポンごとに読み込みが走っている") do
             post_form_state(corrected: { @bento_a => 1 }, coupon: {})
+
+            # 経路が生きていることまで固定しないとガードが空振りする
+            assert_response :success
           end
         end
 

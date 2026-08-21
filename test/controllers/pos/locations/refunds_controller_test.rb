@@ -8,6 +8,7 @@ module Pos
       include RefundParamsHelper
       include SaleTestHelper
       include QueryCountHelper
+      include ActiveCouponHelper
 
       fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules,
                :daily_inventories, :discounts, :coupons, :sales, :sale_items, :sale_discounts
@@ -58,6 +59,34 @@ module Pos
 
         assert_queries_unaffected_by(more_items, "元の販売の明細ごとに価格の読み込みが走っている") do
           get new_pos_location_refund_path(@location, sale_id: @sale.id)
+        end
+      end
+
+      # 割引を読むのは 2 経路だけ。元の販売のクーポン（返却の案内）と、有効なクーポン
+      # （クーポンカードの母集合）である。クーポンタブを並べるかどうかの判定が未ロードの
+      # relation に当たると、ここに存在確認だけの 1 本が乗る。そのあとカードの描画で
+      # 本体を読み直すので SQL が別物になり、クエリキャッシュにも吸収されない
+      test "差額精算画面が割引を読むのは元の販売と有効クーポンの 2 経路だけ" do
+        login_as_employee(@employee)
+
+        assert_queries_match(/FROM ["`]discounts["`]/, count: 2) do
+          get new_pos_location_refund_path(@location, sale_id: @sale.id)
+        end
+
+        assert_response :success
+      end
+
+      # クーポンカードは 1 枚ごとに discount.discountable を読む。preload が外れると
+      # 有効なクーポンの種類ぶんだけ coupons への問い合わせが増える
+      test "差額精算画面は有効なクーポンの種類が増えても問い合わせ本数が増えない" do
+        login_as_employee(@employee)
+        more_coupon_types = -> { create_active_coupon }
+
+        assert_queries_unaffected_by(more_coupon_types, "有効なクーポンごとに読み込みが走っている") do
+          get new_pos_location_refund_path(@location, sale_id: @sale.id)
+
+          # 経路が生きていることまで固定しないとガードが空振りする
+          assert_response :success
         end
       end
 
