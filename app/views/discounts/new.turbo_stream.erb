@@ -1,16 +1,6 @@
 <% new_form = Discounts::NewForm::Component.new(discount: @discount) %>
 
 <%= modal_stream_show do %>
-  <dialog class="modal">
-    <div class="modal-box max-w-lg">
-      <%= render "shared/modal_close_button" %>
-
-      <turbo-frame id="<%= Discounts::NewForm::Component::MODAL_FRAME_ID %>">
-        <%= render partial: "modal_header", formats: [:html], locals: { new_form: new_form } %>
-        <%= render new_form %>
-      </turbo-frame>
-    </div>
-
-    <%= render "shared/modal_backdrop" %>
-  </dialog>
+  <%= render "shared/modal_title", title: new_form.modal_title %>
+  <%= render new_form %>
 <% end %>
