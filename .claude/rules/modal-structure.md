@@ -2,6 +2,7 @@
 paths:
   - "app/views/**/*.turbo_stream.erb"
   - "app/views/components/modal/**/*"
+  - "app/views/components/**/*_form/*"
   - "app/helpers/modal_stream_helper.rb"
 ---
 

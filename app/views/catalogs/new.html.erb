@@ -1,2 +1,2 @@
-<%# フレームの中身だけを返す。閉じるフォームは殻にあり DOM に残るので、ここでは描かない %>
+<%# frame も見出しも Component が出す（.claude/rules/modal-structure.md ルール 5）。閉じるフォームは殻にあり DOM に残る %>
 <%= component "catalogs/new_form", creator: @creator, selected_category: @selected_category %>
