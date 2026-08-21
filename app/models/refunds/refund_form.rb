@@ -2,6 +2,9 @@
 
 module Refunds
   class RefundForm
+    # 陳列カテゴリに載らない商品が数量入力の母集合に現れたときに投げる（詳細は verify_displayable）
+    class UndisplayableCategoryError < StandardError; end
+
     include ActiveModel::Model
     include Rails.application.routes.url_helpers
 
@@ -146,12 +149,14 @@ module Refunds
       errors.add(:base, :no_items_selected) unless has_any_changes?
     end
 
+    # 数量入力の母集合。corrected_quantities も corrected_items もここから派生するので、
+    # 陳列できるかの検査もここに置く（描画を経ない確定経路にも同じ網が掛かる）
     def catalog_lookup
       @catalog_lookup ||= begin
         lookup = {}
         sale.items.each { |item| lookup[item.catalog_id] ||= item.catalog }
         inventories.each { |inv| lookup[inv.catalog_id] ||= inv.catalog }
-        lookup
+        verify_displayable(lookup)
       end
     end
 
@@ -182,6 +187,24 @@ module Refunds
           inventory: inventory
         )
       end
+    end
+
+    # Catalog#category に陳列カテゴリ以外の値が入ると、差額精算の画面はその商品の数量入力を
+    # 描画しない。すると送信ボディにキーが現れず、元の販売側から拾われて「0 個に減った」と
+    # 読まれ、ユーザーが何も触っていない商品が黙って返金される。カテゴリを名指しする他の箇所は
+    # いずれも目に見えて壊れるので（一覧は ADR-0005）、黙って壊れるのはここだけである。
+    #
+    # 判定に Catalog::DISPLAY_CATEGORIES を使ってはいけない。あの定数は category_order が
+    # 読むもので、3 つ目の区分を足す人は enum の隣のテストに促されて真っ先にあれを更新する。
+    # ここが同じ定数を読むと、その瞬間にガードも一緒に外れ、tab_items を直す前に素通りする。
+    # bento? / side_menu? は、下の bento_corrected_items / side_menu_corrected_items と
+    # new_page の tab_items が実際に使っている述語そのもので、タブを増やすまで真にならない
+    def verify_displayable(lookup)
+      undisplayable = lookup.values.compact.reject { |catalog| catalog.bento? || catalog.side_menu? }
+      return lookup if undisplayable.empty?
+
+      names = undisplayable.map { |catalog| "#{catalog.name}(#{catalog.category.inspect})" }
+      raise UndisplayableCategoryError, "陳列カテゴリに載らない商品が修正カートにあります: #{names.join(", ")}"
     end
   end
 end

@@ -3,12 +3,9 @@
 module Pos
   module Locations
     class SalesController < ApplicationController
-      include SubmittedParamsFilterable
+      include CartFormBuildable
 
-      before_action :set_location
-      before_action :set_inventories
       before_action :redirect_unless_inventories, only: :new
-      before_action :set_discounts
 
       def new
         @re_registerable = !@location.sales_started_today?
@@ -42,31 +39,6 @@ module Pos
         return if @inventories.present?
 
         redirect_to new_pos_location_daily_inventory_path(@location)
-      end
-
-      def set_location
-        @location = Location.active.find(params[:location_id])
-      end
-
-      def set_inventories
-        @inventories = @location
-                          .today_inventories
-                          .eager_load(:catalog)
-                          .preload(catalog: Catalog::PRICING_ASSOCIATIONS)
-                          .merge(Catalog.category_order)
-      end
-
-      def set_discounts
-        @discounts = Discount.active_with_discountable
-      end
-
-      def build_form(submitted = ::GhostForms::Submission.absent)
-        ::Sales::CartForm.new(
-          location: @location,
-          inventories: @inventories,
-          discounts: @discounts,
-          submitted: submitted
-        )
       end
     end
   end

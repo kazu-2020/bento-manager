@@ -14,6 +14,16 @@ class DailyInventory < ApplicationRecord
 
   validate :available_stock_must_be_non_negative
 
+  # POS のカート（販売・差額精算）が並べる在庫。商品カードは 1 件ごとに単価と
+  # 価格ルールを引くため、catalog に PRICING_ASSOCIATIONS を載せておかないと
+  # 並ぶ商品の数だけ問い合わせが増える。数量を動かすたびに Ghost Form が
+  # 再描画される画面なので、その本数が操作のたびにまるごと乗る
+  scope :for_cart, -> {
+    eager_load(:catalog)
+      .preload(catalog: Catalog::PRICING_ASSOCIATIONS)
+      .merge(Catalog.category_order)
+  }
+
   # 販売先・商品・日付に対応する在庫を取得する
   #
   # 在庫が見つからないときの扱いは在庫の関心事であって、記録・返金処理の関心事では
