@@ -45,7 +45,10 @@ class Catalog < ApplicationRecord
 
   # 陳列カテゴリ。商品を画面上どう分けて並べるかの区分で、弁当とサラダの 2 つで閉じている。
   # enum の全値ではなくリテラルで持つ（ADR-0005）。Catalog.categories.keys から導くと、
-  # 3 つ目の値が増えた瞬間に「陳列に載らない商品」の検出が黙って通ってしまう
+  # 3 つ目の値が増えた瞬間に category_order の絞り込みが黙って広がる
+  #
+  # 差額精算の実行時ガード（Refunds::RefundForm#verify_displayable）はこの定数を読まない。
+  # 読ませると、ここに値を足した瞬間にガードも一緒に外れ、タブを直す前に素通りしてしまう
   DISPLAY_CATEGORIES = %w[bento side_menu].freeze
 
   # カテゴリ順: 弁当 → サラダの順、同カテゴリ内はふりがな順。

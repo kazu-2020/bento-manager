@@ -64,6 +64,17 @@ side_menu?  → 陳列（タブ分け）3 箇所 + show_bundle_price? 1 箇所
 
 **2 段目が実行時のガード** `Refunds::RefundForm#verify_displayable` で、`UndisplayableCategoryError` を投げる。置き場所は `RefundForm#catalog_lookup`。ここが数量入力の母集合で、`corrected_quantities`（確定経路が読む）と `corrected_items`（描画経路が読む）の**両方がここから派生する**。描画側の `corrected_items` にだけ掛けると、`RefundsController#create` は `corrected_items_for_refunder` しか通らないため素通りし、「確定の前に必ず画面が描画される」という運用上の順序に依存した守りになってしまう。
 
+**判定には `Catalog::DISPLAY_CATEGORIES` を使わない。** `catalog.bento? || catalog.side_menu?` を直接読む。定数を読ませると 2 つの網が**直列**になり、1 段目を通す行為がそのまま 2 段目を開けてしまうからである。区分を増やす人の手順を追うと分かる。
+
+1. `enum` に `dessert: 2` を足す
+2. 1 段目のテストが落ちる
+3. 失敗メッセージに従って `DISPLAY_CATEGORIES` に `dessert` を足し、緑にする
+4. **この時点でガードが `dessert` を通す。**しかし `Pos::Refunds::NewPage::Component#tab_items` は `:bento` / `:side_menu` を直書きしたままなので、デザートのタブは出ない
+
+つまり定数ベースのガードは、この ADR が敵として名指ししている「3 つ目の `enum` 値」に対して**原理的に発火しない**。3 つ目の値が入るときは、必ず定数も一緒に更新されているからである。実際に `enum` と定数の両方に `dessert` を足して差額精算を組むと、例外は出ず `corrected_items` にデザートが居るのにタブは `[:bento, :coupon]` だけになることを確認した。
+
+`bento?` / `side_menu?` は `bento_corrected_items` / `side_menu_corrected_items` と `tab_items` が実際に使っている述語そのものなので、**タブを増やすまで真にならない**。定数を直しただけでは網は開かない。今日の挙動は区分が 2 つで閉じている限り定数版と同値である。
+
 ### 4. `CatalogPricingRule` の汎用性は据え置く
 
 規則が 1 つしか無いのに汎用テーブルが建っているのは過剰だが、既に販売と差額精算の価格計算が乗っている。畳む利益より、価格計算を触るリスクが上回る。**次にこのテーブルを見た人が「汎用ルールエンジンがある」と誤解して拡張しないよう、ここに書き残すことで代える。**
@@ -76,7 +87,8 @@ side_menu?  → 陳列（タブ分け）3 箇所 + show_bundle_price? 1 箇所
 
 ## 結果
 
-- **区分を増やすときに触る箇所**: `Catalog#category` の `enum` と `Catalog::DISPLAY_CATEGORIES`（`Catalog.category_order` と差額精算のガードはどちらもこの定数を読むので、直すのは定数 1 つ）、`CatalogPricingRule#trigger_category` の `enum`、`Catalogs::CreatorFactory` と `Catalogs::*Creator`、POS 販売画面 / 当日在庫登録 / 差額精算の `tab_items` と ERB の `case`、`Catalogs::CategorySelector::Component`、`ja.enums.catalog.category`。加えて、新しい区分がクーポン適用上限と売上分析に数えられるべきかの業務判断（既定は「弁当ではないので数えない」）。
+- **区分を増やすときに触る箇所**: `Catalog#category` の `enum` と `Catalog::DISPLAY_CATEGORIES`（後者は `Catalog.category_order` の絞り込みだけを支配する。**これを直しても画面は何も増えない**）、`CatalogPricingRule#trigger_category` の `enum`、`Catalogs::CreatorFactory` と `Catalogs::*Creator`、POS 販売画面 / 当日在庫登録 / 差額精算の `tab_items` と ERB の `case`、`Catalogs::CategorySelector::Component`、`ja.enums.catalog.category`。加えて、新しい区分がクーポン適用上限と売上分析に数えられるべきかの業務判断（既定は「弁当ではないので数えない」）。
 - **副菜が増えたとき**（味噌汁など）: 区分は増えないが `CONTEXT.md` の「サラダ」が区分名として成り立たなくなる。用語と `side_menu` の対応を見直す必要がある。
-- `Catalog::DISPLAY_CATEGORIES` は `Catalog.categories.keys` から導いてはいけない。導くと 3 つ目の値が増えた瞬間に両方の網が黙って通る。閉じた集合はリテラルで持つことに意味がある。
+- `Catalog::DISPLAY_CATEGORIES` は `Catalog.categories.keys` から導いてはいけない。導くと 3 つ目の値が増えた瞬間に `category_order` の絞り込みが黙って広がる。閉じた集合はリテラルで持つことに意味がある。
+- 2 つの網は**並列**であって直列ではない。1 段目は `enum` の編集を、2 段目は「描画できない商品が母集合に居ること」を、それぞれ独立に検出する。片方を通す操作でもう片方が開いてはいけない。
 - 差額精算の `verify_displayable` は、区分が 2 つで閉じている限り一度も発火しない。発火したらそれは「上の一覧を直し切っていない」という意味である。

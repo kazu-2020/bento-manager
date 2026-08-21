@@ -287,7 +287,8 @@ class CatalogTest < ActiveSupport::TestCase
   # Refunds::RefundForm の実行時ガードは最後の砦であって第一発見者ではない（ADR-0005）
   test "陳列カテゴリは category enum の全値と一致する" do
     assert_equal Catalog.categories.keys, Catalog::DISPLAY_CATEGORIES,
-                 "category に値を足したら、陳列カテゴリと、それに連なる箇所を全部直すこと。" \
+                 "category に値を足したら、DISPLAY_CATEGORIES だけでなく、それに連なる箇所を全部直すこと。" \
+                 "この定数を直しただけでは画面は何も増えない（タブは bento / side_menu を直書きしている）。" \
                  "一覧は docs/adr/0005-bento-and-salad-as-one-catalog.md の「結果」節にある"
   end
 end
