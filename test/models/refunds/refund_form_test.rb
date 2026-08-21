@@ -231,6 +231,16 @@ module Refunds
 
     # === クーポン関連テスト ===
 
+    # ロード済みかどうかが初期化の呼び順に左右されないことを、ここで固定する
+    # （未ロードで返したときに何が起きるかは available_discounts のコメント）
+    test "有効クーポンはロード済みの配列で返る" do
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+
+      form = RefundForm.new(sale: sale, location: @location, inventories: @inventories)
+
+      assert_kind_of Array, form.available_discounts
+    end
+
     test "クーポン数量が初期値として元の販売から設定される" do
       discount = discounts(:fifty_yen_discount)
       sale = record_sale(

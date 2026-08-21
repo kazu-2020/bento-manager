@@ -84,4 +84,11 @@ group :test do
   gem "shoulda-matchers"
   gem "minitest-matchers_vaccine"
   gem "minitest-mock"
+
+  # System testing [https://guides.rubyonrails.org/testing.html#system-testing]
+  # Ghost Form の JS 配線（転写・デバウンス・Turbo Stream の適用）は実ブラウザでしか
+  # 検証できない。ドライバは Capybara が抽象化しているので、フレークが実害になったら
+  # cuprite / playwright への差し替えは driven_by の 1 行で済む
+  gem "capybara"
+  gem "selenium-webdriver"
 end

@@ -214,6 +214,53 @@ end
 
 `t()` はレンダリング前に呼ぶと `TranslateCalledBeforeRenderError` になる。`render_inline` を先に実行してからメソッド経由でデータを参照する。
 
+### 8. system テストは「JS の配線」だけを守る
+
+`test/system/` に置き、`ApplicationSystemTestCase` を継承する。実ブラウザを起動するので、
+ここで検証するのは**コントローラテストでは原理的に通らないもの**に限る。
+
+| 守る | 守らない |
+| --- | --- |
+| `data-action` の配線が生きているか | 価格計算・在庫の増減（モデルのテスト） |
+| turbo_stream の target と描画済み DOM の id の一致 | パラメータの受け取り（コントローラテスト） |
+| 最初の更新のあとも操作が効き続けるか | バリデーションの分岐 |
+| 操作から確定までが一続きに通るか | 画面の文言や並び（ViewComponent テスト） |
+
+メインフォームと Ghost Form の **input 名の対応**はブラウザを使わずに守れる。実 ERB を
+レンダリングして突き合わせる ViewComponent テストのほうが速く壊れにくいので、そちらに置く
+（[`GhostFormCorrespondenceHelper`](test/support/ghost_form_correspondence_helper.rb)）。
+
+実行は専用タスクで行う。`bin/rails test` は `test/system` を**含まない**。
+
+```bash
+bin/rails test:system
+```
+
+**`ApplicationSystemTestCase` で `parallelize` を呼んではいけない。**
+`ActiveSupport::TestCase.parallelize` は `Minitest.parallel_executor` をグローバルに
+差し替える実装なので、`workers: 1` を宣言すると system テストを 1 本読み込んだだけで
+単体テスト全体まで直列化する。`test:system` の単独実行なら、本数が並列化しきい値
+（既定 50）を下回るあいだ Rails が自動的に単一プロセスで走らせる。
+
+#### 踏み抜きやすい罠
+
+**フィクスチャの宣言で画面が変わる。**
+`Location#sales_started_today?` が在庫訂正バナーの表示を左右する（`sales_controller.rb`）。
+`sales` フィクスチャには当日の販売が含まれるため、宣言すればバナーは消え、しなければ出る。
+ただしルール5 のとおり宣言済みフィクスチャはプロセス内の全テストから見えるので、
+**宣言を省くと単体実行と全体実行で画面が変わる**。POS の画面を扱う system テストは
+`:sales` を必ず宣言すること。
+
+**Chrome のパスワードマネージャーが合成入力を飲む。**
+ログインフォームを送信すると「パスワードを保存しますか」バブルが出る。これはブラウザの
+ネイティブ UI なので、`execute_script` や JS からの `click()` は素通りするのに、Capybara の
+クリックだけが 2 回目以降まったく届かなくなる。`ApplicationSystemTestCase` で
+`credentials_enable_service` などを切ってあるので、driver 設定を書き換えるときに落とさないこと。
+
+**ログインの完了を待つ。**
+`click_on` は遷移の完了を待たない。待たずに `visit` すると、セッションが立つ前に次のページを
+要求してログイン画面へ差し戻される。`SystemLoginHelper` はフラッシュを `assert_text` して待つ。
+
 ## 理由
 
 1. **仕様書としての価値**: テスト名がそのままドキュメントになる

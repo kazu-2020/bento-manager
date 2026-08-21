@@ -2,6 +2,8 @@ require "test_helper"
 
 module Sales
   class PriceCalculatorTest < ActiveSupport::TestCase
+    include ActiveCouponHelper
+
     fixtures :catalogs, :catalog_prices, :catalog_pricing_rules, :discounts, :coupons
 
     test "空のカートで会計すると合計が0円になる" do
@@ -218,9 +220,9 @@ module Sales
     end
 
     test "クーポンが弁当の数を超えるときは割引額の大きい順、同額なら先に登録した順に適用される" do
-      cheap_discount = create_coupon_discount("先に登録した30円割引クーポン", amount_per_unit: 30)
-      first_discount = create_coupon_discount("次に登録した80円割引クーポン", amount_per_unit: 80)
-      second_discount = create_coupon_discount("最後に登録した80円割引クーポン", amount_per_unit: 80)
+      cheap_discount = create_active_coupon(amount: 30, name: "先に登録した30円割引クーポン")
+      first_discount = create_active_coupon(amount: 80, name: "次に登録した80円割引クーポン")
+      second_discount = create_active_coupon(amount: 80, name: "最後に登録した80円割引クーポン")
       cart_items = [ { catalog: catalogs(:daily_bento_a), quantity: 2 } ]
       discount_quantities = { cheap_discount.id => 1, first_discount.id => 1, second_discount.id => 1 }
 
@@ -295,17 +297,6 @@ module Sales
 
       assert_includes catalog_names, "味噌汁"
       assert_includes catalog_names, "提供終了済み弁当"
-    end
-
-    private
-
-    # フィクスチャは id の順序を保証できないため、適用順のテストではレコードを作る
-    def create_coupon_discount(name, amount_per_unit:)
-      Discount.create!(
-        name: name,
-        valid_from: 1.month.ago.to_date,
-        discountable: Coupon.new(amount_per_unit: amount_per_unit)
-      )
     end
   end
 end

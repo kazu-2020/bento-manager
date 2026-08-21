@@ -176,6 +176,56 @@ jobs:
           # REDIS_URL: redis://localhost:6379/0
         run: bin/rails db:test:prepare test
 
+  # system テストはブラウザを起動するぶん遅く、フレークもしうる。単体テストと同じ
+  # ジョブに混ぜると 677 本の単体テストの速いフィードバックまで巻き込まれる。分ければ
+  # GitHub Actions が並列に走らせるので実時間は増えず、落ちた原因の切り分けも早い。
+  # ubuntu-latest には Chrome が同梱されており、chromedriver は Selenium Manager が
+  # 自動取得するため、ブラウザのインストール手順は要らない。
+  system_test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: '.node-version'
+          cache: 'npm'
+
+      - name: Install JavaScript dependencies
+        run: npm ci
+
+      # config/vite.json の test は autoBuild だが、任せると最初の visit が
+      # コールドビルドを待つことになる。CI では明示的に先に済ませる
+      - name: Build Vite assets for test
+        env:
+          RAILS_ENV: test
+        run: bin/vite build --mode=test
+
+      # bin/rails test は test/system を含まない。system テストは専用タスクで回す
+      - name: Run system tests
+        env:
+          RAILS_ENV: test
+        run: bin/rails db:test:prepare test:system
+
+      # 画面のスクリーンショット無しに system テストの失敗は追えない
+      - name: Upload failure screenshots
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: system-test-screenshots
+          path: tmp/screenshots
+          if-no-files-found: ignore
+
   # db/seeds.rb はテストから呼ばれないため、壊れても通常のテストでは気付けない。
   # 空の DB に流し直して投入できることだけを独立して確認する。
   seeds:
