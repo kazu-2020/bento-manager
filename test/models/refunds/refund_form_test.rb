@@ -460,5 +460,54 @@ module Refunds
         assert_respond_to item, :side_menu?
       end
     end
+
+    # === 陳列カテゴリのガードテスト ===
+
+    # 数量入力の母集合に陳列できない商品が混ざったら、描画にも確定にも進ませない。
+    # 通すと、その商品が「0 個に減った」と読まれて黙って返金される（ADR-0005）
+    test "陳列カテゴリに載らない商品が母集合に現れたらフォームを組めない" do
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      # enum は validate: true なので、未知の値を代入しても例外にならない（.claude/rules/enum.md）
+      dessert = Catalog.new(name: "プリン", kana: "プリン", category: "dessert")
+      stocked_dessert = DailyInventory.new(catalog: dessert, stock: 3, reserved_stock: 0)
+
+      error = assert_raises(RefundForm::UndisplayableCategoryError) do
+        RefundForm.new(sale: sale, location: @location, inventories: [ stocked_dessert ])
+      end
+
+      assert_match(/プリン/, error.message)
+    end
+
+    # 実運用で陳列カテゴリを外れた商品が届く経路は元の販売の明細だけである。当日在庫の側は
+    # RefundFormBuildable#set_inventories が Catalog.category_order を merge しており、
+    # in_order_of の既定 filter: true が WHERE category IN (...) で先に落とす（ADR-0005）
+    test "元の販売の明細に陳列カテゴリに載らない商品があってもフォームを組めない" do
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      # enum に無い値は代入では作れない（validate: true が保存を弾く）ので DB 側に直接書く。
+      # 3 つ目の区分を足す前の DB だけが先に進んだ状態と同じ形になる
+      @catalog_bento_a.update_column(:category, 2)
+
+      error = assert_raises(RefundForm::UndisplayableCategoryError) do
+        RefundForm.new(sale: Sale.find(sale.id), location: @location, inventories: @inventories)
+      end
+
+      assert_match(/#{Regexp.escape(@catalog_bento_a.name)}/, error.message)
+    end
+
+    # 2 つの網が直列にならないことを固定する。3 つ目の区分を足す人は、enum の隣のテスト
+    # （catalog_test）に促されて真っ先に DISPLAY_CATEGORIES を更新する。ガードがその定数を
+    # 読んでいると、その瞬間にタブを直す前に素通りしてしまう（ADR-0005 の決定 3）。
+    # 定数を差し替えるのは、3 つ目の enum 値を足した世界をテスト内で作る唯一の手段のため
+    test "陳列カテゴリの定数に値を足しただけではガードは開かない" do
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      dessert = Catalog.new(name: "プリン", kana: "プリン", category: "dessert")
+      stocked_dessert = DailyInventory.new(catalog: dessert, stock: 3, reserved_stock: 0)
+
+      stub_const(Catalog, :DISPLAY_CATEGORIES, %w[bento side_menu dessert]) do
+        assert_raises(RefundForm::UndisplayableCategoryError) do
+          RefundForm.new(sale: sale, location: @location, inventories: [ stocked_dessert ])
+        end
+      end
+    end
   end
 end
