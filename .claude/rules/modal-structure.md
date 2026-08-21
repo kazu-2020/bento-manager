@@ -48,17 +48,26 @@ paths:
 
 ### 5. turbo-frame は差し替えが実在する画面にだけ置く
 
-**フレームの範囲はコントローラが何を replace するかで決まる。**
+**frame は差し替わる Component 自身が出す。** 呼び出し側のテンプレートに
+`<turbo-frame>` を書かない。書くと同じフレームを描く画面が 2 つ以上できたとき
+（`catalogs/new` は `.html.erb` と `.turbo_stream.erb` の両方から描かれる）、
+片方だけ id を変える事故が起きる。
 
-| 差し替える単位 | frame の位置 | 例 |
-| --- | --- | --- |
-| Component 1 つ | その Component のテンプレートの中 | `catalog_prices/edit` |
-| 見出し + フォームなど複数 | 呼び出し側テンプレートの `modal_stream_show` ブロックの中 | `catalogs/new` |
+```erb
+<%# component.html.erb %>
+<%= helpers.turbo_frame_tag frame_id do %>
+  <%= render "shared/modal_title", title: modal_title %>
+  <%# フォーム本体 %>
+<% end %>
+```
+
+差し替えのたびに見出しも変わる画面（`catalogs/new` はカテゴリでタイトルが変わる）は、
+見出しをこのフレームの中に置く。呼び出し側に見出しを残すとフレーム差し替えで取り残される。
 
 Component を `turbo_stream.replace(FRAME_ID, Component.new)` で直接差し替える画面
-（`CatalogPricesController#update`）では、Component 自身が frame タグを出さなければならない。
-`replace` は対象要素を丸ごと置き換えるので、出さないと 1 回目の差し替えで frame が消え、
-2 回目のバリデーションエラーが届かなくなる。
+（`CatalogPricesController#update`）では、Component 自身が frame タグを出さなければ
+そもそも動かない。`replace` は対象要素を丸ごと置き換えるので、出さないと 1 回目の
+差し替えで frame が消え、2 回目のバリデーションエラーが届かなくなる。
 
 **差し替える経路が無いなら frame を置かない。** 使われない frame は
 「ここはフレーム差し替えされる」という嘘の契約になり、ルール 3 の制約を、実際には起きない
