@@ -70,8 +70,10 @@ module Refunds
       @side_menu_corrected_items ||= corrected_items.select(&:side_menu?)
     end
 
+    # 配列で返す。relation のままだと any? が未ロードのときに存在確認だけの問い合わせを
+    # 1 本撃つ。いまロード済みなのは初期化が先に map(&:id) を通るからにすぎない
     def available_discounts
-      @available_discounts ||= Discount.preload(:discountable).active
+      @available_discounts ||= Discount.preload(:discountable).active.to_a
     end
 
     def form_with_options
