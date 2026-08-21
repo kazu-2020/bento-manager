@@ -43,8 +43,14 @@ class Catalog < ApplicationRecord
       .order(:kana)
   }
 
-  # カテゴリ順: 弁当 → サイドメニューの順、同カテゴリ内はふりがな順
-  scope :category_order, -> { in_order_of(:category, %w[bento side_menu]).order(:kana) }
+  # 陳列カテゴリ。商品を画面上どう分けて並べるかの区分で、弁当とサラダの 2 つで閉じている。
+  # enum の全値ではなくリテラルで持つ（ADR-0005）。Catalog.categories.keys から導くと、
+  # 3 つ目の値が増えた瞬間に「陳列に載らない商品」の検出が黙って通ってしまう
+  DISPLAY_CATEGORIES = %w[bento side_menu].freeze
+
+  # カテゴリ順: 弁当 → サラダの順、同カテゴリ内はふりがな順。
+  # in_order_of は既定で filter: true なので、陳列カテゴリ以外は WHERE で除外される
+  scope :category_order, -> { in_order_of(:category, DISPLAY_CATEGORIES).order(:kana) }
 
   enum :category, { bento: 0, side_menu: 1 }, validate: true
 

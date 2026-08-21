@@ -450,5 +450,22 @@ module Refunds
         assert_respond_to item, :side_menu?
       end
     end
+
+    # === 陳列カテゴリのガードテスト ===
+
+    # 数量入力の母集合に陳列できない商品が混ざったら、描画にも確定にも進ませない。
+    # 通すと、その商品が「0 個に減った」と読まれて黙って返金される（ADR-0005）
+    test "陳列カテゴリに載らない商品が母集合に現れたらフォームを組めない" do
+      sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
+      # enum は validate: true なので、未知の値を代入しても例外にならない（.claude/rules/enum.md）
+      dessert = Catalog.new(name: "プリン", kana: "プリン", category: "dessert")
+      stocked_dessert = DailyInventory.new(catalog: dessert, stock: 3, reserved_stock: 0)
+
+      error = assert_raises(RefundForm::UndisplayableCategoryError) do
+        RefundForm.new(sale: sale, location: @location, inventories: [ stocked_dessert ])
+      end
+
+      assert_match(/プリン/, error.message)
+    end
   end
 end
