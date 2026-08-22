@@ -3,6 +3,7 @@
 module DailyInventoryCorrectionFormBuildable
   extend ActiveSupport::Concern
   include SubmittedParamsFilterable
+  include SearchQueryFilterable
 
   included do
     before_action :set_location
@@ -23,7 +24,7 @@ module DailyInventoryCorrectionFormBuildable
     ::DailyInventories::CorrectionForm.new(
       location: @location,
       catalogs: Catalog.available_or_stocked_at(@location).category_order,
-      search_query: params[:search_query],
+      search_query: search_query_param,
       submitted: submitted
     )
   end

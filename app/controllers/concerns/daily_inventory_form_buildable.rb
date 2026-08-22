@@ -3,6 +3,7 @@
 module DailyInventoryFormBuildable
   extend ActiveSupport::Concern
   include SubmittedParamsFilterable
+  include SearchQueryFilterable
 
   included do
     before_action :set_location
@@ -21,7 +22,7 @@ module DailyInventoryFormBuildable
     ::DailyInventories::InventoryForm.new(
       location: @location,
       catalogs: Catalog.available.category_order,
-      search_query: params[:search_query],
+      search_query: search_query_param,
       submitted: submitted
     )
   end
