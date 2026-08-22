@@ -38,16 +38,23 @@ Ghost Form 側の input 名は必ずメインフォームと対応させるこ�
 
 ```
 cart[<catalog_id>][quantity]        → ghost_cart[<catalog_id>][quantity]
-refund[items][<id>][quantity]       → ghost_refund[items][<id>][quantity]
+refund[corrected][<id>][quantity]   → ghost_refund[corrected][<id>][quantity]
 ```
+
+**対象レコードの id をメインフォームに hidden で持たせない。** Ghost Form の送信先 URL は
+既にその id を持っているため（`.../refunds/form_state?sale_id=1`）、転写しても誰も読まない
+入力が 1 つ増えるだけになり、`assert_ghost_inputs_correspond` にだけ辻褄合わせを迫る。
+メインフォーム側も URL に載せて、両者の持ち方を揃えること
+（`Refunds::RefundForm#form_with_options`）。
 
 対応関係はメインフォーム側（`product_card` / `coupon_card` / `submit_button`）と Ghost Form 側の
 **別々の ERB リテラル**で決まるため、片方をリネームしても例外は出ない。実 ERB をレンダリングして
 機械的に突き合わせる
 [`GhostFormCorrespondenceHelper`](test/support/ghost_form_correspondence_helper.rb) があるので、
 Ghost Form を持つ画面には `assert_ghost_inputs_correspond` を呼ぶテストを 1 本置くこと。
-現在の適用は販売画面のみ（[new_form_component_test.rb](test/components/pos/sales/new_form_component_test.rb)）で、
-差額精算・当日在庫・在庫訂正・追加発注は未適用。
+現在の適用は販売画面（[new_form_component_test.rb](test/components/pos/sales/new_form_component_test.rb)）と
+差額精算画面（[new_page_component_test.rb](test/components/pos/refunds/new_page_component_test.rb)）で、
+当日在庫・在庫訂正・追加発注は未適用。
 
 配線は Stimulus コントローラー2つの組み合わせで行う。
 

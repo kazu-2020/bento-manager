@@ -7,8 +7,6 @@
     <%= form_with **form_with_options,
                   class: "flex flex-col flex-1 min-h-0",
                   data: { ghost_form_target: "originalForm" } do |f| %>
-      <%= hidden_field_tag "sale_id", sale.id %>
-
       <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
         <%# 元の販売内容（折りたたみ） %>
         <div class="shrink-0 px-3 pt-2">
