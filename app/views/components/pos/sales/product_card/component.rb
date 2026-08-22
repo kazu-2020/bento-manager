@@ -25,7 +25,7 @@ module Pos
         def card_classes
           class_names(
             "card bg-base-100 border-2 transition-all duration-200",
-            "border-accent bg-accent/10": in_cart?,
+            "border-primary bg-primary/10": in_cart?,
             "border-base-300": !in_cart?,
             "opacity-50": sold_out?
           )
