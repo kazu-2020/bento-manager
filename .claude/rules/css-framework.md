@@ -6,17 +6,10 @@ paths:
 
 # CSS Framework ガイドライン
 
-## スタイリング方針
+Tailwind CSS / daisyUI を使ううえでの**技術的な制約**をまとめる。
 
-1. **daisyUI コンポーネントを優先**: ボタン、カード、フォーム要素などは daisyUI のクラスを使用
-2. **Tailwind CSS で補完**: daisyUI で対応できないレイアウトやカスタマイズは Tailwind ユーティリティクラスで対応
-3. **カスタム CSS は最小限**: `application.tailwind.css` への追記は避ける
-
-## プロジェクト設定
-
-- **テーマ**: caramellatte（daisyUI）
-- **フォント**: Noto Sans JP（本文）, Noto Sans Mono（コード）
-- **設定ファイル**: `app/frontend/stylesheets/application.tailwind.css`
+どのトークンをいつ選ぶか（色の意味、ボタンの使い分け、レイアウトの原則）は
+リポジトリルートの [`DESIGN.md`](../../DESIGN.md) にある。そちらを先に読むこと。
 
 ## Context7 ドキュメント参照
 
