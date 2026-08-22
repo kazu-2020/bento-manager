@@ -18,7 +18,7 @@ module Pos
         end
 
         def render_item_card(item)
-          render Pos::AdditionalOrders::OrderItemCard::Component.new(item: item)
+          render Pos::AdditionalOrders::OrderItemCard::Component.new(item: item, form: form)
         end
 
         def render_ghost_form

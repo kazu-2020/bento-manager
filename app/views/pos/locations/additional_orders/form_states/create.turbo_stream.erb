@@ -2,8 +2,7 @@
 <% @form.items.each do |item| %>
   <%= turbo_stream.replace "order-item-#{item.catalog_id}" do %>
     <%= component "pos/additional_orders/order_item_card",
-                  item: item,
-                  hidden: !@form.visible?(item) %>
+                  item: item, form: @form %>
   <% end %>
 <% end %>
 
