@@ -3,29 +3,26 @@
 require "test_helper"
 
 class SalesAnalyses::SummaryCardsComponentTest < ViewComponent::TestCase
-  test "総額・関係者・一般の3カードを通貨表記で表示し、負値はマイナス記号が通貨記号の前に付く" do
-    result = render_cards(staff_amount: 800_000, citizen_amount: 434_567)
-
-    assert_equal [ "弁当 ¥1,234,567 相当", "50% ・ 弁当 ¥800,000", "50% ・ 弁当 ¥434,567" ], card_captions(result)
-
-    result = render_cards(staff_amount: -500, citizen_amount: 0)
-
-    assert_equal [ "弁当 -¥500 相当", "50% ・ 弁当 -¥500", "50% ・ 弁当 ¥0" ], card_captions(result)
-  end
-
-  test "サマリーは総販売数・関係者・一般の見出しと販売数の単位を表示する" do
-    result = render_cards(staff_amount: 800_000, citizen_amount: 434_567)
+  # 母が知りたいのは次に何個積むかであって金額ではない。カードに添えるのは構成比だけで、
+  # 総販売数のカードには添え書き自体が無い（キャプションが 2 つしか無いことがその表明）
+  test "サマリーは総販売数・関係者・一般の販売数を並べ、関係者と一般には構成比だけを添える" do
+    result = render_cards
 
     assert_equal [ "弁当の総販売数", "関係者（職員）", "一般" ], result.css(".card-body p:first-child").map(&:text)
-    assert_equal [ "20個", "10個", "10個" ], result.css(".card-body p:nth-child(2)").map(&:text)
+    assert_equal [ "20個", "12個", "8個" ], result.css(".card-body p:nth-child(2)").map(&:text)
+    assert_equal [ "60%", "40%" ], card_captions(result)
+
+    result = render_cards(staff_quantity: 0, citizen_quantity: 0)
+
+    assert_equal [ "0%", "0%" ], card_captions(result)
   end
 
   private
 
-  def render_cards(staff_amount:, citizen_amount:)
-    render_inline(SalesAnalyses::SummaryCards::Component.new(data: {
-      staff: { quantity: 10, amount: staff_amount },
-      citizen: { quantity: 10, amount: citizen_amount }
+  def render_cards(staff_quantity: 12, citizen_quantity: 8)
+    render_inline(SalesAnalyses::SummaryCards::Component.new(quantities: {
+      staff: staff_quantity,
+      citizen: citizen_quantity
     }))
   end
 
