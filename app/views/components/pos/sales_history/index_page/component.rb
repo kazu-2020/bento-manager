@@ -16,10 +16,6 @@ module Pos
           sales.present?
         end
 
-        def back_url
-          helpers.pos_location_path(location)
-        end
-
         def render_daily_summary
           render Pos::SalesHistory::DailySummary::Component.new(summary: daily_summary)
         end

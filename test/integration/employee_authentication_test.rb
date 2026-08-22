@@ -60,6 +60,22 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/employee/login"
   end
 
+  # アプリを経由せず DB に直接 1 が書き込まれた場合の扱い。Rodauth は既定値のままだと
+  # この行を「見つかったが未確認のアカウント」と解釈し、403 と
+  # 「verify account before logging in」を返す。だがこの製品に確認手続きは存在せず、
+  # 案内できる次の一手が無い。存在しないログイン名と同じ 401 に倒す（ADR-0007）。
+  test "DB に混入した未確認状態の従業員はログインの対象にならない" do
+    employee = employees(:verified_employee)
+    Employee.where(id: employee.id).update_all(status: 1)
+
+    post "/employee/login", params: {
+      username: employee.username,
+      password: "password"
+    }
+
+    assert_response :unauthorized
+  end
+
   # ステータス遷移テスト
   test "closed employee cannot login" do
     # Try to login with closed employee credentials
@@ -239,6 +255,26 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_response :success, "Employee should be able to access business functions"
+  end
+
+  test "ログイン後に閉鎖された従業員は業務画面に入れない" do
+    login_as_employee(:verified_employee)
+    employees(:verified_employee).closed!
+
+    get root_path
+
+    assert_redirected_to "/employee/login"
+  end
+
+  # 認証レイアウトが描画するのは flash[:alert] のみ。他のキーに入れても画面には出ない。
+  test "ログインせずに業務画面を開くとログイン画面に案内が表示される" do
+    get root_path
+
+    assert_redirected_to "/employee/login"
+
+    follow_redirect!
+
+    assert_includes response.body, I18n.t("custom_errors.controllers.require_authentication")
   end
 
   # 未認証アクセステスト
