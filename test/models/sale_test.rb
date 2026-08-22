@@ -3,7 +3,7 @@ require "test_helper"
 class SaleTest < ActiveSupport::TestCase
   include SaleTestHelper
 
-  fixtures :locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items
+  fixtures :locations, :employees, :catalogs, :catalog_prices, :sales, :sale_items, :discounts
 
   test "validations" do
     @subject = Sale.new(
@@ -195,5 +195,20 @@ class SaleTest < ActiveSupport::TestCase
     travel_to(1.day.from_now) do
       assert_not_predicate today_sale, :refundable?
     end
+  end
+
+  test "販売に適用されたクーポンの割引 ID と枚数を返す" do
+    sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: Time.current)
+    fifty_yen = discounts(:fifty_yen_discount)
+    hundred_yen = discounts(:hundred_yen_discount)
+    SaleDiscount.create!(sale: sale, discount: fifty_yen, discount_amount: 100, quantity: 2)
+    SaleDiscount.create!(sale: sale, discount: hundred_yen, discount_amount: 100, quantity: 1)
+
+    assert_equal({ fifty_yen.id => 2, hundred_yen.id => 1 }, sale.applied_discount_quantities)
+
+    # クーポンを使っていない販売は「0 枚」ではなく、そもそも枚数が無い
+    no_coupon_sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: Time.current)
+
+    assert_empty no_coupon_sale.applied_discount_quantities
   end
 end

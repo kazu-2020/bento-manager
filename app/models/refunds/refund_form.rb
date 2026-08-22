@@ -120,17 +120,12 @@ module Refunds
     end
 
     def original_coupon_quantities
-      @original_coupon_quantities ||= GhostForms::Quantities.dense(submittable_discount_ids, original_discount_quantities)
+      @original_coupon_quantities ||= GhostForms::Quantities.dense(submittable_discount_ids, sale.applied_discount_quantities)
     end
 
     def original_item_quantities
       @original_item_quantities ||= sale.items.group_by(&:catalog_id)
         .transform_values { |items| items.sum(&:quantity) }
-    end
-
-    # pluck はロード済みでも必ず問い合わせるので使わない。同じ関連を Preview も読む
-    def original_discount_quantities
-      @original_discount_quantities ||= sale.sale_discounts.to_h { |sd| [ sd.discount_id, sd.quantity ] }
     end
 
     # corrected が 1 件も届かないのは「全て 0」ではなく壊れた送信。全て 0 の確定は
