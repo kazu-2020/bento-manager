@@ -8,9 +8,12 @@ module RefundFormBuildable
   # フォームを組み立てるため（ghost-form-pattern.md ルール 3）、並べる責務を
   # コントローラーに置くと片方だけ素通しになる
   #
-  # ここは @location が置かれた後から始まる。拠点を絞るのは Ghost Form と直交する
-  # 関心事なので、PosLocationScoped は各コントローラーがこの concern より先に
-  # include する（順序を違えると set_sale が @location を掴めず即座に落ちる）
+  # 拠点を絞るのは Ghost Form と直交する関心事だが、@location が無いとこの並びは
+  # 成立しない。include 順をコントローラー側の記述順に委ねると書き忘れた側だけが
+  # 素通しになるため、依存としてここで宣言する（Concern が先に include するので
+  # callback は set_location > set_sale > ガード群の順を保つ）
+  include PosLocationScoped
+
   included do
     before_action :set_sale
     before_action :redirect_if_voided

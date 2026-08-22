@@ -4,7 +4,6 @@ module Pos
   module Locations
     module Refunds
       class FormStatesController < ApplicationController
-        include PosLocationScoped
         include RefundFormBuildable
 
         def create

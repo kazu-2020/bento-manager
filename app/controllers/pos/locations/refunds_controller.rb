@@ -3,7 +3,6 @@
 module Pos
   module Locations
     class RefundsController < ApplicationController
-      include PosLocationScoped
       include RefundFormBuildable
 
       def new

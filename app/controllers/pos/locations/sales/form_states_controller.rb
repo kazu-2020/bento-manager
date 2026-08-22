@@ -4,7 +4,6 @@ module Pos
   module Locations
     module Sales
       class FormStatesController < ApplicationController
-        include PosLocationScoped
         include CartFormBuildable
 
         def create

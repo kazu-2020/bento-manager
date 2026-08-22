@@ -3,7 +3,6 @@
 module Pos
   module Locations
     class SalesController < ApplicationController
-      include PosLocationScoped
       include CartFormBuildable
 
       before_action :redirect_unless_inventories, only: :new

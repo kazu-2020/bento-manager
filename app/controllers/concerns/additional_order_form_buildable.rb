@@ -2,6 +2,9 @@
 
 module AdditionalOrderFormBuildable
   extend ActiveSupport::Concern
+  # @location が無いと build_form の today_inventories が引けない。コントローラー側の
+  # include 順に委ねると書き忘れた側だけが素通しになるため、依存として宣言する
+  include PosLocationScoped
   include SubmittedParamsFilterable
 
   private

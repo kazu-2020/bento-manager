@@ -3,7 +3,6 @@
 module Pos
   module Locations
     class AdditionalOrdersController < ApplicationController
-      include PosLocationScoped
       include AdditionalOrderFormBuildable
 
       before_action :set_inventories, only: :index

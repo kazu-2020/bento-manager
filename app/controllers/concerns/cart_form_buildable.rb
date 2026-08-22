@@ -9,9 +9,12 @@ module CartFormBuildable
   # ここに並ぶのは読み込みだけで、画面に入れるかどうかを決めるガードは
   # 入口ごとに違うのでコントローラーに残す（例: SalesController#redirect_unless_inventories）
   #
-  # ここは @location が置かれた後から始まる。拠点を絞るのは Ghost Form と直交する
-  # 関心事なので、PosLocationScoped は各コントローラーがこの concern より先に
-  # include する（順序を違えると set_inventories が @location を掴めず即座に落ちる）
+  # 拠点を絞るのは Ghost Form と直交する関心事だが、@location が無いとこの並びは
+  # 成立しない。include 順をコントローラー側の記述順に委ねると書き忘れた側だけが
+  # 素通しになるため、依存としてここで宣言する（Concern が先に include するので
+  # callback は set_location > set_inventories > set_discounts の順を保つ）
+  include PosLocationScoped
+
   included do
     before_action :set_inventories
     before_action :set_discounts
