@@ -21,8 +21,9 @@ module SalesHistories
         summary[:total_quantity]
       end
 
+      # 1 個未満まで出すが、割り切れる月に 20.0 個と出しても読み手の役に立たない
       def daily_average
-        summary[:daily_average]
+        helpers.number_with_precision(summary[:daily_average], precision: 1, strip_insignificant_zeros: true)
       end
 
       def best_day_label

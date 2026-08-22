@@ -15,18 +15,18 @@ module Sales
       @calendar = Sales::HistoryCalendar.new(location: @location, month: MONTH)
 
       # 3/2: 弁当A x2（職員）、弁当B x1（一般）の 2 取引
-      sell(day: 2, customer_type: :staff, quantity: 2)
-      sell(day: 2, customer_type: :citizen, quantity: 1, catalog_price: catalog_prices(:daily_bento_b_regular))
+      sell(on: date(2), customer_type: :staff, quantity: 2)
+      sell(on: date(2), customer_type: :citizen, quantity: 1, catalog_price: catalog_prices(:daily_bento_b_regular))
 
       # 3/5: サラダ x1 のみの 1 取引
-      sell(day: 5, customer_type: :citizen, quantity: 1, catalog_price: catalog_prices(:salad_regular))
+      sell(on: date(5), customer_type: :citizen, quantity: 1, catalog_price: catalog_prices(:salad_regular))
 
       # 3/9: 弁当A x5（職員）。同じ日の取消済み 弁当A x3 は数えない
-      sell(day: 9, customer_type: :staff, quantity: 5)
-      sell(day: 9, customer_type: :staff, quantity: 3, status: :voided)
+      sell(on: date(9), customer_type: :staff, quantity: 5)
+      sell(on: date(9), customer_type: :staff, quantity: 3, status: :voided)
 
       # 3/9: 別の販売先の 弁当A x9
-      sell(day: 9, customer_type: :staff, quantity: 9, location: @other_location)
+      sell(on: date(9), customer_type: :staff, quantity: 9, location: @other_location)
     end
 
     # --- daily_quantities ---
@@ -52,7 +52,7 @@ module Sales
     end
 
     test "販売が1件もない月の日別販売数は空になる" do
-      calendar = Sales::HistoryCalendar.new(location: @location, month: MONTH.next_month)
+      calendar = Sales::HistoryCalendar.new(location: @location, month: MONTH.prev_month)
 
       assert_empty calendar.daily_quantities
     end
@@ -64,21 +64,37 @@ module Sales
 
       assert_equal 3, result[:business_days]
       assert_equal 8, result[:total_quantity]
-      assert_equal 2, result[:daily_average]
+      assert_in_delta(2.7, result[:daily_average])
       assert_equal({ date: date(9), quantity: 5 }, result[:best_day])
     end
 
     test "1日平均の分母にはサラダしか売れなかった日も入る" do
-      # 8 個 ÷ 3 日。弁当が売れなかった日も店を開けた日である
-      assert_equal 2, @calendar.monthly_summary[:daily_average]
+      # 8 個 ÷ 3 日 = 2.7。弁当が売れなかった日も店を開けた日である
+      assert_in_delta(2.7, @calendar.monthly_summary[:daily_average])
+    end
+
+    test "1日平均は1個未満を切り捨てない" do
+      # 積込数を決めるために見る数字なので、常に少なめに出る平均は積みすぎを招く
+      assert_operator @calendar.monthly_summary[:daily_average], :>, 8 / 3
+    end
+
+    test "弁当が1個も売れなかった月は最高日を持たない" do
+      month = MONTH.next_month
+      sell(on: month.change(day: 3), customer_type: :citizen, quantity: 1,
+           catalog_price: catalog_prices(:salad_regular))
+      result = Sales::HistoryCalendar.new(location: @location, month: month).monthly_summary
+
+      assert_equal 1, result[:business_days], "サラダが売れた日は販売日として数える"
+      assert_equal 0, result[:total_quantity]
+      assert_nil result[:best_day], "ヒートマップが色をつけない日を最高日として名指ししない"
     end
 
     test "販売が1件もない月の月間サマリーは0を返し最高日を持たない" do
-      result = Sales::HistoryCalendar.new(location: @location, month: MONTH.next_month).monthly_summary
+      result = Sales::HistoryCalendar.new(location: @location, month: MONTH.prev_month).monthly_summary
 
       assert_equal 0, result[:business_days]
       assert_equal 0, result[:total_quantity]
-      assert_equal 0, result[:daily_average]
+      assert_in_delta(0.0, result[:daily_average])
       assert_nil result[:best_day]
     end
 
@@ -137,15 +153,15 @@ module Sales
       Date.new(MONTH.year, MONTH.month, day)
     end
 
-    def sell(day:, customer_type:, quantity:, catalog_price: catalog_prices(:daily_bento_a_regular),
+    def sell(on:, customer_type:, quantity:, catalog_price: catalog_prices(:daily_bento_a_regular),
              status: :completed, location: @location)
       voided = status == :voided
       sale = create_sale(
         location: location,
         customer_type: customer_type,
-        sale_datetime: Time.zone.local(MONTH.year, MONTH.month, day, 12, 0),
+        sale_datetime: on.in_time_zone.change(hour: 12),
         status: status,
-        voided_at: voided ? Time.zone.local(MONTH.year, MONTH.month, day, 13, 0) : nil,
+        voided_at: voided ? on.in_time_zone.change(hour: 13) : nil,
         voided_by_employee: voided ? employees(:owner_employee) : nil
       )
       create_sale_item(sale: sale, quantity: quantity, catalog_price: catalog_price)

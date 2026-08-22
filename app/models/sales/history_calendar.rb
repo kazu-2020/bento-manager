@@ -22,18 +22,26 @@ module Sales
     end
 
     # 月間サマリー
+    #
+    # 1 日平均の分母は販売のあった日であり、弁当が売れなかった日も数える。積込数を
+    # 決めるために見る数字なので、店を開けたのに売れなかった日を落とすと平均が
+    # 上振れし、積みすぎる方向に読ませる。ヒートマップの濃淡がこの 0 個の日を
+    # 閾値の母数から外すのは、色の解像度を保つための表示上の都合であり、別の判断である
+    #
+    # 整数除算にしないのは、単位が円から個に変わって切り捨ての意味が変わったため。
+    # 1 円未満は見えないが、1 個未満は 1 日 20〜30 個の商いで数 % の下振れになる
+    #
     # @return [Hash] { business_days:, total_quantity:, daily_average:, best_day: { date:, quantity: } }
     def monthly_summary
       quantities = daily_quantities
       total = quantities.values.sum
       days = quantities.size
-      best = quantities.max_by { |_, quantity| quantity }
 
       {
         business_days: days,
         total_quantity: total,
-        daily_average: days > 0 ? total / days : 0,
-        best_day: best ? { date: best[0], quantity: best[1] } : nil
+        daily_average: days > 0 ? (total.to_f / days).round(1) : 0.0,
+        best_day: best_day(quantities)
       }
     end
 
@@ -74,6 +82,15 @@ module Sales
     private
 
     attr_reader :location, :month
+
+    # 弁当が売れた日だけを比べる。0 個の日を混ぜると、ヒートマップが色をつけない日を
+    # 隣のサマリが最高日として名指しすることになる
+    def best_day(quantities)
+      best = quantities.reject { |_, quantity| quantity.zero? }.max_by { |_, quantity| quantity }
+      return nil unless best
+
+      { date: best[0], quantity: best[1] }
+    end
 
     def completed_sales(from, to)
       Sale.completed

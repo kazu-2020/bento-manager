@@ -64,7 +64,11 @@ module SalesHistories
       end
 
       # 濃淡の境目は弁当が売れた日だけから取る。0 個の日を混ぜると、サラダしか
-      # 売れなかった日が増えるほど境目が下がり、少し売れた日まで濃く塗られる
+      # 売れなかった日が増えるほど境目が下がり、少し売れた日まで濃く塗られる。
+      #
+      # 同じカードに並ぶ月次サマリの 1 日平均は、逆に 0 個の日も分母に数える。
+      # あちらは店を開けた日あたり何個売れるかを答える業務上の数字で、こちらは
+      # 色の解像度を保つための表示上の都合であり、母数が違ってよい（ADR-0006）
       def compute_thresholds
         @compute_thresholds ||= begin
           values = daily_quantities.values.reject(&:zero?).sort
