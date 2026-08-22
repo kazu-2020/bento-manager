@@ -193,6 +193,39 @@ module Pos
         assert_response :unprocessable_entity
       end
 
+      # 絞り込みは表示にしか効かない（隠すのは CSS で input は無効化しない）。
+      # 検索語に一致しない商品でも、届いた通りに登録される
+      test "絞り込み中に確定しても、絞り込みに合わない商品が登録される" do
+        login_as_employee(@employee)
+
+        post pos_location_daily_inventories_path(@location),
+             params: {
+               search_query: @salad.name,
+               inventory: { @bento_a.id.to_s => { selected: "1", stock: "10" } }
+             }
+
+        assert_redirected_to new_pos_location_sale_path(@location)
+        assert DailyInventory.exists?(location: @location, catalog: @bento_a, inventory_date: Date.current)
+      end
+
+      # 検索欄はメインフォームの中にあり確定 POST にも乗る。確定側が読まないと
+      # 差し戻しの再描画で検索語だけが消える
+      test "確定が差し戻されても検索語が残る" do
+        login_as_employee(@employee)
+
+        post pos_location_daily_inventories_path(@location),
+             params: {
+               search_query: "サラ",
+               inventory: { @bento_a.id.to_s => { selected: "0", stock: "10" } }
+             }
+
+        assert_response :unprocessable_entity
+        assert_select "input[name=?][value=?]", "search_query", "サラ"
+        # 検索語が残るなら絞り込みも効いていること。検索欄と一覧が食い違わない
+        assert_select "#item-card-#{@bento_a.id}.hidden", 1
+        assert_select "#item-card-#{@salad.id}.hidden", 0
+      end
+
       test "create sets correct inventory_date to today" do
         login_as_employee(@employee)
 
