@@ -60,10 +60,10 @@ class EmployeeAuthenticationTest < ActionDispatch::IntegrationTest
     assert_redirected_to "/employee/login"
   end
 
-  # アプリを経由せず DB に直接 1 が書き込まれた場合の扱い。Rodauth は素の状態だと
+  # アプリを経由せず DB に直接 1 が書き込まれた場合の扱い。Rodauth は既定値のままだと
   # この行を「見つかったが未確認のアカウント」と解釈し、403 と
   # 「verify account before logging in」を返す。だがこの製品に確認手続きは存在せず、
-  # 案内できる次の一手が無い。存在しないログイン名と同じ 401 に倒す（ADR 0007）。
+  # 案内できる次の一手が無い。存在しないログイン名と同じ 401 に倒す（ADR-0007）。
   test "DB に混入した未確認状態の従業員はログインの対象にならない" do
     employee = employees(:verified_employee)
     Employee.where(id: employee.id).update_all(status: 1)

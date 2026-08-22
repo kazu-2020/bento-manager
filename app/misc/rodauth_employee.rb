@@ -40,22 +40,25 @@ class RodauthEmployee < Rodauth::Rails::Auth
     # Store account status in an integer column without foreign key constraint.
     account_status_column :status
 
-    # アカウント状態は「有効」と「閉鎖」の 2 つで閉じている（ADR 0007）。
+    # アカウント状態は「有効」と「閉鎖」の 2 つで閉じている（ADR-0007）。
     # Rodauth の既定値（2 / 3）と Employee の enum は今たまたま一致しているだけなので、
     # enum から引いて導出する。状態を足したときに片方だけずれるのを防ぐ。
     account_open_status_value { Employee.statuses.fetch("verified") }
     account_closed_status_value { Employee.statuses.fetch("closed") }
 
     # unverified は Rodauth がメール確認フロー用に用意した状態で、この製品には
-    # 対応する出来事が無い。既定のままだと DB に 1 が混入したとき、Rodauth はそれを
+    # 対応する出来事が無い。既定値 1 のままだと DB に 1 が混入したとき、Rodauth はそれを
     # 「見つかったが未確認のアカウント」として 403 と
     # 「verify account before logging in」で弾く。存在しない手続きを案内することになる。
-    # 有効と同じ値に倒せば _account_from_login の候補から外れ、
-    # 存在しないログイン名と同じ 401 になる。
     #
-    # verify_account を入れるときは、この行を先に消すこと。未確認と有効が同じ値のままだと
-    # 確認手続きが作成直後に通ってしまう。
-    account_unverified_status_value { account_open_status_value }
+    # enum にも DB にも存在しない 0 を番兵として置く。_account_from_login の述語が
+    # status IN (0, 2) になり、1 の行は候補から外れて、存在しないログイン名と同じ 401 になる。
+    #
+    # 有効と同じ値に倒してはいけない。verify_account は account_initial_status_value を
+    # この値へ上書きし（verify_account.rb:202-204）、create_account がそれを新規行に書く
+    # （create_account.rb:124）。有効と同じ値だと、確認リンクを踏まないアカウントが
+    # 最初からログインでき業務画面まで到達する。例外もテスト失敗も出ない。
+    account_unverified_status_value 0
 
     # Store password hash in a column instead of a separate table.
     account_password_hash_column :password_hash
