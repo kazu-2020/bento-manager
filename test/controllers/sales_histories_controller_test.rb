@@ -11,10 +11,11 @@ class SalesHistoriesControllerTest < ActionDispatch::IntegrationTest
 
   # --- index ---
 
-  test "認証済みユーザーが index にアクセスできる" do
+  test "認証済みユーザーが弁当販売履歴を開ける" do
     get sales_histories_path
 
     assert_response :success
+    assert_select "title", "弁当販売履歴"
   end
 
   test "month パラメータで月を指定できる" do
@@ -31,10 +32,12 @@ class SalesHistoriesControllerTest < ActionDispatch::IntegrationTest
 
   # --- show ---
 
-  test "認証済みユーザーが日別取引履歴にアクセスできる" do
+  test "認証済みユーザーが日別の弁当販売履歴を開ける" do
     get sales_history_path(1.day.ago.to_date.to_s, location_id: locations(:city_hall).id)
 
     assert_response :success
+    assert_select "title", /\A弁当販売履歴 /
+    assert_select ".breadcrumbs a", "弁当販売履歴"
   end
 
   test "不正な日付パラメータではリダイレクトされる" do

@@ -15,10 +15,12 @@ module Pos
         login_as_employee(:verified_employee)
       end
 
+      # POS のこの画面は弁当販売履歴とは別のものを指すため、名前を揃えてはいけない
       test "認証済みユーザーが当日の販売履歴にアクセスできる" do
         get pos_location_sales_history_index_path(@location)
 
         assert_response :success
+        assert_select "title", "販売履歴"
       end
 
       test "未認証ユーザーはログインページにリダイレクトされる" do
