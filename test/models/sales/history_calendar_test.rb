@@ -57,6 +57,70 @@ module Sales
       assert_empty calendar.daily_quantities
     end
 
+    # --- daily_sell_through ---
+
+    test "消化率はその日に積んだ弁当のうち売れた割合になる" do
+      # 3/2 は 3 個売れて残数 1。積んだのは 4 個
+      stock(on: date(2), remaining: 1)
+      # 3/5 はサラダしか売れていないが、弁当を 10 個積んである
+      stock(on: date(5), remaining: 10)
+      # 3/9 は 5 個売れて残数 0。積んだ分を売り切っている
+      stock(on: date(9), remaining: 0)
+
+      result = @calendar.daily_sell_through
+
+      assert_in_delta(0.75, result[date(2)].rate)
+      assert_in_delta(0.0, result[date(5)].rate)
+      assert_in_delta(1.0, result[date(9)].rate)
+      assert_predicate result[date(9)], :no_remaining_stock?
+      assert_not_predicate result[date(2)], :no_remaining_stock?
+    end
+
+    test "弁当を1個も積まなかった日は消化率を持たない" do
+      # 3/2 はサラダを積んだだけ、3/5 は弁当とサラダの両方。分母が 0 の日は率が定まらず、
+      # 0% とも 100% とも言えない。サイドメニューは分母に入れない（ADR-0006）
+      stock(on: date(2), catalog: catalogs(:salad), remaining: 6)
+      stock(on: date(5), remaining: 10)
+      stock(on: date(5), catalog: catalogs(:salad), remaining: 6)
+
+      result = @calendar.daily_sell_through
+
+      assert_not_includes result.keys, date(2)
+      assert_in_delta(0.0, result[date(5)].rate)
+    end
+
+    test "積んでいない日の売れ方は組み立てられない" do
+      # 率が NaN になり、色をつけないためのガードも残数 0 の判定もすべて素通りする。
+      # 率が定まらないことは不在で表す（ADR-0008）という約束を型の側でも守る
+      error = assert_raises(ArgumentError) do
+        Sales::HistoryCalendar::DailySellThrough.new(loaded: 0, sold: 0)
+      end
+
+      assert_match(/積んだ総数/, error.message)
+    end
+
+    test "当日在庫の記録が残っていない日は消化率を持たない" do
+      # 在庫の記録が無い日を「残数 0 で売り切った日」と読むと、客を逃した日として
+      # 名指ししてしまう。積んだ数が分からない日は率も分からない
+      assert_empty @calendar.daily_sell_through
+    end
+
+    test "消化率は取消済みの販売を分子にも分母にも入れない" do
+      # 3/9 は確定 5 個・取消 3 個。取消で戻った在庫は残数 2 に含まれる
+      stock(on: date(9), remaining: 2)
+
+      assert_in_delta(5 / 7.0, @calendar.daily_sell_through[date(9)].rate)
+    end
+
+    test "消化率は他の販売先の在庫を含まない" do
+      stock(on: date(9), remaining: 0)
+      stock(on: date(9), remaining: 91, location: @other_location)
+
+      assert_in_delta(1.0, @calendar.daily_sell_through[date(9)].rate)
+      assert_in_delta(0.09, Sales::HistoryCalendar.new(location: @other_location, month: MONTH)
+        .daily_sell_through[date(9)].rate)
+    end
+
     # --- monthly_summary ---
 
     test "月間サマリーは販売日数・弁当の月合計・1日平均・最高日を返す" do
@@ -151,6 +215,18 @@ module Sales
 
     def date(day)
       Date.new(MONTH.year, MONTH.month, day)
+    end
+
+    # その日の販売が終わった時点の在庫。積んだ総数は保存されないため、
+    # テストも残数を置いて積んだ総数を復元させる
+    def stock(on:, remaining:, catalog: catalogs(:daily_bento_a), location: @location)
+      DailyInventory.create!(
+        location: location,
+        catalog: catalog,
+        inventory_date: on,
+        stock: remaining,
+        reserved_stock: 0
+      )
     end
 
     def sell(on:, customer_type:, quantity:, catalog_price: catalog_prices(:daily_bento_a_regular),
