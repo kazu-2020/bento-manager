@@ -126,12 +126,19 @@ module Sales
     # 在庫訂正は販売開始前にしか行えないので、訂正で宣言された個数がそのまま
     # 残数と販売数に分かれ、追加発注はその場で当日在庫に加わる。取消された販売は
     # 在庫が戻るので残数の側に含まれ、分子からも分母からも二重に数えられない
+    #
+    # 弁当の在庫行が 1 件も無い日は、残数を 0 とみなさず日ごと落とす。0 とみなすと
+    # 分母が販売数と一致して必ず消化率 100% になり、積んだ数が分からないだけの日を
+    # 「売り切って客を逃した日」として名指ししてしまう
     def loaded_quantities
       @loaded_quantities ||= begin
         remaining = bento_stocks_by_date
 
         daily_quantities.filter_map do |date, sold|
-          loaded = remaining.fetch(date, 0) + sold
+          remaining_stock = remaining[date]
+          next if remaining_stock.nil?
+
+          loaded = remaining_stock + sold
           [ date, loaded ] unless loaded.zero?
         end.to_h
       end
@@ -140,7 +147,7 @@ module Sales
     # 対象月の日別の弁当の残数。サイドメニューの在庫行は数えない（ADR-0006）
     def bento_stocks_by_date
       DailyInventory
-        .where(location: location, inventory_date: month.beginning_of_month..month.end_of_month)
+        .where(location: location, inventory_date: month_range.first.to_date..month_range.last.to_date)
         .bento
         .group(:inventory_date)
         .sum(:stock)

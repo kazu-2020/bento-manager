@@ -62,19 +62,22 @@ module Sales
     test "消化率はその日に積んだ弁当のうち売れた割合になる" do
       # 3/2 は 3 個売れて残数 1。積んだのは 4 個
       stock(on: date(2), remaining: 1)
+      # 3/5 はサラダしか売れていないが、弁当を 10 個積んである
+      stock(on: date(5), remaining: 10)
       # 3/9 は 5 個売れて残数 0。積んだ分を売り切っている
       stock(on: date(9), remaining: 0)
 
       result = @calendar.daily_sell_through_rates
 
       assert_in_delta(0.75, result[date(2)])
+      assert_in_delta(0.0, result[date(5)])
       assert_in_delta(1.0, result[date(9)])
     end
 
-    test "弁当を積んで1個も売れなかった日の消化率は0になる" do
-      stock(on: date(5), remaining: 10)
-
-      assert_in_delta(0.0, @calendar.daily_sell_through_rates[date(5)])
+    test "当日在庫の記録が残っていない日は消化率を持たない" do
+      # 在庫の記録が無い日を「残数 0 で売り切った日」と読むと、客を逃した日として
+      # 名指ししてしまう。積んだ数が分からない日は率も分からない
+      assert_empty @calendar.daily_sell_through_rates
     end
 
     test "消化率の分母にサイドメニューは入らない" do
