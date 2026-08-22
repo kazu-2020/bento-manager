@@ -1,5 +1,4 @@
-<%= form_with url: form_state_url,
-              method: :post,
+<%= form_with **form_state_options,
               id: "ghost-form",
               data: { turbo_stream: true, ghost_form_target: "ghostForm" } do %>
   <% corrected_items.each do |item| %>
