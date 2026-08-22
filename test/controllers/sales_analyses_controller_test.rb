@@ -9,10 +9,11 @@ class SalesAnalysesControllerTest < ActionDispatch::IntegrationTest
     login_as_employee(:verified_employee)
   end
 
-  test "認証済みユーザーが index にアクセスできる" do
+  test "認証済みユーザーが弁当販売分析を開ける" do
     get sales_analyses_path
 
     assert_response :success
+    assert_select "title", "弁当販売分析"
   end
 
   test "days パラメータを受け取る" do

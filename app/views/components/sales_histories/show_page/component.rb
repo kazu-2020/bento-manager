@@ -13,6 +13,11 @@ module SalesHistories
 
       attr_reader :date, :location, :sales
 
+      # タイトルとパンくずは同じ画面を指す。片方だけ変えると画面の呼び名が割れる
+      def screen_name
+        "弁当販売履歴"
+      end
+
       def back_path
         helpers.sales_histories_path(
           month: date.strftime("%Y-%m"),

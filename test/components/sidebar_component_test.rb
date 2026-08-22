@@ -10,13 +10,13 @@ class SidebarComponentTest < ViewComponent::TestCase
     assert_includes result.to_html, "Bento Manager"
   end
 
+  # 部分一致で見ると「弁当販売分析」が「販売」を含むため、
+  # 項目が消えてもテストが通ってしまう。並びごと突き合わせる
   def test_renders_all_menu_items
     result = render_inline(Sidebar::Component.new(current_path: "/"))
 
-    assert_includes result.to_html, "販売"
-    assert_includes result.to_html, "配達場所"
-    assert_includes result.to_html, "カタログ"
-    assert_includes result.to_html, "クーポン"
+    assert_equal [ "販売", "弁当販売分析", "弁当販売履歴", "配達場所", "カタログ", "クーポン" ],
+                 result.css("aside a").map { |link| link.text.strip }
   end
 
   def test_highlights_active_sales_on_root
