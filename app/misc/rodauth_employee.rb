@@ -3,9 +3,9 @@ require "sequel/core"
 class RodauthEmployee < Rodauth::Rails::Auth
   configure do
     # Employee authentication features
-    # Employees are created and managed by Admin via web UI.
-    # Email-based features (:verify_account, :reset_password, :change_login) are excluded
-    # as employees are created directly with verified status by Admin.
+    # 従業員アカウントは店主が rails console / db:seed で作る。作成用の画面はまだ無い。
+    # メールを使う機能（:verify_account, :reset_password, :change_login）は入れていない。
+    # 連絡先メールアドレスを持たないため、確認も再発行もメールでは行えない。
     # :lockout is enabled for brute-force protection.
     enable :login, :logout, :change_password, :close_account, :lockout, :session_expiration, :remember
 
@@ -39,6 +39,23 @@ class RodauthEmployee < Rodauth::Rails::Auth
 
     # Store account status in an integer column without foreign key constraint.
     account_status_column :status
+
+    # アカウント状態は「有効」と「閉鎖」の 2 つで閉じている（ADR 0007）。
+    # Rodauth の既定値（2 / 3）と Employee の enum は今たまたま一致しているだけなので、
+    # enum から引いて導出する。状態を足したときに片方だけずれるのを防ぐ。
+    account_open_status_value { Employee.statuses.fetch("verified") }
+    account_closed_status_value { Employee.statuses.fetch("closed") }
+
+    # unverified は Rodauth がメール確認フロー用に用意した状態で、この製品には
+    # 対応する出来事が無い。既定のままだと DB に 1 が混入したとき、Rodauth はそれを
+    # 「見つかったが未確認のアカウント」として 403 と
+    # 「verify account before logging in」で弾く。存在しない手続きを案内することになる。
+    # 有効と同じ値に倒せば _account_from_login の候補から外れ、
+    # 存在しないログイン名と同じ 401 になる。
+    #
+    # verify_account を入れるときは、この行を先に消すこと。未確認と有効が同じ値のままだと
+    # 確認手続きが作成直後に通ってしまう。
+    account_unverified_status_value { account_open_status_value }
 
     # Store password hash in a column instead of a separate table.
     account_password_hash_column :password_hash

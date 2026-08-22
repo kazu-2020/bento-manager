@@ -10,7 +10,9 @@ class EmployeeTest < ActiveSupport::TestCase
     must validate_presence_of(:password).on(:create)
     must allow_value("Valid_User123").for(:username)
     wont allow_value("invalid@user").for(:username)
-    must define_enum_for(:status).with_values(unverified: 1, verified: 2, closed: 3).validating
+    must define_enum_for(:status).with_values(verified: 2, closed: 3).validating
+
+    assert_equal "verified", Employee.new.status, "状態を指定せずに作った従業員は有効になる"
   end
 
   test "associations" do

@@ -8,15 +8,10 @@ class ApplicationController < ActionController::Base
   private
 
   def require_authentication
-    return if rodauth(:employee).logged_in?
-
-    flash[:error] = I18n.t("custom_errors.controllers.require_authentication")
-    redirect_to rodauth(:employee).login_path
+    rodauth(:employee).require_account
   end
 
   def current_employee
-    return nil unless rodauth(:employee).logged_in?
-
-    Employee.find_by(id: rodauth(:employee).session_value)
+    rodauth(:employee).rails_account
   end
 end

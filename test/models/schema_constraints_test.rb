@@ -189,6 +189,17 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
   # 外部キーの削除時挙動
   # ============================================================
 
+  test "ユーザー名は閉鎖していない従業員の間だけで一意になる" do
+    taken = employees(:verified_employee).username
+
+    assert_db_rejects(employees(:owner_employee), username: taken)
+
+    closed = employees(:closed_employee)
+    Employee.where(id: closed.id).update_all(username: taken)
+
+    assert_equal taken, closed.reload.username, "閉鎖したアカウントは同じユーザー名を持てる"
+  end
+
   test "従業員を物理削除すると販売の担当者と取消担当者が空になる" do
     sale = sales(:voided_sale)
 
