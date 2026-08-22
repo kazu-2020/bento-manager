@@ -21,15 +21,42 @@ module Sales
       end
     end
 
-    # 対象月の日別の消化率
+    # その日の弁当の売れ方。積んだ総数と売れた個数の組で、消化率も残数もここから答える
+    DailySellThrough = Data.define(:loaded, :sold) do
+      # @return [Float] 0.0〜1.0
+      def rate
+        sold / loaded.to_f
+      end
+
+      # @return [Integer]
+      def remaining_stock
+        loaded - sold
+      end
+
+      # 買いに来た客を逃した可能性のある日。消化率 100% と同じ日を指すが、
+      # ヒートマップの濃淡が答える「よく売れた」とは別の事実なので、別に問える形にする
+      def no_remaining_stock?
+        remaining_stock.zero?
+      end
+    end
+
+    # 対象月の日別の弁当の売れ方
     #
-    # 弁当を 1 個も積まなかった日はキーごと落とす。分母が 0 で率が定まらないため、
-    # 0% として薄く塗るのも 100% として売り切り扱いするのも、どちらも嘘になる
+    # 弁当を 1 個も積まなかった日はキーごと落とす。分母が 0 で消化率が定まらず、
+    # 0% と言うのも 100% と言うのも嘘になる（ADR-0008）
     #
-    # @return [Hash{Date => Float}] 0.0〜1.0
-    def daily_sell_through_rates
-      @daily_sell_through_rates ||= loaded_quantities.to_h do |date, loaded|
-        [ date, daily_quantities[date] / loaded.to_f ]
+    # @return [Hash{Date => DailySellThrough}]
+    def daily_sell_through
+      @daily_sell_through ||= begin
+        remaining_stocks = bento_stocks_by_date
+
+        daily_quantities.filter_map do |date, sold|
+          remaining_stock = remaining_stocks[date]
+          next if remaining_stock.nil?
+
+          loaded = remaining_stock + sold
+          [ date, DailySellThrough.new(loaded: loaded, sold: sold) ] unless loaded.zero?
+        end.to_h
       end
     end
 
@@ -119,38 +146,18 @@ module Sales
         .sort
     end
 
-    # 販売のあった日ごとの、その日に積んだ弁当の総数。1 個も積まなかった日は落とす
-    #
-    # 積んだ総数は保存していない。当日在庫は登録・在庫訂正・追加発注でしか増えず、
-    # 確定した販売でしか減らないため、残数に確定した販売数を戻せば積んだ総数になる。
-    # 在庫訂正は販売開始前にしか行えないので、訂正で宣言された個数がそのまま
-    # 残数と販売数に分かれ、追加発注はその場で当日在庫に加わる。取消された販売は
-    # 在庫が戻るので残数の側に含まれ、分子からも分母からも二重に数えられない
-    #
-    # 弁当の在庫行が 1 件も無い日は、残数を 0 とみなさず日ごと落とす。0 とみなすと
-    # 分母が販売数と一致して必ず消化率 100% になり、積んだ数が分からないだけの日を
-    # 「売り切って客を逃した日」として名指ししてしまう
-    def loaded_quantities
-      @loaded_quantities ||= begin
-        remaining = bento_stocks_by_date
-
-        daily_quantities.filter_map do |date, sold|
-          remaining_stock = remaining[date]
-          next if remaining_stock.nil?
-
-          loaded = remaining_stock + sold
-          [ date, loaded ] unless loaded.zero?
-        end.to_h
-      end
-    end
-
     # 対象月の日別の弁当の残数。サイドメニューの在庫行は数えない（ADR-0006）
+    #
+    # 積んだ総数は保存されておらず、残数に確定した販売数を戻して復元する。当日在庫が
+    # 登録・在庫訂正・追加発注でしか増えず確定した販売でしか減らないため成り立つ等式で、
+    # 破れる条件は ADR-0008 に書いた。在庫行の無い日がキーを持たないことが重要で、
+    # 残数 0 と混ぜると分母が販売数と一致して必ず消化率 100% になる
     def bento_stocks_by_date
-      DailyInventory
-        .where(location: location, inventory_date: month_range.first.to_date..month_range.last.to_date)
-        .bento
-        .group(:inventory_date)
-        .sum(:stock)
+      location.daily_inventories
+              .bento
+              .where(inventory_date: month.all_month)
+              .group(:inventory_date)
+              .sum(:stock)
     end
 
     def bento_quantities_by_date

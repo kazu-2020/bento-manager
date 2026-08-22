@@ -21,8 +21,9 @@ class Sale < ApplicationRecord
   scope :in_period, ->(from, to) { where(sale_datetime: from..to) }
   scope :at_location, ->(location) { where(location: location) }
 
-  # 弁当の販売行だけに絞る。数えるのは弁当だけという業務境界の唯一の定義であり、
-  # 弁当販売分析と弁当販売履歴はこのスコープを共有する（ADR-0005 / ADR-0006）。
+  # 弁当の販売行だけに絞る。弁当販売分析と弁当販売履歴はこのスコープを共有する。
+  # 数えるのは弁当だけという業務境界そのものは Catalog.bento が持ち、在庫側の
+  # DailyInventory.bento も同じものに委譲している（ADR-0005 / ADR-0006）。
   # 1 行は販売ではなく販売 × 弁当なので、件数を数える用途には使えない
   scope :joining_bento_items, -> { joins(items: :catalog).merge(Catalog.bento) }
 

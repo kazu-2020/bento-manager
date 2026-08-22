@@ -57,7 +57,7 @@ module Sales
       assert_empty calendar.daily_quantities
     end
 
-    # --- daily_sell_through_rates ---
+    # --- daily_sell_through ---
 
     test "消化率はその日に積んだ弁当のうち売れた割合になる" do
       # 3/2 は 3 個売れて残数 1。積んだのは 4 個
@@ -67,47 +67,48 @@ module Sales
       # 3/9 は 5 個売れて残数 0。積んだ分を売り切っている
       stock(on: date(9), remaining: 0)
 
-      result = @calendar.daily_sell_through_rates
+      result = @calendar.daily_sell_through
 
-      assert_in_delta(0.75, result[date(2)])
-      assert_in_delta(0.0, result[date(5)])
-      assert_in_delta(1.0, result[date(9)])
+      assert_in_delta(0.75, result[date(2)].rate)
+      assert_in_delta(0.0, result[date(5)].rate)
+      assert_in_delta(1.0, result[date(9)].rate)
+      assert_predicate result[date(9)], :no_remaining_stock?
+      assert_not_predicate result[date(2)], :no_remaining_stock?
+    end
+
+    test "弁当を1個も積まなかった日は消化率を持たない" do
+      # 3/2 はサラダを積んだだけ、3/5 は弁当とサラダの両方。分母が 0 の日は率が定まらず、
+      # 0% とも 100% とも言えない。サイドメニューは分母に入れない（ADR-0006）
+      stock(on: date(2), catalog: catalogs(:salad), remaining: 6)
+      stock(on: date(5), remaining: 10)
+      stock(on: date(5), catalog: catalogs(:salad), remaining: 6)
+
+      result = @calendar.daily_sell_through
+
+      assert_not_includes result.keys, date(2)
+      assert_in_delta(0.0, result[date(5)].rate)
     end
 
     test "当日在庫の記録が残っていない日は消化率を持たない" do
       # 在庫の記録が無い日を「残数 0 で売り切った日」と読むと、客を逃した日として
       # 名指ししてしまう。積んだ数が分からない日は率も分からない
-      assert_empty @calendar.daily_sell_through_rates
-    end
-
-    test "消化率の分母にサイドメニューは入らない" do
-      stock(on: date(2), remaining: 1)
-      stock(on: date(2), catalog: catalogs(:salad), remaining: 6)
-
-      assert_in_delta(0.75, @calendar.daily_sell_through_rates[date(2)])
-    end
-
-    test "弁当を1個も積まなかった日は消化率を持たない" do
-      # サラダしか積まなかった日。分母が 0 なので率は定まらず、0% とも 100% とも言えない
-      stock(on: date(5), catalog: catalogs(:salad), remaining: 2)
-
-      assert_not_includes @calendar.daily_sell_through_rates.keys, date(5)
+      assert_empty @calendar.daily_sell_through
     end
 
     test "消化率は取消済みの販売を分子にも分母にも入れない" do
       # 3/9 は確定 5 個・取消 3 個。取消で戻った在庫は残数 2 に含まれる
       stock(on: date(9), remaining: 2)
 
-      assert_in_delta(5 / 7.0, @calendar.daily_sell_through_rates[date(9)])
+      assert_in_delta(5 / 7.0, @calendar.daily_sell_through[date(9)].rate)
     end
 
     test "消化率は他の販売先の在庫を含まない" do
       stock(on: date(9), remaining: 0)
       stock(on: date(9), remaining: 91, location: @other_location)
 
-      assert_in_delta(1.0, @calendar.daily_sell_through_rates[date(9)])
+      assert_in_delta(1.0, @calendar.daily_sell_through[date(9)].rate)
       assert_in_delta(0.09, Sales::HistoryCalendar.new(location: @other_location, month: MONTH)
-        .daily_sell_through_rates[date(9)])
+        .daily_sell_through[date(9)].rate)
     end
 
     # --- monthly_summary ---
