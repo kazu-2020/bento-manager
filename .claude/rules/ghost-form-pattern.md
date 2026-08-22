@@ -45,14 +45,17 @@ refund[corrected][<id>][quantity]   → ghost_refund[corrected][<id>][quantity]
 指す唯一の画面で（他の 4 画面は `location` だけで足り、path に含まれる）、これをメインフォームに
 hidden で持たせると誰も読まない `ghost_sale_id` が要ることになる。Ghost Form の送信先 URL は
 既に `sale_id` を持っているためである。2 つの URL は `Refunds::RefundForm` に隣り合わせで置く
-（`form_with_options` / `form_state_options`）。片方だけ落とすと、確定と再描画が別の販売を指す。
+（`form_with_options` / `form_state_options`）。片方だけ落とすと、確定と再描画のどちらかが
+`sale_id` を失って 404 になる（`set_sale` の `find(nil)` が `RecordNotFound`）。
+別の販売が拾われる経路は無い。
 
-**ただし `ghost_` の付かない入力が正当な画面もある。** 当日在庫と追加発注の検索欄は、
-メインフォーム側が `search_field_tag :search_query`、Ghost Form 側が**プレフィックス無しの**
-`hidden_field_tag :search_query` で、`search_form_controller.js` が転写を介さず直接書き込む。
-ユーザーが打ち込む欄なので URL には載せられない。この 2 画面に
-`assert_ghost_inputs_correspond` を当てるときは、この 1 件をどう扱うかを先に決めること
-（未着手。素直に当てると `missing: search_query` で落ちる）。
+**ただし `ghost_` の付かない入力が正当な画面もある。** 当日在庫・在庫訂正・追加発注の
+検索欄は、メインフォーム側が `search_field_tag :search_query`、Ghost Form 側が
+**プレフィックス無しの** `hidden_field_tag :search_query` で、`search_form_controller.js` が
+転写を介さず直接書き込む。ユーザーが打ち込む欄なので URL には載せられない。
+在庫訂正は当日在庫と同じ `pos/daily_inventories/new_form` を描くので、検索欄も同じ 1 つである。
+この 3 画面に `assert_ghost_inputs_correspond` を当てるときは、この 1 件をどう扱うかを
+先に決めること（未着手。素直に当てると `missing: search_query` で落ちる）。
 
 対応関係はメインフォーム側（`product_card` / `coupon_card` / `submit_button`）と Ghost Form 側の
 **別々の ERB リテラル**で決まるため、片方をリネームしても例外は出ない。実 ERB をレンダリングして
