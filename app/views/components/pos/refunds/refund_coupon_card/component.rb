@@ -20,7 +20,7 @@ module Pos
         def card_classes
           class_names(
             "card bg-base-100 border-2 transition-all duration-200",
-            "border-accent bg-accent/10": !disabled? && in_cart?,
+            "border-primary bg-primary/10": !disabled? && in_cart?,
             "border-base-300": disabled? || !in_cart?,
             "opacity-50": input_disabled?
           )

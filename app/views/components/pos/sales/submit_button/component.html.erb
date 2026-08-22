@@ -4,13 +4,13 @@
     <div class="flex gap-2 mb-2">
       <label class="flex-1 cursor-pointer">
         <%= f.radio_button :customer_type, "staff", class: "hidden peer" %>
-        <div class="btn w-full peer-checked:btn-accent peer-checked:btn-active">
+        <div class="btn w-full peer-checked:bg-staff peer-checked:border-staff peer-checked:text-white">
           <%= t("enums.sale.customer_type.staff") %>
         </div>
       </label>
       <label class="flex-1 cursor-pointer">
         <%= f.radio_button :customer_type, "citizen", class: "hidden peer" %>
-        <div class="btn w-full peer-checked:btn-accent peer-checked:btn-active">
+        <div class="btn w-full peer-checked:bg-citizen peer-checked:border-citizen peer-checked:text-white">
           <%= t("enums.sale.customer_type.citizen") %>
         </div>
       </label>
