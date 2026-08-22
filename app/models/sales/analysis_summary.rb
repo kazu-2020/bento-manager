@@ -4,6 +4,8 @@ module Sales
   class AnalysisSummary
     include CustomerTypePivot
 
+    CUSTOMER_TYPES = %i[staff citizen].freeze
+
     # 当日を除くのは集計期間の都合ではなく売上分析そのものの性質である。
     # from / to に分解した入口は、その性質を持たない期間を素通しさせる
     def initialize(location:, period:)
@@ -11,37 +13,26 @@ module Sales
       @period = period
     end
 
-    # 顧客タイプ別の集計
-    # @return [Hash] { staff: { quantity:, amount: }, citizen: { quantity:, amount: } }
+    # 顧客タイプ別の集計。販売が無かった顧客タイプも 0 個として並べ、
+    # 呼び出し側にキーの有無を気にさせない
+    # @return [Hash] { staff: 個数, citizen: 個数 }
     def summary_by_customer_type
-      rows = bento_sales
-        .group(:customer_type)
-        .pluck(
-          :customer_type,
-          Arel.sql("SUM(sale_items.quantity)"),
-          Arel.sql("SUM(sale_items.line_total)")
-        )
+      totals = bento_sales.group(:customer_type).sum("sale_items.quantity")
 
-      rows.each_with_object(default_summary) do |(ct, qty, amount), hash|
-        hash[ct.to_sym] = { quantity: qty.to_i, amount: amount.to_i }
-      end
+      CUSTOMER_TYPES.index_with { |type| totals[type.to_s].to_i }
     end
 
     # 顧客タイプ別の弁当ランキング
-    # @return [Hash] { staff: [{ catalog_name:, quantity:, amount: }, ...], citizen: [...] }
+    # @return [Hash] { staff: [{ catalog_name:, quantity: }, ...], citizen: [...] }
     def ranking(limit: 5)
-      %i[staff citizen].each_with_object({}) do |type, hash|
+      CUSTOMER_TYPES.each_with_object({}) do |type, hash|
         hash[type] = bento_sales
           .where(customer_type: type)
           .group("catalogs.name")
           .order(Arel.sql("SUM(sale_items.quantity) DESC"))
           .limit(limit)
-          .pluck(
-            Arel.sql("catalogs.name"),
-            Arel.sql("SUM(sale_items.quantity)"),
-            Arel.sql("SUM(sale_items.line_total)")
-          )
-          .map { |name, qty, amount| { catalog_name: name, quantity: qty.to_i, amount: amount.to_i } }
+          .pluck("catalogs.name", Arel.sql("SUM(sale_items.quantity)"))
+          .map { |name, qty| { catalog_name: name, quantity: qty.to_i } }
       end
     end
 
@@ -75,13 +66,6 @@ module Sales
           .in_period(from, to)
           .joins(items: :catalog)
           .merge(Catalog.bento)
-    end
-
-    def default_summary
-      {
-        staff: { quantity: 0, amount: 0 },
-        citizen: { quantity: 0, amount: 0 }
-      }
     end
   end
 end

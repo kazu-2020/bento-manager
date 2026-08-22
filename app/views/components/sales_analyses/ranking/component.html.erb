@@ -19,7 +19,6 @@
                   <th class="w-8"></th>
                   <th><%= t(".catalog_header") %></th>
                   <th class="text-right"><%= t(".quantity_header") %></th>
-                  <th class="text-right"><%= t(".amount_header") %></th>
                 </tr>
               </thead>
               <tbody>
@@ -28,7 +27,6 @@
                     <td class="font-bold"><%= i + 1 %></td>
                     <td><%= entry[:catalog_name] %></td>
                     <td class="text-right font-bold"><%= entry[:quantity] %> <%= t(".quantity_unit") %></td>
-                    <td class="text-right text-base-content/60 text-xs"><%= helpers.number_to_currency(entry[:amount]) %></td>
                   </tr>
                 <% end %>
               </tbody>

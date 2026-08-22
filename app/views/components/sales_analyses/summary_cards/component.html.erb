@@ -5,7 +5,6 @@
       <div class="card-body p-4">
         <p class="text-xs text-base-content/60"><%= t(".total_label") %></p>
         <p class="text-3xl font-bold"><%= total_quantity %><span class="text-base font-normal"><%= t(".quantity_unit") %></span></p>
-        <p class="text-xs text-base-content/50"><%= t(".total_amount_caption", amount: helpers.number_to_currency(total_amount)) %></p>
       </div>
     </div>
 
@@ -13,8 +12,8 @@
     <div class="card bg-base-100 shadow-sm">
       <div class="card-body p-4">
         <p class="text-xs text-base-content/60"><%= t(".staff_label") %></p>
-        <p class="text-3xl font-bold text-staff"><%= data[:staff][:quantity] %><span class="text-base font-normal"><%= t(".quantity_unit") %></span></p>
-        <p class="text-xs text-base-content/50"><%= t(".ratio_caption", ratio: staff_ratio, amount: helpers.number_to_currency(data[:staff][:amount])) %></p>
+        <p class="text-3xl font-bold text-staff"><%= quantities[:staff] %><span class="text-base font-normal"><%= t(".quantity_unit") %></span></p>
+        <p class="text-xs text-base-content/50"><%= ratio_of(quantities[:staff]) %>%</p>
       </div>
     </div>
 
@@ -22,8 +21,8 @@
     <div class="card bg-base-100 shadow-sm">
       <div class="card-body p-4">
         <p class="text-xs text-base-content/60"><%= t("enums.sale.customer_type.citizen") %></p>
-        <p class="text-3xl font-bold text-citizen"><%= data[:citizen][:quantity] %><span class="text-base font-normal"><%= t(".quantity_unit") %></span></p>
-        <p class="text-xs text-base-content/50"><%= t(".ratio_caption", ratio: citizen_ratio, amount: helpers.number_to_currency(data[:citizen][:amount])) %></p>
+        <p class="text-3xl font-bold text-citizen"><%= quantities[:citizen] %><span class="text-base font-normal"><%= t(".quantity_unit") %></span></p>
+        <p class="text-xs text-base-content/50"><%= ratio_of(quantities[:citizen]) %>%</p>
       </div>
     </div>
   </div>
