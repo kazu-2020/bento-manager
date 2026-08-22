@@ -17,16 +17,13 @@ module SalesHistories
         summary[:best_day]
       end
 
-      def formatted_total_amount
-        helpers.number_to_currency(summary[:total_amount])
+      def total_quantity
+        summary[:total_quantity]
       end
 
-      def formatted_daily_average
-        helpers.number_to_currency(summary[:daily_average])
-      end
-
-      def formatted_best_day_amount
-        helpers.number_to_currency(best_day[:amount]) if best_day
+      # 1 個未満まで出すが、割り切れる月に 20.0 個と出しても読み手の役に立たない
+      def daily_average
+        helpers.number_with_precision(summary[:daily_average], precision: 1, strip_insignificant_zeros: true)
       end
 
       def best_day_label

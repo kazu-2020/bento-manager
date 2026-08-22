@@ -14,15 +14,15 @@ module SalesHistories
 
       WEEKDAY_NAMES = %w[日 月 火 水 木 金 土].freeze
 
-      def initialize(month:, daily_totals:, location:)
+      def initialize(month:, daily_quantities:, location:)
         @month = month
-        @daily_totals = daily_totals
+        @daily_quantities = daily_quantities
         @location = location
       end
 
       private
 
-      attr_reader :month, :daily_totals, :location
+      attr_reader :month, :daily_quantities, :location
 
       def weeks
         first_day = month.beginning_of_month
@@ -36,33 +36,24 @@ module SalesHistories
         date.month == month.month && date.year == month.year
       end
 
+      # 弁当が 1 個も売れなかった日は色をつけない。サラダしか売れていない日であり、
+      # 売れた日と同じ濃さで塗ると弁当の売れ方を読み違える
       def heat_level(date)
-        amount = daily_totals[date]
-        return 0 unless amount
+        quantity = daily_quantities[date]
+        return 0 if quantity.nil? || quantity.zero?
 
-        thresholds = compute_thresholds
-        case amount
-        when ...thresholds[0] then 1
-        when ...thresholds[1] then 2
-        when ...thresholds[2] then 3
-        when ...thresholds[3] then 4
-        else 5
-        end
+        compute_thresholds.count { |threshold| quantity >= threshold } + 1
       end
 
       def heat_class(date)
         HEAT_COLORS[heat_level(date)]
       end
 
-      def amount_display(date)
-        amount = daily_totals[date]
-        return nil unless amount
+      def quantity_display(date)
+        quantity = daily_quantities[date]
+        return nil unless quantity
 
-        if amount >= 10_000
-          "#{helpers.number_to_currency(amount / 1000.0, precision: 1, delimiter: "")}k"
-        else
-          helpers.number_to_currency(amount)
-        end
+        "#{quantity}#{t('.quantity_unit')}"
       end
 
       def daily_detail_path(date)
@@ -72,21 +63,20 @@ module SalesHistories
         )
       end
 
+      # 濃淡の境目は弁当が売れた日だけから取る。0 個の日を混ぜると、サラダしか
+      # 売れなかった日が増えるほど境目が下がり、少し売れた日まで濃く塗られる。
+      #
+      # 同じカードに並ぶ月次サマリの 1 日平均は、逆に 0 個の日も分母に数える。
+      # あちらは店を開けた日あたり何個売れるかを答える業務上の数字で、こちらは
+      # 色の解像度を保つための表示上の都合であり、母数が違ってよい（ADR-0006）
       def compute_thresholds
         @compute_thresholds ||= begin
-          values = daily_totals.values.sort
-          return [ 0, 0, 0, 0 ] if values.empty?
-          [
-            percentile(values, 20),
-            percentile(values, 40),
-            percentile(values, 60),
-            percentile(values, 80)
-          ]
+          values = daily_quantities.values.reject(&:zero?).sort
+          values.empty? ? [] : [ 20, 40, 60, 80 ].map { |pct| percentile(values, pct) }
         end
       end
 
       def percentile(sorted_values, pct)
-        return 0 if sorted_values.empty?
         k = (pct / 100.0 * (sorted_values.length - 1)).round
         sorted_values[k]
       end

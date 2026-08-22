@@ -3,16 +3,18 @@
 module SalesHistories
   module DailyDetailPanel
     class Component < Application::Component
-      def initialize(date:, location:, breakdown:, daily_total:)
+      # 販売数は弁当だけを数え、取引件数は全商品の取引を数える。同じ日を 2 つの
+      # 母集合で見せるのは、集計は弁当の売れ方を、件数はその日の商いを表すため（ADR-0006）
+      def initialize(date:, location:, breakdown:, transaction_count:)
         @date = date
         @location = location
         @breakdown = breakdown
-        @daily_total = daily_total
+        @transaction_count = transaction_count
       end
 
       private
 
-      attr_reader :date, :location, :breakdown, :daily_total
+      attr_reader :date, :location, :breakdown, :transaction_count
 
       def total_quantity
         breakdown.sum { |row| row[:total_quantity] }
