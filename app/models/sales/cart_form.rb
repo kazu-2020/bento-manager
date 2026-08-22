@@ -23,7 +23,10 @@ module Sales
 
     def initialize(location:, inventories:, discounts:, submitted: ::GhostForms::Submission.absent)
       @location = location
-      @discounts = discounts
+      # 注入された母集合はここでロードまで済ませる（未ロードで渡された場合の代償は
+      # Discount.active_with_discountable のコメント）。いまロード済みなのは下の
+      # build_coupon_quantities が先に map(&:id) を通るからにすぎず、呼び順に寄りかかっている
+      @discounts = discounts.to_a
       @submitted = submitted
       @items = build_items(inventories, submitted.values)
       @customer_type = submitted["customer_type"] || "staff"

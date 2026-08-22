@@ -57,11 +57,7 @@ module RefundFormBuildable
   end
 
   def set_inventories
-    @inventories = @location
-                      .today_inventories
-                      .eager_load(:catalog)
-                      .preload(catalog: Catalog::PRICING_ASSOCIATIONS)
-                      .merge(Catalog.category_order)
+    @inventories = @location.today_inventories.for_cart
   end
 
   def build_form(submitted = ::GhostForms::Submission.absent)

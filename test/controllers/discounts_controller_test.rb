@@ -24,6 +24,19 @@ class DiscountsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  # 割引を読むのは 1 経路だけ。一覧に並べる母集合である。空かどうかの判定が未ロードの
+  # relation に当たると、ここに存在確認だけの 1 本が乗る。そのあとカードの描画で本体を
+  # 読み直すので SQL が別物になり、クエリキャッシュにも吸収されない
+  test "割引一覧が割引を読むのは母集合の 1 経路だけ" do
+    login_as_employee(@employee)
+
+    assert_queries_match(/FROM ["`]discounts["`]/, count: 1) do
+      get discounts_path
+    end
+
+    assert_response :success
+  end
+
   test "admin can access show" do
     login_as_employee(@employee)
     get discount_path(@discount)
