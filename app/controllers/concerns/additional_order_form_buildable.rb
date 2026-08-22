@@ -2,14 +2,13 @@
 
 module AdditionalOrderFormBuildable
   extend ActiveSupport::Concern
+  # @location が無いと build_form の today_inventories が引けない。コントローラー側の
+  # include 順に委ねると書き忘れた側だけが素通しになるため、依存として宣言する
+  include PosLocationScoped
   include SubmittedParamsFilterable
   include SearchQueryFilterable
 
   private
-
-  def set_location
-    @location = Location.active.find(params[:location_id])
-  end
 
   def build_form(submitted = ::GhostForms::Submission.absent)
     catalogs = Catalog.bento.available.order(:kana)

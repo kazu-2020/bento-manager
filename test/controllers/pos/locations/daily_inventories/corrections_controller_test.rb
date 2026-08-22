@@ -300,6 +300,25 @@ module Pos
           assert_redirected_to new_pos_location_daily_inventory_path(@location)
         end
 
+        test "停止中の拠点では訂正ページが 404 になる" do
+          login_as_employee(@employee)
+          inactive_location = locations(:prefectural_office)
+
+          get new_pos_location_daily_inventories_correction_path(inactive_location)
+
+          assert_response :not_found
+        end
+
+        test "停止中の拠点には訂正を登録できない" do
+          login_as_employee(@employee)
+          inactive_location = locations(:prefectural_office)
+
+          post pos_location_daily_inventories_correction_path(inactive_location),
+               params: { inventory: { @bento_a.id.to_s => { selected: "1", stock: "20" } } }
+
+          assert_response :not_found
+        end
+
         private
 
         def start_sale

@@ -6,8 +6,6 @@ module Pos
       class FormStatesController < ApplicationController
         include AdditionalOrderFormBuildable
 
-        before_action :set_location
-
         def create
           @form = build_form(submitted_params(:ghost_order, form: ::AdditionalOrders::OrderForm))
 

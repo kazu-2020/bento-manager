@@ -3,7 +3,7 @@
 module Pos
   module Locations
     class SalesHistoryController < ApplicationController
-      before_action :set_location
+      include PosLocationScoped
 
       def index
         @sales = fetch_today_sales
@@ -11,10 +11,6 @@ module Pos
       end
 
       private
-
-      def set_location
-        @location = Location.active.find(params[:location_id])
-      end
 
       def fetch_today_sales
         @location.sales
