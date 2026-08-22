@@ -14,6 +14,11 @@ class DailyInventory < ApplicationRecord
 
   validate :available_stock_must_be_non_negative
 
+  # 弁当の在庫行だけに絞る。数えるのは弁当だけという業務境界は Sale 側と同じもので、
+  # 弁当販売履歴の消化率は分母をこのスコープで、分子を Sale.joining_bento_items で取る
+  # （ADR-0005 / ADR-0006）
+  scope :bento, -> { joins(:catalog).merge(Catalog.bento) }
+
   # POS のカート（販売・差額精算）が並べる在庫。商品カードは 1 件ごとに単価と
   # 価格ルールを引くため、catalog に PRICING_ASSOCIATIONS を載せておかないと
   # 並ぶ商品の数だけ問い合わせが増える。数量を動かすたびに Ghost Form が

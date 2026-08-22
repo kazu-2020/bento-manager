@@ -1,7 +1,10 @@
 ---
 ja:
   title: 日別 弁当販売数ヒートマップ
-  legend_low: 少
-  legend_high: 多
+  legend_scale: 消化率
+  legend_low: 低
+  legend_high: 高
+  legend_no_remaining_stock: 残数0
+  no_remaining_stock: 残数 0。買いに来た客を逃した可能性がある
   closed: 休
   quantity_unit: 個

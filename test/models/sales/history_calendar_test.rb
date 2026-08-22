@@ -57,6 +57,56 @@ module Sales
       assert_empty calendar.daily_quantities
     end
 
+    # --- daily_sell_through_rates ---
+
+    test "消化率はその日に積んだ弁当のうち売れた割合になる" do
+      # 3/2 は 3 個売れて残数 1。積んだのは 4 個
+      stock(on: date(2), remaining: 1)
+      # 3/9 は 5 個売れて残数 0。積んだ分を売り切っている
+      stock(on: date(9), remaining: 0)
+
+      result = @calendar.daily_sell_through_rates
+
+      assert_in_delta(0.75, result[date(2)])
+      assert_in_delta(1.0, result[date(9)])
+    end
+
+    test "弁当を積んで1個も売れなかった日の消化率は0になる" do
+      stock(on: date(5), remaining: 10)
+
+      assert_in_delta(0.0, @calendar.daily_sell_through_rates[date(5)])
+    end
+
+    test "消化率の分母にサイドメニューは入らない" do
+      stock(on: date(2), remaining: 1)
+      stock(on: date(2), catalog: catalogs(:salad), remaining: 6)
+
+      assert_in_delta(0.75, @calendar.daily_sell_through_rates[date(2)])
+    end
+
+    test "弁当を1個も積まなかった日は消化率を持たない" do
+      # サラダしか積まなかった日。分母が 0 なので率は定まらず、0% とも 100% とも言えない
+      stock(on: date(5), catalog: catalogs(:salad), remaining: 2)
+
+      assert_not_includes @calendar.daily_sell_through_rates.keys, date(5)
+    end
+
+    test "消化率は取消済みの販売を分子にも分母にも入れない" do
+      # 3/9 は確定 5 個・取消 3 個。取消で戻った在庫は残数 2 に含まれる
+      stock(on: date(9), remaining: 2)
+
+      assert_in_delta(5 / 7.0, @calendar.daily_sell_through_rates[date(9)])
+    end
+
+    test "消化率は他の販売先の在庫を含まない" do
+      stock(on: date(9), remaining: 0)
+      stock(on: date(9), remaining: 91, location: @other_location)
+
+      assert_in_delta(1.0, @calendar.daily_sell_through_rates[date(9)])
+      assert_in_delta(0.09, Sales::HistoryCalendar.new(location: @other_location, month: MONTH)
+        .daily_sell_through_rates[date(9)])
+    end
+
     # --- monthly_summary ---
 
     test "月間サマリーは販売日数・弁当の月合計・1日平均・最高日を返す" do
@@ -151,6 +201,18 @@ module Sales
 
     def date(day)
       Date.new(MONTH.year, MONTH.month, day)
+    end
+
+    # その日の販売が終わった時点の在庫。積んだ総数は保存されないため、
+    # テストも残数を置いて積んだ総数を復元させる
+    def stock(on:, remaining:, catalog: catalogs(:daily_bento_a), location: @location)
+      DailyInventory.create!(
+        location: location,
+        catalog: catalog,
+        inventory_date: on,
+        stock: remaining,
+        reserved_stock: 0
+      )
     end
 
     def sell(on:, customer_type:, quantity:, catalog_price: catalog_prices(:daily_bento_a_regular),
