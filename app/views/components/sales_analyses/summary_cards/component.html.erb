@@ -13,7 +13,7 @@
       <div class="card-body p-4">
         <p class="text-xs text-base-content/60"><%= t(".staff_label") %></p>
         <p class="text-3xl font-bold text-staff"><%= quantities[:staff] %><span class="text-base font-normal"><%= t(".quantity_unit") %></span></p>
-        <p class="text-xs text-base-content/50"><%= ratio_of(quantities[:staff]) %>%</p>
+        <p class="text-xs text-base-content/50"><%= ratio_of(quantities[:staff]) %><%= t(".ratio_unit") %></p>
       </div>
     </div>
 
@@ -22,7 +22,7 @@
       <div class="card-body p-4">
         <p class="text-xs text-base-content/60"><%= t("enums.sale.customer_type.citizen") %></p>
         <p class="text-3xl font-bold text-citizen"><%= quantities[:citizen] %><span class="text-base font-normal"><%= t(".quantity_unit") %></span></p>
-        <p class="text-xs text-base-content/50"><%= ratio_of(quantities[:citizen]) %>%</p>
+        <p class="text-xs text-base-content/50"><%= ratio_of(quantities[:citizen]) %><%= t(".ratio_unit") %></p>
       </div>
     </div>
   </div>
