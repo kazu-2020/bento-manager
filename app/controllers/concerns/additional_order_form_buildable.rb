@@ -6,6 +6,7 @@ module AdditionalOrderFormBuildable
   # include 順に委ねると書き忘れた側だけが素通しになるため、依存として宣言する
   include PosLocationScoped
   include SubmittedParamsFilterable
+  include SearchQueryFilterable
 
   private
 
@@ -19,7 +20,7 @@ module AdditionalOrderFormBuildable
       location: @location,
       catalogs: catalogs,
       stock_map: stock_map,
-      search_query: params[:search_query],
+      search_query: search_query_param,
       submitted: submitted
     )
   end

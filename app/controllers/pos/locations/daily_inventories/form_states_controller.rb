@@ -4,10 +4,7 @@ module Pos
   module Locations
     module DailyInventories
       class FormStatesController < ApplicationController
-        include PosLocationScoped
-        include SubmittedParamsFilterable
-
-        before_action :set_catalogs
+        include DailyInventoryFormBuildable
 
         def create
           @form = build_form(submitted_params(:ghost_inventory, form: ::DailyInventories::InventoryForm))
@@ -15,19 +12,6 @@ module Pos
           respond_to do |format|
             format.turbo_stream
           end
-        end
-
-        private
-
-        def set_catalogs
-          @catalogs = Catalog.available.category_order
-        end
-
-        def build_form(submitted)
-          ::DailyInventories::InventoryForm.new(
-            location: @location, catalogs: @catalogs,
-            search_query: params[:search_query], submitted: submitted
-          )
         end
       end
     end

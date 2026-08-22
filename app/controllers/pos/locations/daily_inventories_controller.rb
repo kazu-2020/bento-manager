@@ -3,10 +3,7 @@
 module Pos
   module Locations
     class DailyInventoriesController < ApplicationController
-      include PosLocationScoped
-      include SubmittedParamsFilterable
-
-      before_action :set_catalogs
+      include DailyInventoryFormBuildable
 
       def new
         if @location.has_today_inventory?
@@ -27,18 +24,6 @@ module Pos
           flash.now[:alert] = @form.errors.full_messages.first
           render :new, status: :unprocessable_entity
         end
-      end
-
-      private
-
-      def set_catalogs
-        @catalogs = Catalog.available.category_order
-      end
-
-      def build_form(submitted = ::GhostForms::Submission.absent)
-        ::DailyInventories::InventoryForm.new(
-          location: @location, catalogs: @catalogs, submitted: submitted
-        )
       end
     end
   end
