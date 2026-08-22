@@ -3,9 +3,9 @@
 module Pos
   module Locations
     class DailyInventoriesController < ApplicationController
+      include PosLocationScoped
       include SubmittedParamsFilterable
 
-      before_action :set_location
       before_action :set_catalogs
 
       def new
@@ -30,10 +30,6 @@ module Pos
       end
 
       private
-
-      def set_location
-        @location = Location.active.find(params[:location_id])
-      end
 
       def set_catalogs
         @catalogs = Catalog.available.category_order

@@ -5,9 +5,9 @@ module Pos
     module DailyInventories
       module Corrections
         class FormStatesController < ApplicationController
+          include PosLocationScoped
           include SubmittedParamsFilterable
 
-          before_action :set_location
           before_action :set_catalogs
 
           def create
@@ -22,10 +22,6 @@ module Pos
           end
 
           private
-
-          def set_location
-            @location = Location.active.find(params[:location_id])
-          end
 
           def set_catalogs
             @catalogs = Catalog.available_or_stocked_at(@location).category_order

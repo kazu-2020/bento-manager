@@ -3,9 +3,9 @@
 module Pos
   module Locations
     class SalesController < ApplicationController
+      include PosLocationScoped
       include SubmittedParamsFilterable
 
-      before_action :set_location
       before_action :set_inventories
       before_action :redirect_unless_inventories, only: :new
       before_action :set_discounts
@@ -42,10 +42,6 @@ module Pos
         return if @inventories.present?
 
         redirect_to new_pos_location_daily_inventory_path(@location)
-      end
-
-      def set_location
-        @location = Location.active.find(params[:location_id])
       end
 
       def set_inventories

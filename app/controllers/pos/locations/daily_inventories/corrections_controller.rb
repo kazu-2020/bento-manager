@@ -4,9 +4,9 @@ module Pos
   module Locations
     module DailyInventories
       class CorrectionsController < ApplicationController
+        include PosLocationScoped
         include SubmittedParamsFilterable
 
-        before_action :set_location
         before_action :set_catalogs
         before_action :redirect_unless_correctable, only: :new
         before_action :set_additional_order_quantities
@@ -28,10 +28,6 @@ module Pos
         end
 
         private
-
-        def set_location
-          @location = Location.active.find(params[:location_id])
-        end
 
         def set_catalogs
           @catalogs = Catalog.available_or_stocked_at(@location).category_order

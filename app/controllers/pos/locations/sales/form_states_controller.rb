@@ -4,9 +4,9 @@ module Pos
   module Locations
     module Sales
       class FormStatesController < ApplicationController
+        include PosLocationScoped
         include SubmittedParamsFilterable
 
-        before_action :set_location
         before_action :set_inventories
         before_action :set_discounts
 
@@ -19,10 +19,6 @@ module Pos
         end
 
         private
-
-        def set_location
-          @location = Location.active.find(params[:location_id])
-        end
 
         def set_inventories
           @inventories = @location

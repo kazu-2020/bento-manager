@@ -7,8 +7,11 @@ module RefundFormBuildable
   # 差額精算の入口はこの並びで守る。確定用と Ghost Form の 2 つの入口が同じ
   # フォームを組み立てるため（ghost-form-pattern.md ルール 3）、並べる責務を
   # コントローラーに置くと片方だけ素通しになる
+  #
+  # ここは @location が置かれた後から始まる。拠点を絞るのは Ghost Form と直交する
+  # 関心事なので、PosLocationScoped は各コントローラーがこの concern より先に
+  # include する（順序を違えると set_sale が @location を掴めず即座に落ちる）
   included do
-    before_action :set_location
     before_action :set_sale
     before_action :redirect_if_voided
     before_action :redirect_unless_sold_today
@@ -16,10 +19,6 @@ module RefundFormBuildable
   end
 
   private
-
-  def set_location
-    @location = Location.active.find(params[:location_id])
-  end
 
   # 明細側の catalog にも PRICING_ASSOCIATIONS を載せる。修正カートの母集合は「元の販売の商品 + 当日の
   # 在庫」なので、当日の在庫に無い商品を売っていた販売では、在庫側の catalog をいくら

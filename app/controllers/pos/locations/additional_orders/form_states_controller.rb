@@ -4,10 +4,8 @@ module Pos
   module Locations
     module AdditionalOrders
       class FormStatesController < ApplicationController
+        include PosLocationScoped
         include AdditionalOrderFormBuildable
-
-        before_action :set_location
-
         def create
           @form = build_form(submitted_params(:ghost_order, form: ::AdditionalOrders::OrderForm))
 

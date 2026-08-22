@@ -28,6 +28,12 @@ module Pos
         assert_redirected_to "/employee/login"
       end
 
+      test "停止中の拠点では販売履歴が 404 になる" do
+        get pos_location_sales_history_index_path(locations(:prefectural_office))
+
+        assert_response :not_found
+      end
+
       test "販売履歴は販売が増えても問い合わせ本数が増えない" do
         another_sale = -> do
           sale = Sale.create!(
