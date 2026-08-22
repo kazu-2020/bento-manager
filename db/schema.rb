@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_19_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_22_100000) do
   create_table "additional_orders", force: :cascade do |t|
     t.integer "catalog_id", null: false
     t.datetime "created_at", null: false
@@ -131,10 +131,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_19_100000) do
   create_table "employees", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "password_hash"
-    t.integer "status", default: 1, null: false
+    t.integer "status", default: 2, null: false
     t.datetime "updated_at", null: false
     t.string "username", null: false, collation: "NOCASE"
-    t.index [ "username" ], name: "index_employees_on_username", unique: true, where: "status IN (1, 2)"
+    t.index [ "username" ], name: "index_employees_on_username", unique: true, where: "status != 3"
   end
 
   create_table "locations", force: :cascade do |t|

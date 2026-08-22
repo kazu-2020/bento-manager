@@ -6,12 +6,12 @@ class Employee < ApplicationRecord
   has_many :refunds, dependent: :nullify
   has_many :additional_orders, dependent: :nullify
 
-  enum :status, { unverified: 1, verified: 2, closed: 3 }, validate: true
+  enum :status, { verified: 2, closed: 3 }, validate: true
 
-  # アカウント名のユニーク性は、closedステータスを除外して検証
-  # データベースの部分ユニークインデックス (status IN (1, 2)) と一致
-  # これにより、closedアカウントは同じアカウント名を持つことができ、
-  # closedアカウントのアカウント名は新しいアカウントで再利用可能
+  # アカウント名のユニーク性は、閉鎖したアカウントを除外して検証する。
+  # データベースの部分ユニークインデックス (status != 3) と同じ式である。
+  # これにより閉鎖したアカウントは同じアカウント名を持つことができ、
+  # そのアカウント名は新しい従業員が再び使える。
   validates :username, presence: true,
     format: { with: /\A[a-zA-Z0-9_]+\z/ },
     uniqueness: {

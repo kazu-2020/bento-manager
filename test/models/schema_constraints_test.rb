@@ -1,6 +1,6 @@
 require "test_helper"
 
-# DB レベルの CHECK 制約と外部キーの削除時挙動を検証する。
+# DB レベルの CHECK 制約・一意インデックス・外部キーの削除時挙動を検証する。
 #
 # モデルのバリデーションを迂回した書き込みでも台帳が壊れないことを保証するのが目的なので、
 # 書き込みには一貫して update_all を使う。update_column は attr_readonly を尊重するため
@@ -183,6 +183,17 @@ class SchemaConstraintsTest < ActiveSupport::TestCase
         effective_from: 2.months.ago, effective_until: 1.month.ago
       )
     end
+  end
+
+  test "ユーザー名は閉鎖していない従業員の間だけで一意になる" do
+    taken = employees(:verified_employee).username
+
+    assert_db_rejects(employees(:owner_employee), username: taken)
+
+    closed = employees(:closed_employee)
+    Employee.where(id: closed.id).update_all(username: taken)
+
+    assert_equal taken, closed.reload.username, "閉鎖したアカウントは同じユーザー名を持てる"
   end
 
   # ============================================================

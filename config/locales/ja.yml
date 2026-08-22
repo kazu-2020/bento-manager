@@ -185,7 +185,6 @@ ja:
   enums:
     employee:
       status:
-        unverified: "未認証"
         verified: "認証済み"
         closed: "閉鎖"
     location:
