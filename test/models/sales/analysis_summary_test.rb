@@ -16,15 +16,12 @@ module Sales
 
     # --- summary_by_customer_type ---
 
-    test "顧客タイプ別サマリーは職員と一般の販売数量・金額を集計する" do
+    test "顧客タイプ別サマリーは職員と一般の販売個数だけを集計する" do
       result = @summary.summary_by_customer_type
 
-      assert result.key?(:staff)
-      assert result.key?(:citizen)
-      assert_operator result[:staff][:quantity], :>, 0
-      assert_operator result[:citizen][:quantity], :>, 0
-      assert_operator result[:staff][:amount], :>, 0
-      assert_operator result[:citizen][:amount], :>, 0
+      assert_equal %i[staff citizen], result.keys
+      assert_operator result[:staff], :>, 0
+      assert_operator result[:citizen], :>, 0
     end
 
     # 集計を検証するので対象は自分で作る（.claude/rules/testing.md §5）。加えて
@@ -50,7 +47,7 @@ module Sales
         quantity: 1
       )
 
-      assert_equal 550, summary.summary_by_customer_type[:staff][:amount]
+      assert_equal 1, summary.summary_by_customer_type[:staff]
     end
 
     # 当日の販売は差額精算で変わりうるため、混ぜると同じ期間の数字が見るたびに動く。
@@ -68,8 +65,8 @@ module Sales
       result = @summary.summary_by_customer_type
 
       # analysis_pref_1 (県庁, staff) は含まれない
-      # 市役所の staff 金額のみ
-      staff_amount = result[:staff][:amount]
+      # 市役所の staff 個数のみ
+      staff_quantity = result[:staff]
 
       pref_summary = Sales::AnalysisSummary.new(
         location: locations(:prefectural_office),
@@ -77,7 +74,7 @@ module Sales
       )
       pref_result = pref_summary.summary_by_customer_type
 
-      assert_not_equal staff_amount, pref_result[:staff][:amount]
+      assert_not_equal staff_quantity, pref_result[:staff]
     end
 
     # --- 集計対象 ---
@@ -92,11 +89,11 @@ module Sales
       create_sale_item(sale:, quantity: 1)
       create_sale_item(sale:, quantity: 2, catalog_price: catalog_prices(:salad_regular))
 
-      assert_equal({ quantity: 1, amount: 550 }, summary.summary_by_customer_type[:staff])
+      assert_equal 1, summary.summary_by_customer_type[:staff]
       assert_equal [ catalogs(:daily_bento_a).name ], summary.ranking(limit: 10)[:staff].map { |e| e[:catalog_name] }
       assert_equal [ catalogs(:daily_bento_a).name ], summary.cross_table.map { |r| r[:catalog_name] }
       assert_equal(
-        summary.summary_by_customer_type.values.sum { |v| v[:quantity] },
+        summary.summary_by_customer_type.values.sum,
         summary.cross_table.sum { |r| r[:total_quantity] }
       )
     end
@@ -117,13 +114,11 @@ module Sales
       assert_equal catalogs(:daily_bento_a).name, top_staff[:catalog_name]
     end
 
-    test "ランキングの各行は商品名・数量・金額を含む" do
+    test "ランキングの各行は弁当名と販売個数だけを持つ" do
       result = @summary.ranking(limit: 5)
       entry = result[:staff].first
 
-      assert entry.key?(:catalog_name)
-      assert entry.key?(:quantity)
-      assert entry.key?(:amount)
+      assert_equal %i[catalog_name quantity], entry.keys
     end
 
     # --- cross_table ---
