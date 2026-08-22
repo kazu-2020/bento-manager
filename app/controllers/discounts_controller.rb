@@ -4,7 +4,7 @@ class DiscountsController < ApplicationController
   before_action :set_discount, only: %i[show edit update]
 
   def index
-    @discounts = Discount.preload(:discountable).order(created_at: :desc)
+    @discounts = Discount.with_discountable.order(created_at: :desc)
   end
 
   def show
@@ -20,7 +20,7 @@ class DiscountsController < ApplicationController
     @discount.discountable = Coupon.new(discount_params[:discountable])
 
     if @discount.save
-      @discounts = Discount.preload(:discountable).order(created_at: :desc)
+      @discounts = Discount.with_discountable.order(created_at: :desc)
     else
       render :new, status: :unprocessable_entity
     end
@@ -45,7 +45,7 @@ class DiscountsController < ApplicationController
   private
 
   def set_discount
-    @discount = Discount.preload(:discountable).find(params[:id])
+    @discount = Discount.with_discountable.find(params[:id])
   end
 
   # 新規作成時のパラメータ（全項目）

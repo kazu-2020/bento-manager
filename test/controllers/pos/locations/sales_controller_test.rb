@@ -5,6 +5,9 @@ require "test_helper"
 module Pos
   module Locations
     class SalesControllerTest < ActionDispatch::IntegrationTest
+      include QueryCountHelper
+      include ActiveCouponHelper
+
       fixtures :employees, :locations, :catalogs, :catalog_prices, :catalog_pricing_rules, :daily_inventories, :discounts, :coupons
 
       setup do
@@ -57,6 +60,34 @@ module Pos
         end
 
         assert_response :success
+      end
+
+      # 割引を読むのは 1 経路だけ。クーポンカードの母集合である有効な割引である。
+      # クーポンタブを並べるかどうかの判定が未ロードの relation に当たると、ここに
+      # 存在確認だけの 1 本が乗る。そのあとカードの描画で本体を読み直すので SQL が
+      # 別物になり、クエリキャッシュにも吸収されない
+      test "販売画面が割引を読むのは有効クーポンの 1 経路だけ" do
+        login_as_employee(@employee)
+
+        assert_queries_match(/FROM ["`]discounts["`]/, count: 1) do
+          get new_pos_location_sale_path(@location)
+        end
+
+        assert_response :success
+      end
+
+      # クーポンカードは 1 枚ごとに discount.discountable を読む。preload が外れると
+      # 有効なクーポンの種類ぶんだけ coupons への問い合わせが増える
+      test "販売画面は有効なクーポンの種類が増えても問い合わせ本数が増えない" do
+        login_as_employee(@employee)
+        more_coupon_types = -> { create_active_coupon }
+
+        assert_queries_unaffected_by(more_coupon_types, "有効なクーポンごとに読み込みが走っている") do
+          get new_pos_location_sale_path(@location)
+
+          # 経路が生きていることまで固定しないとガードが空振りする
+          assert_response :success
+        end
       end
 
       test "new returns 404 for inactive location" do

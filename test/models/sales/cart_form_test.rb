@@ -20,6 +20,14 @@ module Sales
       CartForm
     end
 
+    # ロード済みかどうかが初期化の呼び順に左右されないことを、ここで固定する
+    # （未ロードで返したときに何が起きるかは initialize のコメント）
+    test "割引の母集合はロード済みの配列で返る" do
+      form = CartForm.new(location: @location, inventories: @inventories, discounts: Discount.active_with_discountable)
+
+      assert_kind_of Array, form.discounts
+    end
+
     test "カートを構築し商品の数量・顧客種別・クーポンを入力できる" do
       form = CartForm.new(location: @location, inventories: @inventories, discounts: @discounts)
 
