@@ -29,8 +29,9 @@ module SalesHistories
         @completed_sales ||= sales.select(&:completed?)
       end
 
-      def total_amount
-        completed_sales.sum(&:total_amount)
+      # 数えるのは弁当だけ。取引一覧は全商品を金額つきで並べるため、この 2 つは一致しない（ADR-0006）
+      def total_quantity
+        completed_sales.sum(&:bento_quantity)
       end
 
       def total_transactions

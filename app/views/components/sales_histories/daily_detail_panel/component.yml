@@ -1,0 +1,10 @@
+---
+ja:
+  selected: 選択中
+  total_quantity: 弁当の販売数
+  transaction_count: 取引件数
+  breakdown_title: 商品別 内訳
+  empty: 弁当の販売はありません
+  show_all: この日の取引履歴を全件表示
+  quantity_unit: 個
+  transactions_unit: 件

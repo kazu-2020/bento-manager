@@ -7,34 +7,36 @@ class SalesHistories::CalendarHeatmapComponentTest < ViewComponent::TestCase
     @location = Location.create!(name: "ヒートマップテスト販売先", status: :active)
   end
 
-  test "1万円未満のマスは金額をそのまま、1万円以上は千円単位の k 表記で表示する" do
-    result = render_heatmap(Date.new(2026, 8, 3) => 9_999, Date.new(2026, 8, 4) => 12_345)
+  test "マスには弁当の販売数を個数で表示する" do
+    result = render_heatmap(Date.new(2026, 8, 3) => 3, Date.new(2026, 8, 4) => 24)
 
-    assert_equal [ "¥9,999", "¥12.3k" ], cell_amounts(result)
+    assert_equal [ "3個", "24個" ], cell_quantities(result)
   end
 
-  # k 表記は「千円単位」であることが読み取れるよう、千区切りを入れない
-  test "k 表記には桁区切りを入れない" do
-    result = render_heatmap(Date.new(2026, 8, 3) => 1_234_567)
+  # サラダしか売れなかった日。休日と区別しつつ、売れた日と同じ色では塗らない
+  test "弁当が0個の日はマスを出すが色をつけない" do
+    result = render_heatmap(Date.new(2026, 8, 3) => 0, Date.new(2026, 8, 4) => 5)
 
-    assert_equal [ "¥1234.6k" ], cell_amounts(result)
+    assert_equal [ "0個", "5個" ], cell_quantities(result)
+    assert_includes result.css("a").first["class"], "bg-base-200"
   end
 
-  test "マイナスの金額はマイナス記号が通貨記号の前に付く" do
-    result = render_heatmap(Date.new(2026, 8, 3) => -500, Date.new(2026, 8, 4) => -12_345)
+  test "販売のなかった日は休みとして描く" do
+    result = render_heatmap(Date.new(2026, 8, 3) => 5)
 
-    assert_equal [ "-¥500", "-¥12,345" ], cell_amounts(result)
+    assert_equal 1, result.css("a").size
+    assert_includes result.to_html, "休"
   end
 
   private
 
-  def render_heatmap(daily_totals)
+  def render_heatmap(daily_quantities)
     render_inline(SalesHistories::CalendarHeatmap::Component.new(
-      month: Date.new(2026, 8, 1), daily_totals: daily_totals, location: @location
+      month: Date.new(2026, 8, 1), daily_quantities: daily_quantities, location: @location
     ))
   end
 
-  def cell_amounts(result)
+  def cell_quantities(result)
     result.css("a div.opacity-80").map(&:text)
   end
 end

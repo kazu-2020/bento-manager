@@ -3,10 +3,16 @@
 require "test_helper"
 
 class SalesHistoriesControllerTest < ActionDispatch::IntegrationTest
-  fixtures :employees, :locations, :catalogs, :catalog_prices, :sales, :sale_items
+  include SaleTestHelper
+
+  # 集計対象は自分で作る。共有フィクスチャを数えると他テストクラスの販売が混ざる
+  fixtures :employees, :catalogs, :catalog_prices
+
+  SALAD_ONLY_ON = Date.new(2026, 3, 5)
 
   setup do
     login_as_employee(:verified_employee)
+    @location = Location.create!(name: "弁当販売履歴テスト販売先", status: :active)
   end
 
   # --- index ---
@@ -33,15 +39,31 @@ class SalesHistoriesControllerTest < ActionDispatch::IntegrationTest
   # --- show ---
 
   test "認証済みユーザーが日別の弁当販売履歴を開ける" do
-    get sales_history_path(1.day.ago.to_date.to_s, location_id: locations(:city_hall).id)
+    get sales_history_path(Date.current.to_s, location_id: @location.id)
 
     assert_response :success
     assert_select "title", /\A弁当販売履歴 /
     assert_select ".breadcrumbs a", "弁当販売履歴"
   end
 
+  test "サラダしか売れなかった日は弁当0個と表示し、取引一覧にはサラダを金額つきで並べる" do
+    sale = create_sale(
+      location: @location,
+      customer_type: :citizen,
+      sale_datetime: SALAD_ONLY_ON.in_time_zone.change(hour: 12)
+    )
+    create_sale_item(sale: sale, quantity: 1, catalog_price: catalog_prices(:salad_regular))
+
+    get sales_history_path(SALAD_ONLY_ON.to_s, location_id: @location.id)
+
+    assert_response :success
+    assert_select "p.text-2xl", text: "0個"
+    assert_select "table tbody tr td", text: "サラダ"
+    assert_select "table tbody tr td", text: "¥550"
+  end
+
   test "不正な日付パラメータではリダイレクトされる" do
-    get sales_history_path("invalid-date", location_id: locations(:city_hall).id)
+    get sales_history_path("invalid-date", location_id: @location.id)
 
     assert_redirected_to sales_histories_path
   end

@@ -1,0 +1,7 @@
+---
+ja:
+  total_quantity: 弁当の販売数
+  total_transactions: 取引件数
+  location: 出店先
+  quantity_unit: 個
+  transactions_unit: 件

@@ -58,14 +58,12 @@ module Sales
 
     # 売上分析が数える販売行。3 つの集計はこの母集合を共有する。
     # 集計ごとに条件を書くと、かつてサマリーだけがサイドメニューを含んで
-    # クロス集計表と合計が食い違ったように、また粒度が分かれる。
-    # 1 行は販売ではなく販売 × 弁当なので、件数を数える用途には使えない
+    # クロス集計表と合計が食い違ったように、また粒度が分かれる
     def bento_sales
       Sale.completed
           .at_location(location)
           .in_period(from, to)
-          .joins(items: :catalog)
-          .merge(Catalog.bento)
+          .joining_bento_items
     end
   end
 end

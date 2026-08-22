@@ -17,16 +17,12 @@ module SalesHistories
         summary[:best_day]
       end
 
-      def formatted_total_amount
-        helpers.number_to_currency(summary[:total_amount])
+      def total_quantity
+        summary[:total_quantity]
       end
 
-      def formatted_daily_average
-        helpers.number_to_currency(summary[:daily_average])
-      end
-
-      def formatted_best_day_amount
-        helpers.number_to_currency(best_day[:amount]) if best_day
+      def daily_average
+        summary[:daily_average]
       end
 
       def best_day_label

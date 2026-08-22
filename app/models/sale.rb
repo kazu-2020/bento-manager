@@ -21,6 +21,11 @@ class Sale < ApplicationRecord
   scope :in_period, ->(from, to) { where(sale_datetime: from..to) }
   scope :at_location, ->(location) { where(location: location) }
 
+  # 弁当の販売行だけに絞る。数えるのは弁当だけという業務境界の唯一の定義であり、
+  # 弁当販売分析と弁当販売履歴はこのスコープを共有する（ADR-0005 / ADR-0006）。
+  # 1 行は販売ではなく販売 × 弁当なので、件数を数える用途には使えない
+  scope :joining_bento_items, -> { joins(items: :catalog).merge(Catalog.bento) }
+
   validates :sale_datetime, presence: true
   validates :customer_type, presence: true
   validates :total_amount, presence: true, numericality: { greater_than_or_equal_to: 0 }
@@ -112,5 +117,15 @@ class Sale < ApplicationRecord
         voided_by_employee: voided_by
       )
     end
+  end
+
+  # この販売で売れた弁当の個数。サイドメニューは数えない（ADR-0006）
+  #
+  # 取引一覧のように全商品を並べる経路と同じ preload 済みの items から数えるため、
+  # SQL ではなく Ruby 側で絞る
+  #
+  # @return [Integer]
+  def bento_quantity
+    items.sum { |item| item.catalog.bento? ? item.quantity : 0 }
   end
 end

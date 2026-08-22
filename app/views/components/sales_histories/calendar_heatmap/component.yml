@@ -1,0 +1,7 @@
+---
+ja:
+  title: 日別販売数ヒートマップ
+  legend_low: 少
+  legend_high: 多
+  closed: 休
+  quantity_unit: 個
