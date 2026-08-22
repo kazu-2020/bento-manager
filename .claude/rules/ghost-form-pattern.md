@@ -38,16 +38,33 @@ Ghost Form 側の input 名は必ずメインフォームと対応させるこ�
 
 ```
 cart[<catalog_id>][quantity]        → ghost_cart[<catalog_id>][quantity]
-refund[items][<id>][quantity]       → ghost_refund[items][<id>][quantity]
+refund[corrected][<id>][quantity]   → ghost_refund[corrected][<id>][quantity]
 ```
+
+**対象レコードの id は、両方の送信先とも URL で持つ。** 差額精算は `sale_id` で対象の販売を
+指す唯一の画面で（他の 4 画面は `location` だけで足り、path に含まれる）、これをメインフォームに
+hidden で持たせると誰も読まない `ghost_sale_id` が要ることになる。Ghost Form の送信先 URL は
+既に `sale_id` を持っているためである。2 つの URL は `Refunds::RefundForm` に隣り合わせで置く
+（`form_with_options` / `form_state_options`）。片方だけ落とすと、確定と再描画のどちらかが
+`sale_id` を失って 404 になる（`set_sale` の `find(nil)` が `RecordNotFound`）。
+別の販売が拾われる経路は無い。
+
+**ただし `ghost_` の付かない入力が正当な画面もある。** 当日在庫・在庫訂正・追加発注の
+検索欄は、メインフォーム側が `search_field_tag :search_query`、Ghost Form 側が
+**プレフィックス無しの** `hidden_field_tag :search_query` で、`search_form_controller.js` が
+転写を介さず直接書き込む。ユーザーが打ち込む欄なので URL には載せられない。
+在庫訂正は当日在庫と同じ `pos/daily_inventories/new_form` を描くので、検索欄も同じ 1 つである。
+この 3 画面に `assert_ghost_inputs_correspond` を当てるときは、この 1 件をどう扱うかを
+先に決めること（未着手。素直に当てると `missing: search_query` で落ちる）。
 
 対応関係はメインフォーム側（`product_card` / `coupon_card` / `submit_button`）と Ghost Form 側の
 **別々の ERB リテラル**で決まるため、片方をリネームしても例外は出ない。実 ERB をレンダリングして
 機械的に突き合わせる
 [`GhostFormCorrespondenceHelper`](test/support/ghost_form_correspondence_helper.rb) があるので、
 Ghost Form を持つ画面には `assert_ghost_inputs_correspond` を呼ぶテストを 1 本置くこと。
-現在の適用は販売画面のみ（[new_form_component_test.rb](test/components/pos/sales/new_form_component_test.rb)）で、
-差額精算・当日在庫・在庫訂正・追加発注は未適用。
+現在の適用は販売画面（[new_form_component_test.rb](test/components/pos/sales/new_form_component_test.rb)）と
+差額精算画面（[new_page_component_test.rb](test/components/pos/refunds/new_page_component_test.rb)）で、
+当日在庫・在庫訂正・追加発注は未適用。
 
 配線は Stimulus コントローラー2つの組み合わせで行う。
 

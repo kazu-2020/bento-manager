@@ -1,10 +1,10 @@
-<% content_for(:title, "販売履歴 #{I18n.l(date, format: :long)}") %>
+<% content_for(:title, "#{screen_name} #{I18n.l(date, format: :long)}") %>
 
 <div class="space-y-6">
   <%# パンくず %>
   <div class="text-sm breadcrumbs">
     <ul>
-      <li><%= link_to "販売履歴", back_path %></li>
+      <li><%= link_to screen_name, back_path %></li>
       <li><%= date.strftime("%Y年%m月") %></li>
       <li><%= I18n.l(date, format: :long) %></li>
     </ul>

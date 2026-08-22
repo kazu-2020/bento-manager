@@ -4,19 +4,14 @@ module Pos
   module Refunds
     module GhostForm
       class Component < Application::Component
-        def initialize(form:, sale:, location:)
+        def initialize(form:)
           @form = form
-          @sale = sale
-          @location = location
         end
 
-        attr_reader :form, :sale, :location
+        attr_reader :form
 
-        delegate :corrected_items, :coupon_quantities, :available_discounts, to: :form
-
-        def form_state_url
-          helpers.pos_location_refunds_form_state_path(location, sale_id: sale.id)
-        end
+        delegate :form_state_options, :corrected_items, :coupon_quantities,
+                 :available_discounts, to: :form
       end
     end
   end
