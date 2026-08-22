@@ -78,6 +78,20 @@ module Pos
           assert_match(/id="order-item-#{bento_b.id}"[^>]*class="hidden"/, response.body)
         end
 
+        # Ghost Form 側はこの PR 以前から素通しだった。search_query[]=a のような
+        # 非スカラーが届くと search_query&.strip が NoMethodError で 500 に化ける
+        test "検索語として読めないパラメータは絞り込み無しとして扱う" do
+          login_as_employee(@employee)
+
+          post pos_location_additional_orders_form_state_path(@location),
+               params: { search_query: [ "a" ] },
+               headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+          assert_response :success
+          # 絞り込み無しとして扱われるので、どのカードも hidden にならない
+          assert_no_match(/id="order-item-\d+"[^>]*class="hidden"/, response.body)
+        end
+
         test "returns 404 for inactive location" do
           login_as_employee(@employee)
           inactive_location = locations(:prefectural_office)

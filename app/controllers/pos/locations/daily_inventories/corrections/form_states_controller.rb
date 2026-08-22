@@ -5,10 +5,7 @@ module Pos
     module DailyInventories
       module Corrections
         class FormStatesController < ApplicationController
-          include SubmittedParamsFilterable
-
-          before_action :set_location
-          before_action :set_catalogs
+          include DailyInventoryCorrectionFormBuildable
 
           def create
             @form = build_form(submitted_params(:ghost_inventory, form: ::DailyInventories::CorrectionForm))
@@ -19,23 +16,6 @@ module Pos
                 render "pos/locations/daily_inventories/form_states/create"
               end
             end
-          end
-
-          private
-
-          def set_location
-            @location = Location.active.find(params[:location_id])
-          end
-
-          def set_catalogs
-            @catalogs = Catalog.available_or_stocked_at(@location).category_order
-          end
-
-          def build_form(submitted)
-            ::DailyInventories::CorrectionForm.new(
-              location: @location, catalogs: @catalogs,
-              search_query: params[:search_query], submitted: submitted
-            )
           end
         end
       end

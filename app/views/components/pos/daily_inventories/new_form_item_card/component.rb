@@ -4,17 +4,20 @@ module Pos
   module DailyInventories
     module NewFormItemCard
       class Component < Application::Component
-        def initialize(item:, hidden: false)
+        def initialize(item:, form:)
           @item = item
-          @hidden = hidden
+          @form = form
         end
 
-        attr_reader :item
+        attr_reader :item, :form
 
         delegate :catalog_id, :catalog_name, :selected?, :stock, to: :item
 
+        # 絞り込みの判断はカードが form に聞く。真偽値を呼び出し側に計算させると、
+        # フルページ描画と turbo_stream のどちらかが渡し忘れても例外にならず、
+        # その経路だけ絞り込みが効かないまま黙って出る
         def hidden?
-          @hidden
+          !form.visible?(item)
         end
 
         def dom_id

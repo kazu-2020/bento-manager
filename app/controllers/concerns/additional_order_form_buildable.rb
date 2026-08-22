@@ -3,6 +3,7 @@
 module AdditionalOrderFormBuildable
   extend ActiveSupport::Concern
   include SubmittedParamsFilterable
+  include SearchQueryFilterable
 
   private
 
@@ -20,7 +21,7 @@ module AdditionalOrderFormBuildable
       location: @location,
       catalogs: catalogs,
       stock_map: stock_map,
-      search_query: params[:search_query],
+      search_query: search_query_param,
       submitted: submitted
     )
   end

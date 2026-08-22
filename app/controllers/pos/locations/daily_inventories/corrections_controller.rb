@@ -4,10 +4,8 @@ module Pos
   module Locations
     module DailyInventories
       class CorrectionsController < ApplicationController
-        include SubmittedParamsFilterable
+        include DailyInventoryCorrectionFormBuildable
 
-        before_action :set_location
-        before_action :set_catalogs
         before_action :redirect_unless_correctable, only: :new
         before_action :set_additional_order_quantities
 
@@ -29,14 +27,6 @@ module Pos
 
         private
 
-        def set_location
-          @location = Location.active.find(params[:location_id])
-        end
-
-        def set_catalogs
-          @catalogs = Catalog.available_or_stocked_at(@location).category_order
-        end
-
         # 訂正は当日在庫があり、かつ販売開始前でなければ行えない。
         # 数量を入れ直したあとで拒否されるのを避けるため、入口で弾く。
         def redirect_unless_correctable
@@ -55,12 +45,6 @@ module Pos
           @additional_order_quantities = AdditionalOrder.quantities_by_catalog_id(
             location: @location,
             since: @location.today_inventories.minimum(:created_at)
-          )
-        end
-
-        def build_form(submitted = ::GhostForms::Submission.absent)
-          ::DailyInventories::CorrectionForm.new(
-            location: @location, catalogs: @catalogs, submitted: submitted
           )
         end
       end

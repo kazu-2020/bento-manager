@@ -60,7 +60,7 @@ module Pos
         end
 
         def render_item_card(item)
-          render Pos::DailyInventories::NewFormItemCard::Component.new(item: item)
+          render Pos::DailyInventories::NewFormItemCard::Component.new(item: item, form: form)
         end
 
         def render_submit_button
