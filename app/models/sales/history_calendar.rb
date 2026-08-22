@@ -23,6 +23,16 @@ module Sales
 
     # その日の弁当の売れ方。積んだ総数と売れた個数の組で、消化率も残数もここから答える
     DailySellThrough = Data.define(:loaded, :sold) do
+      # 積まなかった日は率そのものが無い。不在で表すという約束（ADR-0008）を型の側でも守る。
+      # loaded が 0 だと rate が NaN になり、zero? も閾値の比較もすべて false を返すため、
+      # ヒートマップのガードを素通りして最薄の色がつく。remaining_stock も 0 になるので
+      # 残数 0 の警告印まで出る
+      def initialize(loaded:, sold:)
+        raise ArgumentError, "積んだ総数が 0 の日は消化率を持てない" unless loaded.positive?
+
+        super
+      end
+
       # @return [Float] 0.0〜1.0
       def rate
         sold / loaded.to_f
@@ -55,7 +65,9 @@ module Sales
           next if remaining_stock.nil?
 
           loaded = remaining_stock + sold
-          [ date, DailySellThrough.new(loaded: loaded, sold: sold) ] unless loaded.zero?
+          next unless loaded.positive?
+
+          [ date, DailySellThrough.new(loaded: loaded, sold: sold) ]
         end.to_h
       end
     end

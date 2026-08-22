@@ -89,6 +89,16 @@ module Sales
       assert_in_delta(0.0, result[date(5)].rate)
     end
 
+    test "積んでいない日の売れ方は組み立てられない" do
+      # 率が NaN になり、色をつけないためのガードも残数 0 の判定もすべて素通りする。
+      # 率が定まらないことは不在で表す（ADR-0008）という約束を型の側でも守る
+      error = assert_raises(ArgumentError) do
+        Sales::HistoryCalendar::DailySellThrough.new(loaded: 0, sold: 0)
+      end
+
+      assert_match(/積んだ総数/, error.message)
+    end
+
     test "当日在庫の記録が残っていない日は消化率を持たない" do
       # 在庫の記録が無い日を「残数 0 で売り切った日」と読むと、客を逃した日として
       # 名指ししてしまう。積んだ数が分からない日は率も分からない
