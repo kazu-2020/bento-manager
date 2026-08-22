@@ -41,11 +41,18 @@ cart[<catalog_id>][quantity]        → ghost_cart[<catalog_id>][quantity]
 refund[corrected][<id>][quantity]   → ghost_refund[corrected][<id>][quantity]
 ```
 
-**対象レコードの id をメインフォームに hidden で持たせない。** Ghost Form の送信先 URL は
-既にその id を持っているため（`.../refunds/form_state?sale_id=1`）、転写しても誰も読まない
-入力が 1 つ増えるだけになり、`assert_ghost_inputs_correspond` にだけ辻褄合わせを迫る。
-メインフォーム側も URL に載せて、両者の持ち方を揃えること
-（`Refunds::RefundForm#form_with_options`）。
+**対象レコードの id は、両方の送信先とも URL で持つ。** 差額精算は `sale_id` で対象の販売を
+指す唯一の画面で（他の 4 画面は `location` だけで足り、path に含まれる）、これをメインフォームに
+hidden で持たせると誰も読まない `ghost_sale_id` が要ることになる。Ghost Form の送信先 URL は
+既に `sale_id` を持っているためである。2 つの URL は `Refunds::RefundForm` に隣り合わせで置く
+（`form_with_options` / `form_state_options`）。片方だけ落とすと、確定と再描画が別の販売を指す。
+
+**ただし `ghost_` の付かない入力が正当な画面もある。** 当日在庫と追加発注の検索欄は、
+メインフォーム側が `search_field_tag :search_query`、Ghost Form 側が**プレフィックス無しの**
+`hidden_field_tag :search_query` で、`search_form_controller.js` が転写を介さず直接書き込む。
+ユーザーが打ち込む欄なので URL には載せられない。この 2 画面に
+`assert_ghost_inputs_correspond` を当てるときは、この 1 件をどう扱うかを先に決めること
+（未着手。素直に当てると `missing: search_query` で落ちる）。
 
 対応関係はメインフォーム側（`product_card` / `coupon_card` / `submit_button`）と Ghost Form 側の
 **別々の ERB リテラル**で決まるため、片方をリネームしても例外は出ない。実 ERB をレンダリングして

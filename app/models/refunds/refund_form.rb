@@ -79,11 +79,15 @@ module Refunds
       @available_discounts ||= Discount.active_with_discountable.to_a
     end
 
-    # 対象の販売は URL で持つ。メインフォームに hidden で持たせると Ghost Form 側に
-    # ghost_sale_id の受け皿が要ることになるが、Ghost Form の送信先 URL は既に
-    # sale_id を持っているため、転写しても誰も読まない入力が 1 つ増えるだけになる
+    # 対象の販売は 2 つの送信先とも URL で持つ。メインフォームに hidden で持たせない理由は
+    # .claude/rules/ghost-form-pattern.md のルール 2 を参照。片方だけ sale_id を落とすと
+    # 確定と再描画で別の販売を指すため、2 つは必ず隣に並べておく
     def form_with_options
       { url: pos_location_refunds_path(location, sale_id: sale.id), method: :post }
+    end
+
+    def form_state_options
+      { url: pos_location_refunds_form_state_path(location, sale_id: sale.id), method: :post }
     end
 
     private

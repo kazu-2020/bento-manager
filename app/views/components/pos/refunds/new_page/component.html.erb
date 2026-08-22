@@ -6,7 +6,7 @@
     <%# 差額精算フォーム %>
     <%= form_with **form_with_options,
                   class: "flex flex-col flex-1 min-h-0",
-                  data: { ghost_form_target: "originalForm" } do |f| %>
+                  data: { ghost_form_target: "originalForm" } do %>
       <div data-controller="tabs" class="flex flex-col flex-1 min-h-0">
         <%# 元の販売内容（折りたたみ） %>
         <div class="shrink-0 px-3 pt-2">
@@ -69,7 +69,7 @@
   </div>
 
   <%# Ghost Form %>
-  <%= component "pos/refunds/ghost_form", form: form, sale: sale, location: location %>
+  <%= component "pos/refunds/ghost_form", form: form %>
 
   <%# モバイル用フッターナビゲーション %>
   <%= component "pos/dock", location: location, current_path: helpers.request.path %>

@@ -17,10 +17,9 @@ module Pos
       @bento_a = catalogs(:daily_bento_a)
     end
 
-    # 差額精算も販売と同じ Ghost Form パターンだが、配線は別々の ERB とコントローラーで
-    # 組まれている（数量入力は change->refund-cart#toggle、再描画の target は
-    # corrected-item-* / refund-preview / refund-submit-button）。販売画面の system テストが
-    # 通っても、こちらが生きている保証にはならない。
+    # 差額精算も販売と同じ Ghost Form パターンだが、数量入力の data-action も
+    # turbo_stream の target も、販売画面とは別々の ERB リテラルで組まれている。
+    # 販売画面の system テストが通っても、こちらが生きている保証にはならない。
     #
     # 入力名の対応（メインフォームと ghost_ 付き input）はブラウザを使わずに守れるので、
     # ここでは踏まない。new_page_component_test.rb の assert_ghost_inputs_correspond が見る
@@ -38,9 +37,9 @@ module Pos
         click_on "増やす"
       end
 
-      # 弁当A x2(1,100円) - クーポン50円 = 1,050円。元の会計 500 円との差額は 550 円の追加請求
+      # 金額そのものは踏まない（価格計算はモデルのテストの担当）。差額の向きを表す見出しが
+      # 出たことだけを見れば、refund-preview の差し替えが届いたと分かる
       assert_selector "#refund-preview", text: "追加請求額"
-      assert_selector "#refund-preview", text: "¥550"
 
       # 2 回目は「最初の更新のあとも操作が効き続けるか」を見る。数量入力は turbo_stream で
       # corrected-item-* ごと差し替わるため、差し替え後の input にも data-action が
@@ -49,14 +48,13 @@ module Pos
         click_on "増やす"
       end
 
-      # 見るのは追加請求額（¥1,100）ではなく修正後合計。追加請求額は 1 回目の更新で
-      # 描かれた明細（弁当A x2 = ¥1,100）と同じ文字列になるため、2 回目が無言で
-      # 効かなくても素通りしてしまう
-      assert_selector "#refund-preview", text: "¥1,600"
+      # 見るのはサーバーが描き直した明細の個数。入力欄の値は stepper が往復前に
+      # 書き換えるので、2 回目が届かなくても 3 になり、素通りしてしまう
+      assert_selector "#refund-preview", text: "日替わり弁当A x3"
 
       # ボタンの文言は差額の向きで変わる。押せる文言になっていること自体が、
       # refund-submit-button の差し替えが届いた証拠になる
-      assert_difference -> { Refund.count }, 1 do
+      assert_difference "Refund.count", 1 do
         click_on "追加請求を確定"
 
         assert_text "追加請求が完了しました"

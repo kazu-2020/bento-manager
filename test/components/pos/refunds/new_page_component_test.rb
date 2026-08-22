@@ -35,8 +35,9 @@ class Pos::Refunds::NewPageComponentTest < ViewComponent::TestCase
   # 実際にそのキーを組み立てられるかは通らない。詳細は
   # test/support/ghost_form_correspondence_helper.rb を参照
   test "差額精算画面の入力は、すべて Ghost Form 側に ghost_ 付きの受け皿を持つ" do
-    sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ],
-                       discount_quantities: { discounts(:fifty_yen_discount).id => 1 })
+    # 検査するのは input の名前だけ。クーポンの入力名は available_discounts から出るので、
+    # 元の販売にクーポンを適用しても母集合は変わらない
+    sale = record_sale([ { catalog: @catalog_bento_a, quantity: 1 } ])
     # 修正カートの母集合は「元の販売の商品 + 当日の在庫」。在庫を渡さないと
     # 母集合が元の販売の 1 品だけに痩せ、当日在庫だけに居る商品の入力名を検査できない
     form = ::Refunds::RefundForm.new(

@@ -27,5 +27,5 @@
 
 <%# Ghost Form 更新 %>
 <%= turbo_stream.replace "ghost-form" do %>
-  <%= component "pos/refunds/ghost_form", form: @form, sale: @sale, location: @location %>
+  <%= component "pos/refunds/ghost_form", form: @form %>
 <% end %>
