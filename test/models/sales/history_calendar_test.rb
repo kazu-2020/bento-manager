@@ -105,6 +105,21 @@ module Sales
       assert_equal [], @calendar.daily_breakdown(date(3))
     end
 
+    # --- bento_quantity ---
+
+    test "指定日の弁当の個数はサラダを数えない" do
+      assert_equal 3, @calendar.bento_quantity(date(2))
+      assert_equal 0, @calendar.bento_quantity(date(5)), "サラダしか売れなかった日は0個"
+    end
+
+    test "指定日の弁当の個数は取消済みの販売を含まない" do
+      assert_equal 5, @calendar.bento_quantity(date(9))
+    end
+
+    test "販売がない日の弁当の個数は0になる" do
+      assert_equal 0, @calendar.bento_quantity(date(3))
+    end
+
     # --- transaction_count ---
 
     test "取引件数は弁当で絞らず、その日の取引の数を返す" do

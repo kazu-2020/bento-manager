@@ -52,6 +52,15 @@ module Sales
       pivot_by_customer_type(rows)
     end
 
+    # 指定日に売れた弁当の個数
+    #
+    # @return [Integer]
+    def bento_quantity(date)
+      completed_sales(*day_range(date))
+        .joining_bento_items
+        .sum("sale_items.quantity")
+    end
+
     # 指定日の取引件数
     #
     # 取引の件数であって商品の数ではないため、弁当で絞らない。サラダしか売れなかった日も

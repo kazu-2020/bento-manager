@@ -211,20 +211,4 @@ class SaleTest < ActiveSupport::TestCase
 
     assert_empty no_coupon_sale.applied_discount_quantities
   end
-  # --- bento_quantity ---
-
-  test "販売で売れた弁当の個数はサイドメニューを数えない" do
-    sale = create_sale(location: locations(:city_hall), customer_type: :staff, sale_datetime: Time.current)
-    create_sale_item(sale: sale, quantity: 2)
-    create_sale_item(sale: sale, quantity: 3, catalog_price: catalog_prices(:salad_regular))
-
-    assert_equal 2, sale.bento_quantity
-  end
-
-  test "サラダしか売れなかった販売の弁当の個数は0になる" do
-    sale = create_sale(location: locations(:city_hall), customer_type: :citizen, sale_datetime: Time.current)
-    create_sale_item(sale: sale, quantity: 1, catalog_price: catalog_prices(:salad_regular))
-
-    assert_equal 0, sale.bento_quantity
-  end
 end

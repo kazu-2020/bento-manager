@@ -118,14 +118,4 @@ class Sale < ApplicationRecord
       )
     end
   end
-
-  # この販売で売れた弁当の個数。サイドメニューは数えない（ADR-0006）
-  #
-  # 取引一覧のように全商品を並べる経路と同じ preload 済みの items から数えるため、
-  # SQL ではなく Ruby 側で絞る
-  #
-  # @return [Integer]
-  def bento_quantity
-    items.sum { |item| item.catalog.bento? ? item.quantity : 0 }
-  end
 end

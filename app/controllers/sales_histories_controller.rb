@@ -27,10 +27,16 @@ class SalesHistoriesController < ApplicationController
                  .preload(items: :catalog)
                  .order(:sale_datetime)
 
+    # 数えるのは弁当だけ、並べるものは全部。母集合が違うので、一覧に渡す @sales とは
+    # 別に集計オブジェクトから受け取る（ADR-0006）
+    calendar = Sales::HistoryCalendar.new(location: @location, month: @date)
+
     render SalesHistories::ShowPage::Component.new(
       date: @date,
       location: @location,
-      sales: @sales
+      sales: @sales,
+      total_quantity: calendar.bento_quantity(@date),
+      total_transactions: calendar.transaction_count(@date)
     )
   end
 
