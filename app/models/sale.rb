@@ -72,6 +72,23 @@ class Sale < ApplicationRecord
     completed? && sold_today?
   end
 
+  # この販売に実際に適用されたクーポンの枚数
+  #
+  # 要求枚数ではない。弁当の数を超えて要求された分は Sales::PriceCalculator が
+  # 頭打ちにし、0 枚に落ちた割引は行ごと残らないため、Sales::Recorder や
+  # Sales::Refunder が受け取る discount_quantities:（要求枚数）とは別の量になる。
+  #
+  # 差額精算のフォーム（枚数入力の初期値）と Sales::Refunder（引き継ぐ枚数）が同じ
+  # 問いを投げるため、答えはここ 1 箇所に置く。両者が別々の答えを返すと、
+  # Sales::Recorder に渡る値が食い違い精算金額がずれる。
+  # 同じ関連を読む Refunds::Preview がここに乗らないのは、返却クーポンの表示に
+  # 割引名が要り、ID と枚数だけの Hash では答えられないため。
+  #
+  # @return [Hash{Integer => Integer}] 割引 ID と適用枚数の Hash
+  def applied_discount_quantities
+    sale_discounts.to_h { |sd| [ sd.discount_id, sd.quantity ] }
+  end
+
   # 販売を取り消す
   #
   # 取消済みかどうかの判定は、必ずトランザクション内で reload してから行う

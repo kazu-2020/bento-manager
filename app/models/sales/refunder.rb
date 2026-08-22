@@ -78,8 +78,6 @@ module Sales
     def create_corrected_sale(original_sale, corrected_items, employee, discount_quantities)
       return nil if corrected_items.empty?
 
-      effective_discount_quantities = discount_quantities || extract_discount_quantities(original_sale)
-
       Sales::Recorder.new.record(
         {
           location: original_sale.location,
@@ -87,16 +85,8 @@ module Sales
           employee: employee
         },
         corrected_items,
-        discount_quantities: effective_discount_quantities
+        discount_quantities: discount_quantities || original_sale.applied_discount_quantities
       )
-    end
-
-    # 元の Sale から適用されていた割引 ID と枚数を抽出
-    #
-    # @param sale [Sale] 元の販売レコード
-    # @return [Hash{Integer => Integer}] 割引 ID と枚数の Hash
-    def extract_discount_quantities(sale)
-      sale.sale_discounts.pluck(:discount_id, :quantity).to_h
     end
 
     # 差額を計算（正=返金、負=追加徴収、0=等価交換）
