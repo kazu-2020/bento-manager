@@ -28,7 +28,7 @@ module Sidebar
 
     def menu_item_class(item)
       base = "flex items-center gap-3"
-      active?(item) ? "#{base} active bg-primary/10 text-primary font-medium" : base
+      active?(item) ? "#{base} text-primary font-medium" : base
     end
 
     private
