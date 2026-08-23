@@ -22,7 +22,7 @@ class SidebarComponentTest < ViewComponent::TestCase
   def test_highlights_active_sales_on_root
     result = render_inline(Sidebar::Component.new(current_path: "/"))
 
-    active_link = result.css("a.active")
+    active_link = result.css("a.text-primary")
 
     assert_not active_link.present?, "Should not highlight on root path (only /pos/* paths)"
   end
@@ -30,7 +30,7 @@ class SidebarComponentTest < ViewComponent::TestCase
   def test_highlights_active_sales_on_pos_path
     result = render_inline(Sidebar::Component.new(current_path: "/pos/locations"))
 
-    active_link = result.css("a.active")
+    active_link = result.css("a.text-primary")
 
     assert_predicate active_link, :present?
     assert_includes active_link.to_html, "販売"
@@ -39,7 +39,7 @@ class SidebarComponentTest < ViewComponent::TestCase
   def test_highlights_active_locations
     result = render_inline(Sidebar::Component.new(current_path: "/locations"))
 
-    active_link = result.css("a.active")
+    active_link = result.css("a.text-primary")
 
     assert_predicate active_link, :present?
     assert_includes active_link.to_html, "配達場所"
@@ -48,7 +48,7 @@ class SidebarComponentTest < ViewComponent::TestCase
   def test_highlights_active_catalogs
     result = render_inline(Sidebar::Component.new(current_path: "/catalogs/new"))
 
-    active_link = result.css("a.active")
+    active_link = result.css("a.text-primary")
 
     assert_predicate active_link, :present?
     assert_includes active_link.to_html, "カタログ"
