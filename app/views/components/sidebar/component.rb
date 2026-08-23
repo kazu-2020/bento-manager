@@ -28,7 +28,13 @@ module Sidebar
 
     def menu_item_class(item)
       base = "flex items-center gap-3"
-      active?(item) ? "#{base} active bg-primary/10 text-primary font-medium" : "#{base} hover:bg-base-300"
+      active?(item) ? "#{base} text-primary font-medium" : base
+    end
+
+    # 現在地は見た目（text-primary）だけでなく意味としても示す。
+    # 支援技術に伝わるうえ、テストが表示用クラスに結合しなくなる。
+    def aria_current(item)
+      "page" if active?(item)
     end
 
     private

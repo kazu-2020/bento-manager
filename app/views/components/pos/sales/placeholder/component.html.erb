@@ -30,7 +30,7 @@
             <% inventories.each do |inventory| %>
               <li class="flex justify-between items-center py-2">
                 <span class="font-medium"><%= inventory.catalog.name %></span>
-                <span class="badge badge-lg badge-outline">
+                <span class="badge badge-lg badge-neutral badge-outline">
                   <%= inventory.stock %><%= t(".unit") %>
                 </span>
               </li>
