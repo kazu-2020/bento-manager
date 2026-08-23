@@ -120,8 +120,18 @@ class CatalogPriceTest < ActiveSupport::TestCase
     assert_raises(ArgumentError) { CatalogPrice.pick_by_kind(catalog.prices.to_a, kind: :regular, at: today) }
     assert_raises(ArgumentError) { CatalogPrice.pick_by_kind([], kind: :regular, at: today) }
 
-    # DateTime は Date のサブクラスだが時刻を持つので通る
-    assert_nothing_raised { price.effective_at?(DateTime.current) }
+    # 拒否する型を数える形にすると nil や文字列が素通りし、where(effective_from: ..nil)
+    # が全件一致する。受理側（acts_like?(:time)）で見ているのでこれらも落ちる
+    assert_raises(ArgumentError) { price.effective_at?(nil) }
+    assert_raises(ArgumentError) { catalog.prices.effective_at("2026-08-23") }
+
+    # 時刻として振る舞うものは通る。DateTime は Date のサブクラスだが時刻を持ち、
+    # TimeWithZone は Rails が実際に受け渡しする型そのもの
+    assert_nothing_raised do
+      price.effective_at?(DateTime.current)
+      price.effective_at?(Time.zone.now)
+      price.effective_at?(Time.current)
+    end
   end
 
   test "新しい価格を設定すると既存の価格が終了する" do

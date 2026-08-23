@@ -87,17 +87,20 @@ class CatalogPrice < ApplicationRecord
   # ないまま仕様になる（#358 がまさにそれで、UTC 0 時＝JST 9 時という境界が
   # 文字列比較の副作用として残っていた）。
   #
-  # DateTime は Date のサブクラスだが時刻を持ち、where でも完全な日時として引用される
-  # ため通す（instance_of? で日付だけを拾う）。
+  # 判定は「拒否する型を数える」のではなく acts_like?(:time) で受理側を見る。Time /
+  # DateTime / ActiveSupport::TimeWithZone は通り、Date は落ちる（DateTime は Date の
+  # サブクラスだが時刻を持ち、where でも完全な日時として引用されるため通る側でよい）。
+  # 拒否側を instance_of?(Date) で数えると、nil や文字列が素通りして
+  # where(effective_from: ..nil) が全件一致するような壊れ方をする。
   #
   # @param at [Time] 基準日時
   # @return [void]
-  # @raise [ArgumentError] at が Date の場合
+  # @raise [ArgumentError] at が時刻として振る舞わない場合
   def self.assert_instant!(at)
-    return unless at.instance_of?(Date)
+    return if at.acts_like?(:time)
 
     raise ArgumentError,
-          "有効期間の判定には時刻が必要です。Date ではなく Time を渡してください（ADR-0004 決定 5）"
+          "有効期間の判定には時刻が必要です。#{at.class} ではなく Time を渡してください（ADR-0004 決定 5）"
   end
 
   # 新しい価格を作成し、既存の有効な価格があれば終了させる
