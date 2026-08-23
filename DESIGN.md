@@ -8,7 +8,7 @@ colors:
   neutral: "oklch(26% 0.085 40)"
   info: "oklch(48% 0.14 260)"
   success: "oklch(48% 0.10 171)"
-  warning: "oklch(54% 0.12 85)"
+  warning: "oklch(50% 0.12 85)"
   error: "oklch(43.4% 0.170 28.3)"
   staff: "oklch(40% 0.12 55)"
   citizen: "oklch(45% 0.10 240)"
@@ -180,6 +180,7 @@ daisyUI テーマの `--depth: 1` に任せる。独自の影を定義しない�
 `--border` は `1px`。daisyUI では badge / btn / input / select / tab / alert / card など 20 以上の
 コンポーネントがこの 1 つのトークンを参照するので、変えるとアプリ全体の枠線が一律に動く。
 **枠が見えにくい・強すぎるという話が出たら、色（`base-300`）の前にこの太さを見ること。**
+
 個別に `rounded-*` を指定するのは、daisyUI コンポーネントの外側で独自の面を作るときに限る。
 
 ## Components
@@ -223,7 +224,7 @@ daisyUI のコンポーネントを優先する。ボタン・カード・フォ
 ### Don't
 
 - **淡い `warning` だけで気づかせようとしない。** `badge-warning badge-soft` / `text-warning` は
-  可読性としては AA を満たす（それぞれ 4.77:1 / 4.80:1）が、`warning` の色相 85 は `base` 系の 74 と
+  可読性としては AA を満たす（それぞれ 5.08:1 / 5.68:1）が、`warning` の色相 85 は `base` 系の 74 と
   わずか 11° しか離れておらず、淡くすると地色のクリームに溶けて**目に入らない**。
   `success`（171）と `error`（28）は淡くしても残るので、`warning` だけが構造的に不利である。
   見落とすと困る場面では、アイコン・位置・文言など色以外の手掛かりを併用すること
