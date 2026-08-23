@@ -5,7 +5,6 @@ description: 役場等への出張訪問販売を行うお弁当屋さんの業�
 colors:
   primary: "oklch(56% 0.19 40)"
   secondary: "oklch(51% 0 0)"
-  accent: "oklch(56% 0.19 40)"
   neutral: "oklch(26% 0.085 40)"
   info: "oklch(48% 0.14 260)"
   success: "oklch(48% 0.10 171)"
@@ -66,7 +65,7 @@ daisyUI のテーマ `bento` がすべてのトークンを定義しており、
 | `success` | 有効・提供中の状態 |
 | `error` | **もう選べない状態**（提供終了・閉鎖・無効化・売り切れ・選択不可）。加えて後戻りしにくい操作と「返金」 |
 | `warning` | 条件付き・これからの状態（期間前のクーポン、弁当が必要） |
-| `info` | 差額精算の結果が「追加徴収」であること |
+| `info` | 案内・補足情報。加えて差額精算の結果が「追加徴収」であること |
 
 `error` は失敗を意味しない。「終わっている / もう選べない」を意味する。
 売り切れは `CONTEXT.md` の定義どおり正常な状態であって、エラーではない。
@@ -177,6 +176,10 @@ daisyUI テーマの `--depth: 1` に任せる。独自の影を定義しない�
 
 `--radius-field`（ボタン・入力・タブ）と `--radius-box`（カード・モーダル）はどちらも `0.75rem` で揃えてある。
 ピル型（`2rem`）は入力欄が「入力できる場所」に見えなくなるため使わない。
+
+`--border` は `1px`。daisyUI では badge / btn / input / select / tab / alert / card など 20 以上の
+コンポーネントがこの 1 つのトークンを参照するので、変えるとアプリ全体の枠線が一律に動く。
+**枠が見えにくい・強すぎるという話が出たら、色（`base-300`）の前にこの太さを見ること。**
 個別に `rounded-*` を指定するのは、daisyUI コンポーネントの外側で独自の面を作るときに限る。
 
 ## Components
@@ -190,15 +193,20 @@ daisyUI のコンポーネントを優先する。ボタン・カード・フォ
 | `btn-neutral` | フォーム送信、新規作成への導線。1 画面に 1 つが原則 |
 | `btn-ghost` | 低優先度の操作、アイコンボタン、キャンセル |
 | `btn-outline btn-primary` | 空状態からの誘導、ナビゲーション |
-| `btn-primary` | タブ・トグルの選択中（非選択は `btn-ghost`） |
+| `btn-primary` | `join` によるセグメント切り替えの選択中（非選択は `btn-ghost`）。**タブには使わない**（下記） |
 | `btn-error` | 後戻りしにくい操作（提供終了、返品への導線） |
 
 `btn-primary` を `w-full` で使わないこと。全幅のオレンジは `btn-neutral` と主役を奪い合う。
 
+タブは daisyUI の `tabs tabs-lift` + `tab` / `tab-active` で組む。`btn-*` は使わない。
+`btn-primary` が当てはまるのは弁当販売分析の期間切り替え（`join` グループ）だけである。
+
 ### badge
 
 状態を表すバッジは `badge-soft` を伴う。`badge-success` / `badge-error` / `badge-warning` の 3 つで状態を表し、上の「意味の層」に従う。
-数量やセット価格の印は `badge-outline` を使う。色は借りない。
+数量やセット価格の印は `badge-neutral badge-outline` を使う。
+色クラスを省いた素の `badge-outline` は文字色を持たず親から継承するため、
+薄い文字色のブロックに置くと枠ごと消える。色は必ず添える。
 
 `status_badge` はドメインごとに存在する（`discounts` / `locations` / `catalogs`）。新しい状態バッジを作るときは既存の 3 つと同じ対応表を使う。
 
@@ -214,9 +222,11 @@ daisyUI のコンポーネントを優先する。ボタン・カード・フォ
 
 ### Don't
 
-- **`warning` を `badge-soft` / `alert-dash` / `text-warning` で使わない。塗り（`badge-warning` / `alert-warning`）だけに使う。**
-  `warning` の色相 85 は `base` 系の 74 とわずか 11° しか離れておらず、淡くすると地色のクリームに溶けて気づけなくなる。
-  `success`（171）と `error`（28）は淡くしても残るが、`warning` だけが構造的に不利である
+- **淡い `warning` だけで気づかせようとしない。** `badge-warning badge-soft` / `text-warning` は
+  可読性としては AA を満たす（それぞれ 4.77:1 / 4.80:1）が、`warning` の色相 85 は `base` 系の 74 と
+  わずか 11° しか離れておらず、淡くすると地色のクリームに溶けて**目に入らない**。
+  `success`（171）と `error`（28）は淡くしても残るので、`warning` だけが構造的に不利である。
+  見落とすと困る場面では、アイコン・位置・文言など色以外の手掛かりを併用すること
 - **`data-theme` に `bento` 以外の名前を書かない。** ビルドに登録されているテーマは `bento` だけで、他の名前を書いても黙って `bento` にフォールバックする
 - **`dark:` を使わない。** このアプリはライト固定である（`color-scheme: "light"`, `prefersdark: false`）。ダークモードは対応範囲外
 - **意味の層の色を見やすさのために変えない。** 売り切れが赤いのは意図であって、エラーの誤用ではない
