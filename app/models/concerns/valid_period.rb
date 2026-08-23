@@ -7,6 +7,11 @@
 # その CatalogPrice は期間を datetime で持つためここには含めない。#358 でこの型の選択を
 # 正式に承認しており（ADR-0004 決定 3）、date に寄せる予定は無い。寄せると同じ日に 2 回
 # 価格を変えたときに旧行と新行が両方その日有効になり、勝者が id 順でしか決まらなくなる。
+#
+# なお active_at / active_at? に Time を渡すと、valid_from == valid_until の期間で
+# 答えが割れる（SQL 側は date にキャストされ、Ruby 側は Range#cover? が Date を暦日の
+# 0 時として比較するため）。呼び出し元は全て Date を渡しているので現時点では出ないが、
+# 直すかどうかは #426 で扱う。
 module ValidPeriod
   extend ActiveSupport::Concern
 
