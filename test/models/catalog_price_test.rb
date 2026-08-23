@@ -81,7 +81,47 @@ class CatalogPriceTest < ActiveSupport::TestCase
 
   test "適用開始日時が未設定の価格は、どの時点でも有効ではない" do
     assert_not CatalogPrice.new(kind: :regular, price: 500).effective_at?(Time.current)
-    assert_not CatalogPrice.new(kind: :regular, price: 500).effective_at?(Date.current)
+  end
+
+  test "有効期間は開始と終了のちょうどその時刻も含む" do
+    catalog = catalogs(:miso_soup)
+    price = CatalogPrice.create!(
+      catalog: catalog, kind: :regular, price: 500,
+      effective_from: 2.days.ago, effective_until: 1.day.ago
+    )
+
+    # 保存で丸めた値どうしで突き合わせる
+    price.reload
+    starts_at = price.effective_from
+    ends_at   = price.effective_until
+
+    assert price.effective_at?(starts_at)
+    assert price.effective_at?(ends_at)
+    assert_not price.effective_at?(starts_at - 1.second)
+    assert_not price.effective_at?(ends_at + 1.second)
+
+    # SQL 版も同じ答えを返す。境界の意味が Ruby 側とずれると preload の有無で答えが割れる
+    assert_includes catalog.prices.effective_at(starts_at), price
+    assert_includes catalog.prices.effective_at(ends_at), price
+    assert_not_includes catalog.prices.effective_at(starts_at - 1.second), price
+    assert_not_includes catalog.prices.effective_at(ends_at + 1.second), price
+  end
+
+  test "日付だけで価格を引こうとすると、どの瞬間か決まらないため拒否される" do
+    catalog = catalogs(:daily_bento_a)
+    price = catalog_prices(:daily_bento_a_regular)
+    today = Date.current
+
+    assert_raises(ArgumentError) { price.effective_at?(today) }
+    assert_raises(ArgumentError) { catalog.prices.effective_at(today) }
+    assert_raises(ArgumentError) { catalog.prices.price_by_kind(kind: :regular, at: today) }
+
+    # Ruby 版も SQL 版と同じく落ちる。片方だけ通ると preload の有無で答えが割れる
+    assert_raises(ArgumentError) { CatalogPrice.pick_by_kind(catalog.prices.to_a, kind: :regular, at: today) }
+    assert_raises(ArgumentError) { CatalogPrice.pick_by_kind([], kind: :regular, at: today) }
+
+    # DateTime は Date のサブクラスだが時刻を持つので通る
+    assert_nothing_raised { price.effective_at?(DateTime.current) }
   end
 
   test "新しい価格を設定すると既存の価格が終了する" do
