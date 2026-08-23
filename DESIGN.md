@@ -102,24 +102,30 @@ daisyUI のテーマ `bento` がすべてのトークンを定義しており、
 | かつての用途 | 置き換え先 |
 | --- | --- |
 | 顧客タイプ（関係者）のバッジ | `bg-staff text-white` / `bg-citizen text-white` |
-| 「セット」の印 | `badge badge-xs badge-outline` |
-| 追加発注の合計個数 | `badge badge-outline` |
+| 「セット」の印 | `badge badge-xs badge-neutral badge-outline` |
+| 追加発注の合計個数 | `badge badge-neutral badge-outline` |
 | 追加発注の「+N個」・割引額 | 太字（`font-bold` / `font-medium`）と `base-content` |
 
 **数量と金額は色ではなく字の太さで強調する。** 屋外で最初に失われるのは彩度であって字の太さではない。
 
 ### 選択状態の表し方
 
-「選ばれている」ことは `primary` で表す。カートに入っている商品、選択済みの在庫項目のいずれも
-`border-primary bg-primary/10` を使う。
+「選ばれている」ことは `primary` で表す。ただし表し方はカードとナビゲーションで違う。
+
+**カード**（カートに入っている商品、選択済みの在庫項目）は `border-primary bg-primary/10` を使う。
+カードは選択中も非選択も**中身の文字が同じ**なので、文字側に手掛かりを置けない。枠線で伝えるしかない。
+
+**ナビゲーション**（サイドバーの現在地）は `text-primary` と `font-medium` を使い、枠線は引かない。
+文字色を変えられるので枠が要らない（`text-primary` と `base-content` は ΔE 0.305 で明確に分かれる）。
+現在地に枠を回すとボタンのように見え、ナビゲーションの視覚言語から外れる。
 
 ただし**顧客タイプの選択だけは例外**で、選択中の側を `staff` / `citizen` 色そのもので塗る
 （`peer-checked:bg-staff peer-checked:border-staff peer-checked:text-white`）。
 顧客タイプという 1 つの概念に専用トークンがあるのに、選択状態だけ第 3 の色を使う理由がないためである。
 加えてこのトグルは販売確定ボタンのすぐ上に全幅で並ぶので、彩度の高いオレンジを置くと主役と競合する。
 
-`bg-primary/10` の淡い塗りは素の面との差が 1.09:1 しかなく、実際にはほとんど見えない。
-**選択を伝えているのは枠線である**（`border-primary` は 4.76:1）。塗りだけに頼らないこと。
+カードの `bg-primary/10` は素の面との差が 1.09:1 しかなく、実際にはほとんど見えない。
+**カードの選択を伝えているのは枠線である**（`border-primary` は 4.76:1）。塗りだけに頼らないこと。
 
 ### 差額精算の 3 つの結果
 
