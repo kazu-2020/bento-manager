@@ -40,6 +40,7 @@ class CatalogPrice < ApplicationRecord
   # @param kind [String, Symbol, Integer] 価格種別
   # @param at [Time] 基準日時
   # @return [CatalogPrice, nil]
+  # @raise [ArgumentError] at が時刻として振る舞わない場合
   def self.pick_by_kind(prices, kind:, at: Time.current)
     # prices が空だと effective_at? を一度も通らないため、ここでも弾く。SQL 版は
     # 行数に関わらず落ちるので、揃えないと preload の有無で例外の有無が割れる
@@ -60,7 +61,7 @@ class CatalogPrice < ApplicationRecord
   #
   # @param at [Time] 基準日時
   # @return [Boolean]
-  # @raise [ArgumentError] at が Date の場合
+  # @raise [ArgumentError] at が時刻として振る舞わない場合
   def effective_at?(at)
     # 受け取った値が不正なら、レシーバの状態に関わらず落とす
     self.class.assert_instant!(at)
