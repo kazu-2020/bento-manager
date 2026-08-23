@@ -162,7 +162,7 @@ module Sales
       result
     end
 
-    # バンドル価格アイテムを構築
+    # セット価格アイテムを構築
     def build_bundle_price_item(item, rule, quantity)
       bundle_price = item[:catalog].price_by_kind(rule.price_kind.to_sym, at: calculation_time)
 
@@ -191,13 +191,11 @@ module Sales
     # 必要な価格がすべて設定されているか検証
     # @raise [MissingPriceError] 価格が設定されていない商品がある場合
     def validate_required_prices!
-      validator = Catalogs::PriceValidator.new(at: calculation_time)
-
       missing = cart_items.flat_map do |item|
         catalog = item[:catalog]
 
         determine_required_price_kinds(catalog)
-          .reject { |kind| validator.price_exists?(catalog, kind) }
+          .reject { |kind| catalog.price_exists?(kind, at: calculation_time) }
           .map { |kind| { catalog_id: catalog.id, catalog_name: catalog.name, price_kind: kind.to_s } }
       end
 

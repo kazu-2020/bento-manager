@@ -58,10 +58,6 @@ ja:
       messages:
         unreadable_submission: "送信された内容を読み取れませんでした。画面を再読み込みしてやり直してください"
       models:
-        catalogs/pricing_rule_creator:
-          attributes:
-            base:
-              missing_price: "商品「%{catalog_name}」に価格種別「%{price_kind}」の価格が設定されていません"
         daily_inventories/inventory_form:
           attributes:
             base:
