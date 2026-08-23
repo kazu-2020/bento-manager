@@ -185,21 +185,24 @@ class CatalogTest < ActiveSupport::TestCase
     # 保存で丸められた後の値を使う。Ruby 側の精度のままだと境界ちょうどにならない
     ended_at = ended.reload.effective_until
 
-    # 日付ちょうどの境界は SQL 側が文字列比較になり、Ruby 側と食い違いやすい
-    boundary = Date.new(2026, 3, 10)
+    # 0 時ちょうど（秒以下が全て 0）は SQL の文字列表現でも切りが良く、境界の扱いが
+    # 2 経路で食い違ったときに現れやすい
+    boundary_at = Time.utc(2026, 3, 10)
     # 終了時刻は fixture の salad_bundle と終了していない価格が並ばないために置く。
     # 未来に取ってあるので、以下のどの基準時刻から見ても有効なままである
     CatalogPrice.create!(
       catalog: catalog, kind: :bundle, price: 120,
-      effective_from: boundary.to_time(:utc), effective_until: 1.year.from_now
+      effective_from: boundary_at, effective_until: 1.year.from_now
     )
 
-    # 有効期間の両端そのもの（ended_at / boundary）を含める。両端 inclusive かどうかは
-    # 2 経路で食い違いやすく、境界ちょうどのデータが無いと素通りする
+    # 有効期間の両端そのもの（ended_at / boundary_at）を含める。両端 inclusive かどうかは
+    # 2 経路で食い違いやすく、境界ちょうどのデータが無いと素通りする。
+    # Date は #358 で受け付けなくなったため含めない（両経路とも ArgumentError になることは
+    # CatalogPriceTest が見ている）。DateTime は時刻を持つので対象に残る
     base_times = [
       Time.current, 2.weeks.ago, 6.months.ago, 2.years.ago,
-      Date.current, 6.months.ago.to_date, 2.weeks.ago.to_datetime,
-      boundary, boundary - 1, boundary + 1,
+      2.weeks.ago.to_datetime,
+      boundary_at, boundary_at - 1.second, boundary_at + 1.second,
       ended_at, ended_at - 1.second, ended_at + 1.second
     ]
     preloaded = Catalog.preload(:prices).find(catalog.id)

@@ -2,7 +2,7 @@
 
 - **状態**: 承認
 - **日付**: 2026-08-19
-- **関連 Issue**: [#352](https://github.com/kazu-2020/bento-manager/issues/352), [#354](https://github.com/kazu-2020/bento-manager/issues/354), [#358](https://github.com/kazu-2020/bento-manager/issues/358)
+- **関連 Issue**: [#352](https://github.com/kazu-2020/bento-manager/issues/352), [#354](https://github.com/kazu-2020/bento-manager/issues/354), [#358](https://github.com/kazu-2020/bento-manager/issues/358), [#424](https://github.com/kazu-2020/bento-manager/issues/424)
 
 ## 背景
 
@@ -13,7 +13,7 @@ Rails の既定に従い、datetime は UTC で保存し、`config.time_zone = "
 この事実がどこにも書かれていなかったため、同じ根を持つ不具合が独立に 2 件出た。
 
 - [#352](https://github.com/kazu-2020/bento-manager/issues/352) — `DATE(sale_datetime)` が UTC 基準で日を切り、JST 0:00〜9:00 の販売が前日に寄っていた。同じ回避策が `Location` と `Sales::HistoryCalendar` にコピーされ、さらに 3 つ目の複製が `lib/tasks/sample_data.rake` にオフセット無しのまま残っていた
-- [#358](https://github.com/kazu-2020/bento-manager/issues/358) — `CatalogPrice.boundary_time` が `Date` を UTC 0 時（JST の 9 時）に寄せている。設計判断ではなく、SQLite の文字列比較の副作用がそのまま境界の仕様になったもの
+- [#358](https://github.com/kazu-2020/bento-manager/issues/358) — `CatalogPrice` が `Date` を UTC 0 時（JST の 9 時）に寄せていた。設計判断ではなく、SQLite の文字列比較の副作用がそのまま境界の仕様になったもの。決定 3 と決定 5 で決着させた
 
 どちらも「瞬間から暦日を導出するとき、どのタイムゾーンで切るか」を誰も決めていなかったことに由来する。
 
@@ -49,7 +49,15 @@ Rails の既定に従い、datetime は UTC で保存し、`config.time_zone = "
 | `catalog_pricing_rules` | `valid_from` / `valid_until` |
 | `discounts` | `valid_from` / `valid_until` |
 
-**例外は `catalog_prices.effective_from` / `effective_until` で、姉妹概念が `date` である中でここだけ `datetime` になっている。** #358 の境界問題はこの型の選択から派生しており、`date` に寄せれば問題ごと消える。当日の途中で価格を切り替える運用が要るかどうかが判断の分かれ目で、#358 で扱う。
+**例外は `catalog_prices.effective_from` / `effective_until` で、姉妹概念が `date` である中でここだけ `datetime` になっている。これは [#358](https://github.com/kazu-2020/bento-manager/issues/358) で承認済みの例外である。**
+
+`date` に寄せると、**同じ日に 2 回価格を変えたときに履歴が表現できなくなる**。`CatalogPrice.create_with_history!` は旧行を「今」で閉じて新行を「今」から開くので、`date` では旧行が `valid_until: 今日`、新行が `valid_from: 今日` となり、両方がその日有効になる。どちらが勝つかは `id` の順という実装都合でしか決まらず、「今日この商品はいくらか」に構造として一意に答えられない。値段の打ち間違いをその場で訂正するだけでもこの状態に入るため、「日の途中で値段を変えない」運用でも踏む。
+
+寄せて得られるのは姉妹概念との型の一貫性だけで、境界の問題そのものは決定 5 のガードで閉じる。`sale_items` が `unit_price` と `catalog_price_id` の両方を保存しているため、過去の販売金額はこの型の選択に影響されない。
+
+有効期間は**両端 inclusive** とする。`create_with_history!` が旧行の `effective_until` と新行の `effective_from` に同じ時刻を入れるため、切り替えのその一点だけは 2 件とも有効になる。半開区間 `[from, until)` にすればこの重なりは消えるが、Ruby に「開始端 exclusive」の Range リテラルが無いため `effective_at` スコープが生の SQL 断片に落ちる。重なりは 1 マイクロ秒幅で、SQL 版（`price_by_kind`）と Ruby 版（`pick_by_kind`）が同じ勝者を返すことは `test/models/catalog_test.rb` の「価格の読み込み済みかどうかで、取得できる価格は変わらない」が担保している。
+
+**この規約を変えるなら、先に読む場所が 3 つある。** `CatalogPriceTest` の「新しい価格を設定すると既存の価格が終了する」（切り替えの一点で 2 件が有効になることを `assert_equal 2` で固定している）、同じく「有効期間は開始と終了のちょうどその時刻も含む」（両端そのものが含まれることを Ruby 版・SQL 版の両方で見ている）、そして上記の同値性テストである。
 
 `sales.sale_datetime` は瞬間そのものが要る（販売開始の判定、差額精算の当日判定、履歴の時刻表示）ため、この決定の対象ではない。
 
@@ -72,6 +80,12 @@ end
 **理由**: `Date` を `where` にそのまま渡すと `'YYYY-MM-DD'` として引用され、UTC 保存の datetime 文字列との**文字列比較**になる。この比較は開始端だけが exclusive という非対称を持ち（`'2026-08-18 00:00:00.000000'` は前方一致で長い分だけ大きく、`'2026-08-18'` 以下にならない）、Ruby 側の日時比較では書き起こせない。#354 で、preload の有無によって同じ問い合わせの答えが割れる形で表面化した。
 
 突き合わせるなら Ruby 側で `Time` に変換してから渡す。**そのとき「その日のどの瞬間か」を決めるのは呼び出し側の責任**であり、暗黙に決めてはならない。決定 3 に従っていれば、そもそもこの状況に至らない。
+
+決定 3 の例外である `CatalogPrice` では、この決定を `CatalogPrice.assert_instant!` が実行時に検査する。基準日時を受け取る公開の入口すべて（SQL 版のスコープ、Ruby 版の述語、読み込み済みからの選択）がこれを通る。**暗黙に瞬間へ寄せない**のがこのガードの要点である。#358 で問題になっていた「UTC 0 時＝JST 9 時」という境界は、まさに寄せ方を誰も決めないまま文字列比較の副作用として残ったものだった。行数に関わらず落ちる SQL 版と揃えるため、読み込み済みの価格が空でも落ちる位置に置いてある。
+
+判定は `acts_like?(:time)` で**受理する側**を見る。`Time` / `DateTime` / `ActiveSupport::TimeWithZone` が通り、それ以外は落ちる。拒否する型を数える形（`instance_of?(Date)`）にしないのは、`nil` や文字列が素通りして `where(effective_from: ..nil)` が全件一致するような壊れ方をするためである。静的な型検査ではなく、実行時の検査である。
+
+**このガードを入れても保存済みの価格の有効性は 1 件も動かない。** 置き換える前の `boundary_time` は `Date` を UTC 0 時へ寄せていたが、その分岐に入る本番の呼び出しは 1 つも無かった（唯一 `Date` を渡していた `Catalogs::PricingRuleCreator` は本番から一度も参照されないまま #358 で削除した）。`Time` は以前から素通しで、境界の位置も比較の向きも変わっていない。したがって **JST 0 時〜9 時に作成された価格の扱いも変わらず、データ移行は不要である。**
 
 ## 前提（崩れたら見直すこと）
 
@@ -98,5 +112,6 @@ end
 
 - [Issue #352](https://github.com/kazu-2020/bento-manager/issues/352) — JST 日付式が 2 箇所に重複していた
 - [Issue #354](https://github.com/kazu-2020/bento-manager/issues/354) — `Date` を `where` に渡したときの文字列比較の非対称
-- [Issue #358](https://github.com/kazu-2020/bento-manager/issues/358) — 価格の有効期間の境界が UTC 0 時になっている
+- [Issue #358](https://github.com/kazu-2020/bento-manager/issues/358) — 価格の有効期間の境界が UTC 0 時になっていた。決定 3 の例外を承認し、決定 5 のガードを入れた
+- [Issue #424](https://github.com/kazu-2020/bento-manager/issues/424) — #358 で削除した価格存在検証の退避先。価格ルールの書き込み経路を増やすときに入れる
 - [SQLite: Date And Time Functions](https://www.sqlite.org/lang_datefunc.html) — 修飾子と `localtime` の挙動

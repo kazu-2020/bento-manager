@@ -11,7 +11,7 @@ class CatalogPrice < ApplicationRecord
   validate :valid_date_range
 
   scope :effective_at, ->(at) {
-    at = boundary_time(at)
+    assert_instant!(at)
 
     where(effective_from: ..at)
       .merge(
@@ -38,9 +38,14 @@ class CatalogPrice < ApplicationRecord
   #
   # @param prices [Enumerable<CatalogPrice>] 読み込み済みの価格
   # @param kind [String, Symbol, Integer] 価格種別
-  # @param at [Time, Date] 基準日時
+  # @param at [Time] 基準日時
   # @return [CatalogPrice, nil]
+  # @raise [ArgumentError] at が時刻として振る舞わない場合
   def self.pick_by_kind(prices, kind:, at: Time.current)
+    # prices が空だと effective_at? を一度も通らないため、ここでも弾く。SQL 版は
+    # 行数に関わらず落ちるので、揃えないと preload の有無で例外の有無が割れる
+    assert_instant!(at)
+
     # where(kind:) は整数・シンボル・文字列のどれでも引ける。属性と同じ文字列に
     # 揃えるのは enum の型自身の仕事なので、対応表を持たずに cast へ委ねる
     kind = type_for_attribute(:kind).cast(kind)
@@ -54,39 +59,49 @@ class CatalogPrice < ApplicationRecord
 
   # 指定日時に有効な価格か（effective_at スコープの Ruby 版、両端 inclusive）
   #
-  # @param at [Time, Date] 基準日時
+  # @param at [Time] 基準日時
   # @return [Boolean]
+  # @raise [ArgumentError] at が時刻として振る舞わない場合
   def effective_at?(at)
+    # 受け取った値が不正なら、レシーバの状態に関わらず落とす
+    self.class.assert_instant!(at)
+
     # effective_from が無いうちは、いつの時点でも有効ではない。ここを Range に任せると
     # (nil..nil) が全ての時刻を cover? してしまう
     return false if effective_from.nil?
 
     # effective_until が nil なら終端なしの Range になり、開始端だけで判定される
-    (effective_from..effective_until).cover?(self.class.boundary_time(at))
+    (effective_from..effective_until).cover?(at)
   end
 
-  # 有効期間の境界に使う日時を決める
+  # 有効期間の判定に渡せるのは瞬間だけであることを保証する
   #
   # Date をそのまま where に渡すと 'YYYY-MM-DD' として引用され、UTC で保存された
   # datetime 文字列との文字列比較になる。この比較は開始端だけが exclusive になる
   # （'2026-08-18 00:00:00.000000' は前方一致で長い分だけ大きく、'2026-08-18' 以下に
-  # ならない）。Ruby 側では書き起こせない非対称なので、日付は SQL に渡す前に UTC 0 時の
-  # Time へ寄せ、両端 inclusive の素直な日時比較に揃える。
+  # ならない）。Ruby 側の日時比較では書き起こせない非対称なので、preload の有無で
+  # 同じ問い合わせの答えが割れる（#354）。ADR-0004 決定 5 がこれを禁じており、
+  # 決定を型で守れる場所がここしかない。
   #
-  # 境界の位置は変わらないが、UTC 0 時ちょうどに始まる価格の扱いだけは変わる。従来は
-  # その日から有効にならなかったものが、有効になる。Date を渡すのは
-  # Catalogs::PriceValidator 経由の呼び出し元（PricingRuleCreator#price_exists? など）。
+  # 暗黙に瞬間へ寄せずに落とすのは、同じ ADR が「その日のどの瞬間かを決めるのは
+  # 呼び出し側の責任」としているため。寄せ方を勝手に決めると、その選択が誰の判断でも
+  # ないまま仕様になる（#358 がまさにそれで、UTC 0 時＝JST 9 時という境界が
+  # 文字列比較の副作用として残っていた）。
   #
-  # なお UTC 0 時（JST の 9 時）という境界そのものは、この文字列比較の副作用が
-  # そのまま残ったもの。JST の 0 時に直すかは価格の有効性が動く話なので別で扱う。
+  # 判定は「拒否する型を数える」のではなく acts_like?(:time) で受理側を見る。Time /
+  # DateTime / ActiveSupport::TimeWithZone は通り、Date は落ちる（DateTime は Date の
+  # サブクラスだが時刻を持ち、where でも完全な日時として引用されるため通る側でよい）。
+  # 拒否側を instance_of?(Date) で数えると、nil や文字列が素通りして
+  # where(effective_from: ..nil) が全件一致するような壊れ方をする。
   #
-  # DateTime は Date のサブクラスだが時刻を持ち、where でも完全な日時として引用される
-  # ため触らない（instance_of? で日付だけを拾う）。
-  #
-  # @param at [Time, Date]
-  # @return [Time, Date]
-  def self.boundary_time(at)
-    at.instance_of?(Date) ? at.to_time(:utc) : at
+  # @param at [Time] 基準日時
+  # @return [void]
+  # @raise [ArgumentError] at が時刻として振る舞わない場合
+  def self.assert_instant!(at)
+    return if at.acts_like?(:time)
+
+    raise ArgumentError,
+          "有効期間の判定には時刻が必要です。#{at.class} ではなく Time を渡してください（ADR-0004 決定 5）"
   end
 
   # 新しい価格を作成し、既存の有効な価格があれば終了させる

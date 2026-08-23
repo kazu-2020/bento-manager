@@ -4,9 +4,14 @@
 # 同日指定は「その 1 日だけ有効」という正当な設定として許可する。CatalogPrice が
 # 同時刻を弾くのとは非対称だが、これは仕様（理由は CatalogPrice#valid_date_range）。
 #
-# その CatalogPrice は期間を datetime で持ち、境界の寄せ方（boundary_time）が別物の
-# ためここには含めない。ただし ADR-0004 決定 3 のとおり型の選択自体が未決で、#358 で
-# date に寄せる可能性が残っている。寄せたときはこの concern が受け皿になる。
+# その CatalogPrice は期間を datetime で持つためここには含めない。#358 でこの型の選択を
+# 正式に承認しており（ADR-0004 決定 3）、date に寄せる予定は無い。寄せると同じ日に 2 回
+# 価格を変えたときに旧行と新行が両方その日有効になり、勝者が id 順でしか決まらなくなる。
+#
+# なお active_at / active_at? に Time を渡すと、valid_from == valid_until の期間で
+# 答えが割れる（SQL 側は date にキャストされ、Ruby 側は Range#cover? が Date を暦日の
+# 0 時として比較するため）。呼び出し元は全て Date を渡しているので現時点では出ないが、
+# 直すかどうかは #426 で扱う。
 module ValidPeriod
   extend ActiveSupport::Concern
 
