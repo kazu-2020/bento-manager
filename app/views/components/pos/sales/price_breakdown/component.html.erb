@@ -21,7 +21,7 @@
               <span>
                 <%= item[:catalog].name %>
                 <% if bundle_price?(item) %>
-                  <span class="badge badge-xs badge-accent"><%= t(".bundle") %></span>
+                  <span class="badge badge-xs badge-neutral badge-outline"><%= t(".bundle") %></span>
                 <% end %>
                 × <%= item[:quantity] %>
               </span>
@@ -39,7 +39,7 @@
         <%# 割引行 %>
         <% if has_discounts? %>
           <% discount_details.select { |d| d[:applicable] }.each do |detail| %>
-            <div class="flex justify-between text-sm text-accent">
+            <div class="flex justify-between text-sm font-medium">
               <span><%= detail[:discount_name] %></span>
               <span>-<%= format_price(detail[:discount_amount]) %></span>
             </div>

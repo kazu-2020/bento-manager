@@ -23,9 +23,9 @@ module Pos
         def customer_type_badge_class
           case sale.customer_type
           when "staff"
-            "badge-accent"
+            "bg-staff text-white"
           else
-            "badge-neutral"
+            "bg-citizen text-white"
           end
         end
 
