@@ -32,7 +32,7 @@ side_menu?  → 陳列（タブ分け）3 箇所 + show_bundle_price? 1 箇所
 
 `side_menu?` の唯一の非陳列用例である `Catalogs::Prices::Component#show_bundle_price?` は、`bento?` 側の「セット価格のトリガー」と同じ 1 つの規則の裏表にすぎない ——「弁当を 1 個買うごとに、サラダ 1 個がセット価格になる」。**「サイドメニューである」ことを独立に必要とする業務規則は存在しない。**
 
-同じ歪みが `CatalogPricingRule` にも出ている。`target_catalog` / `price_kind` / `trigger_category` / `max_per_trigger` / `valid_from` を持つ汎用の価格ルールテーブルだが、本番の生成元は `Catalogs::SideMenuCreator#create_pricing_rule!` の 1 箇所だけで、入る値は常に `bundle` / `bento` / `1` である。汎用の生成器 `Catalogs::PricingRuleCreator` に至っては**テストからしか呼ばれていない**。たった 1 つの規則のために汎用ルールエンジンが建っている。
+同じ歪みが `CatalogPricingRule` にも出ている。`target_catalog` / `price_kind` / `trigger_category` / `max_per_trigger` / `valid_from` を持つ汎用の価格ルールテーブルだが、本番の生成元は `Catalogs::SideMenuCreator#create_pricing_rule!` の 1 箇所だけで、入る値は常に `bundle` / `bento` / `1` である。汎用の生成器 `Catalogs::PricingRuleCreator` に至っては**一度も本番から呼ばれないまま**、[#358](https://github.com/kazu-2020/bento-manager/issues/358) で削除された。たった 1 つの規則のために汎用ルールエンジンが建っている。
 
 ## 決定
 
