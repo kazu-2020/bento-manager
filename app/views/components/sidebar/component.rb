@@ -31,6 +31,12 @@ module Sidebar
       active?(item) ? "#{base} text-primary font-medium" : base
     end
 
+    # 現在地は見た目（text-primary）だけでなく意味としても示す。
+    # 支援技術に伝わるうえ、テストが表示用クラスに結合しなくなる。
+    def aria_current(item)
+      "page" if active?(item)
+    end
+
     private
 
     attr_reader :current_path
