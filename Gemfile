@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.3"
+gem "rails", "~> 8.1.4"
 # Use sqlite3 as the database for Active Record
 gem "sqlite3", ">= 2.1"
 # Use the Puma web server [https://github.com/puma/puma]
@@ -46,7 +46,7 @@ gem "vite_rails" # https://github.com/ElMassimo/vite_ruby
 gem "view_component"
 
 # Charting view helpers; the JS side is served from npm (chartkick / chart.js)
-gem "chartkick", "~> 5.2"
+gem "chartkick", "~> 5.3"
 
 # monitoring
 gem "sentry-ruby"
