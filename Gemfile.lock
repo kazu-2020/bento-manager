@@ -179,7 +179,7 @@ GEM
     minitest-matchers_vaccine (1.1.0)
       minitest (>= 5.0, < 7.0)
     minitest-mock (5.27.0)
-    msgpack (1.8.5)
+    msgpack (1.8.7)
     mutex_m (0.3.0)
     net-imap (0.6.6)
       date
