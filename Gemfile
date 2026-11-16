@@ -54,7 +54,7 @@ gem "sentry-rails"
 
 group :development, :test do
   # minitest 6.x (minitest/mock is extracted to minitest-mock gem)
-  gem "minitest", "~> 6.0"
+  gem "minitest", "~> 6.1"
 
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
